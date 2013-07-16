@@ -213,7 +213,7 @@ def write_metadata(DATA, CONFIG, xml_metadata_template, PROCESSOR_VERSION):
 
     nbar_dataset.abstract = "%s NBAR" % nbar_dataset.satellite.NAME
 
-    nbar_dataset.algorithm_version = "SVN version " + CONFIG.svn_revision
+    nbar_dataset.algorithm_version = "Git version " + CONFIG.git_version
 
     # Generate comma-separated list of reflective bands
     nbar_dataset.available_bands = ", ".join(
