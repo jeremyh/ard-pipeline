@@ -1,4 +1,5 @@
-"""Utilities for the extraction of BRDF data.
+"""
+Utilities for the extraction of BRDF data.
 
 The :ref:`nbar-algorithm-label` and :ref:`tc-algorithm-label` algorithms require estimates of various atmospheric
 parameters, which are produced using `MODTRAN <http://modtran5.com/>`_. MODTRAN, in turn, requires
@@ -13,41 +14,38 @@ deriving `BRDF <http://en.wikipedia.org/wiki/Bidirectional_reflectance_distribut
     Someone who knows more about this (particularly the pre 2001 stuff) should document it.
 """
 
-import datetime
-import logging
-import math
-import os
-import re
+import logging, os, re, commands, datetime, math, numpy
 from glob import glob
-
-import commands
-import numpy as np
 from osgeo import gdal, gdalconst
 
-logger = logging.getLogger("root." + __name__)
+logger = logging.getLogger('root.' + __name__)
 
 # keywords for BRDF parameters f0, f1, f2
-_FACTOR_LIST = ["geo", "iso", "vol"]
+_FACTOR_LIST = ['geo', 'iso', 'vol']
 
-# TODO: Implement resume
+#TODO: Implement resume
 
 
 class BRDFLoaderError(Exception):
-    """:todo:
-    Someone who knows what this is used for should document it.
     """
-
+    :todo:
+        Someone who knows what this is used for should document it.
+    """
     pass
 
 
-class BRDFLoader:
-    """Data loader for MCD43A1.005 mosaics.
+
+
+
+class BRDFLoader(object):
+    """
+    Data loader for MCD43A1.005 mosaics.
 
     This class is used internally to load BRDF values from a file.
     """
 
     # MCD43A1.005 HDF files contain 3 subdatasets.
-    SDS_MAP = {0: "brdf", 1: "lat", 2: "lon"}
+    SDS_MAP = { 0: 'brdf', 1: 'lat', 2:'lon' }
 
     # Format for accessing a SDS using GDAL.
     SDS_FORMAT = 'HDF4_SDS:UNKNOWN:"%s":%d'
@@ -55,33 +53,30 @@ class BRDFLoader:
     # Hardwired settings for first version of pre-MODIS BRDF database.
     # TODO create these in HDF file metadata when building database
     DEFAULTS = {
-        "fill_value": -32768,
-        "scale_factor": 0.001,
-        "add_offset": 0.0,
+        'fill_value': -32768,
+        'scale_factor': 0.001,
+        'add_offset': 0.0,
     }
 
     def __init__(self, filename, UL=None, LR=None):
         """Initialise a BRDFLoader instance.
 
         Arguments:
-        ---------
             filename: data file name
             UL: (lon, lat) of ROI upper left corner [2-tuple, floats]
             LR: (lon, lat) of ROI lower right corner [2-tuple, floats]
-        """
-        self.filename = filename
-        self.roi = {"UL": UL, "LR": LR}
 
-        logger.info(
-            "{}: filename={}, roi={}".format(
-                self.__class__.__name__, self.filename, str(self.roi)
-            )
-        )
+        """
+
+        self.filename = filename
+        self.roi = {'UL': UL, 'LR': LR}
+
+        logger.info('%s: filename=%s, roi=%s'
+                    % (self.__class__.__name__, self.filename, str(self.roi)))
 
         if UL is None or LR is None:
-            raise BRDFLoaderError(
-                f"{self.__class__.__name__}: UL and/or LR not defined"
-            )
+            raise BRDFLoaderError('%s: UL and/or LR not defined'
+                                  % (self.__class__.__name__,))
 
         # Initialise data array container.
 
@@ -89,11 +84,11 @@ class BRDFLoader:
 
         # Initialise metadata values.
 
-        self.fill_value = self.DEFAULTS["fill_value"]
-        self.scale_factor = self.DEFAULTS["scale_factor"]
-        self.scale_factor_err = self.DEFAULTS["scale_factor"]
-        self.add_offset = self.DEFAULTS["add_offset"]
-        self.add_offset_err = self.DEFAULTS["add_offset"]
+        self.fill_value = self.DEFAULTS['fill_value']
+        self.scale_factor = self.DEFAULTS['scale_factor']
+        self.scale_factor_err = self.DEFAULTS['scale_factor']
+        self.add_offset = self.DEFAULTS['add_offset']
+        self.add_offset_err = self.DEFAULTS['add_offset']
 
         # Load data from HDF file.
 
@@ -101,23 +96,16 @@ class BRDFLoader:
 
         # The region-of-interest (scene) should lie within the HDF extents.
 
-        if (
-            self.roi["UL"][0] < self.UL[0]
-            or self.roi["LR"][0] > self.LR[0]
-            or self.roi["UL"][1] > self.UL[1]
-            or self.roi["LR"][1] < self.LR[1]
-        ):
-            raise BRDFLoaderError(
-                (
-                    "{}: Region of interest {} extends beyond "
-                    "HDF domain {{UL: {}, LR: {}}}"
-                ).format(
-                    self.__class__.__name__, str(self.roi), str(self.UL), str(self.LR)
-                )
-            )
+        if (self.roi['UL'][0] < self.UL[0] or self.roi['LR'][0] > self.LR[0] or
+            self.roi['UL'][1] > self.UL[1] or self.roi['LR'][1] < self.LR[1]):
+            raise BRDFLoaderError(('%s: Region of interest %s extends beyond '
+                                   'HDF domain {UL: %s, LR: %s}')
+                                  % (self.__class__.__name__, str(self.roi),
+                                     str(self.UL), str(self.LR)))
 
     def load(self):
-        """Open file and load data arrays and required metadata.
+        """
+        Open file and load data arrays and required metadata.
 
         The following SDS structure is assumed in the HDF file:
             SDS 0: BRDF data array (2d)
@@ -127,26 +115,24 @@ class BRDFLoader:
         Latitude and longitude values are centre-of-pixel.
 
         Fill value, scale factor and offset are obtained from the HDF metadata.
+
         """
+
         # Load sub-datasets.
 
         for k in self.SDS_MAP:
             sds_file_spec = self.SDS_FORMAT % (self.filename, k)
             fd = gdal.Open(sds_file_spec, gdalconst.GA_ReadOnly)
             if fd is None:
-                raise BRDFLoaderError(
-                    "{}: gdal.Open failed [{}]".format(
-                        self.__class__.__name__, sds_file_spec
-                    )
-                )
+                raise BRDFLoaderError('%s: gdal.Open failed [%s]'
+                                      % (self.__class__.__name__, sds_file_spec))
 
             self.data[k] = fd.GetRasterBand(1).ReadAsArray()
-            _type = type(self.data[k][0, 0])
+            _type = type(self.data[k][0,0])
 
-            logger.debug(
-                "%s: loaded sds=%d, type=%s, shape=%s"
-                % (self.__class__.__name__, k, str(_type), str(self.data[k].shape))
-            )
+            logger.debug('%s: loaded sds=%d, type=%s, shape=%s'
+                         % (self.__class__.__name__, k, str(_type),
+                            str(self.data[k].shape)))
 
             # Populate metadata entries after reading the BRDF data
             # array (SDS 0).
@@ -155,137 +141,134 @@ class BRDFLoader:
                 m = fd.GetMetadata_Dict()
                 if m:
                     # cast string to dtype
-                    self.fill_value = _type(m["_FillValue"])
+                    self.fill_value = _type(m['_FillValue'])
                     # floats...
-                    self.scale_factor = float(m["scale_factor"])
-                    self.scale_factor_err = float(m["scale_factor_err"])
-                    self.add_offset = float(m["add_offset"])
-                    self.add_offset_err = float(m["add_offset_err"])
+                    self.scale_factor = float(m['scale_factor'])
+                    self.scale_factor_err = float(m['scale_factor_err'])
+                    self.add_offset = float(m['add_offset'])
+                    self.add_offset_err = float(m['add_offset_err'])
                 else:
                     # cast default fill value to dtype
                     self.fill_value = _type(self.fill_value)
 
             fd = None
 
-        logger.debug(
-            "{}: fill_value={}, scale_factor={}, add_offset={}".format(
-                self.__class__.__name__,
-                str(self.fill_value),
-                str(self.scale_factor),
-                str(self.add_offset),
-            )
-        )
+        logger.debug('%s: fill_value=%s, scale_factor=%s, add_offset=%s'
+                     % (self.__class__.__name__, str(self.fill_value),
+                        str(self.scale_factor), str(self.add_offset)))
 
     @property
     def delta_lon(self):
-        """Get the longitude grid increment (cell size).
+        """
+        Get the longitude grid increment (cell size).
 
         :return:
             Longitude grid increment (decimal degrees).
+
         """
-        return self.data[2][0, 1] - self.data[2][0, 0]
+
+        return (self.data[2][0,1] - self.data[2][0,0])
 
     @property
     def delta_lat(self):
-        """Get the latitude grid increment (cell size).
+        """
+        Get the latitude grid increment (cell size).
 
         :return:
             Latitude grid increment (decimal degrees).
+
         """
-        return self.data[1][0, 1] - self.data[1][0, 0]
+
+        return (self.data[1][0,1] - self.data[1][0,0])
 
     @property
     def UL(self):
-        """Get the upper-left (NW) corner-of-pixel coordinates of the data.
+        """
+        Get the upper-left (NW) corner-of-pixel coordinates of the data.
 
         :return:
             Upper-left coordinate tuple: ``(lon, lat)`` (decimal degrees).
+
         """
-        return (
-            self.data[2][0, 0] - self.delta_lon / 2,
-            self.data[1][0, 0] - self.delta_lat / 2,
-        )
+
+        return (self.data[2][0,0] - self.delta_lon/2,
+                self.data[1][0,0] - self.delta_lat/2)
 
     @property
     def LR(self):
-        """Get the lower-right (SE) corner-of-pixel coordinates of the data.
+        """
+        Get the lower-right (SE) corner-of-pixel coordinates of the data.
 
         :return:
             Lower-right coordinate tuple: ``(lon, lat)`` (decimal degrees).
+
         """
-        return (
-            self.data[2][0, -1] + self.delta_lon / 2,
-            self.data[1][0, -1] + self.delta_lat / 2,
-        )
+
+        return (self.data[2][0,-1] + self.delta_lon/2,
+                self.data[1][0,-1] + self.delta_lat/2)
 
     def mean_data_value(self):
-        """Calculate the mean numeric BRDF value over the region of interest.
+        """
+        Calculate the mean numeric BRDF value over the region of interest.
 
         :return:
             Mean data value (float) with scale and offset applied.
+
         """
+
         # Index calculation matches what happens in hdf_extractor.c.
         # TODO: verify correctness
 
-        xmin = (self.roi["UL"][0] - self.UL[0]) / self.delta_lon
-        xmax = (self.roi["LR"][0] - self.UL[0]) / self.delta_lon
+        xmin = (self.roi['UL'][0] - self.UL[0]) / self.delta_lon
+        xmax = (self.roi['LR'][0] - self.UL[0]) / self.delta_lon
 
         imin = max([0, int(math.ceil(xmin))])
         imax = min([self.data[0].shape[1], int(math.ceil(xmax))])
 
-        ymin = (self.roi["UL"][1] - self.UL[1]) / self.delta_lat
-        ymax = (self.roi["LR"][1] - self.UL[1]) / self.delta_lat
+        ymin = (self.roi['UL'][1] - self.UL[1]) / self.delta_lat
+        ymax = (self.roi['LR'][1] - self.UL[1]) / self.delta_lat
 
         jmin = max([0, int(math.ceil(ymin))])
         jmax = min([self.data[0].shape[0], int(math.ceil(ymax))])
 
-        _data = np.ma.masked_values(
-            self.data[0][jmin : jmax + 1, imin : imax + 1], self.fill_value
-        ).compressed()
+        _data = numpy.ma.masked_values(self.data[0][jmin:jmax+1, imin:imax+1],
+                                       self.fill_value).compressed()
 
         try:
             # Float the data sum (int16) to calculate the mean.
-            dmean = float(np.sum(_data)) / _data.size
+            dmean = float(numpy.sum(_data)) / _data.size
         except ZeroDivisionError:
             dmean = 0.0
 
         result = self.scale_factor * (dmean - self.add_offset)
 
-        logger.debug(
-            (
-                "%s: ROI=%s, imin=%d, imax=%d, xmin=%f, xmax=%f, "
-                "jmin=%d, jmax=%d, ymin=%f, ymax=%f, dmean=%.12f, "
-                "result=%.12f"
-            )
-            % (
-                self.__class__.__name__,
-                str(self.roi),
-                imin,
-                imax,
-                xmin,
-                xmax,
-                jmin,
-                jmax,
-                ymin,
-                ymax,
-                dmean,
-                result,
-            )
-        )
+        logger.debug(('%s: ROI=%s, imin=%d, imax=%d, xmin=%f, xmax=%f, '
+                      'jmin=%d, jmax=%d, ymin=%f, ymax=%f, dmean=%.12f, '
+                      'result=%.12f')
+                     % (self.__class__.__name__, str(self.roi),
+                        imin, imax, xmin, xmax,
+                        jmin, jmax, ymin, ymax, dmean, result))
 
         return result
 
 
-class BRDFLookupError(Exception):
-    """:todo:
-    Someone who knows what this is used for should document it.
-    """
 
+
+
+class BRDFLookupError(Exception):
+    """
+    :todo:
+        Someone who knows what this is used for should document it.
+    """
     pass
 
 
+
+
+
 def get_brdf_dirs_modis(brdf_root, scene_date, n_dirs=2):
-    """Get list of MODIS BRDF directories for the dataset.
+    """
+    Get list of MODIS BRDF directories for the dataset.
 
     :param brdf_root:
         BRDF root directory.
@@ -304,11 +287,13 @@ def get_brdf_dirs_modis(brdf_root, scene_date, n_dirs=2):
 
     :return:
        List of BRDF directories, [<primary>, <secondary>, ...]
+
     """
+
     # MCD43A1.005 db interval half-width (days).
     offset = datetime.timedelta(8)
 
-    def __date(s, sep="."):
+    def __date(s, sep='.'):
         # Returns interval midpoint date of a MCD43A1.005/YYYY.MM.DD directory.
         return datetime.date(*[int(x) for x in s.split(sep)]) + offset
 
@@ -316,16 +301,20 @@ def get_brdf_dirs_modis(brdf_root, scene_date, n_dirs=2):
     # scene date.
 
     dirs = sorted(os.listdir(brdf_root))
-    delta_map = {abs(__date(x) - scene_date): x for x in dirs}
+    delta_map = { abs(__date(x) - scene_date): x for x in dirs }
 
     if scene_date < (__date(dirs[0]) - offset):
-        raise BRDFLookupError("scene date precedes first MODIS date (%s)" % dirs[0])
+        raise BRDFLookupError('scene date precedes first MODIS date (%s)' % dirs[0])
 
     return [delta_map[k] for k in sorted(delta_map)[:n_dirs]]
 
 
+
+
+
 def get_brdf_dirs_pre_modis(brdf_root, scene_date, n_dirs=3):
-    """Get list of pre-MODIS BRDF directories for the dataset.
+    """
+    Get list of pre-MODIS BRDF directories for the dataset.
 
     :param brdf_root:
         BRDF root directory.
@@ -344,6 +333,7 @@ def get_brdf_dirs_pre_modis(brdf_root, scene_date, n_dirs=3):
 
     :return:
        List of BRDF directories, [<primary>, <secondary>, ...]
+
     """
     # Pre-MODIS db interval half-width (days).
     offset = 8
@@ -356,30 +346,30 @@ def get_brdf_dirs_pre_modis(brdf_root, scene_date, n_dirs=3):
     # database dir will contain usable data.
 
     dirs = sorted(os.listdir(brdf_root))
-    scene_doy = scene_date.strftime("%j")
+    scene_doy = scene_date.strftime('%j')
     i = int(scene_doy)
     db_doy_max = max(range(1, 365, 8))
     delta_map = {
-        min(abs(int(x) + offset - i), abs(db_doy_max - abs(int(x) + offset - i))): x
-        for x in dirs
+        min( abs(int(x) + offset - i),
+             abs(db_doy_max - abs(int(x) + offset - i)) ) : x for x in dirs
     }
 
     return [delta_map[k] for k in sorted(delta_map)[:n_dirs]]
 
 
+
+
+
 def average_brdf_value(
-    ll_lat,
-    ll_lon,
-    ur_lat,
-    ur_lon,
+    ll_lat, ll_lon,
+    ur_lat, ur_lon,
     band_string,
     wavelength_range,
     factor,
     work_path,
-    brdf_root,
-    brdf_dir,
-):
-    """Get the average value of subset of a HDF file.
+    brdf_root, brdf_dir):
+    """
+    Get the average value of subset of a HDF file.
 
     :param ll_lat:
         The latitude of the lower left corner of the region ('ll' for 'Lower Left').
@@ -442,6 +432,7 @@ def average_brdf_value(
 
     :todo:
         ``wavelength_range`` should be documented by someone who knows what it is.
+
     """
     ul_lat = ur_lat
     ul_lon = ll_lon
@@ -449,16 +440,16 @@ def average_brdf_value(
     lr_lon = ur_lon
 
     def findFile(brdf_root, brdf_dir, band_number, factor):
-        """Find the BRDF file corresponding to the wavelength of the band
-        N.B: band_index argument is the 0-based band index. It is NOT the 1-based band number.
-        """
-
+        '''
+        Find the BRDF file corresponding to the wavelength of the band
+        N.B: band_index argument is the 0-based band index. It is NOT the 1-based band number
+        '''
         def find_wavelength_file(band_number, file_list):
-            """Determine wavelength range for specified band index
+            '''Determine wavelength range for specified band index
             and find the first file in the list whose average wavelength
             falls into this range.
-            N.B: band_index argument is the 0-based band index. It is NOT the 1-based band number.
-            """
+            N.B: band_index argument is the 0-based band index. It is NOT the 1-based band number
+            '''
             # Calculate fractional overlaps of sensor wavelength range with
             # each data wavelength range.
 
@@ -466,62 +457,72 @@ def average_brdf_value(
             avg_wavelength = (wavelength_range[0] + wavelength_range[1]) / 2
 
             for fname in sorted(file_list):
-                s = re.search(r".+_(\d+)_(\d+)nm(\w+)f.+\.hdf.*", fname)
-                data_avg_wavelength = (
-                    int(s.group(1)) + int(s.group(2))
-                ) / 2000.0  # Convert from nm to um
-                data_wavelength_range = [
-                    x / 1000.0 for x in (int(s.group(1)), int(s.group(2)))
-                ]
-                coverage = (
-                    min(data_wavelength_range[1], wavelength_range[1])
-                    - max(data_wavelength_range[0], wavelength_range[0])
-                ) / (data_wavelength_range[1] - data_wavelength_range[0])
+                s = re.search(r'.+_(\d+)_(\d+)nm(\w+)f.+\.hdf.*', fname)
+                data_avg_wavelength = (int(s.group(1)) + int(s.group(2))) / 2000.0 # Convert from nm to um
+                data_wavelength_range = [x/1000.0 for x in (int(s.group(1)), int(s.group(2)))]
+                coverage = ( (min(data_wavelength_range[1], wavelength_range[1]) -
+                              max(data_wavelength_range[0], wavelength_range[0]))
+                             / (data_wavelength_range[1] - data_wavelength_range[0]) )
 
-                if coverage > 0:
+                print
+                print 'band_number          ', band_number
+                print 'fname                ', fname
+                print 'wavelength_range     ', wavelength_range
+                print 'data_wavelength_range', data_wavelength_range
+                print 'coverage             ', coverage
+
+
+                ### LANDSAT8 ###
+                # In some cases we have no direct wavelength overlap.
+                # Register every case and use the one with the maximum coverage.
+                # Smallest abs(coverage) is the nearest case when coverage < 0.
+
+                #if coverage > 0:
+                if True:
+
                     # We have a hit...
 
                     interval_map[fname] = {
-                        "coverage": coverage,
-                        "midpoint_offset": data_avg_wavelength - avg_wavelength,
-                        "width": data_wavelength_range[1] - data_wavelength_range[0],
+                        'coverage': coverage,
+                        'midpoint_offset': data_avg_wavelength - avg_wavelength,
+                        'width': data_wavelength_range[1] - data_wavelength_range[0],
                     }
 
+
+            print
+            print 'interval_map'
+            import pprint
+            pprint.pprint(interval_map[fname])
+
             if interval_map:
+
                 # Select the data band that has the largest overlap with
                 # the sensor. To resolve cases with identical degrees of
                 # coverage, select the file whose wavelength midpoint is
                 # closest to the sensor band midpoint.
 
-                max_coverage = max([interval_map[k]["coverage"] for k in interval_map])
-                tups = [
-                    (abs(interval_map[f]["midpoint_offset"]), f)
-                    for f in interval_map
-                    if interval_map[f]["coverage"] == max_coverage
-                ]
+                max_coverage = max([interval_map[k]['coverage'] for k in interval_map])
+                tups = [(abs(interval_map[f]['midpoint_offset']), f) for f in interval_map
+                        if interval_map[f]['coverage'] == max_coverage]
                 __, fname = sorted(tups).pop(0)
                 return fname
+
             return None
 
-        found_file = find_wavelength_file(
-            band_number,
-            glob(os.path.join(brdf_root, brdf_dir, "*_*_*nm*f" + factor + ".hdf*")),
-        )
-        assert found_file, "No filename found for {} {}, {}, {}".format(
-            brdf_root, brdf_dir, band_number, factor
-        )
-        return found_file  # Should only have one match per directory
+        found_file = find_wavelength_file(band_number,
+                         glob(os.path.join(brdf_root, brdf_dir, '*_*_*nm*f' + factor + '.hdf*')))
+        assert found_file, 'No filename found for %s %s, %s, %s' % (brdf_root, brdf_dir, band_number, factor)
+        return found_file # Should only have one match per directory
+
 
     initial_hdf_file = findFile(brdf_root, brdf_dir, int(band_string), factor)
-    assert initial_hdf_file, "BRDF file not found for {}, {}, {}, {}".format(
-        brdf_root, brdf_dir, band_string, factor
-    )
+    assert initial_hdf_file, 'BRDF file not found for %s, %s, %s, %s' % (brdf_root, brdf_dir, band_string, factor)
 
     if initial_hdf_file.endswith(".hdf.gz"):
         final_hdf_file = os.path.join(
-            work_path, re.sub(".hdf.gz", ".hdf", os.path.basename(initial_hdf_file))
-        )
-        gunzipCmd = f"gunzip -c {initial_hdf_file} > {final_hdf_file}"
+            work_path,
+            re.sub(".hdf.gz", ".hdf", os.path.basename(initial_hdf_file)))
+        gunzipCmd = "gunzip -c %s > %s" % (initial_hdf_file, final_hdf_file)
         (status, msg) = commands.getstatusoutput(gunzipCmd)
         assert status == 0, "gunzip failed: %s" % msg
     else:
@@ -531,15 +532,11 @@ def average_brdf_value(
     # Note that latitude min-max logic is valid for the Southern
     # hemisphere only.
 
-    nw = (
-        min(ul_lon, ll_lon),
-        max(ul_lat, ur_lat),
-    )
+    nw = ( min(ul_lon, ll_lon),
+           max(ul_lat, ur_lat), )
 
-    se = (
-        max(lr_lon, ur_lon),
-        min(ll_lat, lr_lat),
-    )
+    se = ( max(lr_lon, ur_lon),
+           min(ll_lat, lr_lat), )
 
     brdf_mean_value = BRDFLoader(final_hdf_file, UL=nw, LR=se).mean_data_value()
 
