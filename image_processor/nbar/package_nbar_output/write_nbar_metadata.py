@@ -248,10 +248,11 @@ def write_metadata(DATA, CONFIG, xml_metadata_template, PROCESSOR_VERSION):
     )
 
     # Determine size of root geoTIFF file
+    # root_tif_filename = os.path.join(nbar_temp_output, 'scene01', '%s_B%2d%s' % (nbar_dataset_id, nbar_dataset.satellite.root_band, '.tif'))
     root_tif_filename = os.path.join(
         nbar_temp_output,
         "scene01",
-        "%s_B%2d%s" % (nbar_dataset_id, nbar_dataset.satellite.root_band, ".tif"),
+        "%s_B%d%s" % (nbar_dataset_id, nbar_dataset.satellite.root_band, ".tif"),
     )
     nbar_dataset.file_size = int(round(getFileSizeMB(root_tif_filename)))
 
