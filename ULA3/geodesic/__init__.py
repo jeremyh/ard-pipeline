@@ -288,6 +288,7 @@ class Satellite(object):
         self.BAND_TYPES["REFLECTIVE"] = []
         self.BAND_TYPES["THERMAL"] = []
         self.BAND_TYPES["PANCHROMATIC"] = []
+        self.BAND_TYPES["ATMOSPHERE"] = []
         self.rgb_bands = []
 
         self._tle_path_dict = {}  # Dict to hold any TLE paths looked up by date
@@ -532,9 +533,12 @@ def eval_centre_data(scene_dataset, sat_ephem):
         + scene_dataset.scene_centre_datetime.hour,
         "decimal_day": dec_datetime.day_fraction(scene_dataset.scene_centre_datetime)
         + doy,
-        "lon": float(scene_dataset.scene_centre_long),
-        "lat": float(scene_dataset.scene_centre_lat),
+        "lon": float(scene_dataset.lonlats["CENTRE"][0]),
+        "lat": float(scene_dataset.lonlats["CENTRE"][1]),
     }
+    # replaced the following in the above dictionary
+    #'lon': float(scene_dataset.scene_centre_long),
+    #'lat': float(scene_dataset.scene_centre_lat)
 
     # CONFIG.debug HACK
     # Adjust scene centre to match EQR test input
