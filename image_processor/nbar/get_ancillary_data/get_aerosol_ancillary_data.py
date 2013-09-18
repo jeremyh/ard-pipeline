@@ -51,8 +51,10 @@ def get_aerosol_data(
 
 def process(subprocess_list=[], resume=False):
     logger.info("%s.process(%s, %s) called", __name__, subprocess_list, resume)
+
     CONFIG = ProcessorConfig()
     DATA = DataManager()
+
     aod_result = get_aerosol_data(
         CONFIG.DIR_Aerosol,
         CONFIG.ENABLE_AERONET,

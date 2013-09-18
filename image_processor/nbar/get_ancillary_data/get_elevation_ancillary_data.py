@@ -16,8 +16,10 @@ logger = logging.getLogger("root." + __name__)
 
 def process(subprocess_list=[], resume=False):
     logger.info("%s.process(%s, %s) called", __name__, subprocess_list, resume)
+
     CONFIG = ProcessorConfig()
     DATA = DataManager()
+
     l1t_input_dataset = DATA.get_item(CONFIG.input["l1t"]["path"], SceneDataset)
     assert (
         l1t_input_dataset
