@@ -5,12 +5,12 @@ from ULA3.dataset import SceneDataset
 from ULA3.fc import fractional_cover
 from ULA3.image_processor import ProcessorConfig
 
-DATA = DataManager()
 logger = logging.getLogger("root." + __name__)
 
 
 def process(*args, **kwargs):
     CONFIG = ProcessorConfig()
+    DATA = DataManager()
 
     # TODO This would need to change if output format changed.
     asfloat32 = False
