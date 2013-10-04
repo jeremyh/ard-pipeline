@@ -3,9 +3,9 @@ import os
 
 import numexpr
 import numpy as np
+from IDL_functions import IDL_Histogram
 from scipy import ndimage
 
-import ULA3.IDL_functions as IDL_functions
 from ULA3 import DataManager
 from ULA3.common.pqa_result import PQAResult
 from ULA3.dataset import SceneDataset
@@ -165,9 +165,7 @@ def process(subprocess_list=[], resume=False):
 
             # Histogram method, a lot faster
             mx = np.max(ulabels)
-            h = IDL_functions.IDL_Histogram(
-                flat_label, min=0, max=mx, reverse_indices="ri"
-            )
+            h = IDL_Histogram(flat_label, min=0, max=mx, reverse_indices="ri")
             hist = h["histogram"]
             ri = h["ri"]
 
