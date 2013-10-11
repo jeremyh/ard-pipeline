@@ -1574,7 +1574,8 @@ def eval_sat_grids(
     yi = numpy.linspace(ygr[1], ygr[0], nrows)  # Max-to-min
 
     xy = (_x, _y)
-    mg = numpy.meshgrid(xi, yi)
+    mx, my = numpy.meshgrid(xi, yi)
+    mg = (mx, my)
 
     # Cull out-of-scene sample points for bspl/spline interpolation.
 
