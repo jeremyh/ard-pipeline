@@ -9,7 +9,14 @@ import numpy as np
 from ULA3 import DataGrid, DataManager
 from ULA3.dataset import SceneDataset
 from ULA3.image_processor import ProcessorConfig
-from ULA3.tc import clip_dsm, filter_dsm, run_brdfterrain, run_castshadow, run_slope
+from ULA3.tc import (
+    clip_dsm,
+    filter_dsm,
+    run_brdfterrain,
+    run_brdfterrain_LS8,
+    run_castshadow,
+    run_slope,
+)
 from ULA3.utils import Buffers, as_array, dump_array, load_bin_file
 
 logger = logging.getLogger("root." + __name__)
@@ -45,12 +52,21 @@ shadow_sub_matrix_width = 500
 rori = 0.52
 # these were copied from the files files in /g/data/v10/ULA3-TESTDATA/brdf_modis_band%i.txt,
 # they were contained in the last line of those files.
-ave_reflectance_values = {
+ave_reflectance_values_LS5_7 = {
     1: 0.0365,
     2: 0.0667,
     3: 0.0880,
     4: 0.2231,
     5: 0.2512,
+    7: 0.1648,
+}
+ave_reflectance_values_LS8 = {
+    1: 0.0365,
+    2: 0.0365,
+    3: 0.0667,
+    4: 0.0880,
+    5: 0.2231,
+    6: 0.2512,
     7: 0.1648,
 }
 
@@ -214,7 +230,13 @@ def process(subprocess_list=[], resume=False):
     DATA.clean()
     gc.collect()
 
-    for band_number in (2, 3, 4):  # (1, 2, 3, 4, 5, 7):
+    if l1t_input_dataset.satellite.NAME == "Landsat-8":
+        ave_reflectance_values = ave_reflectance_values_LS8
+    else:
+        ave_reflectance_values = ave_reflectance_values_LS5_7
+
+    # for band_number in (2, 3, 4): #(1, 2, 3, 4, 5, 7):
+    for band_number in l1t_input_dataset.bands("REFLECTIVE"):
         # not sure where these get created.
         param_file = open(
             os.path.join(CONFIG.work_path, "brdf_modis_band%i.txt" % band_number)
@@ -241,81 +263,180 @@ def process(subprocess_list=[], resume=False):
         # need to check that these are OK.
         band_data = l1t_input_dataset.band_read_as_array(band_number)
 
-        ref_lm, ref_brdf, ref_terrain = run_brdfterrain(
-            rori,
-            brdf0,
-            brdf1,
-            brdf2,
-            bias,
-            slope_ca,
-            esun,
-            dd,
-            ave_reflectance_values[band_number],
-            istart,
-            iend,
-            band_data,
-            slope_results.mask_self,
-            shadow_s,
-            shadow_v,
-            solar_angle,
-            sazi_angle,
-            view_angle,
-            rela_angle,
-            slope_results.slope,
-            slope_results.aspect,
-            slope_results.incident,
-            slope_results.exiting,
-            slope_results.rela_slope,
-            load_bin_file(
-                boo[(band_number, "a")], region_nrow, region_ncol, dtype=np.float32
-            ),
-            load_bin_file(
-                boo[(band_number, "b")], region_nrow, region_ncol, dtype=np.float32
-            ),
-            load_bin_file(
-                boo[(band_number, "s")], region_nrow, region_ncol, dtype=np.float32
-            ),
-            load_bin_file(
-                boo[(band_number, "fs")], region_nrow, region_ncol, dtype=np.float32
-            ),
-            load_bin_file(
-                boo[(band_number, "fv")], region_nrow, region_ncol, dtype=np.float32
-            ),
-            load_bin_file(
-                boo[(band_number, "ts")], region_nrow, region_ncol, dtype=np.float32
-            ),
-            load_bin_file(
-                boo[(band_number, "dir")], region_nrow, region_ncol, dtype=np.float32
-            ),
-            load_bin_file(
-                boo[(band_number, "dif")], region_nrow, region_ncol, dtype=np.float32
-            ),
-        )
+        # At this point in time we have different instances of brdfterrain
+        # One for LS5/7 and one for LS8. They're different datatypes and we're
+        # preserving the science code which is FORTRAN. THIS NEEDS TO CHANGE!!!
+        if l1t_input_dataset.satellite.NAME == "Landsat-8":
+            ref_lm, ref_brdf, ref_terrain = run_brdfterrain_LS8(
+                rori,
+                brdf0,
+                brdf1,
+                brdf2,
+                bias,
+                slope_ca,
+                esun,
+                dd,
+                ave_reflectance_values[band_number],
+                istart,
+                iend,
+                band_data,
+                slope_results.mask_self,
+                shadow_s,
+                shadow_v,
+                solar_angle,
+                sazi_angle,
+                view_angle,
+                rela_angle,
+                slope_results.slope,
+                slope_results.aspect,
+                slope_results.incident,
+                slope_results.exiting,
+                slope_results.rela_slope,
+                load_bin_file(
+                    boo[(band_number, "a")], region_nrow, region_ncol, dtype=np.float32
+                ),
+                load_bin_file(
+                    boo[(band_number, "b")], region_nrow, region_ncol, dtype=np.float32
+                ),
+                load_bin_file(
+                    boo[(band_number, "s")], region_nrow, region_ncol, dtype=np.float32
+                ),
+                load_bin_file(
+                    boo[(band_number, "fs")], region_nrow, region_ncol, dtype=np.float32
+                ),
+                load_bin_file(
+                    boo[(band_number, "fv")], region_nrow, region_ncol, dtype=np.float32
+                ),
+                load_bin_file(
+                    boo[(band_number, "ts")], region_nrow, region_ncol, dtype=np.float32
+                ),
+                load_bin_file(
+                    boo[(band_number, "dir")],
+                    region_nrow,
+                    region_ncol,
+                    dtype=np.float32,
+                ),
+                load_bin_file(
+                    boo[(band_number, "dif")],
+                    region_nrow,
+                    region_ncol,
+                    dtype=np.float32,
+                ),
+            )
 
-        write_tif_file(
-            l1t_input_dataset,
-            ref_lm,
-            os.path.join(
-                output_path, pref + "ref_lm_" + str(band_number) + output_extension
-            ),
-            file_type=output_format,
-        )
-        write_tif_file(
-            l1t_input_dataset,
-            ref_brdf,
-            os.path.join(
-                output_path, pref + "ref_brdf_" + str(band_number) + output_extension
-            ),
-            file_type=output_format,
-        )
-        write_tif_file(
-            l1t_input_dataset,
-            ref_terrain,
-            os.path.join(
-                output_path, pref + "ref_terrain_" + str(band_number) + output_extension
-            ),
-            file_type=output_format,
-        )
+            write_tif_file(
+                l1t_input_dataset,
+                ref_lm,
+                os.path.join(
+                    output_path, pref + "ref_lm_" + str(band_number) + output_extension
+                ),
+                file_type=output_format,
+            )
+            write_tif_file(
+                l1t_input_dataset,
+                ref_brdf,
+                os.path.join(
+                    output_path,
+                    pref + "ref_brdf_" + str(band_number) + output_extension,
+                ),
+                file_type=output_format,
+            )
+            write_tif_file(
+                l1t_input_dataset,
+                ref_terrain,
+                os.path.join(
+                    output_path,
+                    pref + "ref_terrain_" + str(band_number) + output_extension,
+                ),
+                file_type=output_format,
+            )
 
-        ref_lm = ref_brdf = ref_terrain = None
-        gc.collect()
+            ref_lm = ref_brdf = ref_terrain = None
+            gc.collect()
+        else:
+            ref_lm, ref_brdf, ref_terrain = run_brdfterrain(
+                rori,
+                brdf0,
+                brdf1,
+                brdf2,
+                bias,
+                slope_ca,
+                esun,
+                dd,
+                ave_reflectance_values[band_number],
+                istart,
+                iend,
+                band_data,
+                slope_results.mask_self,
+                shadow_s,
+                shadow_v,
+                solar_angle,
+                sazi_angle,
+                view_angle,
+                rela_angle,
+                slope_results.slope,
+                slope_results.aspect,
+                slope_results.incident,
+                slope_results.exiting,
+                slope_results.rela_slope,
+                load_bin_file(
+                    boo[(band_number, "a")], region_nrow, region_ncol, dtype=np.float32
+                ),
+                load_bin_file(
+                    boo[(band_number, "b")], region_nrow, region_ncol, dtype=np.float32
+                ),
+                load_bin_file(
+                    boo[(band_number, "s")], region_nrow, region_ncol, dtype=np.float32
+                ),
+                load_bin_file(
+                    boo[(band_number, "fs")], region_nrow, region_ncol, dtype=np.float32
+                ),
+                load_bin_file(
+                    boo[(band_number, "fv")], region_nrow, region_ncol, dtype=np.float32
+                ),
+                load_bin_file(
+                    boo[(band_number, "ts")], region_nrow, region_ncol, dtype=np.float32
+                ),
+                load_bin_file(
+                    boo[(band_number, "dir")],
+                    region_nrow,
+                    region_ncol,
+                    dtype=np.float32,
+                ),
+                load_bin_file(
+                    boo[(band_number, "dif")],
+                    region_nrow,
+                    region_ncol,
+                    dtype=np.float32,
+                ),
+            )
+
+            write_tif_file(
+                l1t_input_dataset,
+                ref_lm,
+                os.path.join(
+                    output_path, pref + "ref_lm_" + str(band_number) + output_extension
+                ),
+                file_type=output_format,
+            )
+            write_tif_file(
+                l1t_input_dataset,
+                ref_brdf,
+                os.path.join(
+                    output_path,
+                    pref + "ref_brdf_" + str(band_number) + output_extension,
+                ),
+                file_type=output_format,
+            )
+            write_tif_file(
+                l1t_input_dataset,
+                ref_terrain,
+                os.path.join(
+                    output_path,
+                    pref + "ref_terrain_" + str(band_number) + output_extension,
+                ),
+                file_type=output_format,
+            )
+
+            ref_lm = ref_brdf = ref_terrain = None
+            gc.collect()
