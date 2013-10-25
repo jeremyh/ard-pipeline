@@ -3,7 +3,7 @@ import os
 
 import numexpr
 import numpy as np
-from IDL_functions import IDL_Histogram
+from IDL_functions import histogram
 from scipy import ndimage
 
 from ULA3 import DataManager
@@ -165,7 +165,7 @@ def process(subprocess_list=[], resume=False):
 
             # Histogram method, a lot faster
             mx = np.max(ulabels)
-            h = IDL_Histogram(flat_label, min=0, max=mx, reverse_indices="ri")
+            h = histogram(flat_label, min=0, max=mx, reverse_indices="ri")
             hist = h["histogram"]
             ri = h["ri"]
 
