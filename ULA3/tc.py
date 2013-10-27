@@ -537,7 +537,7 @@ def run_castshadow(
     return mask_all
 
 
-'''
+"""
 @print_call(logger.info)
 def run_brdfterrain(
     rori, # threshold for terrain correction
@@ -571,7 +571,7 @@ def run_brdfterrain(
     edir_h, # MODTRAN output (direct irradiance)
     edif_h # MODTRAN output (diffuse irradiance)
     ):
-    """
+    """ """
     BRDF correction including terrain correction. This code is an interface to the fortran code brdf_terrain_newdiff.f90
     (which is compiled to a Python module using F2py). The parameters have the same names as those used in that code...
     so please see Fuqin for information on what they mean!
@@ -763,7 +763,7 @@ def run_brdfterrain(
         This documentation should be reviewed by someone whom understands the process more thoroughly, and better
         descriptions of the arguments provided.
 
-    """
+    """ """
     return terrain_correction(
         rori,
         brdf0, brdf1, brdf2,
@@ -792,7 +792,7 @@ def run_brdfterrain(
         as_array(ts, dtype=numpy.float32),
         as_array(edir_h, dtype=numpy.float32),
         as_array(edif_h, dtype=numpy.float32))
-'''
+"""
 
 
 @print_call(logger.info)
@@ -1020,10 +1020,6 @@ def run_brdfterrain(
         descriptions of the arguments provided.
 
     """
-    if dn_1.itemsize == 1:
-        dn_tmp = np.array(dn_1, dtype=np.dtype("u2"))
-    else:
-        dn_tmp = dn_1
     return terrain_correction(
         rori,
         brdf0,
@@ -1034,8 +1030,7 @@ def run_brdfterrain(
         esun,
         dd,
         ref_adj,
-        dn_tmp,
-        # as_array(dn_1, dtype=numpy.int16),
+        as_array(dn_1, dtype=np.int16),
         as_array(mask_self, dtype=np.int16),
         as_array(mask_castsun, dtype=np.int16),
         as_array(mask_castview, dtype=np.int16),
