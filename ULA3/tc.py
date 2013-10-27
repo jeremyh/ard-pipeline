@@ -10,13 +10,14 @@ import gdal
 import gdalconst
 import numpy as np
 from _brdf_terrain_newdiff_all import terrain_correction
-from _brdf_terrain_newdiff_all_LS8 import terrain_correction_ls8
 from _shade_main_landsat_pixel import shade_main_landsat_pixel
 from _slope_pixelsize_newpole import slope_pixelsize_newpole
 
 from ULA3.filter import filter_float as filter
 from ULA3.meta import print_call
 from ULA3.utils import DTYPE_MAP, as_array, dump_array, get_bounds, warp
+
+# from _brdf_terrain_newdiff_all_LS8 import terrain_correction_ls8
 
 logger = logging.getLogger("root." + __name__)
 
@@ -536,47 +537,44 @@ def run_castshadow(
     return mask_all
 
 
+'''
 @print_call(logger.info)
 def run_brdfterrain(
-    rori,  # threshold for terrain correction
-    brdf0,
-    brdf1,
-    brdf2,  # BRDF parameters
-    bias,
-    slope_ca,
-    esun,
-    dd,  # satellite calibration coefficients
-    ref_adj,  # average reflectance for terrain correction
-    # line,
+    rori, # threshold for terrain correction
+    brdf0, brdf1, brdf2, # BRDF parameters
+    bias, slope_ca, esun, dd, # satellite calibration coefficients
+    ref_adj, # average reflectance for terrain correction
+    #line,
     istart,
-    # imid,
+    #imid,
     iend,
-    # ii,
-    dn_1,  # raw image
-    mask_self,  # mask
-    mask_castsun,  # self shadow mask
-    mask_castview,  # cast shadow mask
-    solar_angle,  # solar zenith angle
-    sazi_angle,  # solar azimuth angle
-    view_angle,  # view angle (for flat surface)
-    rela_angle,  # relative azimuth angle (for flat surface)
-    slope_angle,  # slop angle
-    aspect_angle,  # aspect angle
-    it_angle,  # incident angle (for inclined surface)
-    et_angle,  # exiting angle (for inclined surface)
-    rela_slope,  # relative angle (for inclined surface)
-    a_mod,  # MODTRAN output (a)
-    b_mod,  # MODTRAN output (b)
-    s_mod,  # MODTRAN output (s)
-    fs,  # MODTRAN output (fs)
-    fv,  # MODTRAN output (fv)
-    ts,  # MODTRAN output (ts)
-    edir_h,  # MODTRAN output (direct irradiance)
-    edif_h,  # MODTRAN output (diffuse irradiance)
-):
-    """BRDF correction including terrain correction. This code is an interface to the fortran code brdf_terrain_newdiff.f90
+    #ii,
+    dn_1, # raw image
+    mask_self, # mask
+    mask_castsun, # self shadow mask
+    mask_castview, # cast shadow mask
+    solar_angle, # solar zenith angle
+    sazi_angle, # solar azimuth angle
+    view_angle, # view angle (for flat surface)
+    rela_angle, # relative azimuth angle (for flat surface)
+    slope_angle, # slop angle
+    aspect_angle, # aspect angle
+    it_angle, # incident angle (for inclined surface)
+    et_angle, # exiting angle (for inclined surface)
+    rela_slope, # relative angle (for inclined surface)
+    a_mod, # MODTRAN output (a)
+    b_mod, # MODTRAN output (b)
+    s_mod, # MODTRAN output (s)
+    fs, # MODTRAN output (fs)
+    fv, # MODTRAN output (fv)
+    ts, # MODTRAN output (ts)
+    edir_h, # MODTRAN output (direct irradiance)
+    edif_h # MODTRAN output (diffuse irradiance)
+    ):
+    """
+    BRDF correction including terrain correction. This code is an interface to the fortran code brdf_terrain_newdiff.f90
     (which is compiled to a Python module using F2py). The parameters have the same names as those used in that code...
-    so please see Fuqin for information on what they mean!.
+    so please see Fuqin for information on what they mean!
 
     :param rori:
         (type: float) Threshold for terrain correction.
@@ -768,42 +766,37 @@ def run_brdfterrain(
     """
     return terrain_correction(
         rori,
-        brdf0,
-        brdf1,
-        brdf2,
-        bias,
-        slope_ca,
-        esun,
-        dd,
+        brdf0, brdf1, brdf2,
+        bias, slope_ca, esun, dd,
         ref_adj,
-        as_array(istart, dtype=np.int32),
-        as_array(iend, dtype=np.int32),
-        as_array(dn_1, dtype=np.int8),
-        as_array(mask_self, dtype=np.int16),
-        as_array(mask_castsun, dtype=np.int16),
-        as_array(mask_castview, dtype=np.int16),
-        as_array(solar_angle, dtype=np.float32),
-        as_array(sazi_angle, dtype=np.float32),
-        as_array(view_angle, dtype=np.float32),
-        as_array(rela_angle, dtype=np.float32),
-        as_array(slope_angle, dtype=np.float32),
-        as_array(aspect_angle, dtype=np.float32),
-        as_array(it_angle, dtype=np.float32),
-        as_array(et_angle, dtype=np.float32),
-        as_array(rela_slope, dtype=np.float32),
-        as_array(a_mod, dtype=np.float32),
-        as_array(b_mod, dtype=np.float32),
-        as_array(s_mod, dtype=np.float32),
-        as_array(fs, dtype=np.float32),
-        as_array(fv, dtype=np.float32),
-        as_array(ts, dtype=np.float32),
-        as_array(edir_h, dtype=np.float32),
-        as_array(edif_h, dtype=np.float32),
-    )
+        as_array(istart, dtype=numpy.int32),
+        as_array(iend, dtype=numpy.int32),
+        as_array(dn_1, dtype=numpy.int8),
+        as_array(mask_self, dtype=numpy.int16),
+        as_array(mask_castsun, dtype=numpy.int16),
+        as_array(mask_castview, dtype=numpy.int16),
+        as_array(solar_angle, dtype=numpy.float32),
+        as_array(sazi_angle, dtype=numpy.float32),
+        as_array(view_angle, dtype=numpy.float32),
+        as_array(rela_angle, dtype=numpy.float32),
+        as_array(slope_angle, dtype=numpy.float32),
+        as_array(aspect_angle, dtype=numpy.float32),
+        as_array(it_angle, dtype=numpy.float32),
+        as_array(et_angle, dtype=numpy.float32),
+        as_array(rela_slope, dtype=numpy.float32),
+        as_array(a_mod, dtype=numpy.float32),
+        as_array(b_mod, dtype=numpy.float32),
+        as_array(s_mod, dtype=numpy.float32),
+        as_array(fs, dtype=numpy.float32),
+        as_array(fv, dtype=numpy.float32),
+        as_array(ts, dtype=numpy.float32),
+        as_array(edir_h, dtype=numpy.float32),
+        as_array(edif_h, dtype=numpy.float32))
+'''
 
 
 @print_call(logger.info)
-def run_brdfterrain_LS8(
+def run_brdfterrain(
     rori,  # threshold for terrain correction
     brdf0,
     brdf1,
@@ -813,11 +806,6 @@ def run_brdfterrain_LS8(
     esun,
     dd,  # satellite calibration coefficients
     ref_adj,  # average reflectance for terrain correction
-    # line,
-    istart,
-    # imid,
-    iend,
-    # ii,
     dn_1,  # raw image
     mask_self,  # mask
     mask_castsun,  # self shadow mask
@@ -1032,7 +1020,11 @@ def run_brdfterrain_LS8(
         descriptions of the arguments provided.
 
     """
-    return terrain_correction_ls8(
+    if dn_1.itemsize == 1:
+        dn_tmp = np.array(dn_1, dtype=np.dtype("u2"))
+    else:
+        dn_tmp = dn_1
+    return terrain_correction(
         rori,
         brdf0,
         brdf1,
@@ -1042,9 +1034,8 @@ def run_brdfterrain_LS8(
         esun,
         dd,
         ref_adj,
-        as_array(istart, dtype=np.int32),
-        as_array(iend, dtype=np.int32),
-        as_array(dn_1, dtype=np.int16),
+        dn_tmp,
+        # as_array(dn_1, dtype=numpy.int16),
         as_array(mask_self, dtype=np.int16),
         as_array(mask_castsun, dtype=np.int16),
         as_array(mask_castview, dtype=np.int16),
