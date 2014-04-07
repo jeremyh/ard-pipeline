@@ -14,7 +14,7 @@ from scipy import ndimage
 from ULA3 import DataGrid, DataManager
 from ULA3.common.pqa_result import PQAResult
 from ULA3.dataset import SceneDataset
-from ULA3.image_processor import ProcessorConfig
+from ULA3.image_processor import ProcessorConfig, constants
 from ULA3.utils import dump_array, log_multiline
 
 logger = logging.getLogger("root." + __name__)
@@ -46,15 +46,18 @@ def process(subprocess_list=[], resume=False):
     assert pqa_temp_output, "Unable to retrieve string object for pqa_temp_output"
     logger.debug("string object for pqa_temp_output retrieved")
 
+    # Get the PQ constants
+    pq_const = constants.pqaContants(nbar_input_dataset.sensor)
+
     # ===========================================================================
     # contiguity_mask = DATA.get_item('contiguity_mask', numpy.ndarray)
     # assert contiguity_mask is not None, 'Unable to retrieve ndarray object for contiguity_mask'
     # logger.debug( 'ndarray object for contiguity_mask retrieved')
     # ===========================================================================
-    assert (
-        CONFIG.pqa_test_index["CONTIGUITY"] in result.test_set
-    ), "Contiguity test not yet run"
-    contiguity_mask = (result.array & (1 << CONFIG.pqa_test_index["CONTIGUITY"])) > 0
+    # assert CONFIG.pqa_test_index['CONTIGUITY'] in result.test_set, 'Contiguity test not yet run'
+    # contiguity_mask = (result.array & (1 << CONFIG.pqa_test_index['CONTIGUITY'])) > 0
+    assert pq_const.contiguity in result.test_set, "Contiguity test not yet run"
+    contiguity_mask = (result.array & (1 << pq_const.contiguity)) > 0
 
     kelvin_grid = DATA.get_item("kelvin.tif", DataGrid)
     assert kelvin_grid is not None, "Unable to retrieve DataGrid object for kelvin_grid"
@@ -352,12 +355,20 @@ def process(subprocess_list=[], resume=False):
                 acca_logfile.write("Class 1 percent: %f\n" % qpop)
                 acca_logfile.write("Class 2 percent: %f\n" % qpop2)
 
-                if qpop < CONFIG.pqa_param["acca_thermal_effect"]:
-                    if qmean < CONFIG.pqa_param["acca_coldcloud_mean"]:
+                if (
+                    qpop < pq_const.acca_thermal_effect
+                ):  # CONFIG.pqa_param['acca_thermal_effect']:
+                    if (
+                        qmean < pq_const.acca_coldCloud_mean
+                    ):  # CONFIG.pqa_param['acca_coldcloud_mean']:
                         # Combine all cloud classes
                         return numexpr.evaluate("cloud_mask | query | query2")
-                    elif qpop2 < CONFIG.pqa_param["acca_thermal_effect"]:
-                        if qmean2 < CONFIG.pqa_param["acca_coldcloud_mean"]:
+                    elif (
+                        qpop2 < pq_const.acca_thermal_effect
+                    ):  # CONFIG.pqa_param['acca_thermal_effect']:
+                        if (
+                            qmean2 < pq_const.acca_coldCloud_mean
+                        ):  # CONFIG.pqa_param['acca_coldcloud_mean']:
                             # Combine lower threshold clouds and pass 1 clouds
                             return numexpr.evaluate("cloud_mask | query2")
                     else:  # Keep first pass cloud
@@ -403,12 +414,20 @@ def process(subprocess_list=[], resume=False):
                 acca_logfile.write("Class 1 percent: %f\n" % qpop)
                 acca_logfile.write("Class 2 percent: %f\n" % qpop2)
 
-                if qpop < CONFIG.pqa_param["acca_thermal_effect"]:
-                    if qmean < CONFIG.pqa_param["acca_coldcloud_mean"]:
+                if (
+                    qpop < pq_const.acca_thermal_effect
+                ):  # CONFIG.pqa_param['acca_thermal_effect']:
+                    if (
+                        qmean < pq_const.acca_coldCloud_mean
+                    ):  # CONFIG.pqa_param['acca_coldcloud_mean']:
                         # Combine all cloud classes
                         return numexpr.evaluate("cloud_mask | query | query2")
-                    elif qpop2 < CONFIG.pqa_param["acca_thermal_effect"]:
-                        if qmean2 < CONFIG.pqa_param["acca_coldcloud_mean"]:
+                    elif (
+                        qpop2 < pq_const.acca_thermal_effect
+                    ):  # CONFIG.pqa_param['acca_thermal_effect']:
+                        if (
+                            qmean2 < pq_const.acca_coldCloud_mean
+                        ):  # CONFIG.pqa_param['acca_coldcloud_mean']:
                             # Combine lower threshold clouds and pass 1 clouds
                             return numexpr.evaluate("cloud_mask | query2")
                     else:  # Keep first pass cloud
@@ -468,11 +487,16 @@ def process(subprocess_list=[], resume=False):
             #            logger.debug('reflectance_stack[:,1612,2126] %s', reflectance_stack[:,1612,2126])
             #            logger.debug('reflectance_stack[:,2252,4294] %s', reflectance_stack[:,2252,4294])
             # Filter 1; brightness threshold (remove dark targets)
+            # query = numexpr.evaluate("where((potential_cloud_array * b3) > thresh_f1, 1, NaN)",
+            #                         {'b3': reflectance_stack[2],
+            #                          'thresh_f1' : CONFIG.pqa_param['acca_thresh_f1'],
+            #                          'NaN' : NaN},
+            #                         locals())
             query = numexpr.evaluate(
                 "where((potential_cloud_array * b3) > thresh_f1, 1, NaN)",
                 {
                     "b3": reflectance_stack[2],
-                    "thresh_f1": CONFIG.pqa_param["acca_thresh_f1"],
+                    "thresh_f1": pq_const.acca_thresh_f1,
                     "NaN": NaN,
                 },
                 locals(),
@@ -496,9 +520,10 @@ def process(subprocess_list=[], resume=False):
 
             # Filter 2: NDSI
             ndsi_array = ndsi(reflectance_stack)
+            # query   = numexpr.evaluate("where((potential_cloud_array * ndsi_array) < thresh_f2, 1, NaN)",{'thresh_f2' : CONFIG.pqa_param['acca_thresh_f2'], 'NaN' : NaN}, locals())
             query = numexpr.evaluate(
                 "where((potential_cloud_array * ndsi_array) < thresh_f2, 1, NaN)",
-                {"thresh_f2": CONFIG.pqa_param["acca_thresh_f2"], "NaN": NaN},
+                {"thresh_f2": pq_const.acca_thresh_f2, "NaN": NaN},
                 locals(),
             )
 
@@ -506,7 +531,7 @@ def process(subprocess_list=[], resume=False):
             # as valid pixels = 1.  Sum of ones therefore = count
             find = numexpr.evaluate(
                 "where(ndsi_array >= thresh_f2, 1, 0)",
-                {"thresh_f2": CONFIG.pqa_param["acca_thresh_f2"]},
+                {"thresh_f2": pq_const.acca_thresh_f2},
                 locals(),
             )
             snow_pixels = find.sum()  # Sum is used as valid pixels = 1
@@ -530,9 +555,13 @@ def process(subprocess_list=[], resume=False):
             acca_logfile.write("Snow Percent: %f\n" % snow_percent)
 
             # Filter 3; Temp. threshold
+            # query   = numexpr.evaluate("where((potential_cloud_array * thermal_array) < thresh_f3, 1, NaN)",
+            #                           {'thresh_f3' : CONFIG.pqa_param['acca_thresh_f3'],
+            #                            'NaN' : NaN},
+            #                           locals())
             query = numexpr.evaluate(
                 "where((potential_cloud_array * thermal_array) < thresh_f3, 1, NaN)",
-                {"thresh_f3": CONFIG.pqa_param["acca_thresh_f3"], "NaN": NaN},
+                {"thresh_f3": pq_const.acca_thresh_f3, "NaN": NaN},
                 locals(),
             )
             potential_cloud_array *= query
@@ -552,16 +581,21 @@ def process(subprocess_list=[], resume=False):
 
             # Filter 4; Band 5/6 composite
             _temporary = potential_cloud_array * filter4(reflectance_stack)
+            # query   = numexpr.evaluate("where(_temporary < thresh_f4, 1, NaN)",
+            #                           {'thresh_f4' : CONFIG.pqa_param['acca_thresh_f4'],
+            #                            'NaN' : NaN},
+            #                           locals())
             query = numexpr.evaluate(
                 "where(_temporary < thresh_f4, 1, NaN)",
-                {"thresh_f4": CONFIG.pqa_param["acca_thresh_f4"], "NaN": NaN},
+                {"thresh_f4": pq_const.acca_thresh_f4, "NaN": NaN},
                 locals(),
             )
 
             # Get ambiguous pixels
+            # find  = numexpr.evaluate("_temporary >= thresh_f4",{'thresh_f4' : CONFIG.pqa_param['acca_thresh_f4']}, locals())
             find = numexpr.evaluate(
                 "_temporary >= thresh_f4",
-                {"thresh_f4": CONFIG.pqa_param["acca_thresh_f4"]},
+                {"thresh_f4": pq_const.acca_thresh_f4},
                 locals(),
             )
             ambiguous_array[find] = 1
@@ -591,16 +625,18 @@ def process(subprocess_list=[], resume=False):
 
             # Filter 5; Band 4/3 ratio (Simple veg ratio)
             _temporary = potential_cloud_array * filter5(reflectance_stack)
+            # query   = numexpr.evaluate("where(_temporary < thresh_f5, 1, NaN)",{'thresh_f5' : CONFIG.pqa_param['acca_thresh_f5'], 'NaN' : NaN}, locals())
             query = numexpr.evaluate(
                 "where(_temporary < thresh_f5, 1, NaN)",
-                {"thresh_f5": CONFIG.pqa_param["acca_thresh_f5"], "NaN": NaN},
+                {"thresh_f5": pq_const.acca_thresh_f5, "NaN": NaN},
                 locals(),
             )
 
             # Get ambiguous pixels
+            # find  = numexpr.evaluate("_temporary >= thresh_f5",{'thresh_f5' : CONFIG.pqa_param['acca_thresh_f5']}, locals())
             find = numexpr.evaluate(
                 "_temporary >= thresh_f5",
-                {"thresh_f5": CONFIG.pqa_param["acca_thresh_f5"]},
+                {"thresh_f5": pq_const.acca_thresh_f5},
                 locals(),
             )
             ambiguous_array[find] = 1
@@ -622,9 +658,10 @@ def process(subprocess_list=[], resume=False):
 
             # Filter 6; Band 4/2 ratio (Dying/senescing veg)
             _temporary = potential_cloud_array * filter6(reflectance_stack)
+            # query   = numexpr.evaluate("where(_temporary < thresh_f6, 1, NaN)",{'thresh_f6' : CONFIG.pqa_param['acca_thresh_f6'], 'NaN' : NaN}, locals())
             query = numexpr.evaluate(
                 "where(_temporary < thresh_f6, 1, NaN)",
-                {"thresh_f6": CONFIG.pqa_param["acca_thresh_f6"], "NaN": NaN},
+                {"thresh_f6": pq_const.acca_thresh_f6, "NaN": NaN},
                 locals(),
             )
 
@@ -632,9 +669,10 @@ def process(subprocess_list=[], resume=False):
             f6_surv = np.nansum(query)
 
             # Get ambiguous pixels
+            # find  = numexpr.evaluate("_temporary >= thresh_f6",{'thresh_f6' : CONFIG.pqa_param['acca_thresh_f6'], 'NaN' : NaN}, locals())
             find = numexpr.evaluate(
                 "_temporary >= thresh_f6",
-                {"thresh_f6": CONFIG.pqa_param["acca_thresh_f6"], "NaN": NaN},
+                {"thresh_f6": pq_const.acca_thresh_f6, "NaN": NaN},
                 locals(),
             )
             ambiguous_array[find] = 1
@@ -658,9 +696,10 @@ def process(subprocess_list=[], resume=False):
             # The results of this query are clouds at first pass
             _temporary = potential_cloud_array * filter7(reflectance_stack)
 
+            # query = numexpr.evaluate("where(_temporary > thresh_f7, 1, NaN)",{'thresh_f7' : CONFIG.pqa_param['acca_thresh_f7'], 'NaN' : NaN}, locals())
             query = numexpr.evaluate(
                 "where(_temporary > thresh_f7, 1, NaN)",
-                {"thresh_f7": CONFIG.pqa_param["acca_thresh_f7"], "NaN": NaN},
+                {"thresh_f7": pq_const.acca_thresh_f7, "NaN": NaN},
                 locals(),
             )
 
@@ -671,9 +710,10 @@ def process(subprocess_list=[], resume=False):
             acca_logfile.write("Desert Index: %f\n" % Desert_Index)
 
             # Get ambiguous pixels
+            # find  = numexpr.evaluate("_temporary <= thresh_f7",{'thresh_f7' : CONFIG.pqa_param['acca_thresh_f7']}, locals())
             find = numexpr.evaluate(
                 "_temporary <= thresh_f7",
-                {"thresh_f7": CONFIG.pqa_param["acca_thresh_f7"]},
+                {"thresh_f7": pq_const.acca_thresh_f7},
                 locals(),
             )
             ambiguous_array[find] = 1
@@ -695,14 +735,16 @@ def process(subprocess_list=[], resume=False):
 
             # Filter 8; Band 5/6 composite (Separate warm/cold clouds)
             _temporary = potential_cloud_array * filter4(reflectance_stack)
+            # cold_cloud    = numexpr.evaluate("_temporary < thresh_f8",{'thresh_f8' : CONFIG.pqa_param['acca_thresh_f8']}, locals())
             cold_cloud = numexpr.evaluate(
                 "_temporary < thresh_f8",
-                {"thresh_f8": CONFIG.pqa_param["acca_thresh_f8"]},
+                {"thresh_f8": pq_const.acca_thresh_f8},
                 locals(),
             )
+            # warm_cloud    = numexpr.evaluate("_temporary >= thresh_f8",{'thresh_f8' : CONFIG.pqa_param['acca_thresh_f8']}, locals())
             warm_cloud = numexpr.evaluate(
                 "_temporary >= thresh_f8",
-                {"thresh_f8": CONFIG.pqa_param["acca_thresh_f8"]},
+                {"thresh_f8": pq_const.acca_thresh_f8},
                 locals(),
             )
 
@@ -725,9 +767,10 @@ def process(subprocess_list=[], resume=False):
             # """
 
             # REDO of tests for pass two engagement
+            # if Desert_Index <= CONFIG.pqa_param['acca_desertindex'] and snow_percent > CONFIG.pqa_param['acca_snow_threshold']:
             if (
-                Desert_Index <= CONFIG.pqa_param["acca_desertindex"]
-                and snow_percent > CONFIG.pqa_param["acca_snow_threshold"]
+                Desert_Index <= pq_const.acca_desertIndex
+                and snow_percent > pq_const.acca_snow_threshold
             ):
                 cloud = cold_cloud
                 ambiguous_array[warm_cloud] = 1
@@ -742,12 +785,14 @@ def process(subprocess_list=[], resume=False):
                 logger.debug(
                     "Mean temperature: %s", np.mean(thermal_array[cloud], dtype="float")
                 )
+                # if ((cold_cloud_pop > CONFIG.pqa_param['acca_coldcloud_pop']) and (Desert_Index > CONFIG.pqa_param['acca_desertindex'])
+                #         and (numpy.mean(thermal_array[cloud], dtype='float') < CONFIG.pqa_param['acca_coldcloud_mean'])):
                 if (
-                    (cold_cloud_pop > CONFIG.pqa_param["acca_coldcloud_pop"])
-                    and (Desert_Index > CONFIG.pqa_param["acca_desertindex"])
+                    (cold_cloud_pop > pq_const.acca_coldCloud_pop)
+                    and (Desert_Index > pq_const.acca_desertIndex)
                     and (
                         np.mean(thermal_array[cloud], dtype="float")
-                        < CONFIG.pqa_param["acca_coldcloud_mean"]
+                        < pq_const.acca_coldCloud_mean
                     )
                 ):
                     # Inititate 2nd Pass Testing
@@ -761,9 +806,11 @@ def process(subprocess_list=[], resume=False):
                         return cloud
                     else:
                         return r_cloud
-                elif (Desert_Index <= CONFIG.pqa_param["acca_desertindex"]) and (
+                # elif ((Desert_Index <= CONFIG.pqa_param['acca_desertindex']) and (numpy.mean(thermal_array[cloud], dtype='float') <
+                #                CONFIG.pqa_param['acca_coldcloud_mean'])):
+                elif (Desert_Index <= pq_const.acca_desertIndex) and (
                     np.mean(thermal_array[cloud], dtype="float")
-                    < CONFIG.pqa_param["acca_coldcloud_mean"]
+                    < pq_const.acca_coldCloud_mean
                 ):
                     return cold_cloud
                 else:
@@ -860,7 +907,8 @@ def process(subprocess_list=[], resume=False):
 
     log_multiline(logger.debug, mask, "mask", "\t")
 
-    bit_index = CONFIG.pqa_test_index["ACCA"]
+    # bit_index = CONFIG.pqa_test_index['ACCA']
+    bit_index = pq_const.acca
     result.set_mask(mask, bit_index)
     if CONFIG.debug:
         dump_array(
