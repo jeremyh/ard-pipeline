@@ -27,6 +27,8 @@ class pqaContants:
             "TM": [1, 2, 3, 4, 5, 6, 7],
             "ETM+": [1, 2, 3, 4, 5, 61, 62, 7],
             "OLI_TIRS": [2, 3, 4, 5, 6, 7, 10, 11],
+            "OLI": [2, 3, 4, 5, 6, 7],
+            "TIRS": [10, 11],
         }
 
         self.saturation_bands = saturation[self.sensor]
@@ -39,6 +41,8 @@ class pqaContants:
             "TM": [0, 1, 2, 3, 4, 5, 7],
             "ETM+": [0, 1, 2, 3, 4, 5, 6, 7],
             "OLI_TIRS": [0, 1, 2, 3, 4, 7, 5, 6],
+            "OLI": [0, 1, 2, 3, 4, 7],
+            "TIRS": [6, 6],
         }
 
         self.saturation_bits = bits[self.sensor]
