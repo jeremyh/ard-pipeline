@@ -921,6 +921,6 @@ def process(subprocess_list=[], resume=False):
             )
     else:  # OLI/TIRS only
         logger.debug(
-            "Cloud Shadow Algorithm Not Run! %s sensor not configured for the cloud shadow algorithm."
+            "ACCA Not Run! %s sensor not configured for the ACCA algorithm."
             % l1t_input_dataset.sensor
         )
