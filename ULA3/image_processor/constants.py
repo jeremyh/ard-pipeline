@@ -21,6 +21,7 @@ class pqaContants:
         self.setRunCloudShadow()
         self.setRunCloud()
         self.setOLITIRS()
+        self.setThermalBand()
 
     def setSaturationBands(self):
         """Get the band numbers associated with saturation tests for a given sensor.
