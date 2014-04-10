@@ -40,7 +40,9 @@ def process(subprocess_list=[], resume=False):
     # SceneDataset.ReadAsArray() only returns reflective & thermal bands (no panchromatic)
     l1t_stack = l1t_input_dataset.ReadAsArray()
     avail_band_types = [
-        bt for bt in ds.satellite.BAND_TYPES.keys() if bt not in ["ALL", "PANCHROMATIC"]
+        bt
+        for bt in l1t_input_dataset.satellite.BAND_TYPES.keys()
+        if bt not in ["ALL", "PANCHROMATIC"]
     ]
     n_bands = 0
     for bt in avail_band_types:
