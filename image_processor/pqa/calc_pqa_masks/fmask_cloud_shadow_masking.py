@@ -63,7 +63,7 @@ def process(subprocess_list=[], resume=False):
         # fmask_cloud_mask = result.get_mask(CONFIG.pqa_test_index['FMASK'])
         # land_sea_mask = result.get_mask(CONFIG.pqa_test_index['LAND_SEA'])
         contiguity_mask = result.get_mask(pq_const.contiguity)
-        result.get_mask(pq_const.fmask)
+        fmask_cloud_mask = result.get_mask(pq_const.fmask)
         land_sea_mask = result.get_mask(pq_const.land_sea)
 
         if pq_const.oli_tirs:
@@ -75,7 +75,7 @@ def process(subprocess_list=[], resume=False):
                 land_sea_mask=land_sea_mask,
                 contiguity_mask=contiguity_mask,
                 cloud_algorithm="FMASK",
-                growregion=1,
+                growregion=True,
             )
         else:  # TM or ETM
             mask = Cloud_Shadow(
@@ -86,7 +86,7 @@ def process(subprocess_list=[], resume=False):
                 land_sea_mask=land_sea_mask,
                 contiguity_mask=contiguity_mask,
                 cloud_algorithm="FMASK",
-                growregion=1,
+                growregion=True,
             )
 
         # bit_index = CONFIG.pqa_test_index['FMASK_SHADOW']

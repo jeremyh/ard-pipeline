@@ -75,7 +75,7 @@ def process(subprocess_list=[], resume=False):
                 land_sea_mask=land_sea_mask,
                 contiguity_mask=contiguity_mask,
                 cloud_algorithm="ACCA",
-                growregion=1,
+                growregion=True,
             )
         else:  # TM or ETM
             mask = Cloud_Shadow(
@@ -86,7 +86,7 @@ def process(subprocess_list=[], resume=False):
                 land_sea_mask=land_sea_mask,
                 contiguity_mask=contiguity_mask,
                 cloud_algorithm="ACCA",
-                growregion=1,
+                growregion=True,
             )
 
         # bit_index = CONFIG.pqa_test_index['ACCA_SHADOW']
