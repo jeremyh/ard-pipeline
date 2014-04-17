@@ -22,6 +22,7 @@ class pqaContants:
         self.setRunCloud()
         self.setOLITIRS()
         self.setThermalBand()
+        self.setBandNumSequence()
 
     def setSaturationBands(self):
         """Get the band numbers associated with saturation tests for a given sensor.
@@ -172,3 +173,29 @@ class pqaContants:
         thermal = {"TM": 6, "ETM+": 61, "OLI_TIRS": 10}
 
         self.thermal_band = thermal[self.sensor]
+
+    def setBandNumSequence(self):
+        """Set the band numbering sequence 1:n for a given sensor.
+        This is intended to be used with the SceneDataset class's
+        gain and bias method.
+        """
+        sequence = {
+            "TM": {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7},
+            "ETM+": {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 61: 6, 62: 7, 7: 8},
+            "OLI_TIRS": {
+                1: 1,
+                2: 2,
+                3: 3,
+                4: 4,
+                5: 5,
+                6: 6,
+                7: 7,
+                8: 8,
+                9: 9,
+                10: 10,
+                11: 11,
+            },
+            "OLI": {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9},
+            "TIRS": {10: 10, 11: 11},
+        }
+        self.band_num_sequence = sequence[self.sensor]
