@@ -116,8 +116,8 @@ def process(subprocess_list=[], resume=False):
 
         radiance_array = radiance_conversion(
             l1t_stack[thermal_band_index],
-            l1t_input_dataset.gain[thermal_band],
-            l1t_input_dataset.bias[thermal_band],
+            l1t_input_dataset.gain[pq_const.band_num_sequence[thermal_band]],
+            l1t_input_dataset.bias[pq_const.band_num_sequence[thermal_band]],
         )
 
         kelvin_array = temperature_conversion(
