@@ -246,7 +246,10 @@ class Satellite(object):
             self.sensor = None
             for sensor_node in sat_node.getElementsByTagName("SENSOR"):
                 sensor_name = unicode_to_ascii(sensor_node.getAttribute("NAME"))
-                if sensor_name.lower() == sensor.lower():
+                # if sensor_name.lower() == sensor.lower():
+                if re.sub(r"\W+", "", sensor_name.lower()) == re.sub(
+                    r"\W+", "", sensor.lower()
+                ):
                     self.sensor = sensor_name
 
                     self.k = (
