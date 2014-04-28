@@ -924,5 +924,5 @@ def process(subprocess_list=[], resume=False):
     else:  # OLI/TIRS only
         logger.debug(
             "ACCA Not Run! %s sensor not configured for the ACCA algorithm."
-            % l1t_input_dataset.sensor
+            % nbar_input_dataset.sensor
         )
