@@ -926,3 +926,10 @@ def process(subprocess_list=[], resume=False):
             "ACCA Not Run! %s sensor not configured for the ACCA algorithm."
             % nbar_input_dataset.sensor
         )
+        logfile = open("ACCA_LOGFILE.txt", "w", buffering=0)
+        logfile.write("Test Not Run!\n")
+        logfile.write(
+            "%s sensor not configured for the ACCA algorithm."
+            % l1t_input_dataset.sensor
+        )
+        logfile.close()
