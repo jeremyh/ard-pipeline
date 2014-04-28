@@ -112,6 +112,7 @@ def process(subprocess_list=[], resume=False):
             kelvin_array = np.zeros(
                 (l1t_stack.shape[1], l1t_stack.shape[2]), dtype="float32"
             )
+            return kelvin_array
         thermal_band_index = pq_const.getArrayBandLookup([thermal_band])[
             0
         ]  # Function returns a list of one item. Take the first item.
