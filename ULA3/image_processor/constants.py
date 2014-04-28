@@ -169,7 +169,10 @@ class pqaContants:
             self.oli_tirs = False
 
     def setThermalBand(self):
-        """Set the relevant thermal band used for the cloud and cloud shadow algorithms."""
+        """Set the relevant thermal band used for the cloud and cloud shadow algorithms.
+        The thermal_band variable will be set to an integer corresponding to the band number
+        for a given sensors thermal band.  If no band is found, then a string is returned.
+        """
         self.thermal_band = {"TM": 6, "ETM+": 61, "OLI_TIRS": 10}.get(
             self.sensor, "Error! No Thermal Band Found."
         )
