@@ -142,6 +142,9 @@ The pixel quality algorithm assesses quality aspects such as saturation, band/sp
 
     new_metadata = Metadata()  # Create new master metadata object
 
+    # Get the PQ constants
+    pq_const = constants.pqaContants(l1t_input_dataset.sensor)
+
     # Open template metadata.xml
     xml_metadata = XMLMetadata(xml_metadata_template)
     # Set reference in master Metadata object
@@ -287,7 +290,8 @@ The pixel quality algorithm assesses quality aspects such as saturation, band/sp
 
     pqa_dataset.algorithm_version = "SVN version " + CONFIG.svn_revision
 
-    pqa_dataset.supplementary_information = """
+    if pq_const.run_cloud:  # TM/ETM/OLI_TIRS
+        pqa_dataset.supplementary_information = """
 The pixel quality algorithm uses data from both the L1T (Systematic Terrain Correction) and ARG25 (Australian Reflectance Grid 25m) products.
 
 ACCA cloud cover is reported as a percentage of the entire data grid, while Fmask is reported as a percentage of the valid image data only.
@@ -298,11 +302,31 @@ Cloud shadow is reported as a percentage of the entire data grid for both analys
 CLOUD SHADOW PERCENTAGE ACCA {ACCA_CLOUD_SHADOW_PERCENT}
 CLOUD SHADOW PERCENTAGE Fmask {Fmask_CLOUD_SHADOW_PERCENT}
 """.format(
-        ACCA_PERCENT=round(pqa_log_info.acca_percent, 2),
-        Fmask_PERCENT=round(pqa_log_info.fmask_percent, 2),
-        ACCA_CLOUD_SHADOW_PERCENT=round(pqa_log_info.acca_cloud_shadow_percent, 2),
-        Fmask_CLOUD_SHADOW_PERCENT=round(pqa_log_info.fmask_cloud_shadow_percent, 2),
-    )
+            ACCA_PERCENT=round(pqa_log_info.acca_percent, 2),
+            Fmask_PERCENT=round(pqa_log_info.fmask_percent, 2),
+            ACCA_CLOUD_SHADOW_PERCENT=round(pqa_log_info.acca_cloud_shadow_percent, 2),
+            Fmask_CLOUD_SHADOW_PERCENT=round(
+                pqa_log_info.fmask_cloud_shadow_percent, 2
+            ),
+        )
+    else:  # OLI/TIRS only
+        pqa_dataset.supplementary_information = """
+The pixel quality algorithm uses data from both the L1T (Systematic Terrain Correction) and ARG25 (Australian Reflectance Grid 25m) products.
+
+ACCA cloud cover is reported as a percentage of the entire data grid, while Fmask is reported as a percentage of the valid image data only.
+CLOUD COVER PERCENTAGE ACCA {ACCA_PERCENT}
+CLOUD COVER PERCENTAGE Fmask {Fmask_PERCENT}
+
+Cloud shadow is reported as a percentage of the entire data grid for both analyses.
+CLOUD SHADOW PERCENTAGE ACCA {ACCA_CLOUD_SHADOW_PERCENT}
+CLOUD SHADOW PERCENTAGE Fmask {Fmask_CLOUD_SHADOW_PERCENT}
+""".format(
+            ACCA_PERCENT=pqa_log_info.acca_percent,
+            Fmask_PERCENT=pqa_log_info.fmask_percent,
+            ACCA_CLOUD_SHADOW_PERCENT=pqa_log_info.acca_cloud_shadow_percent,
+            Fmask_CLOUD_SHADOW_PERCENT=pqa_log_info.fmask_cloud_shadow_percent,
+        )
+
     log_multiline(
         logger.debug,
         pqa_dataset.supplementary_information,
