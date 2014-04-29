@@ -41,6 +41,10 @@ def process(subprocess_list=[], resume=False):
     logger.debug("DataGrid object for kelvin_grid retrieved")
     kelvin_array = kelvin_grid.array
 
+    pqa_temp_output = DATA.get_item("pqa_temp_output.dat", str)
+    assert pqa_temp_output, "Unable to retrieve string object for pqa_temp_output"
+    logger.debug("string object for pqa_temp_output retrieved")
+
     # ===========================================================================
     # acca_cloud_mask = DATA.get_item('acca_cloud_mask', numpy.ndarray)
     # assert acca_cloud_mask is not None, 'Unable to retrieve ndarray object for acca_cloud_mask'
@@ -103,10 +107,13 @@ def process(subprocess_list=[], resume=False):
             "Cloud Shadow Algorithm Not Run! %s sensor not configured for the cloud shadow algorithm."
             % l1t_input_dataset.sensor
         )
-        logfile = open("ACCA_CLOUD_SHADOW_LOGFILE.txt", "w", buffering=0)
-        logfile.write("Test Not Run!\n")
-        logfile.write(
+        cloud_shadow_logfile = open(
+            os.path.join(pqa_temp_output, "scene01", "ACCA_CLOUD_SHADOW_LOGFILE.txt"),
+            "w",
+        )
+        cloud_shadow_logfile.write("Test Not Run!\n")
+        cloud_shadow_logfile.write(
             "%s sensor not configured for the Cloud Shadow algorithm."
             % l1t_input_dataset.sensor
         )
-        logfile.close()
+        cloud_shadow_logfile.close()
