@@ -18,7 +18,7 @@ from pqa_log_extractor import PQALogExtractor
 
 from ULA3 import DataManager
 from ULA3.dataset import SceneDataset
-from ULA3.image_processor import ProcessorConfig
+from ULA3.image_processor import ProcessorConfig, constants
 from ULA3.meta import print_call
 from ULA3.metadata import Metadata, XMLMetadata
 
