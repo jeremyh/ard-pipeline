@@ -288,7 +288,8 @@ The pixel quality algorithm assesses quality aspects such as saturation, band/sp
         "\n", "", execute(command_string="uname -a")["stdout"]
     )
 
-    pqa_dataset.algorithm_version = "SVN version " + CONFIG.svn_revision
+    # pqa_dataset.algorithm_version = 'SVN version ' + CONFIG.svn_revision
+    pqa_dataset.algorithm_version = "Git version " + CONFIG.git_version
 
     if pq_const.run_cloud:  # TM/ETM/OLI_TIRS
         pqa_dataset.supplementary_information = """
