@@ -1,7 +1,6 @@
 import logging
 import os
 
-import numexpr
 import numpy as np
 from IDL_functions import histogram
 from scipy import ndimage
@@ -9,7 +8,7 @@ from scipy import ndimage
 from ULA3 import DataManager
 from ULA3.common.pqa_result import PQAResult
 from ULA3.dataset import SceneDataset
-from ULA3.image_processor import ProcessorConfig
+from ULA3.image_processor import ProcessorConfig, constants
 from ULA3.utils import dump_array
 
 logger = logging.getLogger("root." + __name__)
@@ -129,11 +128,12 @@ def process(subprocess_list=[], resume=False):
             return None
 
         assert type(image_stack[0]) == np.ndarray, "Input is not valid"
+        assert len(image_stack.shape) == 3, "Input array must contain 3 dimensions!"
 
         logger.debug("Determining pixel contiguity")
         # Create mask array with True for all pixels which are non-zero in all bands
-        # mask = image_stack.all(0)
-        mask = numexpr.evaluate("prod(image_stack, 0)") != 0
+        mask = image_stack.all(0)
+        # mask = numexpr.evaluate('prod(image_stack, 0)') != 0 # ***This has the potential to overflow, roll back to array.all(0)***
 
         # The following is only valid for Landsat 5 images
         if satellite.TAG == "LS5":
@@ -155,17 +155,16 @@ def process(subprocess_list=[], resume=False):
             s = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
             low_sat, num_labels = ndimage.label(low_sat_buff, structure=s)
 
-            flat_label = low_sat.flatten()
             labels = low_sat[edge]
             ulabels = np.unique(labels[labels > 0])
 
             # Testing a new method, more code but might be quicker
-            # find_lab = numpy.in1d(flat_label, ulabels)
+            # find_lab = numpy.in1d(low_sat.flatten(), ulabels)
             # th_anom |= find_lab
 
             # Histogram method, a lot faster
             mx = np.max(ulabels)
-            h = histogram(flat_label, min=0, max=mx, reverse_indices="ri")
+            h = histogram(low_sat.flatten(), min=0, max=mx, reverse_indices="ri")
             hist = h["histogram"]
             ri = h["ri"]
 
@@ -219,7 +218,10 @@ def process(subprocess_list=[], resume=False):
 
     mask = Contiguity(l1t_stack, l1t_input_dataset.satellite)
 
-    bit_index = CONFIG.pqa_test_index["CONTIGUITY"]
+    # *** Change so that PQ info is retrieved from constants.py
+    # bit_index = CONFIG.pqa_test_index['CONTIGUITY']
+    pq_const = constants.pqaContants(l1t_input_dataset.sensor)
+    bit_index = pq_const.contiguity
     result.set_mask(mask, bit_index)
     if CONFIG.debug:
         dump_array(

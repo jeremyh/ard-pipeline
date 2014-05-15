@@ -18,7 +18,7 @@ from pqa_log_extractor import PQALogExtractor
 
 from ULA3 import DataManager
 from ULA3.dataset import SceneDataset
-from ULA3.image_processor import ProcessorConfig
+from ULA3.image_processor import ProcessorConfig, constants
 from ULA3.meta import print_call
 from ULA3.metadata import Metadata, XMLMetadata
 
@@ -103,13 +103,9 @@ def write_metadata(DATA, CONFIG, xml_metadata_template, PROCESSOR_VERSION):
         for test_const in test_const_list:
             test_const_dict[CONFIG.pqa_test_index[test_const]] = test_const
 
-        lineage_string = (
-            """
-Pixel Quality SVN Version %s
+        lineage_string = """
 The pixel quality algorithm assesses quality aspects such as saturation, band/spectral contiguity, land/sea, cloud and cloud shadow.
 """
-            % CONFIG.svn_revision
-        )
         for test_index in range(len(tests_run)):
             lineage_string += "%s (Bit %d): " % (
                 CONFIG.pqa_test_description[test_const_dict[test_index]],
@@ -141,6 +137,9 @@ The pixel quality algorithm assesses quality aspects such as saturation, band/sp
     pqa_log_info = PQALogExtractor(pqa_tif_path)  # Get various values from log file
 
     new_metadata = Metadata()  # Create new master metadata object
+
+    # Get the PQ constants
+    pq_const = constants.pqaContants(l1t_input_dataset.sensor)
 
     # Open template metadata.xml
     xml_metadata = XMLMetadata(xml_metadata_template)
@@ -285,9 +284,11 @@ The pixel quality algorithm assesses quality aspects such as saturation, band/sp
         "\n", "", execute(command_string="uname -a")["stdout"]
     )
 
-    pqa_dataset.algorithm_version = "SVN version " + CONFIG.svn_revision
+    # pqa_dataset.algorithm_version = 'SVN version ' + CONFIG.svn_revision
+    pqa_dataset.algorithm_version = "Git version " + CONFIG.git_version
 
-    pqa_dataset.supplementary_information = """
+    if pq_const.run_cloud:  # TM/ETM/OLI_TIRS
+        pqa_dataset.supplementary_information = """
 The pixel quality algorithm uses data from both the L1T (Systematic Terrain Correction) and ARG25 (Australian Reflectance Grid 25m) products.
 
 ACCA cloud cover is reported as a percentage of the entire data grid, while Fmask is reported as a percentage of the valid image data only.
@@ -298,11 +299,31 @@ Cloud shadow is reported as a percentage of the entire data grid for both analys
 CLOUD SHADOW PERCENTAGE ACCA {ACCA_CLOUD_SHADOW_PERCENT}
 CLOUD SHADOW PERCENTAGE Fmask {Fmask_CLOUD_SHADOW_PERCENT}
 """.format(
-        ACCA_PERCENT=round(pqa_log_info.acca_percent, 2),
-        Fmask_PERCENT=round(pqa_log_info.fmask_percent, 2),
-        ACCA_CLOUD_SHADOW_PERCENT=round(pqa_log_info.acca_cloud_shadow_percent, 2),
-        Fmask_CLOUD_SHADOW_PERCENT=round(pqa_log_info.fmask_cloud_shadow_percent, 2),
-    )
+            ACCA_PERCENT=round(pqa_log_info.acca_percent, 2),
+            Fmask_PERCENT=round(pqa_log_info.fmask_percent, 2),
+            ACCA_CLOUD_SHADOW_PERCENT=round(pqa_log_info.acca_cloud_shadow_percent, 2),
+            Fmask_CLOUD_SHADOW_PERCENT=round(
+                pqa_log_info.fmask_cloud_shadow_percent, 2
+            ),
+        )
+    else:  # OLI/TIRS only
+        pqa_dataset.supplementary_information = """
+The pixel quality algorithm uses data from both the L1T (Systematic Terrain Correction) and ARG25 (Australian Reflectance Grid 25m) products.
+
+ACCA cloud cover is reported as a percentage of the entire data grid, while Fmask is reported as a percentage of the valid image data only.
+CLOUD COVER PERCENTAGE ACCA {ACCA_PERCENT}
+CLOUD COVER PERCENTAGE Fmask {Fmask_PERCENT}
+
+Cloud shadow is reported as a percentage of the entire data grid for both analyses.
+CLOUD SHADOW PERCENTAGE ACCA {ACCA_CLOUD_SHADOW_PERCENT}
+CLOUD SHADOW PERCENTAGE Fmask {Fmask_CLOUD_SHADOW_PERCENT}
+""".format(
+            ACCA_PERCENT=pqa_log_info.acca_percent,
+            Fmask_PERCENT=pqa_log_info.fmask_percent,
+            ACCA_CLOUD_SHADOW_PERCENT=pqa_log_info.acca_cloud_shadow_percent,
+            Fmask_CLOUD_SHADOW_PERCENT=pqa_log_info.fmask_cloud_shadow_percent,
+        )
+
     log_multiline(
         logger.debug,
         pqa_dataset.supplementary_information,
@@ -324,7 +345,7 @@ CLOUD SHADOW PERCENTAGE Fmask {Fmask_CLOUD_SHADOW_PERCENT}
     if CONFIG.purpose is not None:
         pqa_dataset.purpose = CONFIG.purpose
 
-    pqa_dataset.title = "%s %s PQ x%03d y%03d %s version 0 status completed" % (
+    pqa_dataset.title = "%s %s PQ x%03d y%03d %s" % (
         pqa_dataset.satellite.NAME,
         re.sub(r"\W+", "", pqa_dataset.satellite.sensor),
         pqa_dataset.path_number,
