@@ -36,5 +36,26 @@ setup(
                 "rl_brdf.f90",
             ],
         ),
+        Extension(name="set_satmod", sources=["geo_pix_size.f90", "set_satmod.f90"]),
+        Extension(
+            name="set_times",
+            sources=[
+                "geod2geo.f90",
+                "q_cal.f90",
+                "geo_pix_size.f90",
+                "cal_track.f90",
+                "set_times.f90",
+            ],
+        ),
+        Extension(
+            name="angle_all",
+            sources=[
+                "solar.f90",
+                "geod2geo.f90",
+                "q_cal.f90",
+                "cal_angles.f90",
+                "angle_all.f90",
+            ],
+        ),
     ],
 )
