@@ -1,9 +1,11 @@
 #!/bin/env python
 
+import logging
 import os
 
 import luigi
 from EOtools.DatasetDrivers import SceneDataset
+from memuseFilter import MemuseFilter
 
 from ULA3.fc import fractional_cover
 
@@ -19,6 +21,7 @@ class FractionalCoverTask(luigi.Task):
         return NBARTask(self.nbar_path)
 
     def run(self):
+        logging.info("In FractionalCoverTask.run method")
         fractional_cover(
             self.input().nbar_path,
             asfloat32=False,
@@ -52,4 +55,9 @@ class NBARdataset(luigi.Target):
 
 
 if __name__ == "__main__":
+    logging.config.fileConfig("logging.conf")  # Get basic config
+    log = logging.getLogger("")  # Get root logger
+    f = MemuseFilter()  # Create filter
+    log.handlers[0].addFilter(f)  # The ugly part:adding filter to handler
+    log.info("FC started")
     luigi.run()
