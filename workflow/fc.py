@@ -21,7 +21,11 @@ class FractionalCoverTask(luigi.Task):
         return NBARTask(self.nbar_path)
 
     def run(self):
-        logging.info("In FractionalCoverTask.run method")
+        logging.info(
+            "In FractionalCoverTask.run method, NBAR={}, output={}".format(
+                self.input().nbar_path, self.output().path
+            )
+        )
         fractional_cover(
             self.input().nbar_path,
             asfloat32=False,

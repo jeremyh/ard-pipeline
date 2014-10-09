@@ -91,10 +91,10 @@ def fractional_cover(
     )
 
     for i in range(len(b_match)):
-        logging.info("Reading band %d" % (i,))
+        logging.debug("Reading band %d" % (i,))
         r_data[i, :, :] = nbar_dataset.band_read_as_array(b_match[i])
 
-    logging.info("All NBAR bands read")
+    logging.debug("All NBAR bands read")
 
     # Get the dimensions, only interested in the x and y dims
     dims = r_data.shape
@@ -116,25 +116,26 @@ def fractional_cover(
 
     # Setting the no_data values to zero. It was just easier to do this when
     # feeding into the pixel unmixing algorithm.
-    logging.info("setting no_data values to zero")
+    logging.debug("setting no_data values to zero")
     #    numexpr.evaluate("(r_data == data_ignore) * null_val + (r_data != data_ignore) * r_data", out=r_data)
     #    r_data = numexpr.evaluate("where(r_data == data_ignore, null_val, r_data)", out=r_data)
-    wh = numexpr.evaluate("r_data==data_ignore")
-    r_data[wh] = null_val
-    logging.info("done setting no_data values to zero")
+    #    wh = numexpr.evaluate("r_data==data_ignore")
+    #    r_data[wh] = null_val
+    np.maximum(r_data, null_val, out=r_data)
+    logging.debug("done setting no_data values to zero")
     # del r_data; gc.collect()
 
     # 2013_01_08_version produces green, dead1, dead2, bare, unmixing error
-    logging.info("Calling unmix()")
+    logging.debug("Calling unmix()")
     frac = unmix(r_data)
-    logging.info("unmix() done")
+    logging.debug("unmix() done")
     wh = numexpr.evaluate("r_data == null_val")
 
     # Need to change the null data values back to the original -999 null value
     wh_any = np.any(wh, axis=0)
     del wh
     gc.collect()
-    logging.info("gc.collect() done")
+    logging.debug("gc.collect() done")
 
     # scale factors
     np.float32(0.01)
@@ -146,7 +147,7 @@ def fractional_cover(
     bare = frac[3, :, :]
     frac[4, :, :]  # unmixing error
 
-    logging.info("Writing GeoTiff output")
+    logging.debug("Writing GeoTiff output")
     # Creating the output image
     driver = gdal.GetDriverByName("GTiff")
 
@@ -195,7 +196,7 @@ def fractional_cover(
             for band_index in range(len(_fc_bands)):
                 outband = outds.GetRasterBand(band_index + 1)
                 outband.SetNoDataValue(data_ignore)
-                logging.info("Writing band %d" % (band_index,))
+                logging.debug("Writing band %d" % (band_index,))
                 outband.WriteArray(_fc_bands[band_index][1])
 
         else:  # Multiple single-band TIF files required
@@ -212,10 +213,10 @@ def fractional_cover(
 
                 outband = outds.GetRasterBand(1)
                 outband.SetNoDataValue(data_ignore)
-                logging.info("Writing band %d" % (band_index,))
+                logging.debug("Writing band %d" % (band_index,))
                 outband.WriteArray(_fc_bands[band_index][1])
 
         outds = None
-        logging.info("output dataset closed by not flushedd")
+        logging.debug("output dataset closed by not flushedd")
 
     return FractionalCoverResult(green, dead, bare, unmix_err)
