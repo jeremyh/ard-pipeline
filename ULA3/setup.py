@@ -20,12 +20,16 @@ setup(
                 "set_borderf.f90",
                 "get_proj_shadows.f90",
                 "proj_terrain.f90",
-                "pixelsize.f90",
+                "geo2metres_pixel_size.f90",
             ],
         ),
         Extension(
             name="_slope_pixelsize_newpole",
-            sources=["slope_pixelsize_newpole.f90", "cal_pole.f90", "pixelsize.f90"],
+            sources=[
+                "slope_pixelsize_newpole.f90",
+                "cal_pole.f90",
+                "geo2metres_pixel_size.f90",
+            ],
         ),
         Extension(
             name="_brdf_terrain_newdiff_all",
@@ -36,13 +40,15 @@ setup(
                 "rl_brdf.f90",
             ],
         ),
-        Extension(name="set_satmod", sources=["geo_pix_size.f90", "set_satmod.f90"]),
+        Extension(
+            name="set_satmod", sources=["geo2metres_pixel_size.f90", "set_satmod.f90"]
+        ),
         Extension(
             name="set_times",
             sources=[
                 "geod2geo.f90",
                 "q_cal.f90",
-                "geo_pix_size.f90",
+                "geo2metres_pixel_size.f90",
                 "cal_track.f90",
                 "set_times.f90",
             ],
