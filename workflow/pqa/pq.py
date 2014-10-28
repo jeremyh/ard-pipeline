@@ -4,8 +4,11 @@ import logging
 import os
 
 import luigi
+from constants import PQAConstants
 from EOtools.DatasetDrivers import SceneDataset
 from memuseFilter import MemuseFilter
+from pqa_result import PQAResult
+from saturation_masking import setSaturationBits
 
 
 class PixelQualityTask(luigi.Task):
@@ -40,6 +43,22 @@ class PixelQualityTask(luigi.Task):
         nbar_data = nbar_sd.ReadAsArray()
         logging.debug("nbar_data shape=%s" % (str(nbar_data.shape)))
 
+        # constants to be use for this PQA computation
+
+        sensor = l1t_sd.sensor
+        logging.debug(f"setting constants for sensor={sensor}")
+        pq_const = PQAConstants(sensor)
+
+        # the PQAResult object for this run
+
+        pqaResult = PQAResult(l1t_data[0].shape)
+
+        # Saturation
+
+        logging.debug("setting saturation bits")
+        setSaturationBits(l1t_data, pq_const, pqaResult)
+        logging.debug("done setting saturation bits")
+
 
 class PQDataset(luigi.Target):
     def __init__(self, path):
@@ -70,6 +89,6 @@ if __name__ == "__main__":
     log = logging.getLogger("")  # Get root logger
     f = MemuseFilter()  # Create filter
     log.handlers[0].addFilter(f)  # The ugly part:adding filter to handler
-    log.info("PQA started")
+    logging.info("PQA started")
     luigi.run()
-    log.info("PQA done")
+    logging.info("PQA done")
