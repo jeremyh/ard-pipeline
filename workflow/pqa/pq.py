@@ -5,6 +5,7 @@ import os
 
 import luigi
 from constants import PQAConstants
+from contiguity_masking import setContiguityBit
 from EOtools.DatasetDrivers import SceneDataset
 from memuseFilter import MemuseFilter
 from pqa_result import PQAResult
@@ -58,6 +59,12 @@ class PixelQualityTask(luigi.Task):
         logging.debug("setting saturation bits")
         setSaturationBits(l1t_data, pq_const, pqaResult)
         logging.debug("done setting saturation bits")
+
+        # contiguity
+
+        logging.debug("setting contiguity bit")
+        setContiguityBit(l1t_data, l1t_sd.satellite, pq_const, pqaResult)
+        logging.debug("done setting contiguity bit")
 
 
 class PQDataset(luigi.Target):
