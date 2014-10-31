@@ -81,6 +81,8 @@ class AcquisitionTest(unittest.TestCase):
         assert not hasattr(acq, "lmin_band1")
         assert not hasattr(acq, "lmin_band2")
 
+        assert not hasattr(acq, "band1_sl_gain_change")
+
 
 if __name__ == "__main__":
     unittest.main()
