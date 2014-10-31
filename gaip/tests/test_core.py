@@ -69,6 +69,7 @@ class AcquisitionTest(unittest.TestCase):
 
     def test_acquisition(self):
         acq = core.acquisitions(MTL_FILE_DATA)[0]
+
         assert acq.band_name == "band1"
         assert acq.band_num == 1
         assert acq.file_name == "L71090084_08420131003_B10.TIF"
@@ -76,6 +77,9 @@ class AcquisitionTest(unittest.TestCase):
         assert acq.lmax == 191.6
         assert acq.qcalmin == 1.0
         assert acq.qcalmax == 255.0
+
+        assert not hasattr(acq, "lmin_band1")
+        assert not hasattr(acq, "lmin_band2")
 
 
 if __name__ == "__main__":
