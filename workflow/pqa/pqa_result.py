@@ -6,13 +6,28 @@ import numpy as np
 class PQAResult:
     """Represents the PQA result."""
 
-    def __init__(self, shape, dtype=np.uint16):
-        """Constructor."""
+    def __init__(self, shape, dtype=np.uint16, aux_data={}):
+        """Constructor.
+
+        Arguments:
+        ---------
+            :shape:
+                the shape of the numpy array holding the data
+            :dtype:
+                the datatype of the array
+            :aux_data:
+                a dictionary hold auxillary data associated with
+                the PQAResult object. These may represent metadata
+                elements that could be written to the final output
+                file
+
+        """
         assert shape is not None
 
         self.test_set = set()
         self.array = np.zeros(shape, dtype=dtype)
         self.bitcount = self.array.itemsize * 8
+        self.aux_data = aux_data
 
     def set_mask(self, mask, bit_index, unset_bits=False):
         """Takes a boolean mask array and sets the bit in the result array."""
@@ -36,6 +51,22 @@ class PQAResult:
         assert 0 <= bit_index < self.bitcount, "Invalid bit index"
         assert bit_index in self.test_set, "Test %d not run" % bit_index
         return (self.array & (1 << bit_index)) > 0
+
+    def add_to_aux_data(self, new_data={}):
+        """Add the elements in the supplied dictionary to this objects
+        aux_data property.
+        """
+        self.aux_data.update(new_data)
+
+    #
+    #    def save_as_tiff(self, name, crs):
+    #        (width, height) = self.array.shape
+    #        with rio.open(path, mode='w', driver='GTiff', \
+    #            width=width, \
+    #            height=height, \
+    #            count=1, \
+    #            crs=crs, \
+    #            dtype=rio.uint16) as ds:
 
     @property
     def test_list(self):
