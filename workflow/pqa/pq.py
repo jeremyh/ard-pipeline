@@ -4,6 +4,7 @@ import logging
 import os
 
 import luigi
+from acca_cloud_masking import calc_acca_cloud_mask
 from constants import PQAConstants
 from contiguity_masking import setContiguityBit
 from EOtools.DatasetDrivers import SceneDataset
@@ -78,8 +79,38 @@ class PixelQualityTask(luigi.Task):
 
         # get temperature data from thermal band in prepartion for cloud detection
 
-        logging.debug("setting land/sea bit")
-        get_landsat_temperature(l1t_data, l1t_sd, pq_const)
+        logging.debug("calculating kelvin band")
+        kelvin_band = get_landsat_temperature(l1t_data, l1t_sd, pq_const)
+
+        # acca cloud mask
+
+        logging.debug("calculating acca cloud mask")
+        contiguity_mask = (pqaResult.array & (1 << pq_const.contiguity)) > 0
+        if pq_const.run_cloud:
+            mask = None
+            aux_data = {}  # for collecting result metadata
+            if pq_const.oli_tirs:
+                mask = calc_acca_cloud_mask(
+                    nbar_data[1:, :, :],
+                    kelvin_band,
+                    pq_const,
+                    contiguity_mask,
+                    aux_data,
+                )
+            else:  # TM or ETM
+                mask = calc_acca_cloud_mask(
+                    nbar_data, kelvin_band, pq_const, contiguity_mask, aux_data
+                )
+
+            # set the result
+            pqaResult.set_mask(mask, pq_const.acca)
+            pqaResult.add_to_aux_data(aux_data)
+        else:
+            logging.warning(
+                "ACCA Not Run! {} sensor not configured for the ACCA algorithm.".format(
+                    sensor
+                )
+            )
 
 
 class PQDataset(luigi.Target):
