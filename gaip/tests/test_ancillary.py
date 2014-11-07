@@ -3,7 +3,7 @@ import logging
 import os
 import unittest
 
-import gaip.ancillary as ancillary
+import gaip
 
 AOT_LOADER_PATH = os.path.abspath("../../bin")
 AEROSOL_PATH = "/g/data1/v10/eoancillarydata/aerosol/AATSR/2.0"
@@ -17,7 +17,7 @@ class AerosolAncillaryTest(unittest.TestCase):
     def test_run_fail(self):
         dt = datetime.datetime.now()
         self.assertRaises(
-            OSError, ancillary.run_aot_loader("foo", dt, 1.0, 1.0, 10.0, 10.0, "bar")
+            OSError, gaip.run_aot_loader("foo", dt, 1.0, 1.0, 10.0, 10.0, "bar")
         )
 
 
