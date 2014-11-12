@@ -206,7 +206,7 @@ def acca_2nd_pass(
     :author:
         Josh Sixsmith, joshua.sixsmith@ga.gov.au
     """
-    logging.info("ACCA Pass Two Engaged\n")
+    logging.info("ACCA Pass Two Engaged")
     aux_data["acca_pass_2"] = "engaged"
 
     # cloud_stddev    = thermal_array[cloud_mask].std()
