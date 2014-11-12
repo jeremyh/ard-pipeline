@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import re
+
 
 class pqaContants:
     """A Class object that contains the majority of constants used throughout the PQA process.
@@ -230,7 +232,7 @@ def brdf_wavelength_lut(satellite_sensor):
             5: "1628_1652nm",
             7: "2105_2155nm",
         },
-        "landsat7etm": {
+        "landsat7etm+": {
             1: "0459_0479nm",
             2: "0545_0565nm",
             3: "0620_0670nm",
@@ -273,7 +275,7 @@ class NBARConstants:
         """ """
         # NOTE: GA Landsat products use both '-' and '_' as a seperator
         # Remove any occurences of - and _ then convert to lowercase
-        satellite_name = re.sub("[-_]", "", self.satellite_name).lower()
+        satellite_name = re.sub("[-_]", "", self.satellite).lower()
         sensor_name = re.sub("[-_]", "", self.sensor).lower()
 
         sat_sensor = "".join((satellite_name, sensor_name))
