@@ -20,8 +20,9 @@ import os
 import re
 
 import numpy as np
-import write_img
 from osgeo import gdal, gdalconst, osr
+
+from gaip import write_img
 
 logger = logging.getLogger("root." + __name__)
 
