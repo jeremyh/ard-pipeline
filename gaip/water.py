@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 
-import logging
 import os
 
-import get_pixel  # Waiting on Dales work to be pushed
 import rasterio
 
-from ULA3.meta import print_call
-
-logger = logging.getLogger("root." + __name__)
+from gaip import get_pixel
 
 
-@print_call(logger.info)
 def get_water_vapour_data(water_vapour_path, lonlat, date_time, scale_factor=0.1):
     """Retrieve the water vapour value given a longitude, latitude and
     date time.
