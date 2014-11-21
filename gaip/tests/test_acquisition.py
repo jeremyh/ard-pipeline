@@ -3,6 +3,7 @@ import os
 import unittest
 
 import rasterio
+from osgeo import osr
 
 import gaip
 
@@ -344,6 +345,50 @@ class Landsat8AcquisitionTest(unittest.TestCase):
     def test_min_max_reflectance_band3(self):
         assert self.acqs[0].max_reflectance == 1.2107
         assert self.acqs[0].min_reflectance == -0.09998
+
+    def test_gridded_geo_box(self):
+        box = self.acqs[0].gridded_geo_box()
+        assert type(box) == gaip.GriddedGeoBox
+        assert box.origin == (644000.0, 6283000.0)
+        assert box.corner == (879025.0, 6055975.0)
+        assert box.shape == (9081, 9401)
+        assert box.pixelsize == (25.0, 25.0)
+
+    def test_gridded_geo_box_crs(self):
+        box = self.acqs[0].gridded_geo_box()
+        crs = box.crs
+        assert type(crs) == osr.SpatialReference
+        assert crs.IsProjected() == 1
+        assert crs.IsGeographic() == 0
+        assert crs.IsGeocentric() == 0
+        assert crs.GetUTMZone() == -55
+        assert crs.GetLinearUnits() == 1.0
+        assert crs.GetLinearUnitsName() == "metre"
+        self.assertAlmostEqual(crs.GetAngularUnits(), 0.0174532925199433)
+        assert (
+            crs.ExportToProj4()
+            == "+proj=utm +zone=55 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs "
+        )
+
+    def test_single_band_read(self):
+        acq = self.acqs[0]
+        band_data = acq.data()
+        assert band_data.shape == (9081, 9401)
+
+    def test_single_band_read_with_gridded_geo_box(self):
+        acq = self.acqs[0]
+        band_data, box = acq.data_and_box()
+        assert band_data.shape == (9081, 9401)
+        assert type(box) == gaip.GriddedGeoBox
+        assert box.origin == (644000.0, 6283000.0)
+        assert box.corner == (879025.0, 6055975.0)
+        assert box.shape == (9081, 9401)
+        assert box.pixelsize == (25.0, 25.0)
+
+
+#    def test_multi_band_read(self):
+#        bands = gaip.vstack_data(self.acqs)
+#        self.assertEqual(bands.shape, (7, 9081, 9401))
 
 
 class L1TDataTest(unittest.TestCase):
