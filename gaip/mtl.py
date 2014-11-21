@@ -1,5 +1,8 @@
 """Utilities to handle MTL files."""
 
+import datetime
+import re
+
 
 def parse_type(s):
     """Parse the string `s` and return a native python object."""
