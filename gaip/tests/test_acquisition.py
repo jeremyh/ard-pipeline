@@ -115,18 +115,6 @@ class Landsat5AcquisitionTest(unittest.TestCase):
         assert self.acqs[0].min_radiance == -1.52
         assert self.acqs[0].max_radiance == 193.0
 
-    def test_min_max_reflectance_band1(self):
-        assert self.acqs[0].min_reflectance == 1.0
-        assert self.acqs[0].max_reflectance == 255.0
-
-    def test_min_max_reflectance_band2(self):
-        assert self.acqs[0].min_reflectance == 1.0
-        assert self.acqs[0].max_reflectance == 255.0
-
-    def test_min_max_reflectance_band3(self):
-        assert self.acqs[0].min_reflectance == 1.0
-        assert self.acqs[0].max_reflectance == 255.0
-
     def test_lmin(self):
         assert self.acqs[0].lmin == -1.52
 
@@ -216,18 +204,6 @@ class Landsat7AcquisitionTest(unittest.TestCase):
     def test_min_max_radiance_band3(self):
         assert self.acqs[0].min_radiance == -6.2
         assert self.acqs[0].max_radiance == 191.6
-
-    def test_min_max_reflectance_band1(self):
-        assert self.acqs[0].min_reflectance == 1.0
-        assert self.acqs[0].max_reflectance == 255.0
-
-    def test_min_max_reflectance_band2(self):
-        assert self.acqs[0].min_reflectance == 1.0
-        assert self.acqs[0].max_reflectance == 255.0
-
-    def test_min_max_reflectance_band3(self):
-        assert self.acqs[0].min_reflectance == 1.0
-        assert self.acqs[0].max_reflectance == 255.0
 
     def test_lmin(self):
         assert self.acqs[0].lmin == -6.2
@@ -320,18 +296,6 @@ class Landsat8AcquisitionTest(unittest.TestCase):
     def test_min_max_radiance_band3(self):
         assert self.acqs[0].min_radiance == -64.75256
         assert self.acqs[0].max_radiance == 784.11609
-
-    def test_min_max_reflectance_band1(self):
-        assert self.acqs[0].max_reflectance == 1.2107
-        assert self.acqs[0].min_reflectance == -0.09998
-
-    def test_min_max_reflectance_band2(self):
-        assert self.acqs[0].max_reflectance == 1.2107
-        assert self.acqs[0].min_reflectance == -0.09998
-
-    def test_min_max_reflectance_band3(self):
-        assert self.acqs[0].max_reflectance == 1.2107
-        assert self.acqs[0].min_reflectance == -0.09998
 
     def test_lmin(self):
         assert self.acqs[0].lmin == -64.75256
