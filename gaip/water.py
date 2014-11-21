@@ -1,10 +1,8 @@
-#!/usr/bin/env python
-
 import os
 
 import rasterio
 
-from gaip import get_pixel
+import gaip
 
 
 def get_water_vapour_data(water_vapour_path, lonlat, date_time, scale_factor=0.1):
@@ -42,51 +40,35 @@ def get_water_vapour_data(water_vapour_path, lonlat, date_time, scale_factor=0.1
         'data_file' -> File system path to the file of interest.
         'value' -> The retrieved data value.
     """
-
-    def get_band_index():
-        """Calculate the water vapour band number based on the datetime.
-
-        Code and data layout are not documented in original
-        extractVapour.c program, so we clone the code here.
-
-        N.B: Water vapour datasets each cover a single year over the
-        whole of Australia with day-of-year and hour in separate
-        bands.
-
-        :return:
-            Integer representing the band index.
-            The band index is 1 based, i.e. starting at 1.
-        """
-        doy = date_time.timetuple().tm_yday
-        hour = date_time.timetuple().tm_hour
-        band_number = (int(doy) - 1) * 4 + int((hour + 3) / 6)
-
-        # Check for boundary condition: 1 Jan, 0-3 hours
-        if band_number == 0 and doy == 1:
-            band_number = 1
-
-        # Get the number of bands
-        with rasterio.open(datafile) as src:
-            n_bands = src.count
-
-        # Enable NBAR Near Real Time (NRT) processing
-        if band_number > (n_bands + 1):
-            rasterdoy = (((n_bands) - (int((hour + 3) / 6))) / 4) + 1
-            if (doy - rasterdoy) < 7:
-                band_number = (int(rasterdoy) - 1) * 4 + int((hour + 3) / 6)
-
-        return band_number
-
     year = date_time.strftime("%Y")
     filename = f"pr_wtr.eatm.{year}.tif"
     datafile = os.path.join(water_vapour_path, filename)
 
-    band_idx = get_band_index()
+    # calculate the water vapour band number based on the datetime
+
+    doy = date_time.timetuple().tm_yday
+    hour = date_time.timetuple().tm_hour
+    band_number = (int(doy) - 1) * 4 + int((hour + 3) / 6)
+
+    # Check for boundary condition: 1 Jan, 0-3 hours
+    if band_number == 0 and doy == 1:
+        band_number = 1
+
+    # Get the number of bands
+    with rasterio.open(datafile) as src:
+        n_bands = src.count
+
+    # Enable NBAR Near Real Time (NRT) processing
+    if band_number > (n_bands + 1):
+        rasterdoy = (((n_bands) - (int((hour + 3) / 6))) / 4) + 1
+        if (doy - rasterdoy) < 7:
+            band_idx = (int(rasterdoy) - 1) * 4 + int((hour + 3) / 6)
 
     try:
-        value = get_pixel(datafile, lonlat)
+        value = gaip.get_pixel(datafile, lonlat, band=band_idx)
     except IndexError:
-        raise Exception(f"Invalid Water Vapour band number: {band_idx}")
+        msg = f"Invalid water vapour band number: {band_idx}"
+        raise IndexError(msg)
 
     value = value * scale_factor
 
