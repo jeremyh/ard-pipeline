@@ -44,6 +44,12 @@ class Acquisition:
     def data(self):
         return gaip.data(self)
 
+    def data_and_box(self):
+        return gaip.data_and_box(self)
+
+    def gridded_geo_box(self):
+        return gaip.gridded_geo_box(self)
+
 
 class LandsatAcquisition(Acquisition):
     def __init__(self, metadata):
