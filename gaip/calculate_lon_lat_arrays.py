@@ -166,6 +166,9 @@ def create_lon_lat_grids(
 
     lon_arr = interpolate_array(shape, lon_func)
 
+    crs = geobox.crs.ExportToWkt()
+    transform = geobox.affine.to_gdal()
+
     if to_disk:
         lon_fname = os.path.join(work_dir, lon_fname)
         write_img(
