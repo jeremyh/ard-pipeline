@@ -74,9 +74,9 @@ class GriddedGeoBox(object):
         bbshape = dataset.shape
         origin = (dataset.affine[2], dataset.affine[5])
         pixelsize = dataset.res
-        crsName = str(dataset.crs["init"])
+        crsString = bytes(dataset.crs_wkt)
 
-        return GriddedGeoBox(bbshape, origin, pixelsize, crsName)
+        return GriddedGeoBox(bbshape, origin, pixelsize, crsString)
 
     @staticmethod
     def from_gdal_dataset(dataset):
@@ -159,6 +159,10 @@ class GriddedGeoBox(object):
     def getShapeYX(self):
         return self.shape
 
+    def transformPoint(self, transformation, point):
+        (x, y, z) = transformation.TransformPoint(point[0], point[1])
+        return (x, y)
+
     def copy(self, crs="EPSG:4326"):
         """
         Create a copy of this GriddedGeoBox transformed to the supplied
@@ -166,16 +170,11 @@ class GriddedGeoBox(object):
         to the old and will be grid aligned to the new CRS. Pixel size
         may change to accommodate the new CRS
         """
-
-        def transformPoint(transformation, point):
-            (x, y, z) = transformation.TransformPoint(point[0], point[1])
-            return (x, y)
-
         newCrs = osr.SpatialReference()
         newCrs.SetFromUserInput(crs)
         old2New = osr.CoordinateTransformation(self.crs, newCrs)
-        newOrigin = transformPoint(old2New, self.origin)
-        newCorner = transformPoint(old2New, self.corner)
+        newOrigin = self.transformPoint(old2New, self.origin)
+        newCorner = self.transformPoint(old2New, self.corner)
         newPixelSize = tuple(
             [
                 abs((self.origin[0] - newCorner[0]) / self.shape[0]),
@@ -227,3 +226,67 @@ class GriddedGeoBox(object):
 
     def y_size(self):
         return self.shape[0]
+
+    def convert_coordinates(self, xy, to_map=True, centre=False):
+        """
+        Given a tuple containing an (x, y) co-ordinate pair, convert
+        the co-ordinate pair to either image/array co-ordinates or
+        real world (map) co-ordinates.
+
+        :param xy:
+            A tuple containing an (x, y) co-ordinate pair. The pair
+            can be either image/array co-ordinates or map
+            co-ordinates. If image co-ordinates are input, then set
+            to_map=True. If map co-ordinates are input, then set
+            to_map=False.
+
+        :param to_map:
+            A boolean indicating if the conversion should be image to
+            map or map to image. Default is True (image to map).
+
+        :param centre:
+            A boolean indicating if the returned co-ordinate pair
+            should be offset by 0.5 indicating the centre of a pixel.
+            Default is False.
+
+        :return:
+            A tuple containing an (x, y) co-ordinate pair.
+            The returned type will be int if to_map=False and float
+            if to_map=True (Default).
+        """
+        if to_map:
+            if centre:
+                xy = tuple(v + 0.5 for v in xy)
+            x, y = xy * self.affine
+        else:
+            inv = ~self.affine
+            x, y = [int(v) for v in inv * xy]
+
+        return (x, y)
+
+    def transform_coordinates(self, xy, to_crs):
+        """
+        Transform a tuple co-ordinate pair (x, y) from one CRS to
+        another.
+
+        :param xy:
+            A tuple containing an (x, y) co-ordinate pair of real
+            world co-ordinates.
+
+        :param to_crs:
+            An instance of a defined osr.SpatialReference object.
+
+        :return:
+            A tuple (x, y) floating point co-ordinate pair.
+        """
+        if not isinstance(to_crs, osr.SpatialReference):
+            err = "Err: to_crs is not an instance of osr.SpatialReference: {}"
+            err.format(to_crs)
+            raise TypeError(err)
+
+        # Define the transform we are transforming to
+        transform = osr.CoordinateTransformation(self.crs, to_crs)
+
+        x, y = self.transformPoint(transform, point)
+
+        return (x, y)
