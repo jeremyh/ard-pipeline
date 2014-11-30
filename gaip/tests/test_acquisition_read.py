@@ -40,24 +40,26 @@ class Landsat5AcquisitionTest(unittest.TestCase):
         self.acqs = gaip.acquisitions(L5_DIR)
 
     def test_multi_band_read(self):
-        acqs_subset, bands = gaip.stack_data(
+        acqs_subset, bands, geo_box = gaip.stack_data(
             self.acqs, filter=(lambda acq: acq.band_type != gaip.PAN)
         )
         assert bands.shape == (7, 8801, 9721)
 
     def test_multi_band_read(self):
-        acqs_subset, bands = gaip.stack_data(
+        acqs_subset, bands, geo_box = gaip.stack_data(
             self.acqs, filter=(lambda acq: acq.band_type != gaip.PAN)
         )
         assert bands.shape == (7, 8801, 9721)
 
     def test_read_with_no_acqs_selected(self):
-        acqs_subset, bands = gaip.stack_data(self.acqs, filter=(lambda acq: False))
+        acqs_subset, bands, geo_box = gaip.stack_data(
+            self.acqs, filter=(lambda acq: False)
+        )
         assert len(acqs_subset) == 0
         assert bands is None
 
     def test_read_with_no_acqs_input(self):
-        acqs_subset, bands = gaip.stack_data([], filter=(lambda acq: False))
+        acqs_subset, bands, geo_box = gaip.stack_data([], filter=(lambda acq: False))
         assert len(acqs_subset) == 0
         assert bands is None
 
@@ -67,30 +69,32 @@ class Landsat7AcquisitionTest(unittest.TestCase):
         self.acqs = gaip.acquisitions(L7_DIR)
 
     def test_multi_band_read(self):
-        acqs_subset, bands = gaip.stack_data(
+        acqs_subset, bands, geo_box = gaip.stack_data(
             self.acqs, filter=(lambda acq: acq.band_type != gaip.PAN)
         )
         assert bands.shape == (8, 8761, 9761)
 
     def test_multi_band_read(self):
-        acqs_subset, bands = gaip.stack_data(
+        acqs_subset, bands, geo_box = gaip.stack_data(
             self.acqs, filter=(lambda acq: acq.band_type != gaip.PAN)
         )
         assert bands.shape == (8, 8761, 9761)
 
     def test_read_with_no_acqs_selected(self):
-        acqs_subset, bands = gaip.stack_data(self.acqs, filter=(lambda acq: False))
+        acqs_subset, bands, geo_box = gaip.stack_data(
+            self.acqs, filter=(lambda acq: False)
+        )
         assert len(acqs_subset) == 0
         assert bands is None
 
     def test_read_with_no_acqs_input(self):
-        acqs_subset, bands = gaip.stack_data([], filter=(lambda acq: False))
+        acqs_subset, bands, geo_box = gaip.stack_data([], filter=(lambda acq: False))
         assert len(acqs_subset) == 0
         assert bands is None
 
     def test_read_with_all_selected(self):
         try:
-            acqs_subset, bands = gaip.stack_data(self.acqs)
+            acqs_subset, bands, geo_box = gaip.stack_data(self.acqs)
             self.fail(
                 "Should have got ValueError exception ",
                 "because Panchromatic band is wrong size",
@@ -143,30 +147,33 @@ class Landsat8AcquisitionTest(unittest.TestCase):
         assert box.pixelsize == (25.0, 25.0)
 
     def test_multi_band_read(self):
-        acqs_subset, bands = gaip.stack_data(
+        acqs_subset, bands, geo_box = gaip.stack_data(
             self.acqs, filter=(lambda acq: acq.band_type != gaip.PAN)
         )
         assert bands.shape == (9, 9081, 9401)
 
     def test_multi_band_read(self):
-        acqs_subset, bands = gaip.stack_data(
+        acqs_subset, bands, geo_box = gaip.stack_data(
             self.acqs, filter=(lambda acq: acq.band_type != gaip.PAN)
         )
         assert bands.shape == (9, 9081, 9401)
 
     def test_read_with_no_acqs_selected(self):
-        acqs_subset, bands = gaip.stack_data(self.acqs, filter=(lambda acq: False))
+        acqs_subset, bands, geo_box = gaip.stack_data(
+            self.acqs, filter=(lambda acq: False)
+        )
         assert len(acqs_subset) == 0
         assert bands is None
+        assert geo_box is None
 
     def test_read_with_no_acqs_input(self):
-        acqs_subset, bands = gaip.stack_data([], filter=(lambda acq: False))
+        acqs_subset, bands, geo_box = gaip.stack_data([], filter=(lambda acq: False))
         assert len(acqs_subset) == 0
         assert bands is None
 
     def test_read_with_all_selected(self):
         try:
-            acqs_subset, bands = gaip.stack_data(self.acqs)
+            acqs_subset, bands, geo_box = gaip.stack_data(self.acqs)
             self.fail(
                 "Should have got ValueError exception ",
                 "because Panchromatic band is wrong size",
