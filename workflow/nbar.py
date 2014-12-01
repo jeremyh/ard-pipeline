@@ -1,39 +1,20 @@
-import logging
+from os.path import dirname
+from os.path import join as pjoin
 
 import luigi
 
-config = luigi.configuration.get_config()
-config.add_config_path("workflow.cfg")
+import gaip
 
-HOSTNAME = "raijin"
+CONFIG = luigi.configuration.get_config()
+CONFIG.add_config_path(pjoin(dirname(__file__), "nbar.cfg"))
 
-log = logging.getLogger("root." + __name__)
+WORK_PATH = CONFIG.get("work", "path")
+DEM_PATH = CONFIG.get("ancillary", "dem_path")
 
 
-class Parameter(luigi.Parameter):
-    def __init__(
-        self,
-        default=_no_value,
-        is_list=False,
-        is_boolean=False,
-        is_global=False,
-        significant=True,
-        description=None,
-        config_path=None,
-        default_from_config=None,
-        name=None,
-    ):
-        path = dict(section=HOSTNAME, name=name)
-        super().__init__(
-            default=default,
-            is_list=is_list,
-            is_boolean=is_boolean,
-            is_global=is_global,
-            significant=significant,
-            description=description,
-            config_path=path,
-            default_from_config=None,
-        )
+def save(target, value):
+    with target().open("w") as outfile:
+        print >> outfile, value
 
 
 class CheckNBAROutputTask(luigi.Task):
@@ -51,33 +32,35 @@ class CheckNBAROutputTask(luigi.Task):
 
 
 class GetElevationAncillaryDataTask(luigi.Task):
-    l1t_path = Parameter(name="l1t_path")
+    l1t_path = luigi.Parameter()
 
     def requires(self):
-        return [CheckNBAROutputTask()]
+        return []
 
     def output(self):
-        return luigi.LocalTarget(f"data/thresh_{cell}_{self.value}.txt")
+        return luigi.LocalTarget(pjoin(WORK_PATH, "elevation.txt"))
 
     def run(self):
-        from ULA3.ancillary.elevation import get_elevation_data
-        from ULA3.image_processor import ProcessorConfig
-
-        CONFIG = ProcessorConfig()
-        l1t_input_dataset = DATA.get_item(CONFIG.input["l1t"]["path"], SceneDataset)
-        get_elevation_data(l1t_input_dataset.lonlats["CENTRE"], CONFIG.DIR_DEM)
-        pass
+        gaip.acquisitions(self.l1t_path)
+        centre = (149.8356150617209, -34.610552280145946)  # FIXME
+        value = gaip.get_elevation_data(centre, DEM_PATH)
+        save(self.output, value)
 
 
 class GetOzoneAncillaryDataTask(luigi.Task):
+    l1t_path = luigi.Parameter()
+
     def requires(self):
-        return [CheckNBAROutputTask()]
+        return []
 
     def output(self):
-        pass
+        return luigi.LocalTarget(pjoin(WORK_PATH, "ozone.txt"))
 
     def run(self):
-        pass
+        gaip.acquisitions(self.l1t_path)
+        centre = (149.8356150617209, -34.610552280145946)  # FIXME
+        value = gaip.get_ozone_data(OZONE_PATH, centre, dt)
+        save(self.output, value)
 
 
 class GetSolarIrradienceAncillaryDataTask(luigi.Task):
@@ -330,3 +313,8 @@ class RadiativeTransferPostprocessingTask(luigi.Task):
 
     def run(self):
         pass
+
+
+if __name__ == "__main__":
+    l1t_path = "../gaip/tests/data/L1T/LS7_90-81_2009-04-15/UTM/LS7_ETM_OTH_P51_GALPGS01-002_090_081_20090415"
+    luigi.build([GetElevationAncillaryDataTask(l1t_path)], local_scheduler=True)
