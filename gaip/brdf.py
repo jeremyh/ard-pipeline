@@ -22,7 +22,7 @@ import re
 import numpy as np
 from osgeo import gdal, gdalconst, osr
 
-from gaip import write_img
+from gaip import GriddedGeoBox, write_img
 
 logger = logging.getLogger("root." + __name__)
 
@@ -292,9 +292,6 @@ class BRDFLoader:
         pixsz_x = self.delta_lon
         pixsz_y = self.delta_lat
 
-        # Construct the geotransform tuple; assuming 0 degree rotation
-        geotransform = (ULlon, pixsz_x, 0, ULlat, 0, pixsz_y)
-
         # Setup the projection; assuming Geographics WGS84
         # (Tests have shown that this appears to be the case)
         # (unfortunately it is not expicitly defined in the HDF file)
@@ -302,8 +299,15 @@ class BRDFLoader:
         sr.SetWellKnownGeogCS("WGS84")
         prj = sr.ExportToWkt()
 
+        # Setup the geobox
+        dims = self.data[0].shape
+        res = (pixsz_x, pixsz_y)
+        geobox = GriddedGeoBox(
+            shape=dims, origin=(ULlon, ULlat), pixelsize=res, crs=prj
+        )
+
         # Write the file
-        write_img(self.data[0], filename, format, prj, geotransform)
+        write_img(self.data[0], filename, format, geobox=geobox)
 
     def get_mean(self, array):
         """This mechanism will be used to calculate the mean in place in
