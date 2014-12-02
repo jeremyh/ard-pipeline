@@ -136,8 +136,8 @@ def create_lon_lat_grids(
     lat_func = partial(get_lat_coordinate, geobox=geobox, centre=True)
 
     # Get some basic info about the image
-    crs = geobox.crs.ExportToWkt()
-    transform = geobox.affine.to_gdal()
+    geobox.crs.ExportToWkt()
+    geobox.affine.to_gdal()
     shape = geobox.getShapeYX()
 
     # Initialise the array to contain the result
@@ -148,9 +148,7 @@ def create_lon_lat_grids(
 
     if to_disk:
         lon_fname = os.path.join(work_dir, lon_fname)
-        write_img(
-            lon_arr, lon_fname, format="GTiff", geotransform=transform, projection=crs
-        )
+        write_img(lon_arr, lon_fname, format="GTiff", geobox=geobox)
         lon_arr = None
 
     lat_arr = np.zeros(shape, dtype=dtype)
@@ -160,9 +158,7 @@ def create_lon_lat_grids(
 
     if to_disk:
         lat_fname = os.path.join(work_dir, lat_fname)
-        write_img(
-            lat_arr, lat_fname, format="GTiff", geotransform=transform, projection=crs
-        )
+        write_img(lat_arr, lat_fname, format="GTiff", geobox=geobox)
         lat_arr = None
         return
     else:
