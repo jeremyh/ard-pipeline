@@ -7,7 +7,7 @@ import numpy as np
 import osr
 from EOtools.blrb import interpolate_grid
 
-from gaip import write_img
+from gaip import gridded_geo_box, write_img
 
 CRS = "EPSG:4326"
 
@@ -89,7 +89,7 @@ def get_lat_coordinate(y, x, geobox, geo_crs=None, centre=False):
 
 
 def create_lon_lat_grids(
-    geobox,
+    acquisition,
     depth=7,
     dtype="float64",
     lon_fname="LON.tif",
@@ -100,8 +100,8 @@ def create_lon_lat_grids(
     """Creates 2 by 2D NumPy arrays containing longitude and latitude
     co-ordinates for each array element.
 
-    :param geobox:
-        A GriddedGeoBox object.
+    :param acquisition:
+        An instance of an acquisitions object.
 
     :param lon_fname:
         If the keyword to_disk is set to True (Default) then the
@@ -131,6 +131,9 @@ def create_lon_lat_grids(
         the longitude and latitude arrays are returned as a tuple
         (longitude, latitude) 2D float64 NumPy arrays.
     """
+    # Compute the geobox
+    geobox = gridded_geo_box(acquisition)
+
     # Define the lon and lat transform funtions
     lon_func = partial(get_lon_coordinate, geobox=geobox, centre=True)
     lat_func = partial(get_lat_coordinate, geobox=geobox, centre=True)
