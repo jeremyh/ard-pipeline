@@ -10,9 +10,7 @@ import gaip
 log = logging.getLogger()
 
 
-def get_aerosol_value(
-    dt, ll_lat, ll_lon, ur_lat, ur_lon, aerosol_path, aot_loader_path
-):
+def get_aerosol_data(dt, ll_lat, ll_lon, ur_lat, ur_lon, aerosol_path, aot_loader_path):
     """Extract the aerosol value for a region (typically a scene).
 
     :param dt:
@@ -199,3 +197,36 @@ def get_ozone_data(ozone_path, lonlat, datetime):
     datafile = pjoin(ozone_path, filename)
     value = gaip.get_pixel(datafile, lonlat)
     return {"data_source": "Ozone", "data_file": datafile, "value": value}
+
+
+def get_solar_irrad(acquisitions, solar_path):
+    """Extract solar irradiance values from the specified file. One for each band."""
+    bands = [a.band_num for a in acquisitions if a.band_type == gaip.REF]
+
+    with open(pjoin(solar_path, bands[0].solar_irrad_file)) as infile:
+        header = infile.readline()
+        if "band solar irradiance" not in header:
+            raise OSError("Cannot load solar irradiance file")
+
+        irrads = {}
+        for line in infile.readlines():
+            band, value = line.strip().split()
+            band, value = int(band), float(value)  # parse
+            if band in bands:
+                irrads[band] = value
+
+        return irrads
+
+
+def get_solar_dist(acquisition, sundist_path):
+    """Extract Earth-Sun distance for this day of the year (varies during orbit)."""
+    doy = acquisition.scene_center_date.timetuple().tm_yday
+
+    with open(sundist_path) as infile:
+        for line in infile.readlines():
+            index, dist = line.strip().split()
+            index = int(index)
+            if index == doy:
+                return float(dist)
+
+    raise OSError("Cannot load Earth-Sun distance")
