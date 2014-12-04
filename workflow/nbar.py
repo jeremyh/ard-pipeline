@@ -1,6 +1,7 @@
 from os.path import dirname
 from os.path import join as pjoin
 
+import cPickle as pickle
 import luigi
 
 import gaip
@@ -9,12 +10,22 @@ CONFIG = luigi.configuration.get_config()
 CONFIG.add_config_path(pjoin(dirname(__file__), "nbar.cfg"))
 
 WORK_PATH = CONFIG.get("work", "path")
+
 DEM_PATH = CONFIG.get("ancillary", "dem_path")
+DEM_TARGET = pjoin(WORK_PATH, "elevation.pkl")
+
+OZONE_PATH = CONFIG.get("ancillary", "ozone_path")
+OZONE_TARGET = pjoin(WORK_PATH, "ozone.pkl")
 
 
 def save(target, value):
     with target().open("w") as outfile:
-        print >> outfile, value
+        pickle.dump(value, outfile)
+
+
+def load(target):
+    with target().open("r") as infile:
+        return pickle.load(infile)
 
 
 class CheckNBAROutputTask(luigi.Task):
@@ -38,12 +49,12 @@ class GetElevationAncillaryDataTask(luigi.Task):
         return []
 
     def output(self):
-        return luigi.LocalTarget(pjoin(WORK_PATH, "elevation.txt"))
+        return luigi.LocalTarget(DEM_TARGET)
 
     def run(self):
-        gaip.acquisitions(self.l1t_path)
-        centre = (149.8356150617209, -34.610552280145946)  # FIXME
-        value = gaip.get_elevation_data(centre, DEM_PATH)
+        acqs = gaip.acquisitions(self.l1t_path)
+        geobox = acqs[0].gridded_geo_box()
+        value = gaip.get_elevation_data(geobox.centre_lonlat, DEM_PATH)
         save(self.output, value)
 
 
@@ -54,11 +65,13 @@ class GetOzoneAncillaryDataTask(luigi.Task):
         return []
 
     def output(self):
-        return luigi.LocalTarget(pjoin(WORK_PATH, "ozone.txt"))
+        return luigi.LocalTarget(OZONE_TARGET)
 
     def run(self):
-        gaip.acquisitions(self.l1t_path)
-        centre = (149.8356150617209, -34.610552280145946)  # FIXME
+        acqs = gaip.acquisitions(self.l1t_path)
+        dt = acqs[0].scene_center_datetime
+        geobox = acqs[0].gridded_geo_box()
+        centre = geobox.centre_lonlat
         value = gaip.get_ozone_data(OZONE_PATH, centre, dt)
         save(self.output, value)
 
