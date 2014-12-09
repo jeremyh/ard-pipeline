@@ -9,11 +9,13 @@ import os
 import gdal
 import gdalconst
 import numpy as np
-from _brdf_terrain_newdiff_all import terrain_correction
-from _shade_main_landsat_pixel import shade_main_landsat_pixel
-from _slope_pixelsize_newpole import slope_pixelsize_newpole
 
-from ULA3.filtering import filter_float as filter
+from gaip import (
+    filter,
+    shade_main_landsat_pixel,
+    slope_pixelsize_newpole,
+    terrain_correction,
+)
 from ULA3.meta import print_call
 from ULA3.utils import DTYPE_MAP, as_array, dump_array, get_bounds, warp
 
