@@ -1,6 +1,3 @@
-# Fortran modules (F2Py)
-
-# Python imports
 from acquisition import *
 from ancillary import *
 from brdf import *
