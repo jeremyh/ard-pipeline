@@ -1,5 +1,7 @@
 #!/bin/env python
 
+import gc
+
 # from EOtools.DatasetDrivers import SceneDataset
 import logging
 import os
@@ -13,7 +15,7 @@ from cloud_shadow_masking import Cloud_Shadow
 from constants import PQAConstants
 from contiguity_masking import setContiguityBit
 from fmask_cloud_masking_wrapper import FMaskCloudMask
-from land_sea_masking import setLandSeaBit
+from memuseFilter import MemuseFilter
 from pqa_result import PQAResult
 from saturation_masking import setSaturationBits
 from thermal_conversion import get_landsat_temperature
@@ -82,8 +84,7 @@ class PixelQualityTask(luigi.Task):
         # land/sea
 
         logging.debug("setting land/sea bit")
-        utm_zone = l1t_acqs[0].zone_number
-        setLandSeaBit(geo_box, utm_zone, self.land_sea_path, pq_const, pqaResult)
+        gaip.setLandSeaBit(geo_box, pq_const, pqaResult, self.land_sea_path)
         logging.debug("done setting land/sea bit")
 
         # get temperature data from thermal band in prepartion for cloud detection
@@ -134,7 +135,7 @@ class PixelQualityTask(luigi.Task):
         # band data
 
         nbar_acqs, nbar_data, geo_box = gaip.stack_data(
-            nbar_acqs, filter=(lambda acq: acq.band_type != gaip.PAN)
+            nbar_acqs, filter=(lambda acq: True)
         )
         logging.debug(
             f"nbar_data shape={str(nbar_data.shape)}, geo_box= {str(geo_box)}"
@@ -171,7 +172,6 @@ class PixelQualityTask(luigi.Task):
 
         # parameters for cloud shadow masks
 
-        contiguity_mask = pqaResult.get_mask(pq_const.contiguity)
         land_sea_mask = pqaResult.get_mask(pq_const.land_sea)
 
         # acca cloud shadow
@@ -182,14 +182,14 @@ class PixelQualityTask(luigi.Task):
             aux_data = {}  # for collecting result metadata
 
             cloud_mask = pqaResult.get_mask(pq_const.acca)
+            sun_az_deg = l1t_acqs[0].sun_azimuth
+            sun_elev_deg = l1t_acqs[0].sun_elevation
             if pq_const.oli_tirs:
                 mask = Cloud_Shadow(
                     nbar_data[1:, :, :],
                     kelvin_band,
                     cloud_mask,
                     geo_box,
-                    nbar_acqs,
-                    pq_const,
                     land_sea_mask=land_sea_mask,
                     contiguity_mask=contiguity_mask,
                     cloud_algorithm="ACCA",
@@ -202,7 +202,8 @@ class PixelQualityTask(luigi.Task):
                     kelvin_band,
                     cloud_mask,
                     geo_box,
-                    nbar_acqs,
+                    sun_az_deg,
+                    sun_elev_deg,
                     pq_const,
                     land_sea_mask=land_sea_mask,
                     contiguity_mask=contiguity_mask,
@@ -231,13 +232,16 @@ class PixelQualityTask(luigi.Task):
             aux_data = {}  # for collecting result metadata
 
             cloud_mask = pqaResult.get_mask(pq_const.fmask)
+            sun_az_deg = l1t_acqs[0].sun_azimuth
+            sun_elev_deg = l1t_acqs[0].sun_elevation
             if pq_const.oli_tirs:
                 mask = Cloud_Shadow(
                     nbar_data[1:, :, :],
                     kelvin_band,
                     cloud_mask,
                     geo_box,
-                    nbar_acqs,
+                    sun_az_deg,
+                    sun_elev_deg,
                     pq_const,
                     land_sea_mask=land_sea_mask,
                     contiguity_mask=contiguity_mask,
@@ -251,7 +255,8 @@ class PixelQualityTask(luigi.Task):
                     kelvin_band,
                     cloud_mask,
                     geo_box,
-                    nbar_acqs,
+                    sun_az_deg,
+                    sun_elev_deg,
                     pq_const,
                     land_sea_mask=land_sea_mask,
                     contiguity_mask=contiguity_mask,
@@ -305,10 +310,10 @@ class NBARdataset(luigi.Target):
 
 
 if __name__ == "__main__":
-    #    logging.config.fileConfig('logging.conf') # Get basic config
-    #    log = logging.getLogger('')               # Get root logger
-    #    f = MemuseFilter()                        # Create filter
-    #    log.handlers[0].addFilter(f)         # The ugly part:adding filter to handler
+    logging.config.fileConfig("logging.conf")  # Get basic config
+    log = logging.getLogger("")  # Get root logger
+    f = MemuseFilter()  # Create filter
+    log.handlers[0].addFilter(f)  # The ugly part:adding filter to handler
     logging.info("PQA started")
     luigi.run()
     logging.info("PQA done")
