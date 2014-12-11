@@ -1,4 +1,4 @@
-from os.path import dirname
+from os.path import dirname, exists
 from os.path import join as pjoin
 
 import cPickle as pickle
@@ -255,15 +255,71 @@ class CalculateGridsTask(luigi.Task):
         return all([d.complete() for d in self.requires()])
 
 
-class PrepareModtranInputTask(luigi.Task):
+class CreateModtranDirectories(luigi.Task):
+    created = None
+
+    def run(self):
+        workpath = CONFIG.get("work", "path")
+        modtran_root = CONFIG.get("modtran", "root")
+        CONFIG.get("modtran", "exe")
+        self.created = gaip.create_modtran_dirs(workpath, modtran_root)
+
+    def complete(self):
+        if self.created:
+            return all([exists(p) for p in self.created])
+        else:
+            return False
+
+
+class CreateSatelliteFilterFile(luigi.Task):
+    l1t_path = luigi.Parameter()
+    created = None
+
     def requires(self):
         return []
 
+    def run(self):
+        acqs = gaip.acquisitions(self.l1t_path)
+        workpath = CONFIG.get("work", "path")
+        satfilterpath = CONFIG.get("ancillary", "satfilter_path")
+        self.created = gaip.create_satellite_filter_file(acqs, workpath, satfilterpath)
+
+    def complete(self):
+        if self.created:
+            return exists(self.created)
+        else:
+            return False
+
+
+class WriteModtranInputFile(luigi.Task):
+    l1t_path = luigi.Parameter()
+
+    def requires(self):
+        return [GetAncillaryData(self.l1t_path)]
+
     def output(self):
-        pass
+        target = CONFIG.get("work", "modtran_input_target")
+        return luigi.LocalTarget(target)
 
     def run(self):
-        pass
+        # TODO
+        target = self.output().fn
+        gaip.write_modtran_input(acqs, target, ozone, vapour, aerosol, elevation)
+
+
+class PrepareModtranInput(luigi.Task):
+    l1t_path = luigi.Parameter()
+
+    def requires(self):
+        return [CreateModtranDirectories(), CreateSatelliteFilterFile(self.l1t_path)]
+
+    def run(self):
+        acqs = gaip.acquisitions(self.l1t_path)
+        workpath = CONFIG.get("work", "path")
+        CONFIG.get("modtran", "root")
+        satfilter_path = CONFIG.get("ancillary", "satfilter_path")
+        CONFIG.get("modtran", "exe")
+        gaip.create_satellite_filter_file(acqs, workpath, satfilter_path)
 
 
 class RunModtranTask(luigi.Task):
