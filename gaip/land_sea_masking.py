@@ -1,38 +1,37 @@
 import os
 
 import numpy as np
-from osgeo import gdal
+from osgeo import gdal, osr
 
 
-def calc_land_sea_mask(image_stack, input_dataset, ancillary_path):
+def calc_land_sea_mask(
+    geo_box, ancillary_path="/g/data/v10/eoancillarydata/Land_Sea_Rasters"
+):
     """Creates a Land/Sea mask.
-
-    :param image_stack:
-        An ordered array of all bands.
-
-    :param input_dataset:
-        A 2D Numpy array of the Land/Sea file.
-
-    :param ancillary_path:
-        Path to land/sea ancillary data directory
-
+    :param geo_box:
+        An instance of GriddedGeoBox defining the region for which the
+        land/sea mask is required
+    :param ancillary_mask:
+        The path to the directory containing the land/sea data files.
     :return:
         A 2D Numpy Boolean array. True = Land, False = Sea.
-
     :author:
-        Josh Sixsmith, joshua.sixsmith@ga.gov.au
+        Josh Sixsmith, joshua.sixsmith@ga.gov.au.
+
+    Note: The function does not currently support reprojections. The
+    GriddedGeoBox must have CRS and Pixelsize matching the
+    ancillary data GeoTiffs.
+
+    TODO: support reprojection to any arbitrary GriddedGeoBox
     """
 
     def img2map(geoTransform, pixel):
         """Converts a pixel (image) co-ordinate into a map co-ordinate.
-
         :param geoTransform:
             The Image co-ordinate information (upper left coords, offset
             and pixel sizes)
-
         :param pixel:
             A tuple containg the y and x image co-ordinates.
-
         :return:
             A tuple containg the x and y map co-ordinates.
         """
@@ -43,14 +42,11 @@ def calc_land_sea_mask(image_stack, input_dataset, ancillary_path):
 
     def map2img(geoTransform, location):
         """Converts a map co-ordinate into a pixel (image) co-ordinate.
-
         :param geoTransform:
             The Image co-ordinate information (upper left coords, offset
             and pixel sizes)
-
         :param location:
             A tuple containg the x and y map co-ordinates.
-
         :return:
             A tuple containg the y and x image co-ordinates.
         """
@@ -58,22 +54,40 @@ def calc_land_sea_mask(image_stack, input_dataset, ancillary_path):
         imgy = int(np.round((geoTransform[3] - location[1]) / np.abs(geoTransform[5])))
         return (imgy, imgx)
 
-    rasfile = os.path.join(ancillary_path, "WORLDzone%02d.tif" % input_dataset.zone)
+    def getUtmZone(pos_longlat):
+        """Return the UTM zone number corresponding to the supplied position.
+
+        Arguments:
+        ---------
+            pos_longlat: position as tuple (This in (long, lat)
+
+        Returns:
+        -------
+            The UTM zone number (+ve for North, -ve for South)
+        """
+        lon, lat = pos_longlat
+        z = int(lon / 6) + 31
+        if lat < 0:
+            z = -z
+        return z
+
+    # get lat/long of geo_box origin
+
+    to_crs = osr.SpatialReference()
+    to_crs.SetFromUserInput("EPSG:4326")
+    origin_longlat = geo_box.transform_coordinates(geo_box.origin, to_crs)
+
+    # get Land/Sea data file for this bounding box
+    utm_zone = abs(getUtmZone(origin_longlat))
+
+    rasfile = os.path.join(ancillary_path, "WORLDzone%02d.tif" % abs(utm_zone))
     assert os.path.exists(rasfile), "ERROR: Raster File Not Found (%s)" % rasfile
 
-    prj = input_dataset.GetProjection()
-    geoTransform = input_dataset.GetGeoTransform()
-
-    if prj is None:
-        raise Exception("Image projection Infomation is needed")
+    geoTransform = geo_box.affine.to_gdal()
     if geoTransform is None:
         raise Exception("Image geotransformation Info is needed")
 
-    dims = image_stack.shape
-    if len(dims) > 2:
-        ncols = dims[2]
-        nrows = dims[1]
-        dims = (nrows, ncols)
+    dims = geo_box.shape
 
     lsobj = gdal.Open(rasfile, gdal.gdalconst.GA_ReadOnly)
     ls_geoT = lsobj.GetGeoTransform()
@@ -93,11 +107,15 @@ def calc_land_sea_mask(image_stack, input_dataset, ancillary_path):
 
     # Read in the land/sea array
     ls_arr = lsobj.ReadAsArray(xoff, yoff, xsize, ysize)
-
     return ls_arr.astype("bool")
 
 
-def setLandSeaBit(l1t_data, l1t_dataset, ancillary_path, pq_const, pqaResult):
-    mask = calc_land_sea_mask(l1t_data, l1t_dataset, ancillary_path)
+def setLandSeaBit(
+    gridded_geo_box,
+    pq_const,
+    pqaResult,
+    ancillary_path="/g/data/v10/eoancillarydata/Land_Sea_Rasters",
+):
+    mask = calc_land_sea_mask(gridded_geo_box, ancillary_path)
     bit_index = pq_const.land_sea
     pqaResult.set_mask(mask, bit_index)
