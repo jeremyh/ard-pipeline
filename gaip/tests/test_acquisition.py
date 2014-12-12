@@ -135,6 +135,12 @@ class Landsat5AcquisitionTest(unittest.TestCase):
     def test_sun_elevation(self):
         assert self.acqs[0].sun_elevation == 28.704069
 
+    def test_gain(self):
+        self.assertAlmostEqual(self.acqs[0].gain, 0.7658267716535433)
+
+    def test_bias(self):
+        self.assertAlmostEqual(self.acqs[0].bias, -2.2858267716535465)
+
 
 class Landsat7AcquisitionTest(unittest.TestCase):
     def setUp(self):
@@ -224,6 +230,12 @@ class Landsat7AcquisitionTest(unittest.TestCase):
 
     def test_sun_elevation(self):
         assert self.acqs[0].sun_elevation == 40.4612407
+
+    def test_gain(self):
+        self.assertAlmostEqual(self.acqs[0].gain, 0.7787401574803149)
+
+    def test_bias(self):
+        self.assertAlmostEqual(self.acqs[0].bias, -6.978740157480303)
 
 
 class Landsat8AcquisitionTest(unittest.TestCase):
@@ -316,6 +328,12 @@ class Landsat8AcquisitionTest(unittest.TestCase):
 
     def test_sun_elevation(self):
         assert self.acqs[0].sun_elevation == 52.25003864
+
+    def test_gain(self):
+        self.assertAlmostEqual(self.acqs[0].gain, 0.012953)
+
+    def test_bias(self):
+        self.assertAlmostEqual(self.acqs[0].bias, -64.76551)
 
 
 class L1TDataTest(unittest.TestCase):
