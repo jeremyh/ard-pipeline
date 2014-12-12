@@ -359,7 +359,7 @@ def acquisitions_via_geotiff(path):
         r"(?P<spacecraft_id>LS\d)_(?P<sensor_id>\w+)_(?P<product_type>\w+)"
         r"_(?P<product_id>P\d+)_GA(?P<product_code>.*)-(?P<station_id>\d+)_"
         r"(?P<wrs_path>\d+)_(?P<wrs_row>\d+)_(?P<acquisition_date>\d{8})_"
-        r"B(?P<band_num>\d{2})\.tif"
+        r"B(?P<band_num>\d+)\.tif"
     )
 
     acqs = []
