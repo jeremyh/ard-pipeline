@@ -264,11 +264,28 @@ def run_slope(
 
     nrow = bounds.RasterYSize + 2
     ncol = bounds.RasterXSize + 2
-    rlat = bounds.RasterYOrigin
 
     # x & y pixel resolution (This should handle cases of non-square pixels.)
-    dresx = abs(bounds.RasterXCellSize)
-    dresy = abs(bounds.RasterYCellSize)
+    # dresx = abs(bounds.RasterXCellSize)
+    # dresy = abs(bounds.RasterYCellSize)
+
+    # Perform datatype checks
+    if DEM.dtype.name != "float32":
+        msg = "DEM datatype must be float32! Datatype: {dtype}"
+        msg = msg.format(dtype=DEM.dtype.name)
+        raise TypeError(msg)
+
+    # Get the x and y pixel sizes
+    geobox = acquisition.gridded_geo_box()
+    x_origin, y_origin = geobox.origin
+    x_res, y_res = geobox.pixelsize
+    dresx = x_res + 2
+    dresy = y_res + 2
+
+    # Get acquisition dimensions and add 1 pixel top, bottom, left & right
+    cols, rows = geobox.getShapeXY()
+    ncol = cols + 2
+    nrow = rows + 2
 
     dem_dat = as_array(dem_data, dtype=np.float32)[
         (pix_buf.top - 1) : -(pix_buf.bottom - 1),
@@ -283,7 +300,7 @@ def run_slope(
 
     # This will be ignored if is_utm == True
     alat = np.array(
-        [rlat - i * dresy for i in range(-1, nrow - 1)], dtype=np.float64
+        [y_origin - i * dresy for i in range(-1, nrow - 1)], dtype=np.float64
     )  # yes, I did mean float64.
 
     mask, theta, phit, it, et, azi_it, azi_et, rela, ierr = slope_pixelsize_newpole(
