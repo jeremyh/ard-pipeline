@@ -5,6 +5,7 @@ import gc
 # from EOtools.DatasetDrivers import SceneDataset
 import logging
 import os
+import re
 
 # TODO: remove soon
 from glob import glob
@@ -21,6 +22,49 @@ from saturation_masking import setSaturationBits
 from thermal_conversion import get_landsat_temperature
 
 import gaip
+
+L1T_PATTERN = (
+    r"(?P<spacecraft_id>LS\d)_(?P<sensor_id>\w+)_(?P<product_type>\w+)"
+    r"_(?P<product_id>P\d+)_GA(?P<product_code>.*)-(?P<station_id>\d+)_"
+    r"(?P<wrs_path>\d+)_(?P<wrs_row>\d+)_(?P<acquisition_date>\d{8})"
+)
+PAT = re.compile(L1T_PATTERN)
+
+
+def nbar_name_from_l1t(l1t_fname):
+    """Return an NBAR file name given a L1T file name or None if
+    invalid L1T name.
+    """
+    m = PAT.match(l1t_fname)
+    if m:
+        sensor_id = m.group("sensor_id")
+        sensor_id = sensor_id.replace("OLITIRS", "OLI_TIRS")
+        return "{}_{}_NBAR_P54_GANBAR01-{}_{}_{}_{}".format(
+            m.group("spacecraft_id"),
+            sensor_id,
+            m.group("station_id"),
+            m.group("wrs_path"),
+            m.group("wrs_row"),
+            m.group("acquisition_date"),
+        )
+
+
+def pqa_name_from_l1t(l1t_fname):
+    """Return a PQA file name given a L1T file name or None if
+    invalid L1T name.
+    """
+    m = PAT.match(l1t_fname)
+    if m:
+        sensor_id = m.group("sensor_id")
+        sensor_id = sensor_id.replace("OLITIRS", "OLI_TIRS")
+        return "{}_{}_PQ_P55_GAPQ01-{}_{}_{}_{}".format(
+            m.group("spacecraft_id"),
+            sensor_id,
+            m.group("station_id"),
+            m.group("wrs_path"),
+            m.group("wrs_row"),
+            m.group("acquisition_date"),
+        )
 
 
 class PixelQualityTask(luigi.Task):
