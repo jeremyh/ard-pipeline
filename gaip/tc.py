@@ -322,7 +322,6 @@ def run_slope(
     if satellite_zenith.dtype.name != "float32":
         msg = "Satellite zenith datatype must be float32! Datatype: {dtype}"
         msg = msg.format(dtype=satellite_zenith.dtype.name)
-        raise TypeError(msg)
 
     if solar_azimuth.dtype.name != "float32":
         msg = "Solar azimuth datatype must be float32! Datatype: {dtype}"
@@ -349,6 +348,7 @@ def run_slope(
     dem_dat = DEM[
         (buffer.top - 1) : -(buffer.bottom - 1), (buffer.left - 1) : -(buffer.right - 1)
     ]
+
     # Check that the dimensions match
     if dem_dat.shape != (nrow, ncol):
         msg = "DEM index not of correct shape ({row}, {col}) " "!= ({drow}, {dcol})"
@@ -916,6 +916,8 @@ def run_brdfterrain(
         - (index 2) Atmospheric and brdf and terrain corrected
           reflectance
     """
+    # TODO check for correct array datatypes
+    # We want to limit any potential copies
     return terrain_correction(
         rori,
         brdf0,
