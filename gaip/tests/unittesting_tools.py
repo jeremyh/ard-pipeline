@@ -89,7 +89,11 @@ class ParameterisedTestCase(unittest.TestCase):
 
 
 def createTestImage(
-    dimensions=(1000, 1000), geotransform=None, projection=None, resolution=(25.0, 25.0)
+    dimensions=(1000, 1000),
+    geotransform=None,
+    projection=None,
+    resolution=(25.0, 25.0),
+    dtype="uint8",
 ):
     """Creates an image with geo-location information.
 
@@ -131,7 +135,7 @@ def createTestImage(
         dimensions (y, x), containing values in the range [0,256).
         The 2nd element contains an instance of a GriddedGeoBox.
     """
-    img = np.random.randint(0, 256, dimensions).astype("uint8")
+    img = np.random.randint(0, 256, dimensions).astype(dtype)
 
     if (geotransform is None) or (projection is None):
         geotransform = (635000.0, 25.0, 0.0, 6277000.0, 0.0, 25.0)
