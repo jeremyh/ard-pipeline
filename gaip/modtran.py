@@ -262,15 +262,22 @@ def bilinear_interpolate(
 
     bands = [str(a.band_num) for a in acqs]
 
+    # Initialise the dict to store the locations of the bilinear outputs
+    bilinear_outputs = {}
+
     for band in bands:
         for factor in factors:
+            fname = output_fmt.format(factor=factor, band=band)
+            bilinear_outputs[(band, factor)] = pjoin(workpath, fname)
             args = [
                 cmd,
                 coordinator,
-                input_fmt.format(coord=coord, band=band),
+                input_fmt.format(factor=factor, band=band),
                 boxline,
                 centreline,
                 output_fmt.format(factor=factor, band=band),
             ]
 
             subprocess.check_call(args, cwd=workpath)
+
+    return bilinear_outputs
