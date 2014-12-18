@@ -272,7 +272,7 @@ def bilinear_interpolate(
             args = [
                 cmd,
                 coordinator,
-                input_fmt.format(coord=coord, band=band),
+                input_fmt.format(factor=factor, band=band),
                 boxline,
                 centreline,
                 output_fmt.format(factor=factor, band=band),
