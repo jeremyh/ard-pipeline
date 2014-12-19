@@ -10,13 +10,16 @@ def calc_land_sea_mask(
     """Creates a Land/Sea mask.
     :param geo_box:
         An instance of GriddedGeoBox defining the region for which the
-        land/sea mask is required
+        land/sea mask is required.
+
+        WARNING: geo_box.crs must be UTM!!!
+
     :param ancillary_mask:
         The path to the directory containing the land/sea data files.
     :return:
         A 2D Numpy Boolean array. True = Land, False = Sea.
     :author:
-        Josh Sixsmith, joshua.sixsmith@ga.gov.au.
+        Josh Sixsmith, joshua.sixsmith@ga.gov.au
 
     Note: The function does not currently support reprojections. The
     GriddedGeoBox must have CRS and Pixelsize matching the
@@ -54,31 +57,14 @@ def calc_land_sea_mask(
         imgy = int(np.round((geoTransform[3] - location[1]) / np.abs(geoTransform[5])))
         return (imgy, imgx)
 
-    def getUtmZone(pos_longlat):
-        """Return the UTM zone number corresponding to the supplied position.
-
-        Arguments:
-        ---------
-            pos_longlat: position as tuple (This in (long, lat)
-
-        Returns:
-        -------
-            The UTM zone number (+ve for North, -ve for South)
-        """
-        lon, lat = pos_longlat
-        z = int(lon / 6) + 31
-        if lat < 0:
-            z = -z
-        return z
-
     # get lat/long of geo_box origin
 
     to_crs = osr.SpatialReference()
     to_crs.SetFromUserInput("EPSG:4326")
-    origin_longlat = geo_box.transform_coordinates(geo_box.origin, to_crs)
+    geo_box.transform_coordinates(geo_box.origin, to_crs)
 
     # get Land/Sea data file for this bounding box
-    utm_zone = abs(getUtmZone(origin_longlat))
+    utm_zone = geo_box.crs.GetUTMZone()
 
     rasfile = os.path.join(ancillary_path, "WORLDzone%02d.tif" % abs(utm_zone))
     assert os.path.exists(rasfile), "ERROR: Raster File Not Found (%s)" % rasfile
