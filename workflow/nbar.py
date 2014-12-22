@@ -739,7 +739,10 @@ class ReformatAtmosphericParameters(luigi.Task):
     l1t_path = luigi.Parameter()
 
     def requires(self):
-        return [CalculateCoefficients(self.l1t_path)]
+        return [
+            CalculateCoefficients(self.l1t_path),
+            CreateSatelliteFilterFile(self.l1t_path),
+        ]
 
     def output(self):
         factors = CONFIG.get("read_modtran", "factors").split(",")
@@ -771,6 +774,7 @@ class ReformatAtmosphericParameters(luigi.Task):
         input_format = CONFIG.get("read_modtran", "input_format")
         output_format = CONFIG.get("read_modtran", "output_format")
         workpath = CONFIG.get("work", "modtran_root")
+        satfilter = CONFIG.get("work", "sat_filter_target")
 
         acqs = gaip.acquisitions(self.l1t_path)
 
