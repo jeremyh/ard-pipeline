@@ -127,7 +127,7 @@ def generate_modtran_inputs(
     workdir,
 ):
     """Generate MODTRAN input files."""
-    cmd = pjoin(BIN_DIR, "input_modtran_ortho_ula")
+    cmd = pjoin(BIN_DIR, "input_modtran_ortho")
 
     args = [cmd, modtran_input, coordinator, sat_view_zenith, sat_azimuth]
 
