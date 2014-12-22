@@ -57,17 +57,13 @@ def write_modtran_input(
 ):
     """Generate modtran input file."""
     acq = acquisitions[0]
-    geobox = acq.gridded_geo_box()
-    ul_lon, ul_lat = geobox.ul_lonlat
-    pixel_degrees = acq.nominal_pixel_degrees
+    acq.gridded_geo_box()
     filter_file = acq.spectral_filter_file
     cdate = acq.scene_centre_date
     altitude = acq.altitude / 1000.0  # in km
     dechour = acq.decimal_hour
 
     with open(modtran_input_file, "w") as outfile:
-        outfile.write(f"{ul_lat:f} {ul_lon:f}\n")
-        outfile.write("%f\n" % pixel_degrees)
         outfile.write("%f\n" % ozone)
         outfile.write("%f\n" % vapour)
         outfile.write("DATA/%s\n" % filter_file)
@@ -79,7 +75,9 @@ def write_modtran_input(
         outfile.write("%f\n" % dechour)
 
 
-def write_modis_brdf_files(acquisitions, prefix, brdf_data):
+def write_modis_brdf_files(
+    acquisitions, prefix, brdf_data, solar_irrad_data, solar_dist_data
+):
     """Generate brdf input file."""
     ref_acqs = [a for a in acquisitions if a.band_type == gaip.REF]
 
@@ -131,7 +129,7 @@ def generate_modtran_inputs(
     workdir,
 ):
     """Generate MODTRAN input files."""
-    cmd = pjoin(BIN_DIR, "input_modtran_ortho_ula")
+    cmd = pjoin(BIN_DIR, "input_modtran_ortho")
 
     args = [cmd, modtran_input, coordinator, sat_view_zenith, sat_azimuth]
 
