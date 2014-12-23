@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 from scipy import ndimage
 
@@ -144,21 +142,27 @@ class SlopeResultSet:
         self.rela_slope = rela_slope
 
     def write_arrays(
-        self, output_path, geobox, file_type="ENVI", file_extension=".img"
+        self, geobox, out_fnames=None, file_type="ENVI", file_extension=".bin"
     ):
         # Filenames
-        fname_mask_self = os.path.join(output_path, "mask_self" + file_extension)
-        fname_slope = os.path.join(output_path, "slope" + file_extension)
-        fname_aspect = os.path.join(output_path, "aspect" + file_extension)
-        fname_incident = os.path.join(output_path, "incident" + file_extension)
-        fname_exiting = os.path.join(output_path, "exiting" + file_extension)
-        fname_azimuth_incident = os.path.join(
-            output_path, "azi_incident" + file_extension
-        )
-        fname_azimuth_exiting = os.path.join(
-            output_path, "azi_exiting" + file_extension
-        )
-        fname_relative_slope = os.path.join(output_path, "rela_slope" + file_extension)
+        if (out_fnames is None) or (len(out_fnames) != 8):
+            fname_mask_self = "self_shadow_mask" + file_extension
+            fname_slope = "slope" + file_extension
+            fname_aspect = "aspect" + file_extension
+            fname_incident = "incident_angle" + file_extension
+            fname_exiting = "exiting_angle" + file_extension
+            fname_azimuth_incident = "azimuth_incident_angle" + file_extension
+            fname_azimuth_exiting = "azimuth_exiting_angle" + file_extension
+            fname_relative_slope = "relative_slope" + file_extension
+        else:
+            fname_mask_self = out_fnames[0]
+            fname_slope = out_fnames[1]
+            fname_aspect = out_fnames[2]
+            fname_incident = out_fnames[3]
+            fname_exiting = out_fnames[4]
+            fname_azimuth_incident = out_fnames[5]
+            fname_azimuth_exiting = out_fnames[6]
+            fname_relative_slope = out_fnames[7]
 
         # Write
         write_img(
@@ -224,21 +228,12 @@ def run_slope(
     acquisition,
     DEM,
     solar_zenith,
-    satellite_zenith,
+    satellite_view,
     solar_azimuth,
     satellite_azimuth,
     buffer,
     is_utm,
     spheroid,
-    output_type="ENVI",
-    slope_dataset=None,
-    aspect_dataset=None,
-    incident_dataset=None,
-    azi_incident_dataset=None,
-    exiting_dataset=None,
-    azi_exiting_dataset=None,
-    rela_slope_dataset=None,
-    mask_self_dataset=None,
 ):
     """Calculate the slope and angles for a region. This code is an
     interface to the fortran code slope_pixel_newpole.f90 written by
@@ -263,8 +258,8 @@ def run_slope(
     :param solar_zenith:
         The solar zenith angle data for the region.
 
-    :param satellite_zenith:
-        The satellite zenith angle data for the region.
+    :param satellite_view:
+        The satellite view angle data for the region.
 
     :param solar_azimuth:
         The solar azimuth angle data for the region.
@@ -319,8 +314,8 @@ def run_slope(
         msg = msg.format(dtype=solar_zenith.dtype.name)
         raise TypeError(msg)
 
-    if satellite_zenith.dtype.name != "float32":
-        msg = "Satellite zenith datatype must be float32! Datatype: {dtype}"
+    if satellite_view.dtype.name != "float32":
+        msg = "Satellite view datatype must be float32! Datatype: {dtype}"
         msg = msg.format(dtype=satellite_zenith.dtype.name)
 
     if solar_azimuth.dtype.name != "float32":
@@ -370,7 +365,7 @@ def run_slope(
         is_utm,
         dem_dat,
         solar_zenith,
-        satellite_zenith,
+        satellite_view,
         solar_azimuth,
         satellite_azimuth,
     )
