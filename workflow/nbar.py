@@ -376,7 +376,7 @@ class CreateSatelliteFilterFile(luigi.Task):
         gaip.create_satellite_filter_file(acqs, satfilterpath, target)
 
 
-class WriteModtranInputFile(luigi.Task):
+class CreateModtranInputFile(luigi.Task):
     """Create the MODTRAN input file."""
 
     l1t_path = luigi.Parameter()
@@ -402,8 +402,8 @@ class WriteModtranInputFile(luigi.Task):
         gaip.write_modtran_input(acqs, target, ozone, vapour, aerosol, elevation)
 
 
-class WriteModisBrdfFiles(luigi.Task):
-    """Write the Modis BRDF files."""
+class CreateModisBrdfFiles(luigi.Task):
+    """Create the Modis BRDF files."""
 
     l1t_path = luigi.Parameter()
 
@@ -473,7 +473,7 @@ class GenerateModtranInputFiles(luigi.task):
         return [
             RunModtranCorOrtho(self.l1t_path),
             CalculateSatelliteAndSolarGrids(self.l1t_path),
-            WriteModtranInputFile(self.l1t_path),
+            CreateModtranInputFile(self.l1t_path),
             CalculateLatGrid(self.l1t_path),
             CalculateLonGrid(self.l1t_path),
         ]
