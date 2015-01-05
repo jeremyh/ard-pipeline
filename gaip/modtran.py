@@ -94,11 +94,10 @@ def write_modis_brdf_files(
                 )
             )
 
-            # FIXME: Waiting for Stephen Ring's code
             outfile.write(
-                str(l1t_input_dataset.bias[band_number])
+                str(acq.bias)
                 + " "
-                + str(l1t_input_dataset.gain[band_number])
+                + str(acq.gain)
                 + " "
                 + str(solar_irrad_data[band_number]["value"])
                 + " "

@@ -128,6 +128,7 @@ class PixelQualityTask(luigi.Task):
         # land/sea
 
         logging.debug("setting land/sea bit")
+        #       affine = geo_box.affine
         gaip.setLandSeaBit(geo_box, pq_const, pqaResult, self.land_sea_path)
         logging.debug("done setting land/sea bit")
 
