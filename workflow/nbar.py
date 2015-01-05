@@ -1018,6 +1018,7 @@ class SlopeAndSelfShadow(luigi.Task):
         relative_slope_target = pjoin(
             work_path, CONFIG.get("self_shadow", "relative_slope_target")
         )
+        header_slope_target = CONFIG.get("work", "header_slope_target")
 
         out_targets = [
             self_shadow_target,
@@ -1039,6 +1040,7 @@ class SlopeAndSelfShadow(luigi.Task):
             satellite_view_fname,
             satellite_azimuth_fname,
             out_targets,
+            header_slope_target,
         )
 
 
