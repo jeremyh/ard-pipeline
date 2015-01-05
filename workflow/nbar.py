@@ -462,7 +462,7 @@ class RunModtranCorOrtho(luigi.Task):
         )
 
 
-class GenerateModtranInputFiles(luigi.task):
+class GenerateModtranInputFiles(luigi.Task):
     """Generate the MODTRAN input files by running the Fortran binary
     `input_modtran_ortho_ula`.
     """
@@ -516,7 +516,7 @@ class GenerateModtranInputFiles(luigi.task):
         )
 
 
-class ReformatAsTp5(luigi.task):
+class ReformatAsTp5(luigi.Task):
     """Reformat the MODTRAN input files in `tp5` format. This runs the
     Fortran binary `refort_tp5_ga` multiple times.
     """
@@ -560,7 +560,7 @@ class ReformatAsTp5(luigi.task):
         )
 
 
-class ReformatAsTp5Trans(luigi.task):
+class ReformatAsTp5Trans(luigi.Task):
     """Reformat the MODTRAN input files in `tp5` format in the transmissive
     case. This runs the Fortran binary `refort_tp5_ga_trans` multiple
     times.
