@@ -278,6 +278,8 @@ def nbar_bands_lut(satellite_sensor):
 
     :return:
     """
+    input_str = str(satellite_sensor)
+
     NBAR_LUT = {
         "landsat5tm": [1, 2, 3, 4, 5, 7],
         "landsat7etm+": [1, 2, 3, 4, 5, 7],
