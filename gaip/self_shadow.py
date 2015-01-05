@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from gaip import Buffers, read_img, run_slope
 from gaip import calculate_angles as ca
 
@@ -13,6 +11,7 @@ def calculate_self_shadow(
     satellite_view_fname,
     satellite_azimuth_fname,
     out_fnames=None,
+    header_slope_fname=None,
 ):
     """Computes the self shadow mask, slope, aspect, incident, exiting,
     azimuth incident, azimuth exiting and relative slope angles.
@@ -98,3 +97,22 @@ def calculate_self_shadow(
 
     # Output the results
     slope_results.write_arrays(out_fnames=out_fnames, geo_box=geobox)
+
+    if header_slope_fname:
+        write_header_slope_file(header_slope_fname, pixel_buf, geobox)
+
+
+def write_header_slope_file(file_name, margins, geobox):
+    with open(file_name, "w") as output:
+        # get dimensions, resolution and pixel origin
+        rows, cols = geobox.shape
+        res = geobox.res
+        origin = geobox.origin
+
+        # Now output the details
+        output.write(f"{rows} {cols}\n")
+        output.write(
+            f"{margins.left} {margins.right}\n{margins.top} {margins.bottom}\n"
+        )
+        output.write(f"{res[1]} {res[0]}\n")
+        output.write(f"{origin[1]} {origin[0]}\n")
