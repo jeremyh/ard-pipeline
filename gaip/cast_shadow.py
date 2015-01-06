@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-from gaip import Buffers, read_img, run_castshadow, write_img
+from gaip import ImageMargins, read_img, run_castshadow, write_img
 from gaip import calculate_angles as ca
 
 
 def calculate_cast_shadow(
     acquisition,
     DSM_fname,
-    buffer,
+    margins,
     block_height,
     block_width,
     view_angle_fname,
@@ -21,9 +21,9 @@ def calculate_cast_shadow(
         A string containing the full file path name to the Digital
         Surface Model to be used in deriving the surface angles.
 
-    :param buffer:
+    :param margins:
         An object with members top, bottom, left and right giving the
-        size of the buffer (in pixels) which have been added to the
+        size of the margins (in pixels) which have been added to the
         corresponding sides of DSM.
 
     :param block_height:
@@ -63,8 +63,8 @@ def calculate_cast_shadow(
     view_angle = read_img(view_angle_fname)
     azimuth_angle = read_img(azimuth_angle_fname)
 
-    # Define Top, Bottom, Left, Right pixel buffers
-    pixel_buf = Buffers(buffer)
+    # Define Top, Bottom, Left, Right pixel margins
+    pixel_buf = ImageMargins(margins)
 
     # Compute the cast shadow mask
     mask = run_castshadow(

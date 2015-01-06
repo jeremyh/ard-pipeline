@@ -41,6 +41,8 @@ def load(target):
 
 def load_value(target):
     """Load the value from `target`."""
+    if isinstance(target, str):
+        target = luigi.LocalTarget(target)
     data = load(target)
     try:
         return data["value"]
@@ -202,6 +204,9 @@ class GetAncillaryData(luigi.Task):
             GetBrdfAncillaryData(self.l1t_path),
         ]
 
+    def complete(self):
+        return all([t.complete() for t in self.requires()])
+
 
 class CalculateLonGrid(luigi.Task):
     """Calculate the longitude grid."""
@@ -280,8 +285,8 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
         ]
         centreline_target = CONFIG.get("work", "centreline_target")
         header_angle_target = CONFIG.get("work", "header_angle_target")
-        lon_target = CONFIG.get("work", "lon_target")
-        lat_target = CONFIG.get("work", "lat_target")
+        lon_target = CONFIG.get("work", "lon_grid_target")
+        lat_target = CONFIG.get("work", "lat_grid_target")
 
         acqs = gaip.acquisitions(self.l1t_path)
 
@@ -376,7 +381,7 @@ class CreateSatelliteFilterFile(luigi.Task):
         gaip.create_satellite_filter_file(acqs, satfilterpath, target)
 
 
-class WriteModtranInputFile(luigi.Task):
+class CreateModtranInputFile(luigi.Task):
     """Create the MODTRAN input file."""
 
     l1t_path = luigi.Parameter()
@@ -392,7 +397,7 @@ class WriteModtranInputFile(luigi.Task):
         ozone_target = CONFIG.get("work", "ozone_target")
         vapour_target = CONFIG.get("work", "vapour_target")
         aerosol_target = CONFIG.get("work", "aerosol_target")
-        elevation_target = CONFIG.get("work", "elevation_target")
+        elevation_target = CONFIG.get("work", "dem_target")
         acqs = gaip.acquisitions(self.l1t_path)
         target = self.output().fn
         ozone = load_value(ozone_target)
@@ -402,8 +407,8 @@ class WriteModtranInputFile(luigi.Task):
         gaip.write_modtran_input(acqs, target, ozone, vapour, aerosol, elevation)
 
 
-class WriteModisBrdfFiles(luigi.Task):
-    """Write the Modis BRDF files."""
+class CreateModisBrdfFiles(luigi.Task):
+    """Create the Modis BRDF files."""
 
     l1t_path = luigi.Parameter()
 
@@ -446,7 +451,7 @@ class RunModtranCorOrtho(luigi.Task):
     def run(self):
         # sources
         centreline_target = CONFIG.get("work", "centreline_target")
-        sat_view_zenith_target = CONFIG.get("work", "sat_view_zenith_target")
+        sat_view_zenith_target = CONFIG.get("work", "sat_view_target")
         # targets
         coordinator_target = CONFIG.get("work", "coordinator_target")
         boxline_target = CONFIG.get("work", "boxline_target")
@@ -462,7 +467,7 @@ class RunModtranCorOrtho(luigi.Task):
         )
 
 
-class GenerateModtranInputFiles(luigi.task):
+class GenerateModtranInputFiles(luigi.Task):
     """Generate the MODTRAN input files by running the Fortran binary
     `input_modtran_ortho_ula`.
     """
@@ -473,7 +478,7 @@ class GenerateModtranInputFiles(luigi.task):
         return [
             RunModtranCorOrtho(self.l1t_path),
             CalculateSatelliteAndSolarGrids(self.l1t_path),
-            WriteModtranInputFile(self.l1t_path),
+            CreateModtranInputFile(self.l1t_path),
             CalculateLatGrid(self.l1t_path),
             CalculateLonGrid(self.l1t_path),
         ]
@@ -482,6 +487,9 @@ class GenerateModtranInputFiles(luigi.task):
         coords = CONFIG.get("input_modtran", "coords").split(",")
         albedos = CONFIG.get("input_modtran", "albedos").split(",")
         output_format = CONFIG.get("input_modtran", "output_format")
+        workdir = CONFIG.get("work", "input_modtran_cwd")
+        output_format = pjoin(workdir, output_format)
+
         targets = []
         for coord in coords:
             for albedo in albedos:
@@ -492,7 +500,7 @@ class GenerateModtranInputFiles(luigi.task):
         # sources
         modtran_input_target = CONFIG.get("work", "modtran_input_target")
         coordinator_target = CONFIG.get("work", "coordinator_target")
-        sat_view_zenith_target = CONFIG.get("work", "sat_view_zenith_target")
+        sat_view_zenith_target = CONFIG.get("work", "sat_view_target")
         sat_azimuth_target = CONFIG.get("work", "sat_azimuth_target")
         lon_grid_target = CONFIG.get("work", "lon_grid_target")
         lat_grid_target = CONFIG.get("work", "lat_grid_target")
@@ -516,7 +524,7 @@ class GenerateModtranInputFiles(luigi.task):
         )
 
 
-class ReformatAsTp5(luigi.task):
+class ReformatAsTp5(luigi.Task):
     """Reformat the MODTRAN input files in `tp5` format. This runs the
     Fortran binary `refort_tp5_ga` multiple times.
     """
@@ -560,7 +568,7 @@ class ReformatAsTp5(luigi.task):
         )
 
 
-class ReformatAsTp5Trans(luigi.task):
+class ReformatAsTp5Trans(luigi.Task):
     """Reformat the MODTRAN input files in `tp5` format in the transmissive
     case. This runs the Fortran binary `refort_tp5_ga_trans` multiple
     times.
@@ -589,6 +597,7 @@ class ReformatAsTp5Trans(luigi.task):
         output_format = CONFIG.get("reformat_tp5_trans", "output_format")
         workdir = CONFIG.get("work", "reformat_tp5_trans_cwd")
         coords = CONFIG.get("reformat_tp5_trans", "coords").split(",")
+        albedos = CONFIG.get("reformat_tp5_trans", "albedos").split(",")
 
         # determine modtran profile
         acqs = gaip.acquisitions(self.l1t_path)
@@ -601,7 +610,7 @@ class ReformatAsTp5Trans(luigi.task):
         profile = pjoin(modtran_profile_path, profile_format.format(profile=profile))
 
         gaip.reformat_as_tp5_trans(
-            coords, profile, input_format, output_format, workdir
+            coords, albedos, profile, input_format, output_format, workdir
         )
 
 
@@ -618,6 +627,9 @@ class PrepareModtranInput(luigi.Task):
             ReformatAsTp5(self.l1t_path),
             ReformatAsTp5Trans(self.l1t_path),
         ]
+
+    def complete(self):
+        return all([t.complete() for t in self.requires()])
 
 
 class RunModtranCase(luigi.Task):
@@ -659,6 +671,9 @@ class RunModtran(luigi.Task):
             for albedo in albedos:
                 reqs.append(RunModtranCase(self.l1t_path, coord, albedo))
         return reqs
+
+    def complete(self):
+        return all([t.complete() for t in self.requires()])
 
 
 class ExtractFlux(luigi.Task):
