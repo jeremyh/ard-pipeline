@@ -1,11 +1,11 @@
-from gaip import Buffers, read_img, run_slope
+from gaip import ImageMargins, read_img, run_slope
 from gaip import calculate_angles as ca
 
 
 def calculate_self_shadow(
     acquisition,
     DSM_fname,
-    buffer,
+    margins,
     solar_zenith_fname,
     solar_azimuth_fname,
     satellite_view_fname,
@@ -23,9 +23,9 @@ def calculate_self_shadow(
         A string containing the full file path name to the Digital
         Surface Model to be used in deriving the surface angles.
 
-    :param buffer:
+    :param margins:
         An object with members top, bottom, left and right giving the
-        size of the buffer (in pixels) which have been added to the
+        size of the margins (in pixels) which have been added to the
         corresponding sides of DSM.
 
     :param solar_zenith_fname:
@@ -79,8 +79,8 @@ def calculate_self_shadow(
     satellite_view = read_img(satellite_view_fname)
     satellite_azimuth = read_img(satellite_azimuth_fname)
 
-    # Define Top, Bottom, Left, Right pixel buffers
-    pixel_buf = Buffers(buffer)
+    # Define Top, Bottom, Left, Right pixel margins
+    pixel_buf = ImageMargins(margins)
 
     # Compute self shadow, slope and various other angles
     slope_results = run_slope(

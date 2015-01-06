@@ -120,6 +120,16 @@ class LandsatAcquisition(Acquisition):
         return self.grid_cell_size
 
     @property
+    def scene_center_date(self):
+        """The acquisition date."""
+        return self.acquisition_date
+
+    @property
+    def scene_centre_date(self):
+        """The acquisition date."""
+        return self.acquisition_date
+
+    @property
     def scene_center_datetime(self):
         """The acquisition time."""
         return datetime.datetime.combine(self.acquisition_date, self.scene_center_time)
@@ -128,6 +138,11 @@ class LandsatAcquisition(Acquisition):
     def scene_centre_datetime(self):
         """The acquisition time."""
         return self.scene_center_datetime
+
+    @property
+    def scene_centre_time(self):
+        """The acquisition time."""
+        return self.scene_center_time
 
     @property
     def min_radiance(self):
