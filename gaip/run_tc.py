@@ -109,10 +109,11 @@ def run_tc(
         A dictionary with keys specified via a tuple of
         (band, reflectance_level) and the value corresponding to a
         full file pathname.
-        Valid reflectance level string are:
-            ref_lm -> Lambertian reflectance
-            ref_brdf -> BRDF corrected reflectance
-            ref_terrain -> Terrain corrected reflectance
+        Valid reflectance level strings are:
+
+        1. ref_lm -> Lambertian reflectance
+        2. ref_brdf -> BRDF corrected reflectance
+        3. ref_terrain -> Terrain corrected reflectance
 
     :param brdf_fname_format:
         A string containing the brdf filename format eg:
@@ -127,13 +128,14 @@ def run_tc(
     :return:
         None.
         The terrain correction algorithm will output 3 files for every
-        band in the following format.
-        reflectance_lambertian_{band_number}.bin -> Lambertian
-            reflectance.
-        reflectance_brdf_{band_number}.bin -> BRDF corrected
-            reflectance.
-        reflectance_terrain_{band_number}.bin -> Terrain corrected
-            reflectance.
+        band in the following format:
+
+        1. reflectance_lambertian_{band_number}.bin -> Lambertian
+           reflectance.
+        2. reflectance_brdf_{band_number}.bin -> BRDF corrected
+           reflectance.
+        3. reflectance_terrain_{band_number}.bin -> Terrain corrected
+           reflectance.
 
     :notes:
         Arrays will be converted to the required datatype and

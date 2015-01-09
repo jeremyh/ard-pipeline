@@ -1,5 +1,4 @@
-from gaip import ImageMargins, read_img, run_slope
-from gaip import calculate_angles as ca
+from gaip import ImageMargins, read_img, run_slope, setup_spheroid
 
 
 def calculate_self_shadow(
@@ -67,7 +66,7 @@ def calculate_self_shadow(
 
     # Retrive the spheroid parameters
     # (used in calculating pixel size in metres per lat/lon)
-    spheroid = ca.setup_spheroid(geobox.crs.ExportToWkt())
+    spheroid = setup_spheroid(geobox.crs.ExportToWkt())
 
     # Are we in projected or geographic space
     is_utm = not geobox.crs.IsGeographic()
@@ -96,7 +95,7 @@ def calculate_self_shadow(
     )
 
     # Output the results
-    slope_results.write_arrays(out_fnames=out_fnames, geo_box=geobox)
+    slope_results.write_arrays(out_fnames=out_fnames, geobox=geobox)
 
     if header_slope_fname:
         write_header_slope_file(header_slope_fname, pixel_buf, geobox)
@@ -106,7 +105,7 @@ def write_header_slope_file(file_name, margins, geobox):
     with open(file_name, "w") as output:
         # get dimensions, resolution and pixel origin
         rows, cols = geobox.shape
-        res = geobox.res
+        res = geobox.pixelsize
         origin = geobox.origin
 
         # Now output the details
