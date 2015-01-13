@@ -4,7 +4,6 @@ import logging
 
 import numexpr
 import numpy as np
-
 from ULA3 import DataGrid, DataManager
 from ULA3.dataset import SceneDataset
 from ULA3.image_processor import ProcessorConfig, constants

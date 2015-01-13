@@ -15,7 +15,6 @@ from copy import copy
 from datetime import datetime
 
 from pqa_log_extractor import PQALogExtractor
-
 from ULA3 import DataManager
 from ULA3.dataset import SceneDataset
 from ULA3.image_processor import ProcessorConfig, constants

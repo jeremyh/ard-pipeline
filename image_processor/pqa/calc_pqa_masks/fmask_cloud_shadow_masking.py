@@ -6,7 +6,6 @@ import os
 
 import numpy as np
 from cloud_shadow_masking import Cloud_Shadow
-
 from ULA3 import DataGrid, DataManager
 from ULA3.common.pqa_result import PQAResult
 from ULA3.dataset import SceneDataset

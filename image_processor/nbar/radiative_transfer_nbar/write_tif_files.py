@@ -7,7 +7,6 @@ import logging
 from datetime import datetime
 
 import numpy as np
-
 from ULA3 import DataManager
 from ULA3.dataset import SceneDataset
 from ULA3.image_processor import ProcessorConfig

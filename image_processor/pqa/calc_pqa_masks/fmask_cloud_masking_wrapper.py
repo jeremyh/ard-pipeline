@@ -9,7 +9,6 @@ from glob import glob
 import fmask_cloud_masking as _fmask
 import numexpr
 from scipy import ndimage
-
 from ULA3 import DataManager
 from ULA3.common.pqa_result import PQAResult
 from ULA3.dataset import SceneDataset

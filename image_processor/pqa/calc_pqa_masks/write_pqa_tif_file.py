@@ -3,7 +3,6 @@ import os
 
 import numpy as np
 from numpy.core.numeric import nan
-
 from ULA3 import DataManager
 from ULA3.common.pqa_result import PQAResult
 from ULA3.dataset import SceneDataset
