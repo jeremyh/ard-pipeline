@@ -10,7 +10,6 @@ import numpy as np
 from numpy.core.numeric import nan
 from osgeo import gdal
 from scipy import ndimage
-
 from ULA3 import DataGrid, DataManager
 from ULA3.common.pqa_result import PQAResult
 from ULA3.dataset import SceneDataset
