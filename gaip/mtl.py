@@ -9,6 +9,7 @@ def parse_type(s):
     strptime = datetime.datetime.strptime
 
     def yesno(s):
+        """Parse Y/N."""
         if len(s) == 1:
             if s == "Y":
                 return True
@@ -17,6 +18,7 @@ def parse_type(s):
         raise ValueError
 
     def none(s):
+        """Parse a NONE."""
         if len(s) == 4 and s == "NONE":
             return None
         raise ValueError
@@ -44,6 +46,7 @@ def load_mtl(filename, root="L1_METADATA_FILE", pairs=r"(\w+)\s=\s(.*)"):
     """Parse an MTL file and return dict-of-dict's containing the metadata."""
 
     def parse(lines, tree, level=0):
+        """Parse it."""
         while lines:
             line = lines.pop(0)
             match = re.findall(pairs, line)

@@ -1,3 +1,6 @@
+"""Image Margins."""
+
+
 class ImageMargins:
     """Holds some value for each side of an image. This was initially
     created to hold buffer widths (in pixels) for a scene, but does

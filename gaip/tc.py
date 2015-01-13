@@ -1,3 +1,7 @@
+"""Terrain Correction
+------------------.
+
+"""
 import numpy as np
 from scipy import ndimage
 
@@ -173,7 +177,7 @@ def run_slope(
     satellite_view,
     solar_azimuth,
     satellite_azimuth,
-    buffer,
+    margin,
     is_utm,
     spheroid,
 ):
@@ -195,7 +199,7 @@ def run_slope(
 
     :param DEM:
         A DEM of the region. This must have the same dimensions as
-        zenith_angle plus a buffer of widths specified by buffer.
+        zenith_angle plus a margin of widths specified by margin.
 
     :param solar_zenith:
         The solar zenith angle data for the region.
@@ -209,9 +213,9 @@ def run_slope(
     :param satellite_azimuth:
         The satellite azimuth angle data for the region.
 
-    :param buffer:
+    :param margin:
         An object with members top, bottom, left and right giving the
-        size of the buffer (in pixels) which have been added to the
+        size of the margin (in pixels) which have been added to the
         corresponding sides of DEM.
 
     :param is_utm:
@@ -283,7 +287,7 @@ def run_slope(
     nrow = rows + 2
 
     dem_dat = DEM[
-        (buffer.top - 1) : -(buffer.bottom - 1), (buffer.left - 1) : -(buffer.right - 1)
+        (margin.top - 1) : -(margin.bottom - 1), (margin.left - 1) : -(margin.right - 1)
     ]
 
     # Check that the dimensions match
@@ -431,9 +435,9 @@ class CastShadowError(FortranError):
         if code == 72:
             return "Matrix A not embedded in image"
         if code == 73:
-            return "matrix A does not have sufficient y buffer"
+            return "matrix A does not have sufficient y margin"
         if code == 74:
-            return "matrix A does not have sufficient x buffer"
+            return "matrix A does not have sufficient x margin"
 
 
 def run_castshadow(
@@ -441,7 +445,7 @@ def run_castshadow(
     DEM,
     zenith_angle,
     azimuth_angle,
-    buffer,
+    margin,
     block_height,
     block_width,
     spheroid,
@@ -482,7 +486,7 @@ def run_castshadow(
 
     :param DEM:
         A DEM of the region. This must have the same dimensions as
-        zenith_angle plus a buffer of widths specified by buffer.
+        zenith_angle plus a margin of widths specified by margin.
     :type DEM:
         A 2D NumPy float32 array.
 
@@ -498,10 +502,10 @@ def run_castshadow(
     :type azimuth_angle:
         A 2D NumPy float32 array.
 
-    :param buffer:
-        Object describing the pixel buffers around the azimuth_angle
+    :param margin:
+        Object describing the pixel margins around the azimuth_angle
         and the zenith_angle arrays.
-    :type buffer:
+    :type margin:
         Class, ImageMargins with properties left, right, top & bottom.
 
     :param block_height:
@@ -563,10 +567,10 @@ def run_castshadow(
         spheroid,
         y_origin,
         x_origin,
-        buffer.left,
-        buffer.right,
-        buffer.top,
-        buffer.bottom,
+        margin.left,
+        margin.right,
+        margin.top,
+        margin.bottom,
         block_height,
         block_width,
         is_utm,

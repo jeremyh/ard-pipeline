@@ -1,3 +1,6 @@
+"""Contiguity Mask
+---------------.
+"""
 import logging
 
 import numpy as np
@@ -34,15 +37,15 @@ def calc_contiguity_mask(image_stack, spacecraft_id):
         return None
 
     assert type(image_stack[0]) == np.ndarray, "Input is not valid"
-    assert len(image_stack.shape) == 3, "Input array must contain 3 dimensions!"
+    assert len(image_stack.shape) == 3, "Input array must contain 3 dims!"
 
     logging.debug("Determining pixel contiguity")
-    # Create mask array with True for all pixels which are non-zero in all bands
+    # Create mask array with True for all pixels which are non-zero in all
+    # bands
     mask = image_stack.all(0)
-    # mask = numexpr.evaluate('prod(image_stack, 0)') != 0 # ***This has the potential to overflow, roll back to array.all(0)***
 
     # The following is only valid for Landsat 5 images
-    logging.debug(f"calc_contiguity_mask: spacecraft_id={spacecraft_id}")
+    logging.debug("calc_contiguity_mask: spacecraft_id=%s", spacecraft_id)
     if spacecraft_id == "Landsat5":
         logging.debug("Finding thermal edge anomalies")
         # Apply thermal edge anomalies
@@ -86,7 +89,8 @@ def calc_contiguity_mask(image_stack, spacecraft_id):
     return mask
 
 
-def setContiguityBit(l1t_data, spacecraft_id, pq_const, pqaResult):
+def set_contiguity_bit(l1t_data, spacecraft_id, pq_const, pqa_result):
+    """Set the contiguity bit."""
     mask = calc_contiguity_mask(l1t_data, spacecraft_id)
     bit_index = pq_const.contiguity
-    pqaResult.set_mask(mask, bit_index)
+    pqa_result.set_mask(mask, bit_index)

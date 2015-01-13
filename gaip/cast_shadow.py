@@ -1,11 +1,13 @@
-#!/usr/bin/env python
+"""Shadow Casting
+--------------.
+"""
 
 from gaip import ImageMargins, read_img, run_castshadow, setup_spheroid, write_img
 
 
 def calculate_cast_shadow(
     acquisition,
-    DSM_fname,
+    dsm_fname,
     margins,
     block_height,
     block_width,
@@ -16,14 +18,14 @@ def calculate_cast_shadow(
     """:param acquisition:
         An instance of an acquisition object.
 
-    :param DSM_fname:
+    :param dsm_fname:
         A string containing the full file path name to the Digital
         Surface Model to be used in deriving the surface angles.
 
     :param margins:
         An object with members top, bottom, left and right giving the
         size of the margins (in pixels) which have been added to the
-        corresponding sides of DSM.
+        corresponding sides of dsm.
 
     :param block_height:
         The height (rows) of the window/submatrix used in the cast
@@ -57,8 +59,8 @@ def calculate_cast_shadow(
     # (used in calculating pixel size in metres per lat/lon)
     spheroid = setup_spheroid(geobox.crs.ExportToWkt())
 
-    # Read the DSM and angle arrays into memory
-    DSM = read_img(DSM_fname)
+    # Read the dsm and angle arrays into memory
+    dsm = read_img(dsm_fname)
     view_angle = read_img(view_angle_fname)
     azimuth_angle = read_img(azimuth_angle_fname)
 
@@ -68,7 +70,7 @@ def calculate_cast_shadow(
     # Compute the cast shadow mask
     mask = run_castshadow(
         acquisition,
-        DSM,
+        dsm,
         view_angle,
         azimuth_angle,
         pixel_buf,
