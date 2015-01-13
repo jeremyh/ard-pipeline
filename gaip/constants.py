@@ -1,36 +1,39 @@
-#!/usr/bin/env python
+"""Constants
+---------.
+"""
+# pylint: disable=attribute-defined-outside-init
+# pylint: disable=too-many-instance-attributes
 
 import re
 
 
 class PQAConstants:
-    """A Class object that contains the majority of constants used throughout the PQA process.
-    Such constants include bands for specific tests, bit positions for various tests and thresholds used
-    within various tests.
+    """A class object that contains the majority of constants used throughout
+    the PQA process.  Such constants include bands for specific tests, bit
+    positions for various tests and thresholds used within various tests.
     """
 
     def __init__(self, sensor):
         assert sensor is not None
         self.sensor = sensor
         # Initialise everything for immediate access
-        self.setSaturationBands()
-        self.setSaturationBits()
-        self.setACCA()
-        self.setFmask()
-        self.setCloudShadow()
-        self.setTestBits()
-        self.setAvailableBands()
-        # self.setBandIndexLookup()
-        self.setRunCloudShadow()
-        self.setRunCloud()
-        self.setOLITIRS()
-        self.setThermalBand()
-        self.setBandNumSequence()
+        self.set_saturation_bands()
+        self.set_saturation_bits()
+        self.set_acca()
+        self.set_fmask()
+        self.set_cloud_shadow()
+        self.set_test_bits()
+        self.set_available_bands()
+        self.set_run_cloud_shadow()
+        self.set_run_cloud()
+        self.set_olitirs()
+        self.set_thermal_band()
+        self.set_band_num_sequence()
 
-    def setSaturationBands(self):
-        """Get the band numbers associated with saturation tests for a given sensor.
-        The band numbers are (to some degree) the band names. This may change to
-        be an ordered list, ie 1-n_bands.
+    def set_saturation_bands(self):
+        """Get the band numbers associated with saturation tests for a given
+        sensor. The band numbers are (to some degree) the band names. This
+        may change to be an ordered list, ie 1-n_bands.
         """
         saturation = {
             "TM": [1, 2, 3, 4, 5, 6, 7],
@@ -42,9 +45,10 @@ class PQAConstants:
 
         self.saturation_bands = saturation[self.sensor]
 
-    def setSaturationBits(self):
+    def set_saturation_bits(self):
         """Get the relevant bit positions for setting the saturation tests.
-        The order should be the same as that returned by the setSaturationBands() function.
+        The order should be the same as that returned by the
+        set_saturation_bands() function.
         """
         bits = {
             "TM": [0, 1, 2, 3, 4, 5, 7],
@@ -56,7 +60,7 @@ class PQAConstants:
 
         self.saturation_bits = bits[self.sensor]
 
-    def setACCA(self):
+    def set_acca(self):
         """Set the threshold constants for the ACCA test."""
         # Potentially can configure thresholds per sensor
         self.acca_thresh_f1 = 0.08
@@ -67,24 +71,26 @@ class PQAConstants:
         self.acca_thresh_f6 = 2
         self.acca_thresh_f7 = 1
         self.acca_thresh_f8 = 210
-        self.acca_desertIndex = 0.5
-        self.acca_coldCloud_pop = 0.4
-        self.acca_coldCloud_mean = 295
+        self.acca_desert_index = 0.5
+        self.acca_cold_cloud_pop = 0.4
+        self.acca_cold_cloud_mean = 295
         self.acca_thermal_effect = 40.0
         self.acca_snow_threshold = 1
 
-    def setFmask(self):
+    def set_fmask(self):
         """Set the threshold constants for the Fmask test.
 
-        Note: Most of the thresholds are still defined in the python function and not here due to licencing constraints.
+        Note: Most of the thresholds are still defined in the python function
+        and not here due to licencing constraints.
         """
         # Potentially can configure thresholds per sensor
         self.fmask_cloudprob = 22.5
         # Threshold for water.
-        # NB: This seems to miss some clouds over water (which end up having about 35-40% probability, not >50%)
+        # NB: This seems to miss some clouds over water (which end up having
+        # about 35-40% probability, not >50%)
         self.fmask_wclr_max = 50
 
-    def setCloudShadow(self):
+    def set_cloud_shadow(self):
         """Set the threshold constants for the Cloud shadow test."""
         # Potentially can configure thresholds per sensor
         self.cshadow_wt_ndvi = 0.1
@@ -109,7 +115,7 @@ class PQAConstants:
         self.cshadow_slope_b47b = 0.05
         self.cshadow_stdv_multiplier = 2.5
 
-    def setTestBits(self):
+    def set_test_bits(self):
         """Set the bit positions for each Pixel Quality test."""
         self.contiguity = 8
         self.land_sea = 9
@@ -120,7 +126,7 @@ class PQAConstants:
         self.topo_shadow = 14
         self.reserved = 15
 
-    def setAvailableBands(self):
+    def set_available_bands(self):
         """Set the availble bands for a given sensor."""
         band_numbers = {
             "TM": [1, 2, 3, 4, 5, 6, 7],
@@ -132,17 +138,19 @@ class PQAConstants:
 
         self.available_bands = band_numbers[self.sensor]
 
-    def getArrayBandLookup(self, band_numbers):
-        """Get the correspoding array indices for a given list of band number identifiers.
-        This is only meant to be used wherever dataset.ReadAsArray() is used, otherwise the
-        array index lookup could be incorrect.
+    def get_array_band_lookup(self, band_numbers):
+        """Get the correspoding array indices for a given list of band number
+        identifiers. This is only meant to be used wherever
+        dataset.ReadAsArray() is used, otherwise the array index lookup
+        could be incorrect.
         """
         idx = [self.available_bands.index(bn) for bn in band_numbers]
         return idx
 
-    def setRunCloudShadow(self):
-        """Determine and set (True/False) as to whether or not the cloud shadow algorithm will be run.
-        This is so due to the algorithm needing both spectral and temperature arrays.
+    def set_run_cloud_shadow(self):
+        """Determine and set (True/False) as to whether or not the cloud shadow
+        algorithm will be run. This is so due to the algorithm needing both
+        spectral and temperature arrays.
         """
         sensor_list = ["TM", "ETM+", "OLI_TIRS"]
         if self.sensor in sensor_list:
@@ -150,9 +158,10 @@ class PQAConstants:
         else:
             self.run_cloud_shadow = False
 
-    def setRunCloud(self):
-        """Determine and set (True/False) as to whether or not the cloud algorithm will be run.
-        This is so due to the algorithm needing both spectral and temperature arrays.
+    def set_run_cloud(self):
+        """Determine and set (True/False) as to whether or not the cloud
+        algorithm will be run. This is so due to the algorithm needing
+        both spectral and temperature arrays.
         """
         sensor_list = ["TM", "ETM+", "OLI_TIRS"]
         if self.sensor in sensor_list:
@@ -160,10 +169,11 @@ class PQAConstants:
         else:
             self.run_cloud = False
 
-    def setOLITIRS(self):
-        """Determine and set (True/False) as to whether or not the sensor in question is OLI_TIRS.
-        This will be used for both ACCA and the cloud shadow algorithm, where the argument input
-        "image_stack" doesn't use the coastal aerosol band, but is automatcally read by the
+    def set_olitirs(self):
+        """Determine and set (True/False) as to whether or not the sensor in
+        question is OLI_TIRS. This will be used for both ACCA and the cloud
+        shadow algorithm, where the argument input "image_stack" doesn't use
+        the coastal aerosol band, but is automatcally read by the
         ReadAsArray() method.
         """
         if self.sensor == "OLI_TIRS":
@@ -171,16 +181,17 @@ class PQAConstants:
         else:
             self.oli_tirs = False
 
-    def setThermalBand(self):
-        """Set the relevant thermal band used for the cloud and cloud shadow algorithms.
-        The thermal_band variable will be set to an integer corresponding to the band number
-        for a given sensors thermal band.  If no band is found, then a string is returned.
+    def set_thermal_band(self):
+        """Set the relevant thermal band used for the cloud and cloud shadow
+        algorithms. The thermal_band variable will be set to an integer
+        corresponding to the band number for a given sensors thermal band.
+        If no band is found, then a string is returned.
         """
         self.thermal_band = {"TM": 6, "ETM+": 61, "OLI_TIRS": 10}.get(
             self.sensor, "Error! No Thermal Band Found."
         )
 
-    def setBandNumSequence(self):
+    def set_band_num_sequence(self):
         """Set the band numbering sequence 1:n for a given sensor.
         This is intended to be used with the SceneDataset class's
         gain and bias method.
@@ -224,7 +235,7 @@ def brdf_wavelength_lut(satellite_sensor):
     """
     input_str = str(satellite_sensor)
 
-    BRDF_LUT = {
+    brdf_lut = {
         "landsat5tm": {
             1: "0459_0479nm",
             2: "0545_0565nm",
@@ -261,7 +272,7 @@ def brdf_wavelength_lut(satellite_sensor):
         },
     }.get(input_str, "Error")
 
-    return BRDF_LUT
+    return brdf_lut
 
 
 def nbar_bands_lut(satellite_sensor):
@@ -280,14 +291,14 @@ def nbar_bands_lut(satellite_sensor):
     """
     input_str = str(satellite_sensor)
 
-    NBAR_LUT = {
+    nbar_lut = {
         "landsat5tm": [1, 2, 3, 4, 5, 7],
         "landsat7etm+": [1, 2, 3, 4, 5, 7],
         "landsat8oli": [1, 2, 3, 4, 5, 6, 7],
         "landsat8olitirs": [1, 2, 3, 4, 5, 6, 7],
-    }.get(input_str, "Error")
+    }
 
-    return NBAR_LUT
+    return nbar_lut.get(input_str, "Error")
 
 
 def avg_reflectance_lut(satellite_sensor):
@@ -314,7 +325,7 @@ def avg_reflectance_lut(satellite_sensor):
     """
     input_str = str(satellite_sensor)
 
-    AVG_reflectance_values = {
+    avg_reflectance_values = {
         "landsat5tm": {
             1: 0.0365,
             2: 0.0667,
@@ -349,16 +360,16 @@ def avg_reflectance_lut(satellite_sensor):
             6: 0.2512,
             7: 0.1648,
         },
-    }.get(input_str, "Error")
+    }
 
-    return AVG_reflectance_values
+    return avg_reflectance_values.get(input_str, "Error")
 
 
 class NBARConstants:
-    """ """
+    """NBAR Constants."""
 
     def __init__(self, satellite, sensor):
-        """ """
+        """Initialise."""
         self.satellite = satellite
         self.sensor = sensor
         # NOTE: GA Landsat products use both '-' and '_' as a seperator
@@ -368,29 +379,26 @@ class NBARConstants:
 
         self.sat_sensor = "".join((satellite_name, sensor_name))
 
-    def getBRDFlut(self):
-        """ """
-
+    def get_brdf_lut(self):
+        """Get the BRDF lookup table."""
         brdf_wavelengths = brdf_wavelength_lut(self.sat_sensor)
 
         return brdf_wavelengths
 
-    def getBRDFfactors(self):
-        """ """
+    def get_brdf_factors(self):
+        """Get the BRDF factors."""
         factors = ["geo", "iso", "vol"]
 
         return factors
 
-    def getNBARlut(self):
-        """ """
-
+    def get_nbar_lut(self):
+        """Get the NBAR lookup table."""
         nbar_lut = nbar_bands_lut(self.sat_sensor)
 
         return nbar_lut
 
-    def getAvgReflut(self):
-        """ """
-
+    def get_avg_ref_lut(self):
+        """Get the average reflectance lookup table."""
         avg_ref_lut = avg_reflectance_lut(self.sat_sensor)
 
         return avg_ref_lut

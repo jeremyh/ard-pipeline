@@ -1,4 +1,5 @@
-"""Utilities for the extraction of BRDF data.
+"""BRDF data extraction utilities
+------------------------------.
 
 The :ref:`nbar-algorithm-label` and :ref:`tc-algorithm-label` algorithms
 require estimates of various atmospheric parameters, which are produced using
@@ -27,14 +28,17 @@ from osgeo import gdal, gdalconst, osr
 
 from gaip import GriddedGeoBox, write_img
 
-logger = logging.getLogger("root." + __name__)
+log = logging.getlog("root." + __name__)
 
 
-# TODO: Implement resume
 class BRDFLoaderError(Exception):
-    """:todo:
-    Someone who knows what this is used for should document it.
-    """
+    """BRDF Loader Error."""
+
+    pass
+
+
+class BRDFLookupError(Exception):
+    """BRDF Lookup Error."""
 
     pass
 
@@ -52,7 +56,6 @@ class BRDFLoader:
     SDS_FORMAT = 'HDF4_SDS:UNKNOWN:"%s":%d'
 
     # Hardwired settings for first version of pre-MODIS BRDF database.
-    # TODO create these in HDF file metadata when building database
     DEFAULTS = {
         "fill_value": -32768,
         "scale_factor": 0.001,
@@ -72,7 +75,7 @@ class BRDFLoader:
         self.filename = filename
         self.roi = {"UL": UL, "LR": LR}
 
-        logger.info(
+        log.info(
             "{}: filename={}, roi={}".format(
                 self.__class__.__name__, self.filename, str(self.roi)
             )
@@ -126,11 +129,11 @@ class BRDFLoader:
 
         Latitude and longitude values are centre-of-pixel.
 
-        Fill value, scale factor and offset are obtained from the HDF metadata.
+        Fill value, scale factor and offset are obtained from the HDF
+        metadata.
 
         """
         # Load sub-datasets.
-
         for k in self.SDS_MAP:
             sds_file_spec = self.SDS_FORMAT % (self.filename, k)
             fd = gdal.Open(sds_file_spec, gdalconst.GA_ReadOnly)
@@ -144,7 +147,7 @@ class BRDFLoader:
             self.data[k] = fd.GetRasterBand(1).ReadAsArray()
             _type = type(self.data[k][0, 0])
 
-            logger.debug(
+            log.debug(
                 "%s: loaded sds=%d, type=%s, shape=%s"
                 % (self.__class__.__name__, k, str(_type), str(self.data[k].shape))
             )
@@ -168,7 +171,7 @@ class BRDFLoader:
 
             fd = None
 
-        logger.debug(
+        log.debug(
             "{}: fill_value={}, scale_factor={}, add_offset={}".format(
                 self.__class__.__name__,
                 str(self.fill_value),
@@ -245,19 +248,19 @@ class BRDFLoader:
         jmin = max([0, int(math.ceil(ymin))])
         jmax = min([self.data[0].shape[0], int(math.ceil(ymax))])
 
-        _data = np.ma.masked_values(
+        data = np.ma.masked_values(
             self.data[0][jmin : jmax + 1, imin : imax + 1], self.fill_value
         ).compressed()
 
         try:
             # Float the data sum (int16) to calculate the mean.
-            dmean = float(np.sum(_data)) / _data.size
+            dmean = float(np.sum(data)) / data.size
         except ZeroDivisionError:
             dmean = 0.0
 
         result = self.scale_factor * (dmean - self.add_offset)
 
-        logger.debug(
+        log.debug(
             (
                 "%s: ROI=%s, imin=%d, imax=%d, xmin=%f, xmax=%f, "
                 "jmin=%d, jmax=%d, ymin=%f, ymax=%f, dmean=%.12f, "
@@ -281,15 +284,15 @@ class BRDFLoader:
 
         return result
 
-    def convert_format(self, filename, format="ENVI"):
+    def convert_format(self, filename, fmt="ENVI"):
         """Convert the HDF file to a more spatially recognisable data
         format such as ENVI or GTiff.
         The default format is ENVI (flat bianry file and an
         accompanying header (*.hdr) text file.
         """
         # Get the UL corner of the UL pixel co-ordinate
-        ULlon = self.UL[0]
-        ULlat = self.UL[1]
+        ul_lon = self.UL[0]
+        ul_lat = self.UL[1]
 
         # pixel size x & y
         pixsz_x = self.delta_lon
@@ -306,11 +309,11 @@ class BRDFLoader:
         dims = self.data[0].shape
         res = (pixsz_x, pixsz_y)
         geobox = GriddedGeoBox(
-            shape=dims, origin=(ULlon, ULlat), pixelsize=res, crs=prj
+            shape=dims, origin=(ul_lon, ul_lat), pixelsize=res, crs=prj
         )
 
         # Write the file
-        write_img(self.data[0], filename, format, geobox=geobox)
+        write_img(self.data[0], filename, fmt, geobox=geobox)
 
     def get_mean(self, array):
         """This mechanism will be used to calculate the mean in place in
@@ -326,14 +329,6 @@ class BRDFLoader:
             xbar = self.scale_factor * (xbar - self.add_offset)
 
         return xbar
-
-
-class BRDFLookupError(Exception):
-    """:todo:
-    Someone who knows what this is used for should document it.
-    """
-
-    pass
 
 
 def get_brdf_dirs_modis(brdf_root, scene_date, pattern=r"\d{4}.\d{2}.\d{2}$"):
@@ -365,14 +360,14 @@ def get_brdf_dirs_modis(brdf_root, scene_date, pattern=r"\d{4}.\d{2}.\d{2}$"):
     offset = datetime.timedelta(8)
 
     def parsedate(s, sep="."):
-        # Returns interval midpoint date of a MCD43A1.005/YYYY.MM.DD directory.
+        """Returns interval midpoint date of a MCD43A1.005/YYYY.MM.DD directory."""
         return datetime.date(*[int(x) for x in s.split(sep)]) + offset
 
     # Compile the search pattern
-    BRDF_DIR_PATTERN = re.compile(pattern)
+    brdf_dir_pattern = re.compile(pattern)
 
     # List only directories that match 'YYYY.MM.DD' format.
-    dirs = sorted([d for d in os.listdir(brdf_root) if BRDF_DIR_PATTERN.match(d)])
+    dirs = sorted([d for d in os.listdir(brdf_root) if brdf_dir_pattern.match(d)])
 
     # Find the N (n_dirs) BRDF directories with midpoints closest to the
     # scene date.

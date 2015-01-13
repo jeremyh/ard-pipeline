@@ -1,13 +1,20 @@
+"""ACCA Cloud Masking Algorithm
+----------------------------.
+
+Follows the ACCA (Automated Cloud Cover Assessment) given by
+Irish, R et al, October 2006, Photogrammetric Engineering & Remote
+Sensing, Vol. 72, No. 10, October 2006, pp. 1179-1188.
+
+"""
 import datetime
 import gc
 import logging
 
 import numexpr
 import numpy as np
-from numpy.core.numeric import nan
 from scipy import ndimage
 
-NaN = np.float32(nan)
+NAN = np.float32(np.NaN)
 
 
 def water_test(reflectance_stack):
@@ -46,7 +53,6 @@ def ndvi(reflectance_stack):
     )
 
 
-# Calculate NSDI; FILTER 2
 def ndsi(reflectance_stack):
     """Calculates the Normalised Snow Difference Index.
 
@@ -64,7 +70,6 @@ def ndsi(reflectance_stack):
     )
 
 
-# Calculate band 5/6 composite; FILTER 4
 def filter4(reflectance_stack, thermal_array):
     """Calculates band 5/6 composite.
 
@@ -83,7 +88,6 @@ def filter4(reflectance_stack, thermal_array):
     )
 
 
-# Calculate band 4/3 ratio; FILTER 5/Simple Ratio
 def filter5(reflectance_stack):
     """Calculates band 4/3 ratio.
 
@@ -102,7 +106,6 @@ def filter5(reflectance_stack):
     )
 
 
-# Calculate band 4/2 ratio; FILTER 6
 def filter6(reflectance_stack):
     """Calculates band 4/2 ratio.
 
@@ -123,7 +126,6 @@ def filter6(reflectance_stack):
     )
 
 
-# Calculate band 4/5 ratio; FILTER 7
 def filter7(reflectance_stack):
     """Calculates band 4/5 ratio.
 
@@ -142,7 +144,6 @@ def filter7(reflectance_stack):
     )
 
 
-# Calculate skewness. Couldn't find a numpy alternative
 def skewness(cloud_thermal_array, mean_temp, stdv_temp, count):
     """Calculates the third moment about the mean (aka, skewness).
 
@@ -162,13 +163,11 @@ def skewness(cloud_thermal_array, mean_temp, stdv_temp, count):
         Floating point value.
     """
     cubed_deviates = (cloud_thermal_array - mean_temp) ** 3
-    # sum_cubed_dv   = cubed_deviates.sum()
     sum_cubed_dv = np.sum(cubed_deviates, dtype="float64")
     cubed_stdv = stdv_temp**3
     return (sum_cubed_dv / cubed_stdv) / count
 
 
-# ACCA Second Pass
 def acca_2nd_pass(
     cloud_mask, ambiguous_array, thermal_array, mean_cloud_temp, pq_const, aux_data={}
 ):
@@ -189,7 +188,8 @@ def acca_2nd_pass(
         The mean temperature of the currently identifed cloud pixels.
 
     :param pq_const:
-        An instance of PQAConstants applicable to the reflectance stack supplied
+        An instance of PQAConstants applicable to the reflectance stack
+        supplied
 
     :param aux_data:
         A dict into which the function will place interesting intermediate
@@ -209,9 +209,7 @@ def acca_2nd_pass(
     logging.info("ACCA Pass Two Engaged")
     aux_data["acca_pass_2"] = "engaged"
 
-    # cloud_stddev    = thermal_array[cloud_mask].std()
     cloud_stddev = np.std(thermal_array[cloud_mask], dtype="float64", ddof=1)
-    # cloud_count     = cloud_mask.sum() # Sum is used as valid pixels = 1
     cloud_count = np.sum(cloud_mask, dtype="float64")
 
     aux_data["acca_pass_2_sdev"] = cloud_stddev
@@ -253,11 +251,11 @@ def acca_2nd_pass(
 
         # query  = (thermal_array > new_lower) & (thermal_array <= new_upper)
         query = numexpr.evaluate(
-            "((ambiguous_array * thermal_array) > new_lower) & ((ambiguous_array * thermal_array) <= new_upper)"
+            "((ambiguous_array * thermal_array)"
+            "> new_lower) & ((ambiguous_array *"
+            "thermal_array) <= new_upper)"
         )
-        # query2 = ((ambiguous_array * thermal_array) != 0) & ((ambiguous_array * thermal_array) <= new_lower)
-        # query2 = numexpr.evaluate("((ambiguous_array * thermal_array) != 0) & ((ambiguous_array * thermal_array) <= new_lower)")
-        query2 = numexpr.evaluate("((ambiguous_array * thermal_array) <= new_lower)")
+        query2 = numexpr.evaluate("((ambiguous_array * thermal_array)" "<= new_lower)")
 
         # Compute stats for each query/class
         # Max
@@ -293,20 +291,16 @@ def acca_2nd_pass(
         aux_data["acca_pass_2_class_1_percent"] = qpop
         aux_data["acca_pass_2_class_2_percent"] = qpop2
 
-        if (
-            qpop < pq_const.acca_thermal_effect
-        ):  # CONFIG.pqa_param['acca_thermal_effect']:
-            if (
-                qmean < pq_const.acca_coldCloud_mean
-            ):  # CONFIG.pqa_param['acca_coldcloud_mean']:
+        # CONFIG.pqa_param['acca_thermal_effect']:
+        if qpop < pq_const.acca_thermal_effect:
+            # CONFIG.pqa_param['acca_coldcloud_mean']:
+            if qmean < pq_const.acca_coldCloud_mean:
                 # Combine all cloud classes
                 return numexpr.evaluate("cloud_mask | query | query2")
-            elif (
-                qpop2 < pq_const.acca_thermal_effect
-            ):  # CONFIG.pqa_param['acca_thermal_effect']:
-                if (
-                    qmean2 < pq_const.acca_coldCloud_mean
-                ):  # CONFIG.pqa_param['acca_coldcloud_mean']:
+            # CONFIG.pqa_param['acca_thermal_effect']:
+            elif qpop2 < pq_const.acca_thermal_effect:
+                # CONFIG.pqa_param['acca_coldcloud_mean']:
+                if qmean2 < pq_const.acca_coldCloud_mean:
                     # Combine lower threshold clouds and pass 1 clouds
                     return numexpr.evaluate("cloud_mask | query2")
             else:  # Keep first pass cloud
@@ -315,13 +309,15 @@ def acca_2nd_pass(
             return None
 
     else:
-        # query  = ((ambiguous_array * thermal_array) > lower) * ((ambiguous_array * thermal_array) <= upper)
-        # query2 = ((ambiguous_array * thermal_array) != 0) * ((ambiguous_array * thermal_array) <= lower)
         query = numexpr.evaluate(
-            "((ambiguous_array * thermal_array) > lower) & ((ambiguous_array * thermal_array) <= upper)"
+            "((ambiguous_array * thermal_array)"
+            "> lower) & ((ambiguous_array * "
+            "thermal_array) <= upper)"
         )
         query2 = numexpr.evaluate(
-            "((ambiguous_array * thermal_array) != 0) & ((ambiguous_array * thermal_array) <= lower)"
+            "((ambiguous_array * thermal_array)"
+            "!= 0) & ((ambiguous_array * thermal_array)"
+            "<= lower)"
         )
 
         # Compute stats for each query/class
@@ -352,20 +348,16 @@ def acca_2nd_pass(
         aux_data["acca_pass_2_class_1_percent"] = qpop
         aux_data["acca_pass_2_class_2_percent"] = qpop2
 
-        if (
-            qpop < pq_const.acca_thermal_effect
-        ):  # CONFIG.pqa_param['acca_thermal_effect']:
-            if (
-                qmean < pq_const.acca_coldCloud_mean
-            ):  # CONFIG.pqa_param['acca_coldcloud_mean']:
+        # CONFIG.pqa_param['acca_thermal_effect']:
+        if qpop < pq_const.acca_thermal_effect:
+            # CONFIG.pqa_param['acca_coldcloud_mean']:
+            if qmean < pq_const.acca_coldCloud_mean:
                 # Combine all cloud classes
                 return numexpr.evaluate("cloud_mask | query | query2")
-            elif (
-                qpop2 < pq_const.acca_thermal_effect
-            ):  # CONFIG.pqa_param['acca_thermal_effect']:
-                if (
-                    qmean2 < pq_const.acca_coldCloud_mean
-                ):  # CONFIG.pqa_param['acca_coldcloud_mean']:
+            # CONFIG.pqa_param['acca_thermal_effect']:
+            elif qpop2 < pq_const.acca_thermal_effect:
+                # CONFIG.pqa_param['acca_coldcloud_mean']:
+                if qmean2 < pq_const.acca_coldCloud_mean:
                     # Combine lower threshold clouds and pass 1 clouds
                     return numexpr.evaluate("cloud_mask | query2")
             else:  # Keep first pass cloud
@@ -387,11 +379,12 @@ def acca(
         A 2D Numpy array containing the thermal band.
 
     :param potential_cloud_array:
-        A 2D Numpy array containing values of 1 for valid areas and NaN for
+        A 2D Numpy array containing values of 1 for valid areas and NAN for
         invalid areas.
 
     :param pq_const:
-        An instance of PQAConstants applicable to the reflectance stack supplied
+        An instance of PQAConstants applicable to the reflectance stack
+        supplied
 
     :param aux_data:
         A dict into which the function will place interesting intermediate
@@ -418,10 +411,10 @@ def acca(
     # b7 = image_stack[6,:,:]
     # ===================================================================
 
-    # Create the array for Ambiguous Pixels - NaN means not ambiguous
-    ambiguous_array = np.ones(potential_cloud_array.shape, dtype=np.float32) * NaN
+    # Create the array for Ambiguous Pixels - NAN means not ambiguous
+    ambiguous_array = np.ones(potential_cloud_array.shape, dtype=np.float32) * NAN
 
-    # Keep an un-NaNed copy of the thermal band for later use
+    # Keep an un-NANed copy of the thermal band for later use
     # thermal_array = image_stack[5].copy()
     # thermal_array = image_stack[5]
 
@@ -430,32 +423,19 @@ def acca(
     # reflectance, it will have made it this far.
 
     water_mask = water_test(reflectance_stack)
-    #    logging.debug('reflectance_stack[:,1612,2126] %s', reflectance_stack[:,1612,2126])
-    #    logging.debug('reflectance_stack[:,2252,4294] %s', reflectance_stack[:,2252,4294])
-    # Filter 1; brightness threshold (remove dark targets)
-    # query = numexpr.evaluate("where((potential_cloud_array * b3) > thresh_f1, 1, NaN)",
-    #                         {'b3': reflectance_stack[2],
-    #                          'thresh_f1' : CONFIG.pqa_param['acca_thresh_f1'],
-    #                          'NaN' : NaN},
-    #                         locals())
     query = numexpr.evaluate(
-        "where((potential_cloud_array * b3) > thresh_f1, 1, NaN)",
-        {"b3": reflectance_stack[2], "thresh_f1": pq_const.acca_thresh_f1, "NaN": NaN},
+        "where((potential_cloud_array * b3)" "> thresh_f1, 1, NAN)",
+        {"b3": reflectance_stack[2], "thresh_f1": pq_const.acca_thresh_f1, "NAN": NAN},
         locals(),
     )
 
     potential_cloud_array *= query
 
-    #    if CONFIG.debug:
-    #        dump_array(query, os.path.join(CONFIG.work_path, 'acca_filter1.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
-    #        dump_array(potential_cloud_array, os.path.join(CONFIG.work_path, 'potential_cloud_array1.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
-
     # Filter 2: NDSI
     ndsi_array = ndsi(reflectance_stack)
-    # query   = numexpr.evaluate("where((potential_cloud_array * ndsi_array) < thresh_f2, 1, NaN)",{'thresh_f2' : CONFIG.pqa_param['acca_thresh_f2'], 'NaN' : NaN}, locals())
     query = numexpr.evaluate(
-        "where((potential_cloud_array * ndsi_array) < thresh_f2, 1, NaN)",
-        {"thresh_f2": pq_const.acca_thresh_f2, "NaN": NaN},
+        "where((potential_cloud_array * ndsi_array)" "< thresh_f2, 1, NAN)",
+        {"thresh_f2": pq_const.acca_thresh_f2, "NAN": NAN},
         locals(),
     )
 
@@ -467,90 +447,65 @@ def acca(
         locals(),
     )
     snow_pixels = find.sum()  # Sum is used as valid pixels = 1
-    # snow_percent = (float(snow_pixels)/NaN.size) * 100
     snow_percent = (float(snow_pixels) / find.size) * 100
 
     potential_cloud_array *= query
-    #    if CONFIG.debug:
-    #        dump_array(query, os.path.join(CONFIG.work_path, 'acca_filter2.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
-    #        dump_array(potential_cloud_array, os.path.join(CONFIG.work_path, 'potential_cloud_array2.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
 
     aux_data["acca_pass_1_snow_percent"] = snow_percent
 
     # Filter 3; Temp. threshold
-    # query   = numexpr.evaluate("where((potential_cloud_array * thermal_array) < thresh_f3, 1, NaN)",
-    #                           {'thresh_f3' : CONFIG.pqa_param['acca_thresh_f3'],
-    #                            'NaN' : NaN},
-    #                           locals())
     query = numexpr.evaluate(
-        "where((potential_cloud_array * thermal_array) < thresh_f3, 1, NaN)",
-        {"thresh_f3": pq_const.acca_thresh_f3, "NaN": NaN},
+        "where((potential_cloud_array * thermal_array)" "< thresh_f3, 1, NAN)",
+        {"thresh_f3": pq_const.acca_thresh_f3, "NAN": NAN},
         locals(),
     )
     potential_cloud_array *= query
-    #    if CONFIG.debug:
-    #        dump_array(query, os.path.join(CONFIG.work_path, 'acca_filter3.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
-    #        dump_array(potential_cloud_array, os.path.join(CONFIG.work_path, 'potential_cloud_array3.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
 
     # Filter 4; Band 5/6 composite
     _temporary = potential_cloud_array * filter4(reflectance_stack, thermal_array)
-    # query   = numexpr.evaluate("where(_temporary < thresh_f4, 1, NaN)",
-    #                           {'thresh_f4' : CONFIG.pqa_param['acca_thresh_f4'],
-    #                            'NaN' : NaN},
-    #                           locals())
     query = numexpr.evaluate(
-        "where(_temporary < thresh_f4, 1, NaN)",
-        {"thresh_f4": pq_const.acca_thresh_f4, "NaN": NaN},
+        "where(_temporary < thresh_f4, 1, NAN)",
+        {"thresh_f4": pq_const.acca_thresh_f4, "NAN": NAN},
         locals(),
     )
 
     # Get ambiguous pixels
-    # find  = numexpr.evaluate("_temporary >= thresh_f4",{'thresh_f4' : CONFIG.pqa_param['acca_thresh_f4']}, locals())
     find = numexpr.evaluate(
         "_temporary >= thresh_f4", {"thresh_f4": pq_const.acca_thresh_f4}, locals()
     )
     ambiguous_array[find] = 1
 
     potential_cloud_array *= query
-    #    if CONFIG.debug:
-    #        dump_array(query, os.path.join(CONFIG.work_path, 'acca_filter4.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
-    #        dump_array(potential_cloud_array, os.path.join(CONFIG.work_path, 'potential_cloud_array4.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
 
     # Will add in a water mask, to remove cold water bodies that have been
     # put into the ambiguous group. If the water body is high in red
     # reflectance, it will have made it this far.
 
-    ambiguous_array[water_mask] = NaN  # All water is unambiguous
+    ambiguous_array[water_mask] = NAN  # All water is unambiguous
     del water_mask
-    gc.collect
+    gc.collect()
 
     # Filter 5; Band 4/3 ratio (Simple veg ratio)
     _temporary = potential_cloud_array * filter5(reflectance_stack)
-    # query   = numexpr.evaluate("where(_temporary < thresh_f5, 1, NaN)",{'thresh_f5' : CONFIG.pqa_param['acca_thresh_f5'], 'NaN' : NaN}, locals())
     query = numexpr.evaluate(
-        "where(_temporary < thresh_f5, 1, NaN)",
-        {"thresh_f5": pq_const.acca_thresh_f5, "NaN": NaN},
+        "where(_temporary < thresh_f5, 1, NAN)",
+        {"thresh_f5": pq_const.acca_thresh_f5, "NAN": NAN},
         locals(),
     )
 
     # Get ambiguous pixels
-    # find  = numexpr.evaluate("_temporary >= thresh_f5",{'thresh_f5' : CONFIG.pqa_param['acca_thresh_f5']}, locals())
     find = numexpr.evaluate(
         "_temporary >= thresh_f5", {"thresh_f5": pq_const.acca_thresh_f5}, locals()
     )
     ambiguous_array[find] = 1
 
     potential_cloud_array *= query
-    #    if CONFIG.debug:
-    #        dump_array(query, os.path.join(CONFIG.work_path, 'acca_filter5.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
-    #        dump_array(potential_cloud_array, os.path.join(CONFIG.work_path, 'potential_cloud_array5.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
 
     # Filter 6; Band 4/2 ratio (Dying/senescing veg)
     _temporary = potential_cloud_array * filter6(reflectance_stack)
-    # query   = numexpr.evaluate("where(_temporary < thresh_f6, 1, NaN)",{'thresh_f6' : CONFIG.pqa_param['acca_thresh_f6'], 'NaN' : NaN}, locals())
     query = numexpr.evaluate(
-        "where(_temporary < thresh_f6, 1, NaN)",
-        {"thresh_f6": pq_const.acca_thresh_f6, "NaN": NaN},
+        "where(_temporary < thresh_f6, 1, NAN)",
+        {"thresh_f6": pq_const.acca_thresh_f6, "NAN": NAN},
         locals(),
     )
 
@@ -558,27 +513,22 @@ def acca(
     f6_surv = np.nansum(query)
 
     # Get ambiguous pixels
-    # find  = numexpr.evaluate("_temporary >= thresh_f6",{'thresh_f6' : CONFIG.pqa_param['acca_thresh_f6'], 'NaN' : NaN}, locals())
     find = numexpr.evaluate(
         "_temporary >= thresh_f6",
-        {"thresh_f6": pq_const.acca_thresh_f6, "NaN": NaN},
+        {"thresh_f6": pq_const.acca_thresh_f6, "NAN": NAN},
         locals(),
     )
     ambiguous_array[find] = 1
 
     potential_cloud_array *= query
-    #    if CONFIG.debug:
-    #        dump_array(query, os.path.join(CONFIG.work_path, 'acca_filter6.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
-    #        dump_array(potential_cloud_array, os.path.join(CONFIG.work_path, 'potential_cloud_array6.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
 
     # Filter 7; Band 4/5 ratio (Identify highly reflective soils/rocks)
     # The results of this query are clouds at first pass
     _temporary = potential_cloud_array * filter7(reflectance_stack)
 
-    # query = numexpr.evaluate("where(_temporary > thresh_f7, 1, NaN)",{'thresh_f7' : CONFIG.pqa_param['acca_thresh_f7'], 'NaN' : NaN}, locals())
     query = numexpr.evaluate(
-        "where(_temporary > thresh_f7, 1, NaN)",
-        {"thresh_f7": pq_const.acca_thresh_f7, "NaN": NaN},
+        "where(_temporary > thresh_f7, 1, NAN)",
+        {"thresh_f7": pq_const.acca_thresh_f7, "NAN": NAN},
         locals(),
     )
 
@@ -589,24 +539,18 @@ def acca(
     aux_data["acca_pass_1_desert_index"] = desert_index
 
     # Get ambiguous pixels
-    # find  = numexpr.evaluate("_temporary <= thresh_f7",{'thresh_f7' : CONFIG.pqa_param['acca_thresh_f7']}, locals())
     find = numexpr.evaluate(
         "_temporary <= thresh_f7", {"thresh_f7": pq_const.acca_thresh_f7}, locals()
     )
     ambiguous_array[find] = 1
 
     potential_cloud_array *= query
-    #    if CONFIG.debug:
-    #        dump_array(query, os.path.join(CONFIG.work_path, 'acca_filter7.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
-    #        dump_array(potential_cloud_array, os.path.join(CONFIG.work_path, 'potential_cloud_array7.tif'), template_dataset=nbar_input_dataset, dtype=gdal.GDT_Float32)
 
     # Filter 8; Band 5/6 composite (Separate warm/cold clouds)
     _temporary = potential_cloud_array * filter4(reflectance_stack, thermal_array)
-    # cold_cloud    = numexpr.evaluate("_temporary < thresh_f8",{'thresh_f8' : CONFIG.pqa_param['acca_thresh_f8']}, locals())
     cold_cloud = numexpr.evaluate(
         "_temporary < thresh_f8", {"thresh_f8": pq_const.acca_thresh_f8}, locals()
     )
-    # warm_cloud    = numexpr.evaluate("_temporary >= thresh_f8",{'thresh_f8' : CONFIG.pqa_param['acca_thresh_f8']}, locals())
     warm_cloud = numexpr.evaluate(
         "_temporary >= thresh_f8", {"thresh_f8": pq_const.acca_thresh_f8}, locals()
     )
@@ -624,13 +568,10 @@ def acca(
     del query, find, _temporary
     gc.collect()
 
-    # """
-    #             Tests for snow and desert.  If the thresholds aren't
-    #             breached, Pass two is implemented.
-    # """
+    # Tests for snow and desert.  If the thresholds aren't breached, Pass two
+    # is implemented.
 
     # REDO of tests for pass two engagement
-    # if desert_index <= CONFIG.pqa_param['acca_desertindex'] and snow_percent > CONFIG.pqa_param['acca_snow_threshold']:
     if (
         desert_index <= pq_const.acca_desertIndex
         and snow_percent > pq_const.acca_snow_threshold
@@ -648,8 +589,6 @@ def acca(
         logging.debug(
             "Mean temperature: %s", np.mean(thermal_array[cloud], dtype="float")
         )
-        # if ((cold_cloud_pop > CONFIG.pqa_param['acca_coldcloud_pop']) and (desert_index > CONFIG.pqa_param['acca_desertindex'])
-        #         and (numpy.mean(thermal_array[cloud], dtype='float') < CONFIG.pqa_param['acca_coldcloud_mean'])):
         if (
             (cold_cloud_pop > pq_const.acca_coldCloud_pop)
             and (desert_index > pq_const.acca_desertIndex)
@@ -671,8 +610,6 @@ def acca(
                 return cloud
             else:
                 return r_cloud
-        # elif ((desert_index <= CONFIG.pqa_param['acca_desertindex']) and (numpy.mean(thermal_array[cloud], dtype='float') <
-        #                CONFIG.pqa_param['acca_coldcloud_mean'])):
         elif (desert_index <= pq_const.acca_desertIndex) and (
             np.mean(thermal_array[cloud], dtype="float") < pq_const.acca_coldCloud_mean
         ):
@@ -687,8 +624,9 @@ def acca(
 
 
 def majority_filter(cloud, iterations=1):
+    """Majority filter."""
     weights_array = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
-    for i in range(iterations):
+    for _ in range(iterations):
         cloud = ndimage.convolve(cloud, weights_array)
         cloud = numexpr.evaluate("cloud > 4")
 
@@ -730,14 +668,14 @@ def calc_acca_cloud_mask(
     # Contiguity masking
     null_nan_array = np.ones(contiguity_mask.shape, dtype=np.float32)
     if contiguity_mask is not None:
-        null_nan_array[~contiguity_mask] = NaN
+        null_nan_array[~contiguity_mask] = NAN
     potential_cloud_array = null_nan_array.copy()
 
     # reflectance_stack contains surface reflectance in un-scaled units
     np.float32(0.0001)
     reflectance_stack = nbar_array.astype(np.float32)
     reflectance_stack = numexpr.evaluate(
-        "reflectance_stack * scaling_factor * null_nan_array"
+        "reflectance_stack *" "scaling_factor * null_nan_array"
     )
 
     thermal_array = numexpr.evaluate("kelvin_array * null_nan_array")

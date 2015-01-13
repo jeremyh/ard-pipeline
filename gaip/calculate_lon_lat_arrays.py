@@ -1,3 +1,6 @@
+"""Grid Creation
+-------------.
+"""
 import os
 from functools import partial
 
@@ -137,7 +140,7 @@ def create_lon_lat_grids(
     lat_func = partial(get_lat_coordinate, geobox=geobox, centre=True)
 
     # Get some basic info about the image
-    geobox.crs.ExportToWkt()
+    # crs = geobox.crs.ExportToWkt()
     geobox.affine.to_gdal()
     shape = geobox.getShapeYX()
 
@@ -167,7 +170,7 @@ def create_lon_lat_grids(
 
 
 def create_grid(acquisition, coord_fn, fname=None, depth=7, dtype="float64"):
-    """Creates 2 by 2D NumPy arrays containing co-ordinates for each array element.
+    """Creates 2x2 NumPy arrays containing co-ordinates for each array element.
 
     :param acquisition:
         An instance of an acquisitions object.
@@ -191,8 +194,8 @@ def create_grid(acquisition, coord_fn, fname=None, depth=7, dtype="float64"):
     func = partial(coord_fn, geobox=geobox, centre=True)
 
     # Get some basic info about the image
-    geobox.crs.ExportToWkt()
-    geobox.affine.to_gdal()
+    # crs = geobox.crs.ExportToWkt()
+    # transform = geobox.affine.to_gdal()
     shape = geobox.getShapeYX()
 
     # Initialise the array to contain the result
@@ -206,8 +209,10 @@ def create_grid(acquisition, coord_fn, fname=None, depth=7, dtype="float64"):
 
 
 def create_lon_grid(acquisition, fname=None, depth=7, dtype="float64"):
+    """Create longitude grid."""
     return create_grid(acquisition, get_lon_coordinate, fname, depth, dtype)
 
 
 def create_lat_grid(acquisition, fname=None, depth=7, dtype="float64"):
+    """Create latitude grid."""
     return create_grid(acquisition, get_lat_coordinate, fname, depth, dtype)

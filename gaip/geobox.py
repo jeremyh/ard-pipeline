@@ -1,32 +1,25 @@
-"""
-Gridded Data
-"""
-import gdal
-import rasterio as rio
+"""Gridded Data."""
 import math
-import osr
 
-# ======================================================
+import affine
+import gdal
+import osr
+import rasterio as rio
 from affine import Affine
 
 # Landsat tranforms have very small determinants
 # the following setting is required, and there is a
 # bug in rasterio.set_epsilon() ver < 1.0.5
-import affine
-
 affine.EPSILON = 1e-9
 affine.EPSILON2 = 1e-18
-# affine.set_epsilon(1e-9)    # works for rasterio ver >= 1.0.5
 
 
 # WGS84
 CRS = "EPSG:4326"
 
 
-class GriddedGeoBox(object):
-
-    """
-    Represents a north up rectangular region on the Earth's surface which
+class GriddedGeoBox:
+    """Represents a north up rectangular region on the Earth's surface which
     has been divided into equal size retangular pixels for the purpose of
     data processing.
 
@@ -45,20 +38,19 @@ class GriddedGeoBox(object):
 
     All pixels are grid-aligned. Origin and corner will always be
     located on grid corners
-
-    :author: Steven Ring, Oct 2014
     """
 
     @staticmethod
     def from_dataset(dataset):
-        """
-        Return the GriddedGeoBox that encloses the full extent of
-        the supplied Rasterio or GDAL dataset
+        """Return the GriddedGeoBox that encloses the full extent of
+        the supplied Rasterio or GDAL dataset.
 
         Arguments:
+        ---------
             dataset: an open rasterio or GDAL Dataset
 
         Returns:
+        -------
             A GriddedGeoBox that encloses the full extent of
             the supplied dataset
         """
@@ -69,19 +61,20 @@ class GriddedGeoBox(object):
         else:
             raise ValueError(
                 "GriddedGeoBox.from_dataset() expects"
-                " GDAL or rasterio dataset, not %s" % (type(dataset))
+                " GDAL or rasterio dataset, not %s" % type(dataset)
             )
 
     @staticmethod
     def from_rio_dataset(dataset):
-        """
-        Return the GriddedGeoBox that encloses the full extent of
-        the supplied Rasterio dataset
+        """Return the GriddedGeoBox that encloses the full extent of
+        the supplied Rasterio dataset.
 
         Arguments:
+        ---------
             dataset: an open rasterio Dataset
 
         Returns:
+        -------
             A GriddedGeoBox that encloses the full extent of
             the supplied dataset
         """
@@ -94,14 +87,15 @@ class GriddedGeoBox(object):
 
     @staticmethod
     def from_gdal_dataset(dataset):
-        """
-        Return the GriddedGeoBox that encloses the full extent of
-        the supplied GDAL dataset
+        """Return the GriddedGeoBox that encloses the full extent of
+        the supplied GDAL dataset.
 
         Arguments:
+        ---------
             dataset: an open GDAL Dataset
 
         Returns:
+        -------
             A GriddedGeoBox that encloses the full extent of
             the supplied dataset
         """
@@ -115,10 +109,10 @@ class GriddedGeoBox(object):
 
     @staticmethod
     def from_corners(origin, corner, pixelsize=(0.00025, 0.00025), crs="EPSG:4326"):
-        """
-        Return a GriddedGeoBox defined by the the two supplied corners
+        """Return a GriddedGeoBox defined by the the two supplied corners.
 
         Arguments:
+        ---------
             origin: a tuple (in CRS coordinates) representing the positon
                     of the NW corner of the GriddedGeoBox
             corner: a tuple (in CRS coordinates) representing the positon
@@ -139,10 +133,10 @@ class GriddedGeoBox(object):
         pixelsize=(0.00025, 0.00025),
         crs="EPSG:4326",
     ):
-        """
-        Create a new GriddedGeoBox
+        """Create a new GriddedGeoBox.
 
         Arguments:
+        ---------
             shape: (ySize, xSize) 2-tuple defining the shape of the GGB
                    Note: Use getShapeXY() to get (xSize, ySize)
             origin: (xPos, yPos) 2-tuple difining the upper left GGB corner
@@ -158,28 +152,27 @@ class GriddedGeoBox(object):
         else:
             self.crs = osr.SpatialReference()
             if self.crs == self.crs.SetFromUserInput(crs):
-                raise ValueError("Invalid crs: %s" % (crs,))
+                raise ValueError(f"Invalid crs: {crs}")
         self.affine = Affine(
             self.pixelsize[0], 0, self.origin[0], 0, -self.pixelsize[1], self.origin[1]
         )
         self.corner = self.affine * self.getShapeXY()
 
-    def getShapeXY(self):
+    def get_shape_xy(self):
         return (self.shape[1], self.shape[0])
 
-    def getShapeYX(self):
+    def get_shape_yx(self):
         return self.shape
 
-    def transformPoint(self, transformation, point):
-        (x, y, z) = transformation.TransformPoint(point[0], point[1])
+    def transform_point(self, transformation, point):
+        (x, y, _) = transformation.TransformPoint(point[0], point[1])
         return (x, y)
 
     def copy(self, crs="EPSG:4326"):
-        """
-        Create a copy of this GriddedGeoBox transformed to the supplied
+        """Create a copy of this GriddedGeoBox transformed to the supplied
         Coordinate Reference System. The new GGB will have idential shape
         to the old and will be grid aligned to the new CRS. Pixel size
-        may change to accommodate the new CRS
+        may change to accommodate the new CRS.
         """
         newCrs = osr.SpatialReference()
         newCrs.SetFromUserInput(crs)
@@ -196,24 +189,22 @@ class GriddedGeoBox(object):
         return GriddedGeoBox(self.shape, newOrigin, newPixelSize, crs=crs)
 
     def __str__(self):
-        return "GriddedGeoBox(origin=%s,shape=%s,pixelsize=%s,crs: %s)" % (
-            self.origin,
-            self.shape,
-            str(self.pixelsize),
-            self.crs.ExportToProj4(),
+        return "GriddedGeoBox(origin={},shape={},pixelsize={},crs: {})".format(
+            self.origin, self.shape, str(self.pixelsize), self.crs.ExportToProj4()
         )
 
     def window(self, enclosedGGB):
-        """
-        Return the window, (expressed in the grid coordinates of this
+        """Return the window, (expressed in the grid coordinates of this
         GriddedGeoBox) of the supplied GriddedGeoBox. Self must be a
         GriddedGeoBox which fully encloses the enclosed GGB.
 
         Arguments:
+        ---------
             enclosedGGB: a GGB which is a subset of this GGB and is fully
                         enclosed by it
 
         Returns:
+        -------
             A pair of range tuples defining the enclosed retangular subset
             ((row_start, row_stop), (col_start, col_stop))
         """
@@ -239,8 +230,7 @@ class GriddedGeoBox(object):
         return self.shape[0]
 
     def convert_coordinates(self, xy, to_map=True, centre=False):
-        """
-        Given a tuple containing an (x, y) co-ordinate pair, convert
+        """Given a tuple containing an (x, y) co-ordinate pair, convert
         the co-ordinate pair to either image/array co-ordinates or
         real world (map) co-ordinates.
 
@@ -271,13 +261,12 @@ class GriddedGeoBox(object):
             x, y = xy * self.affine
         else:
             inv = ~self.affine
-            x, y = [int(v) for v in inv * xy]
+            x, y = (int(v) for v in inv * xy)
 
         return (x, y)
 
     def transform_coordinates(self, xy, to_crs):
-        """
-        Transform a tuple co-ordinate pair (x, y) from one CRS to
+        """Transform a tuple co-ordinate pair (x, y) from one CRS to
         another.
 
         :param xy:
@@ -304,16 +293,14 @@ class GriddedGeoBox(object):
 
     @property
     def ul(self):
-        """
-        Return the upper left corner co-ordinate in the units
+        """Return the upper left corner co-ordinate in the units
         defined by the geobox's co-ordinate reference frame.
         """
         return self.origin
 
     @property
     def ur(self):
-        """
-        Return the upper right corner co-ordinate in the units
+        """Return the upper right corner co-ordinate in the units
         defined by the geobox's co-ordinate reference frame.
         """
         ur = self.convert_coordinates((self.shape[1], 0))
@@ -321,16 +308,14 @@ class GriddedGeoBox(object):
 
     @property
     def lr(self):
-        """
-        Return the lower right corner co-ordinate in the units
+        """Return the lower right corner co-ordinate in the units
         defined by the geobox's co-ordinate reference frame.
         """
         return self.corner
 
     @property
     def ll(self):
-        """
-        Return the lower left corner co-ordinate in the units
+        """Return the lower left corner co-ordinate in the units
         defined by the geobox's co-ordinate reference frame.
         """
         ll = self.convert_coordinates((0, self.shape[0]))
@@ -338,8 +323,7 @@ class GriddedGeoBox(object):
 
     @property
     def centre(self):
-        """
-        Return the centre co-ordinate in the units defined by the
+        """Return the centre co-ordinate in the units defined by the
         geobox's co-ordinate reference frame.
         """
         x = (self.ul[0] + self.ur[0] + self.lr[0] + self.ll[0]) / 4.0
@@ -348,8 +332,7 @@ class GriddedGeoBox(object):
 
     @property
     def ul_lonlat(self):
-        """
-        Return the upper left corner co-ordinate in geographical
+        """Return the upper left corner co-ordinate in geographical
         longitude and latitude degrees based on the WGS84 datum.
         """
         sr = osr.SpatialReference()
@@ -359,8 +342,7 @@ class GriddedGeoBox(object):
 
     @property
     def ur_lonlat(self):
-        """
-        Return the upper right corner co-ordinate in geographical
+        """Return the upper right corner co-ordinate in geographical
         longitude and latitude degrees based on the WGS84 datum.
         """
         sr = osr.SpatialReference()
@@ -370,8 +352,7 @@ class GriddedGeoBox(object):
 
     @property
     def lr_lonlat(self):
-        """
-        Return the lower right corner co-ordinate in geographical
+        """Return the lower right corner co-ordinate in geographical
         longitude and latitude degrees based on the WGS84 datum.
         """
         sr = osr.SpatialReference()
@@ -381,8 +362,7 @@ class GriddedGeoBox(object):
 
     @property
     def ll_lonlat(self):
-        """
-        Return the lower left corner co-ordinate in geographical
+        """Return the lower left corner co-ordinate in geographical
         longitude and latitude degrees based on the WGS84 datum.
         """
         sr = osr.SpatialReference()
@@ -392,8 +372,7 @@ class GriddedGeoBox(object):
 
     @property
     def centre_lonlat(self):
-        """
-        Return the centre co-ordinate in geographical longitude
+        """Return the centre co-ordinate in geographical longitude
         and latitude degrees based on the WGS84 datum.
         """
         sr = osr.SpatialReference()
