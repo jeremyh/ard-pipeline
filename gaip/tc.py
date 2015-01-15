@@ -5,7 +5,7 @@
 import numpy as np
 from scipy import ndimage
 
-from gaip import shade_main_landsat_pixel, slope_pixelsize_newpole, write_img
+from gaip import cast_shadow_main, slope_self_shadow, write_img
 
 
 def filter_dsm(array):
@@ -303,7 +303,7 @@ def run_slope(
         [y_origin - i * dresy for i in range(-1, nrow - 1)], dtype=np.float64
     )  # yes, I did mean float64.
 
-    (mask, theta, phit, it, et, azi_it, azi_et, rela, ierr) = slope_pixelsize_newpole(
+    (mask, theta, phit, it, et, azi_it, azi_et, rela, ierr) = slope_self_shadow(
         dresx,
         dresy,
         spheroid,
@@ -558,7 +558,7 @@ def run_castshadow(
         msg = msg.format(dtype=azimuth_angle.dtype.name)
         raise TypeError(msg)
 
-    ierr, mask = shade_main_landsat_pixel(
+    ierr, mask = cast_shadow_main(
         DEM,
         zenith_angle,
         azimuth_angle,
