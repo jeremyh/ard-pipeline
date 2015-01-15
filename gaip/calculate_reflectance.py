@@ -9,13 +9,13 @@ from gaip import (
     constants,
     load_2D_bin_file,
     read_img,
-    terrain_correction,
+    reflectance,
     write_img,
     write_new_brdf_file,
 )
 
 
-def run_tc(
+def calculate_reflectance(
     acquisitions,
     bilinear_ortho_filenames,
     rori,
@@ -35,7 +35,8 @@ def run_tc(
     brdf_fname_format,
     new_brdf_fname_format,
 ):
-    """The terrain correction workflow.
+    """The workflow used to calculate lambertian, BRDF corrected and
+    terrain corrected surface reflectance.
 
     :param acquisitions:
         A list of acquisition class objects that will be run through
@@ -315,7 +316,7 @@ def run_tc(
 
         # Run terrain correction
         # We use transposed arrays; rows become cols and cols become rows
-        terrain_correction(
+        reflectance(
             cols,
             rows,
             rori,
