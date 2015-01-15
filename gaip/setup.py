@@ -53,5 +53,9 @@ setup(
                 "angle_all.f90",
             ],
         ),
+        Extension(
+            name="unmiximage",
+            sources=["constants_NSWC.f90", "nnls.f90", "unmiximage.f90"],
+        ),
     ],
 )
