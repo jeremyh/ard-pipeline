@@ -4,9 +4,9 @@ setup(
     name="gaip",
     ext_modules=[
         Extension(
-            name="_shade_main_landsat_pixel",
+            name="_cast_shadow_mask",
             sources=[
-                "shade_main_landsat_pixel.f90",
+                "cast_shadow.f90",
                 "set_borderf.f90",
                 "get_proj_shadows.f90",
                 "proj_terrain.f90",
@@ -14,7 +14,7 @@ setup(
             ],
         ),
         Extension(
-            name="_slope_pixelsize_newpole",
+            name="_slope_self_shadow",
             sources=[
                 "slope_pixelsize_newpole.f90",
                 "cal_pole.f90",
@@ -22,7 +22,7 @@ setup(
             ],
         ),
         Extension(
-            name="_brdf_terrain_newdiff_all",
+            name="_surface_reflectance",
             sources=[
                 "terrain_correction.f90",
                 "white_sky.f90",
