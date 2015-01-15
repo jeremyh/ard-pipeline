@@ -15,8 +15,7 @@ def majority_filter(array, iterations=1):
     return array.astype("uint8")
 
 
-# def calc_fmask_cloud_mask(l1t_data, l1t_sd, pq_const, contiguity_mask, aux_data={}):
-def FMaskCloudMask(
+def fmask_cloud_mask(
     mtl, null_mask=None, cloud_prob=None, wclr_max=None, sat_tag=None, aux_data={}
 ):
     Lnum = int(sat_tag[-1:])
@@ -39,8 +38,10 @@ def FMaskCloudMask(
         prj,
     ) = _fmask.plcloud(filename=mtl, mask=null_mask, num_Lst=Lnum, aux_data=aux_data)
 
-    fmask_byte = fmask_byte == 1  # Convert to bool, True = Cloud, False not Cloud
-    # Use a majority filter to fill holes, 2 iterations works well to smoothe things over
+    # Convert to bool, True = Cloud, False not Cloud
+    fmask_byte = fmask_byte == 1
+    # Use a majority filter to fill holes, 2 iterations works well to smoothe
+    # things over
     fmask_byte = majority_filter(array=fmask_byte, iterations=2)
 
     return (fmask_byte != 1).astype("bool")  # Invert to a 'land mask'
