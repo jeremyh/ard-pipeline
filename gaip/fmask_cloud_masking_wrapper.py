@@ -1,18 +1,6 @@
-"""Created on 08/01/2013.
-
-@author: u76345
-"""
 import fmask_cloud_masking as _fmask
-import numexpr
-from scipy import ndimage
 
-
-def majority_filter(array, iterations=1):
-    weights_array = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
-    for i in range(iterations):
-        array = ndimage.convolve(array, weights_array)
-        array = numexpr.evaluate("array > 4")
-    return array.astype("uint8")
+from gaip import majority_filter
 
 
 def fmask_cloud_mask(
@@ -44,4 +32,4 @@ def fmask_cloud_mask(
     # things over
     fmask_byte = majority_filter(array=fmask_byte, iterations=2)
 
-    return (fmask_byte != 1).astype("bool")  # Invert to a 'land mask'
+    return ~fmask_byte  # Invert
