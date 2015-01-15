@@ -141,6 +141,10 @@ class Landsat5AcquisitionTest(unittest.TestCase):
     def test_bias(self):
         self.assertAlmostEqual(self.acqs[0].bias, -2.2858267716535465)
 
+    def test_no_data(self):
+        acq = gaip.acquisitions(L5_DIR)[0]
+        assert acq.no_data is None, "L1T data has NO no_data value specified"
+
 
 class Landsat7AcquisitionTest(unittest.TestCase):
     def setUp(self):
@@ -236,6 +240,10 @@ class Landsat7AcquisitionTest(unittest.TestCase):
 
     def test_bias(self):
         self.assertAlmostEqual(self.acqs[0].bias, -6.978740157480303)
+
+    def test_no_data(self):
+        acq = gaip.acquisitions(L7_DIR)[0]
+        assert acq.no_data is None, "L1T data has NO no_data value specified"
 
 
 class Landsat8AcquisitionTest(unittest.TestCase):
@@ -334,6 +342,10 @@ class Landsat8AcquisitionTest(unittest.TestCase):
 
     def test_bias(self):
         self.assertAlmostEqual(self.acqs[0].bias, -64.76551)
+
+    def test_no_data(self):
+        acq = gaip.acquisitions(L7_DIR)[0]
+        assert acq.no_data is None, "L1T data has NO no_data value specified"
 
 
 class L1TDataTest(unittest.TestCase):
