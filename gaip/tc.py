@@ -1,6 +1,6 @@
-"""Terrain Correction
+"""A group of functions associated with:
+Terrain Correction
 ------------------.
-
 """
 import numpy as np
 from scipy import ndimage
@@ -182,11 +182,11 @@ def run_slope(
     spheroid,
 ):
     """Calculate the slope and angles for a region. This code is an
-    interface to the fortran code slope_pixel_newpole.f90 written by
+    interface to the fortran code slope_self_shadow.f90 written by
     Fuqin (which was modified to work with F2py).
 
     The following was taken from the top of the Fotran program:
-    "slope_pixelsize_newpole.f90:
+    "slope_self_shadow.f90":
     This program is used to calculate slope and aspect angles
     using Sobel filter and then calculate incident and
     exiting angles as well as their azimuth angles.
@@ -338,7 +338,7 @@ class CastShadowError(FortranError):
 
     def __init__(self, code):
         super().__init__(
-            "shade_main_landsat_pixel", code, CastShadowError.get_error_message(code)
+            "cast_shadow_main", code, CastShadowError.get_error_message(code)
         )
 
     @staticmethod
@@ -451,11 +451,11 @@ def run_castshadow(
     spheroid,
 ):
     """This code is an interface to the fortran code
-    shade_main_landsat_pixel.f90 written by Fuqin (and modified to
+    cast_shadow_main.f90 written by Fuqin (and modified to
     work with F2py).
 
     The following was taken from the top of the Fotran program:
-    "shade_main_landsat_pixel.f90":
+    "cast_shadow_main.f90":
 
     Creates a shadow mask for a standard Landsat scene
     the program was originally written by DLB Jupp in Oct. 2010
