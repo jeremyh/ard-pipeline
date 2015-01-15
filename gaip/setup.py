@@ -27,7 +27,7 @@ setup(
                 "surface_reflectance.f90",
                 "white_sky.f90",
                 "black_sky.f90",
-                "rl_brdf.f90",
+                "brdf_shape.f90",
             ],
         ),
         Extension(
