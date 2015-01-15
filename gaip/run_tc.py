@@ -175,7 +175,7 @@ def run_tc(
     nbar_constants = constants.NBARConstants(satellite, sensor)
     avg_reflectance_values = nbar_constants.getAvgReflut()
 
-    # Read arrays into memory
+    # Read all required arrays into memory
     # Convert to the appropriate datatype and transpose the array to convert
     # to Fortran contiguous memory. This should prevent any array copying
     self_shadow = as_array(read_img(self_shadow_fname), dtype=np.int16, transpose=True)
@@ -219,10 +219,11 @@ def run_tc(
         # Read the BRDF modis file for a given band
         brdf_modis_file = brdf_fname_format.format(band_num=acq.band_num)
         with open(brdf_modis_file) as param_file:
-            brdf0, brdf1, brdf2, bias, slope_ca, esun, dd = map(
+            (brdf0, brdf1, brdf2, bias, slope_ca, esun, dd) = map(
                 float, " ".join(param_file.readlines()).split()
             )
 
+        # Output the new format of the brdf file (QA/QC)
         write_new_brdf_file(
             new_brdf_fname_format.format(band_num=band_number),
             rori,
