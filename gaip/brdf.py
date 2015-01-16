@@ -28,7 +28,7 @@ from osgeo import gdal, gdalconst, osr
 
 from gaip import GriddedGeoBox, write_img
 
-log = logging.getlog("root." + __name__)
+log = logging.getLogger("root." + __name__)
 
 
 class BRDFLoaderError(Exception):

@@ -7,15 +7,15 @@ import numpy as np
 from gaip import (
     as_array,
     constants,
-    load_2D_bin_file,
+    load_2d_bin_file,
     read_img,
-    terrain_correction,
+    reflectance,
     write_img,
     write_new_brdf_file,
 )
 
 
-def run_tc(
+def calculate_reflectance(
     acquisitions,
     bilinear_ortho_filenames,
     rori,
@@ -35,7 +35,8 @@ def run_tc(
     brdf_fname_format,
     new_brdf_fname_format,
 ):
-    """The terrain correction workflow.
+    """The workflow used to calculate lambertian, BRDF corrected and
+    terrain corrected surface reflectance.
 
     :param acquisitions:
         A list of acquisition class objects that will be run through
@@ -173,7 +174,7 @@ def run_tc(
 
     # Get the average reflectance values per band
     nbar_constants = constants.NBARConstants(satellite, sensor)
-    avg_reflectance_values = nbar_constants.getAvgReflut()
+    avg_reflectance_values = nbar_constants.get_avg_ref_lut()
 
     # Read all required arrays into memory
     # Convert to the appropriate datatype and transpose the array to convert
@@ -256,56 +257,56 @@ def run_tc(
         ref_terrain_work = np.zeros(cols, dtype="float32")
 
         # Read the bilinear ortho files for the current band
-        a_mod = load_2D_bin_file(
+        a_mod = load_2d_bin_file(
             boo_fnames[(band_number, "a")],
             rows,
             cols,
             dtype=bilinear_dtype,
             transpose=True,
         )
-        b_mod = load_2D_bin_file(
+        b_mod = load_2d_bin_file(
             boo_fnames[(band_number, "b")],
             rows,
             cols,
             dtype=bilinear_dtype,
             transpose=True,
         )
-        s_mod = load_2D_bin_file(
+        s_mod = load_2d_bin_file(
             boo_fnames[(band_number, "s")],
             rows,
             cols,
             dtype=bilinear_dtype,
             transpose=True,
         )
-        fv = load_2D_bin_file(
+        fv = load_2d_bin_file(
             boo_fnames[(band_number, "fs")],
             rows,
             cols,
             dtype=bilinear_dtype,
             transpose=True,
         )
-        fs = load_2D_bin_file(
+        fs = load_2d_bin_file(
             boo_fnames[(band_number, "fv")],
             rows,
             cols,
             dtype=bilinear_dtype,
             transpose=True,
         )
-        ts = load_2D_bin_file(
+        ts = load_2d_bin_file(
             boo_fnames[(band_number, "ts")],
             rows,
             cols,
             dtype=bilinear_dtype,
             transpose=True,
         )
-        edir_h = load_2D_bin_file(
+        edir_h = load_2d_bin_file(
             boo_fnames[(band_number, "dir")],
             rows,
             cols,
             dtype=bilinear_dtype,
             transpose=True,
         )
-        edif_h = load_2D_bin_file(
+        edif_h = load_2d_bin_file(
             boo_fnames[(band_number, "dif")],
             rows,
             cols,
@@ -315,7 +316,7 @@ def run_tc(
 
         # Run terrain correction
         # We use transposed arrays; rows become cols and cols become rows
-        terrain_correction(
+        reflectance(
             cols,
             rows,
             rori,
