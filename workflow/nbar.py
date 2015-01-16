@@ -498,8 +498,8 @@ class CreateModisBrdfFiles(luigi.Task):
         )
 
 
-class RunModtranCorOrtho(luigi.Task):
-    """Run `modtran_cor_ortho` binary."""
+class RunBoxLineCoordinates(luigi.Task):
+    """Run `box_line_coordinates` binary."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -525,7 +525,7 @@ class RunModtranCorOrtho(luigi.Task):
         boxline_target = pjoin(out_path, CONFIG.get("work", "boxline_target"))
         cwd = pjoin(out_path, CONFIG.get("work", "read_modtrancor_ortho_cwd"))
 
-        gaip.run_read_modtrancor_ortho(
+        gaip.run_box_line_coordinates(
             centreline_target,
             sat_view_zenith_target,
             coordinator_target,
@@ -536,7 +536,7 @@ class RunModtranCorOrtho(luigi.Task):
 
 class GenerateModtranInputFiles(luigi.Task):
     """Generate the MODTRAN input files by running the Fortran binary
-    `input_modtran_ortho`.
+    `generate_modtran_input`.
     """
 
     l1t_path = luigi.Parameter()
@@ -544,7 +544,7 @@ class GenerateModtranInputFiles(luigi.Task):
 
     def requires(self):
         return [
-            RunModtranCorOrtho(self.l1t_path, self.out_path),
+            RunBoxLineCoordinates(self.l1t_path, self.out_path),
             CreateModtranDirectories(self.out_path),
             CalculateSatelliteAndSolarGrids(self.l1t_path, self.out_path),
             CreateModtranInputFile(self.l1t_path, self.out_path),
@@ -599,7 +599,7 @@ class GenerateModtranInputFiles(luigi.Task):
 
 class ReformatAsTp5(luigi.Task):
     """Reformat the MODTRAN input files in `tp5` format. This runs the
-    Fortran binary `refort_tp5_ga` multiple times.
+    Fortran binary `reformat_tp5_albedo` multiple times.
     """
 
     l1t_path = luigi.Parameter()
@@ -647,7 +647,7 @@ class ReformatAsTp5(luigi.Task):
 
 class ReformatAsTp5Trans(luigi.Task):
     """Reformat the MODTRAN input files in `tp5` format in the transmissive
-    case. This runs the Fortran binary `refort_tp5_ga_trans` multiple
+    case. This runs the Fortran binary `reformat_tp5_transmittance` multiple
     times.
     """
 
@@ -768,7 +768,9 @@ class RunModtran(luigi.Task):
 
 
 class ExtractFlux(luigi.Task):
-    """Extract the flux data from the MODTRAN outputs."""
+    """Extract the flux data from the MODTRAN outputs. This runs the
+    Fortran binary `read_flux_albedo`.
+    """
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -806,7 +808,7 @@ class ExtractFlux(luigi.Task):
 
 class ExtractFluxTrans(luigi.Task):
     """Extract the flux data from the MODTRAN output in the transmissive
-    case.
+    case. This runs the Fortran binary `read_flux_transmittance`.
     """
 
     l1t_path = luigi.Parameter()
@@ -842,7 +844,7 @@ class ExtractFluxTrans(luigi.Task):
 
 class CalculateCoefficients(luigi.Task):
     """Calculate the atmospheric parameters needed by BRDF and atmospheric
-    correction model.
+    correction model. This runs the Fortran binary `calculate_coefficients`.
     """
 
     l1t_path = luigi.Parameter()
@@ -888,7 +890,7 @@ class CalculateCoefficients(luigi.Task):
 class ReformatAtmosphericParameters(luigi.Task):
     """Reformat the atmospheric parameters produced by MODTRAN for four boxes.
     These are needed to conduct bilinear interpolation. This runs the binary
-    `read_modtran`.
+    `reformat_modtran_output`.
     """
 
     l1t_path = luigi.Parameter()
@@ -967,7 +969,9 @@ class ReformatAtmosphericParameters(luigi.Task):
 
 
 class BilinearInterpolation(luigi.Task):
-    """Perform the bilinear interpolation."""
+    """Perform the bilinear interpolation. This runs the Fortran binary
+    `bilinear_interpolation`.
+    """
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
