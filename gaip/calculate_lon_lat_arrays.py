@@ -142,7 +142,7 @@ def create_lon_lat_grids(
     # Get some basic info about the image
     # crs = geobox.crs.ExportToWkt()
     geobox.affine.to_gdal()
-    shape = geobox.getShapeYX()
+    shape = geobox.get_shape_yx()
 
     # Initialise the array to contain the result
     lon_arr = np.zeros(shape, dtype=dtype)
@@ -196,7 +196,7 @@ def create_grid(acquisition, coord_fn, fname=None, depth=7, dtype="float64"):
     # Get some basic info about the image
     # crs = geobox.crs.ExportToWkt()
     # transform = geobox.affine.to_gdal()
-    shape = geobox.getShapeYX()
+    shape = geobox.get_shape_yx()
 
     # Initialise the array to contain the result
     arr = np.zeros(shape, dtype=dtype)
