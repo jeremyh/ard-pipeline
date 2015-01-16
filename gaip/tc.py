@@ -282,7 +282,7 @@ def run_slope(
     dresy = y_res + 2
 
     # Get acquisition dimensions and add 1 pixel top, bottom, left & right
-    cols, rows = geobox.getShapeXY()
+    cols, rows = geobox.get_shape_xy()
     ncol = cols + 2
     nrow = rows + 2
 
