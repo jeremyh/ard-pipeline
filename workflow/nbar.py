@@ -1346,7 +1346,7 @@ class CalculateCastShadowSatellite(luigi.Task):
 
         # Output targets
         satellite_target = pjoin(
-            out_path, CONFIG.get("cast_shadow", "satellite_direction_target")
+            tc_work_path, CONFIG.get("cast_shadow", "satellite_direction_target")
         )
 
         gaip.calculate_cast_shadow(
