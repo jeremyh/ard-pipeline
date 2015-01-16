@@ -112,40 +112,34 @@ class SlopeResultSet:
 
         # Write
         write_img(
-            self.mask_self,
-            fname_mask_self,
-            format=file_type,
-            geobox=geobox,
-            nodata=-999,
+            self.mask_self, fname_mask_self, fmt=file_type, geobox=geobox, nodata=-999
         )
-        write_img(self.slope, fname_slope, format=file_type, geobox=geobox, nodata=-999)
+        write_img(self.slope, fname_slope, fmt=file_type, geobox=geobox, nodata=-999)
+        write_img(self.aspect, fname_aspect, fmt=file_type, geobox=geobox, nodata=-999)
         write_img(
-            self.aspect, fname_aspect, format=file_type, geobox=geobox, nodata=-999
+            self.incident, fname_incident, fmt=file_type, geobox=geobox, nodata=-999
         )
         write_img(
-            self.incident, fname_incident, format=file_type, geobox=geobox, nodata=-999
-        )
-        write_img(
-            self.exiting, fname_exiting, format=file_type, geobox=geobox, nodata=-999
+            self.exiting, fname_exiting, fmt=file_type, geobox=geobox, nodata=-999
         )
         write_img(
             self.azi_incident,
             fname_azimuth_incident,
-            format=file_type,
+            fmt=file_type,
             geobox=geobox,
             nodata=-999,
         )
         write_img(
             self.azi_exiting,
             fname_azimuth_exiting,
-            format=file_type,
+            fmt=file_type,
             geobox=geobox,
             nodata=-999,
         )
         write_img(
             self.rela_slope,
             fname_relative_slope,
-            format=file_type,
+            fmt=file_type,
             geobox=geobox,
             nodata=-999,
         )
