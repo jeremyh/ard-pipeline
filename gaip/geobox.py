@@ -159,12 +159,15 @@ class GriddedGeoBox:
         self.corner = self.affine * self.get_shape_xy()
 
     def get_shape_xy(self):
+        """Get the shape as a tuple (x,y)."""
         return (self.shape[1], self.shape[0])
 
     def get_shape_yx(self):
+        """Get the shape as a tuple (y,x)."""
         return self.shape
 
     def transform_point(self, transformation, point):
+        """Transform the point."""
         (x, y, _) = transformation.TransformPoint(point[0], point[1])
         return (x, y)
 
@@ -224,9 +227,11 @@ class GriddedGeoBox:
         return ((areaOriginXY[1], areaCornerXY[1]), (areaOriginXY[0], areaCornerXY[0]))
 
     def x_size(self):
+        """The x-axis size."""
         return self.shape[1]
 
     def y_size(self):
+        """The y-axis size."""
         return self.shape[0]
 
     def convert_coordinates(self, xy, to_map=True, centre=False):

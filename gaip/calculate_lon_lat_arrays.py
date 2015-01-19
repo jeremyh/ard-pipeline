@@ -140,8 +140,6 @@ def create_lon_lat_grids(
     lat_func = partial(get_lat_coordinate, geobox=geobox, centre=True)
 
     # Get some basic info about the image
-    # crs = geobox.crs.ExportToWkt()
-    geobox.affine.to_gdal()
     shape = geobox.get_shape_yx()
 
     # Initialise the array to contain the result
