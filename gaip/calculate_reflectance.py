@@ -1,5 +1,6 @@
-#!/usr/bin/env python
-
+"""Reflectance Calculations
+------------------------.
+"""
 import gc
 
 import numpy as np
