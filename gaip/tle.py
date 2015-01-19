@@ -1,3 +1,6 @@
+"""Satellite TLE (two-line element) Loading
+----------------------------------------.
+"""
 import datetime
 import os
 import re
@@ -97,6 +100,7 @@ def load_tle_from_files(acquisition, data_root, day_range=45):
     name = acquisition.satellite_name.replace("-", "").upper()
 
     def open_tle(tle_path, center_datetime):
+        """Open the TLE file and read."""
         with open(tle_path) as fd:
             tle_text = fd.readlines()
             if acquisition.tag == "LS5":
@@ -126,15 +130,11 @@ def load_tle_from_files(acquisition, data_root, day_range=45):
             pass
 
     for d in range(1, day_range):
-        ddelta = timedelta(days=d)
+        ddelta = datetime.timedelta(days=d)
         for s in [-1, 1]:
             dt = center_datetime + (ddelta * s)
             tle_dir = os.path.join(
-                data_root,
-                data_subdir,
-                "TLE",
-                "%s_YEAR" % acquisition.tag,
-                "%4d" % dt.year,
+                data_root, name, "TLE", "%s_YEAR" % acquisition.tag, "%4d" % dt.year
             )
             tle_file = acquisition.tle_format % (dt.year, dt.strftime("%j"))
             tle_path = os.path.join(tle_dir, tle_file)

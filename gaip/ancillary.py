@@ -1,6 +1,7 @@
 """Ancillary datasets."""
 
 import logging
+import os
 import re
 import subprocess
 from os.path import abspath, dirname, exists, pardir, splitext
