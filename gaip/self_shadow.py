@@ -1,9 +1,12 @@
+"""Shadow Calculations
+-------------------.
+"""
 from gaip import ImageMargins, read_img, run_slope, setup_spheroid
 
 
 def calculate_self_shadow(
     acquisition,
-    DSM_fname,
+    dsm_fname,
     margins,
     solar_zenith_fname,
     solar_azimuth_fname,
@@ -18,14 +21,14 @@ def calculate_self_shadow(
     :param acquisition:
         An instance of an acquisition object.
 
-    :param DSM_fname:
+    :param dsm_fname:
         A string containing the full file path name to the Digital
         Surface Model to be used in deriving the surface angles.
 
     :param margins:
         An object with members top, bottom, left and right giving the
         size of the margins (in pixels) which have been added to the
-        corresponding sides of DSM.
+        corresponding sides of dsm.
 
     :param solar_zenith_fname:
         A string containing the full file path name to the solar
@@ -72,7 +75,7 @@ def calculate_self_shadow(
     is_utm = not geobox.crs.IsGeographic()
 
     # Read the DSM and angle arrays into memory
-    DSM = read_img(DSM_fname)
+    dsm = read_img(dsm_fname)
     solar_zenith = read_img(solar_zenith_fname)
     solar_azimuth = read_img(solar_azimuth_fname)
     satellite_view = read_img(satellite_view_fname)
@@ -84,7 +87,7 @@ def calculate_self_shadow(
     # Compute self shadow, slope and various other angles
     slope_results = run_slope(
         acquisition,
-        DSM,
+        dsm,
         solar_zenith,
         satellite_view,
         solar_azimuth,
@@ -102,6 +105,7 @@ def calculate_self_shadow(
 
 
 def write_header_slope_file(file_name, margins, geobox):
+    """Write the header slope file."""
     with open(file_name, "w") as output:
         # get dimensions, resolution and pixel origin
         rows, cols = geobox.shape

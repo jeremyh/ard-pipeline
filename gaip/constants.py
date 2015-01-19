@@ -2,7 +2,6 @@
 ---------.
 """
 # pylint: disable=attribute-defined-outside-init
-# pylint: disable=too-many-instance-attributes
 
 import re
 

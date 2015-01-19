@@ -1,3 +1,9 @@
+"""Setup
+-----.
+
+This compiles all the Fortran extensions.
+"""
+
 from numpy.distutils.core import Extension, setup
 
 setup(

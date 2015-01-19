@@ -1,5 +1,6 @@
-#! /usr/bin/env python
-
+"""Conversion Routines
+-------------------.
+"""
 import logging
 
 import numexpr
@@ -70,25 +71,17 @@ def get_landsat_temperature(l1t_stack, acquisitions, pq_const):
     :author:
         Josh Sixsmith, joshua.sixsmith@ga.gov.au
     """
-    # Find index of band 62 for LS7, band 60 for LS5 ***Should be band 61 for LS7
-    # thermal_band = max(l1t_input_dataset.bands('THERMAL')) # TODO: May break with LS8
-    # thermal_band_index = full_band_list.index(thermal_band)
-    # Get Band 6 for TM, Band 61 for ETM+ and Band 10 for OLI_TIRS
+    acqs = acquisitions
     thermal_band = pq_const.thermal_band
 
     if type(thermal_band) == str:
-        logging.debug(
-            "No thermal band defined in constants.py for sensor %s."
-            " Generating a blank float32 array.",
-            l1t_input_dataset.sensor,
-        )
         kelvin_array = np.zeros(
             (l1t_stack.shape[1], l1t_stack.shape[2]), dtype="float32"
         )
         return kelvin_array
 
     # Function returns a list of one item. Take the first item.
-    thermal_band_index = pq_const.getArrayBandLookup([thermal_band])[0]
+    thermal_band_index = pq_const.get_array_band_lookup([thermal_band])[0]
 
     logging.debug(
         "thermal_band = %d, thermal_band_index = %d", thermal_band, thermal_band_index
@@ -96,18 +89,12 @@ def get_landsat_temperature(l1t_stack, acquisitions, pq_const):
 
     radiance_array = radiance_conversion(
         l1t_stack[thermal_band_index],
-        acquisitions[thermal_band_index].gain,
-        acquisitions[thermal_band_index].bias,
+        acqs[thermal_band_index].gain,
+        acqs[thermal_band_index].bias,
     )
-    #        l1t_input_dataset.gain[pq_const.band_num_sequence[thermal_band]],
-    #        l1t_input_dataset.bias[pq_const.band_num_sequence[thermal_band]])
 
     kelvin_array = temperature_conversion(
-        radiance_array,
-        acquisitions[thermal_band_index].K1,
-        acquisitions[thermal_band_index].K2,
+        radiance_array, acqs[thermal_band_index].K1, acqs[thermal_band_index].K2
     )
-    #        l1t_input_dataset.satellite.k[0],
-    #        l1t_input_dataset.satellite.k[1])
 
     return kelvin_array.astype("float32")
