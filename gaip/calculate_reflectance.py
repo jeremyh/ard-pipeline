@@ -48,6 +48,7 @@ def calculate_reflectance(
         (band_number, factor) and the value corresponding to a full
         file pathname to the bilinearly interpolated flaot32 array.
         Valid factor strings are:
+
             * fv: MODTRAN output (fv).
             * fs: MODTRAN output (fs).
             * b: MODTRAN output (b).
@@ -114,9 +115,9 @@ def calculate_reflectance(
         full file pathname.
         Valid reflectance level strings are:
 
-        1. ref_lm -> Lambertian reflectance
-        2. ref_brdf -> BRDF corrected reflectance
-        3. ref_terrain -> Terrain corrected reflectance
+            * 1. ref_lm -> Lambertian reflectance
+            * 2. ref_brdf -> BRDF corrected reflectance
+            * 3. ref_terrain -> Terrain corrected reflectance
 
     :param brdf_fname_format:
         A string containing the brdf filename format eg:
@@ -133,12 +134,12 @@ def calculate_reflectance(
         The terrain correction algorithm will output 3 files for every
         band in the following format:
 
-        1. reflectance_lambertian_{band_number}.bin -> Lambertian
-           reflectance.
-        2. reflectance_brdf_{band_number}.bin -> BRDF corrected
-           reflectance.
-        3. reflectance_terrain_{band_number}.bin -> Terrain corrected
-           reflectance.
+            * 1. reflectance_lambertian_{band_number}.bin -> Lambertian
+                 reflectance.
+            * 2. reflectance_brdf_{band_number}.bin -> BRDF corrected
+                 reflectance.
+            * 3. reflectance_terrain_{band_number}.bin -> Terrain corrected
+                 reflectance.
 
     :notes:
         Arrays will be converted to the required datatype and
@@ -147,6 +148,7 @@ def calculate_reflectance(
         being written to disk.
         All arrays should have the same dimensions.
         Required datatypes are as follows:
+
             * acquisitions: `numpy.int16`
             * self_shadow: `numpy.int16`
             * cast_shadow_sun: `numpy.int16`

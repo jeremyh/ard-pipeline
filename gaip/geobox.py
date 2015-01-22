@@ -45,14 +45,12 @@ class GriddedGeoBox:
         """Return the GriddedGeoBox that encloses the full extent of
         the supplied Rasterio or GDAL dataset.
 
-        Arguments:
-        ---------
-            dataset: an open rasterio or GDAL Dataset
+        :param dataset:
+            An open rasterio or GDAL Dataset.
 
-        Returns:
-        -------
+        :return:
             A GriddedGeoBox that encloses the full extent of
-            the supplied dataset
+            the supplied dataset.
         """
         if isinstance(dataset, gdal.Dataset):
             return GriddedGeoBox.from_gdal_dataset(dataset)
@@ -69,14 +67,12 @@ class GriddedGeoBox:
         """Return the GriddedGeoBox that encloses the full extent of
         the supplied Rasterio dataset.
 
-        Arguments:
-        ---------
-            dataset: an open rasterio Dataset
+        :param dataset:
+            An open rasterio Dataset.
 
-        Returns:
-        -------
+        :return:
             A GriddedGeoBox that encloses the full extent of
-            the supplied dataset
+            the supplied dataset.
         """
         bbshape = dataset.shape
         origin = (dataset.affine[2], dataset.affine[5])
@@ -90,14 +86,12 @@ class GriddedGeoBox:
         """Return the GriddedGeoBox that encloses the full extent of
         the supplied GDAL dataset.
 
-        Arguments:
-        ---------
-            dataset: an open GDAL Dataset
+        :param dataset:
+            An open GDAL Dataset.
 
-        Returns:
-        -------
+        :return:
             A GriddedGeoBox that encloses the full extent of
-            the supplied dataset
+            the supplied dataset.
         """
         bbshape = (dataset.RasterYSize, dataset.RasterXSize)
         transform = dataset.GetGeoTransform()
@@ -109,17 +103,23 @@ class GriddedGeoBox:
 
     @staticmethod
     def from_corners(origin, corner, pixelsize=(0.00025, 0.00025), crs="EPSG:4326"):
-        """Return a GriddedGeoBox defined by the the two supplied corners.
+        """Return a GriddedGeoBox defined by the the two supplied
+        corners.
 
-        Arguments:
-        ---------
-            origin: a tuple (in CRS coordinates) representing the positon
-                    of the NW corner of the GriddedGeoBox
-            corner: a tuple (in CRS coordinates) representing the positon
-                    of the NW corner of the GriddedGeoBox
-            pixelsize: pixel (xSize, ySize) in CRS units
-            crs: the SpatialReferenceSystem in which both origin and pixelsize
-                are expressed (supports various text formats)
+        :param origin:
+            A tuple (in CRS coordinates) representing the positon of
+            the NW corner of the GriddedGeoBox.
+
+        :param corner:
+            A tuple (in CRS coordinates) representing the positon of
+            the NW corner of the GriddedGeoBox.
+
+        :param pixelsize:
+             Pixel (xSize, ySize) in CRS units.
+
+        :param crs:
+            The SpatialReferenceSystem in which both origin and
+            pixelsize are expressed (supports various text formats).
         """
         a = Affine(pixelsize[0], 0, origin[0], 0, -pixelsize[1], origin[1])
         shapeXY = tuple([int(math.ceil(v)) for v in ~a * corner])
@@ -135,14 +135,20 @@ class GriddedGeoBox:
     ):
         """Create a new GriddedGeoBox.
 
-        Arguments:
-        ---------
-            shape: (ySize, xSize) 2-tuple defining the shape of the GGB
-                   Note: Use get_shape_xy() to get (xSize, ySize)
-            origin: (xPos, yPos) 2-tuple difining the upper left GGB corner
-            pixelsize: pixel (xSize, ySize) in CRS units
-            crs: the SpatialReferenceSystem in which both origin and
-                 pixelsize are expressed (supports various text formats)
+        :param shape:
+            (ySize, xSize) 2-tuple defining the shape of the GGB.
+
+            * Use get_shape_xy() to get (xSize, ySize).
+
+        :param origin:
+            (xPos, yPos) 2-tuple difining the upper left GGB corner.
+
+        :param pixelsize:
+            Pixel (xSize, ySize) in CRS units.
+
+        :param crs:
+            The SpatialReferenceSystem in which both origin and
+            pixelsize are expressed (supports various text formats).
         """
         self.pixelsize = pixelsize
         self.shape = tuple([int(v) for v in shape])
@@ -201,15 +207,13 @@ class GriddedGeoBox:
         GriddedGeoBox) of the supplied GriddedGeoBox. Self must be a
         GriddedGeoBox which fully encloses the enclosed GGB.
 
-        Arguments:
-        ---------
-            enclosedGGB: a GGB which is a subset of this GGB and is fully
-                        enclosed by it
+        :param enclosedGGB:
+            A GGB which is a subset of this GGB and is fully enclosed
+            by it.
 
-        Returns:
-        -------
+        :return:
             A pair of range tuples defining the enclosed retangular subset
-            ((row_start, row_stop), (col_start, col_stop))
+            ((row_start, row_stop), (col_start, col_stop)).
         """
         # transform to map enclosedGGB coords to self.crs coordinates
         enclosed2self = osr.CoordinateTransformation(enclosedGGB.crs, self.crs)
