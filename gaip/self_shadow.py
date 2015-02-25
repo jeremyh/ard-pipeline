@@ -1,21 +1,24 @@
-"""Shadow Calculations
--------------------.
 """
-from gaip import ImageMargins, read_img, run_slope, setup_spheroid
+Shadow Calculations
+-------------------
+"""
+
+import gdal
+import numpy
+import rasterio
+
+from gaip import ImageMargins
+from gaip import setup_spheroid
+from gaip import read_img
+from gaip import run_slope
 
 
-def calculate_self_shadow(
-    acquisition,
-    dsm_fname,
-    margins,
-    solar_zenith_fname,
-    solar_azimuth_fname,
-    satellite_view_fname,
-    satellite_azimuth_fname,
-    out_fnames=None,
-    header_slope_fname=None,
-):
-    """Computes the self shadow mask, slope, aspect, incident, exiting,
+def calculate_self_shadow(acquisition, dsm_fname, margins,
+                          solar_zenith_fname, solar_azimuth_fname,
+                          satellite_view_fname, satellite_azimuth_fname,
+                          out_fnames=None, header_slope_fname=None):
+    """
+    Computes the self shadow mask, slope, aspect, incident, exiting,
     azimuth incident, azimuth exiting and relative slope angles.
 
     :param acquisition:
@@ -87,17 +90,9 @@ def calculate_self_shadow(
     pixel_buf = ImageMargins(margins)
 
     # Compute self shadow, slope and various other angles
-    slope_results = run_slope(
-        acquisition,
-        dsm,
-        solar_zenith,
-        satellite_view,
-        solar_azimuth,
-        satellite_azimuth,
-        pixel_buf,
-        is_utm,
-        spheroid,
-    )
+    slope_results = run_slope(acquisition, dsm, solar_zenith, satellite_view,
+                              solar_azimuth, satellite_azimuth, pixel_buf,
+                              is_utm, spheroid)
 
     # Output the results
     slope_results.write_arrays(out_fnames=out_fnames, geobox=geobox)
@@ -108,16 +103,82 @@ def calculate_self_shadow(
 
 def write_header_slope_file(file_name, margins, geobox):
     """Write the header slope file."""
-    with open(file_name, "w") as output:
+    with open(file_name, 'w') as output:
         # get dimensions, resolution and pixel origin
         rows, cols = geobox.shape
         res = geobox.pixelsize
         origin = geobox.origin
 
         # Now output the details
-        output.write(f"{rows} {cols}\n")
-        output.write(
-            f"{margins.left} {margins.right}\n{margins.top} {margins.bottom}\n"
-        )
-        output.write(f"{res[1]} {res[0]}\n")
-        output.write(f"{origin[1]} {origin[0]}\n")
+        output.write("{nr} {nc}\n".format(nr=rows, nc=cols))
+        output.write("{0} {1}\n{2} {3}\n".format(margins.left, margins.right,
+                                                 margins.top, margins.bottom))
+        output.write("{resy} {resx}\n".format(resx=res[0], resy=res[1]))
+        output.write("{yorigin} {xorigin}\n".format(xorigin=origin[0],
+                                                    yorigin=origin[1]))
+
+
+def self_shadow(incident_fname, exiting_fname, self_shadow_out_fname,
+                header_slope_fname=None):
+    """
+
+    """
+
+    with rasterio.open(incident_fname) as inc_ds,\
+        rasterio.open(exiting_fname) as exi_ds:
+
+        # Retrieve a geobox and image info
+        geobox = GriddedGeoBox.from_rio_dataset(inc_ds)
+        cols, rows = geobox.get_shape_xy()
+        prj = geobox.crs.ExportToWkt()
+        geoT = geobox.affine.to_gdal()
+
+        # Initialise the output file
+        drv = gdal.GetDriverByName("ENVI")
+        out_dtype = gdal.GDT_Byte
+        nbands = 1
+        outds = drv.Create(self_shadow_out_fname, cols, rows, nbands,
+                           out_dtype)
+        outds.SetProjection(prj)
+        outds.SetGeoTransform(geoT)
+        outband = outds.GetRasterBand(1)
+
+        # Initialise the tiling scheme for processing
+        if X_TILE is None:
+            X_TILE = cols
+        if Y_TILE is None:
+            Y_TILE = 1
+        tiles = tiling.generate_tiles(cols, rows, X_TILE, Y_TILE,
+                                      Generator=False)
+
+        # Loop over each tile
+        for tile in tiles:
+            # Row and column start and end locations
+            ystart = tile[0][0]
+            xstart = tile[1][0]
+            yend = tile[0][1]
+            xend = tile[1[0]
+
+            # Tile size
+            ysize = yend - ystart
+            xsize = xend - xstart
+
+            # Read the data for the current tile
+            inc = numpy.radians(inc_ds.read_band(1, window=tile, masked=False))
+            exi = numpy.radians(exi_ds.read_band(1, window=tile, masked=False))
+
+            # Process the tile
+            mask = numpy.ones((rows, cols), dtype='uint8')
+            mask[inc <= 0.0] = 0
+            mask[exi <= 0.0] = 0
+
+            # Write the current tile to disk
+            outband.WriteArray(mask, xstart, ystart)
+            outband.FlushCache()
+
+        # Close the file
+        outband = None
+        outds = None
+
+    if header_slope_fname:
+        write_header_slope_file(header_slope_fname, pixel_buf, geobox)
