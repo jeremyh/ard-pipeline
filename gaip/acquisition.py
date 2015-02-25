@@ -48,12 +48,12 @@ class Acquisition:
         else:
             return self.band_name.replace("band", "")
 
-    def data(self, out=None):
+    def data(self, out=None, window=None):
         """Return `numpy.array` of the data for this acquisition.
         If `out` is supplied, it must be a numpy.array into which
         the Acquisition's data will be read.
         """
-        return gaip.data(self, out=out)
+        return gaip.data(self, out=out, window=None)
 
     def data_and_box(self, out=None):
         """Return a tuple comprising the `numpy.array` of the data for this
