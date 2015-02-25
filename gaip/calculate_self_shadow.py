@@ -1,25 +1,20 @@
-"""
-Shadow Calculations
--------------------
+"""Shadow Calculations
+-------------------.
 """
 
 import gdal
-import numpy
+import numpy as np
 import rasterio
+from EOtools import tiling
 
-from gaip import ImageMargins
-from gaip import setup_spheroid
-from gaip import read_img
-from gaip import run_slope
-
+from gaip import GriddedGeoBox
 
 X_TILE = None
 Y_TILE = 100
 
 
 def self_shadow(incident_fname, exiting_fname, self_shadow_out_fname):
-    """
-    Computes the self shadow mask.
+    """Computes the self shadow mask.
 
     :param incident_fname:
         A string containing the full file path name to the incident
@@ -36,10 +31,9 @@ def self_shadow(incident_fname, exiting_fname, self_shadow_out_fname):
     :return:
         None. Output is written to disk.
     """
-
-    with rasterio.open(incident_fname) as inc_ds,\
-        rasterio.open(exiting_fname) as exi_ds:
-
+    with rasterio.open(incident_fname) as inc_ds, rasterio.open(
+        exiting_fname
+    ) as exi_ds:
         # Retrieve a geobox and image info
         geobox = GriddedGeoBox.from_rio_dataset(inc_ds)
         cols, rows = geobox.get_shape_xy()
@@ -50,8 +44,7 @@ def self_shadow(incident_fname, exiting_fname, self_shadow_out_fname):
         drv = gdal.GetDriverByName("ENVI")
         out_dtype = gdal.GDT_Byte
         nbands = 1
-        outds = drv.Create(self_shadow_out_fname, cols, rows, nbands,
-                           out_dtype)
+        outds = drv.Create(self_shadow_out_fname, cols, rows, nbands, out_dtype)
         outds.SetProjection(prj)
         outds.SetGeoTransform(geoT)
         outband = outds.GetRasterBand(1)
@@ -61,27 +54,20 @@ def self_shadow(incident_fname, exiting_fname, self_shadow_out_fname):
             X_TILE = cols
         if Y_TILE is None:
             Y_TILE = 1
-        tiles = tiling.generate_tiles(cols, rows, X_TILE, Y_TILE,
-                                      Generator=False)
+        tiles = tiling.generate_tiles(cols, rows, X_TILE, Y_TILE, Generator=False)
 
         # Loop over each tile
         for tile in tiles:
-            # Row and column start and end locations
+            # Row and column start locations
             ystart = tile[0][0]
             xstart = tile[1][0]
-            yend = tile[0][1]
-            xend = tile[1[0]
-
-            # Tile size
-            ysize = yend - ystart
-            xsize = xend - xstart
 
             # Read the data for the current tile
-            inc = numpy.radians(inc_ds.read_band(1, window=tile, masked=False))
-            exi = numpy.radians(exi_ds.read_band(1, window=tile, masked=False))
+            inc = np.radians(inc_ds.read_band(1, window=tile, masked=False))
+            exi = np.radians(exi_ds.read_band(1, window=tile, masked=False))
 
             # Process the tile
-            mask = numpy.ones((rows, cols), dtype='uint8')
+            mask = np.ones((rows, cols), dtype="uint8")
             mask[inc <= 0.0] = 0
             mask[exi <= 0.0] = 0
 

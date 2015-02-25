@@ -3,10 +3,7 @@
 import numpy as np
 import rasterio
 
-from gaip import ImageMargins, _slope_aspect, setup_spheroid, write_img
-
-X_TILE = None
-Y_TILE = 100
+from gaip import ImageMargins, _slope_aspect, as_array, setup_spheroid, write_img
 
 
 def write_header_slope_file(file_name, margins, geobox):
@@ -89,7 +86,7 @@ def slope_aspect(
 
     # Define the index to read the DEM subset
     idx = (
-        (pixel_margin.top - 1, -(margin.bottom - 1)),
+        (pixel_margin.top - 1, -(pixel_margin.bottom - 1)),
         (pixel_margin.left - 1, -(pixel_margin.right - 1)),
     )
 

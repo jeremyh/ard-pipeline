@@ -1,30 +1,38 @@
+"""Reflectance Calculations
+------------------------.
 """
-Reflectance Calculations
-------------------------
-"""
-from osgeo import gdal
-import numpy
+import numpy as np
 import rasterio
-
-from gaip import as_array
-from gaip import constants
-from gaip import reflectance
-from gaip import write_new_brdf_file
 from EOtools import tiling
+from osgeo import gdal
+
+from gaip import as_array, constants, reflectance, write_new_brdf_file
 
 X_TILE = None
 Y_TILE = 100
 
-def calculate_reflectance(acquisitions, bilinear_ortho_filenames, rori,
-                          self_shadow_fname, cast_shadow_sun_fname,
-                          cast_shadow_satellite_fname, solar_zenith_fname,
-                          solar_azimuth_fname, satellite_view_fname,
-                          relative_angle_fname, slope_fname, aspect_fname,
-                          incident_angle_fname, exiting_angle_fname,
-                          relative_slope_fname, reflectance_filenames,
-                          brdf_fname_format, new_brdf_fname_format):
-    """
-    The workflow used to calculate lambertian, BRDF corrected and
+
+def calculate_reflectance(
+    acquisitions,
+    bilinear_ortho_filenames,
+    rori,
+    self_shadow_fname,
+    cast_shadow_sun_fname,
+    cast_shadow_satellite_fname,
+    solar_zenith_fname,
+    solar_azimuth_fname,
+    satellite_view_fname,
+    relative_angle_fname,
+    slope_fname,
+    aspect_fname,
+    incident_angle_fname,
+    exiting_angle_fname,
+    relative_slope_fname,
+    reflectance_filenames,
+    brdf_fname_format,
+    new_brdf_fname_format,
+):
+    """The workflow used to calculate lambertian, BRDF corrected and
     terrain corrected surface reflectance.
 
     :param acquisitions:
@@ -170,7 +178,7 @@ def calculate_reflectance(acquisitions, bilinear_ortho_filenames, rori,
     self_shadow_ds = rasterio.open(self_shadow_fname)
     cast_shadow_sun_ds = rasterio.open(cast_shadow_sun_fname)
     cast_shadow_satellite_ds = rasterio.open(cast_shadow_satellite_fname)
-    solar_zenith_ds =  rasterio.open(solar_zenith_fname)
+    solar_zenith_ds = rasterio.open(solar_zenith_fname)
     solar_azimuth_ds = rasterio.open(solar_azimuth_fname)
     satellite_view_ds = rasterio.open(satellite_view_fname)
     relative_angle_ds = rasterio.open(relative_angle_fname)
@@ -188,17 +196,14 @@ def calculate_reflectance(acquisitions, bilinear_ortho_filenames, rori,
         geobox = acq.gridded_geo_box()
 
         # Filenames for lambertian, brdf & terrain corrected reflectance
-        lmbrt_fname = reflectance_filenames[(band_number,
-                                             'reflectance_lambertian')]
-        brdf_fname = reflectance_filenames[(band_number,
-                                            'reflectance_brdf')]
-        tc_fname = reflectance_filenames[(band_number,
-                                          'reflectance_terrain')]
+        lmbrt_fname = reflectance_filenames[(band_number, "reflectance_lambertian")]
+        brdf_fname = reflectance_filenames[(band_number, "reflectance_brdf")]
+        tc_fname = reflectance_filenames[(band_number, "reflectance_terrain")]
 
         fnames = {}
-        fnames['lambertian'] = lmbrt_fname
-        fnames['brdf'] = brdf_fname
-        fnames['terrain'] = tc_fname
+        fnames["lambertian"] = lmbrt_fname
+        fnames["brdf"] = brdf_fname
+        fnames["terrain"] = tc_fname
 
         # Initialise the output files
         output_files = {}
@@ -210,8 +215,7 @@ def calculate_reflectance(acquisitions, bilinear_ortho_filenames, rori,
         geoT = geobox.affine.to_gdal()
         for key in fnames:
             fname = fnames[key]
-            output_files[key] = drv.Create(fname, cols, rows, nbands,
-                                           out_dtype)
+            output_files[key] = drv.Create(fname, cols, rows, nbands, out_dtype)
             output_files[key].SetProjection(prj)
             output_files[key].SetGeoTransform(geoT)
             out_bands[key] = output_files[key].GetRasterBand(1)
@@ -223,39 +227,52 @@ def calculate_reflectance(acquisitions, bilinear_ortho_filenames, rori,
             X_TILE = cols
         if Y_TILE is None:
             Y_TILE = 1
-        tiles = tiling.generate_tiles(cols, rows, X_TILE, Y_TILE,
-                                      Generator=False)
+        tiles = tiling.generate_tiles(cols, rows, X_TILE, Y_TILE, Generator=False)
 
         # Read the BRDF modis file for a given band
         brdf_modis_file = brdf_fname_format.format(band_num=acq.band_num)
-        with open(brdf_modis_file, 'r') as param_file:
-            (brdf0, brdf1, brdf2, bias, slope_ca,
-             esun, dd) = map(float,
-                             ' '.join(param_file.readlines()).split())
+        with open(brdf_modis_file) as param_file:
+            (brdf0, brdf1, brdf2, bias, slope_ca, esun, dd) = map(
+                float, " ".join(param_file.readlines()).split()
+            )
 
         # Output the new format of the brdf file (QA/QC)
         write_new_brdf_file(
             new_brdf_fname_format.format(band_num=band_number),
-            rori, brdf0, brdf1, brdf2, bias, slope_ca, esun, dd,
-            avg_reflectance_values[band_number])
+            rori,
+            brdf0,
+            brdf1,
+            brdf2,
+            bias,
+            slope_ca,
+            esun,
+            dd,
+            avg_reflectance_values[band_number],
+        )
 
         # Open all the bilinear interpolated files for the current band
-        with rasterio.open(boo_fnames[(band_number, 'a')]) as a_mod_ds,\
-            rasterio.open(boo_fnames[(band_number, 'b')]) as b_mod_ds,\
-            rasterio.open(boo_fnames[(band_number, 's')]) as s_mod_ds,\
-            rasterio.open(boo_fnames[(band_number, 'fs')]) as fs_ds,\
-            rasterio.open(boo_fnames[(band_number, 'fv')]) as fv_ds,\
-            rasterio.open(boo_fnames[(band_number, 'ts')]) as ts_ds,\
-            rasterio.open(boo_fnames[(band_number, 'dir')]) as edir_h_ds,\
-            rasterio.open(boo_fnames[(band_number, 'dif')]) as edif_h_ds:
-
+        with rasterio.open(boo_fnames[(band_number, "a")]) as a_mod_ds, rasterio.open(
+            boo_fnames[(band_number, "b")]
+        ) as b_mod_ds, rasterio.open(
+            boo_fnames[(band_number, "s")]
+        ) as s_mod_ds, rasterio.open(
+            boo_fnames[(band_number, "fs")]
+        ) as fs_ds, rasterio.open(
+            boo_fnames[(band_number, "fv")]
+        ) as fv_ds, rasterio.open(
+            boo_fnames[(band_number, "ts")]
+        ) as ts_ds, rasterio.open(
+            boo_fnames[(band_number, "dir")]
+        ) as edir_h_ds, rasterio.open(
+            boo_fnames[(band_number, "dif")]
+        ) as edif_h_ds:
             # Loop over each tile
             for tile in tiles:
                 # Row and column start and end locations
                 ystart = tile[0][0]
                 xstart = tile[1][0]
                 yend = tile[0][1]
-                xend = tile[1[0]
+                xend = tile[1][0]
 
                 # Tile size
                 ysize = yend - ystart
@@ -264,111 +281,173 @@ def calculate_reflectance(acquisitions, bilinear_ortho_filenames, rori,
                 # Read the data corresponding to the current tile for all
                 # files
                 # Convert the datatype if required and transpose
-                band_data = as_array(acq.data(window=tile, masked=False),
-                                     dtype=numpy.int16, transpose=True)
-                self_shadow = as_array(self_shadow_ds.read_band(1,
-                                       window=tile, masked=False),
-                                       dtype=numpy.int16,
-                                       transpose=True)
-                cast_shadow_sun = as_array(cast_shadow_sun_ds.read_band(1,
-                                           window=tile, masked=False),
-                                           dtype=numpy.int16,
-                                           transpose=True)
+                band_data = as_array(
+                    acq.data(window=tile, masked=False), dtype=np.int16, transpose=True
+                )
+                self_shadow = as_array(
+                    self_shadow_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.int16,
+                    transpose=True,
+                )
+                cast_shadow_sun = as_array(
+                    cast_shadow_sun_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.int16,
+                    transpose=True,
+                )
                 cast_shadow_satellite = as_array(
-                                      cast_shadow_satellite_ds.read_band(1,
-                                      window=tile, masked=False),
-                                      dtype=numpy.int16,
-                                      transpose=True)
-                solar_zenith = as_array(solar_zenith_ds.read_band(1,
-                                        window=tile, masked=False),
-                                        dtype=numpy.float32,
-                                        transpose=True)
-                solar_azimuth = as_array(solar_azimuth_ds.read_band(1,
-                                         window=tile, masked=False),
-                                         dtype=numpy.float32,
-                                         transpose=True)
-                satellite_view = as_array(satellite_view_ds.read_band(1,
-                                          window=tile, masked=False),
-                                          dtype=numpy.float32, transpose=True)
-                relative_angle = as_array(relative_angle_ds.read_band(1,
-                                          window=tile),
-                                          dtype=numpy.float32, transpose=True)
-                slope = as_array(slope_ds.read_band(1, window=tile,
-                                                    masked=False),
-                                 dtype=numpy.float32, transpose=True)
-                aspect = as_array(aspect_ds.read_band(1, window=tile,
-                                                      masked=False),
-                                  dtype=numpy.float32, transpose=True)
-                incident_angle = as_array(incident_angle_ds.read_band(1,
-                                          window=tile, msked=False),
-                                          dtype=numpy.float32,
-                                          transpose=True)
-                exiting_angle = as_array(exiting_angle_ds.read_band(1,
-                                         window=tile, masked=False),
-                                         dtype=numpy.float32,
-                                         transpose=True)
-                relative_slope = as_array(relative_slope_ds.read_band(1,
-                                          window=tile, masked=False),
-                                          dtype=numpy.float32, transpose=True)
-                a_mod = as_array(a_mod_ds.read_band(1, window=tile,
-                                                    masked=False),
-                                 dtype=numpy.float32, transpose=True)
-                b_mod = as_array(b_mod_ds.read_band(1, window=tile,
-                                                    masked=False),
-                                 dtype=numpy.float32, transpose=True)
-                s_mod = as_array(s_mod_ds.read_band(1, window=tile,
-                                                    masked=False),
-                                 dtype=numpy.float32, transpose=True)
-                fs = as_array(fs_ds.read_band(1, window=tile, masked=False),
-                              dtype=numpy.float32, transpose=True)
-                fv = as_array(fv_ds.read_band(1, window=tile, masked=False),
-                              dtype=numpy.float32, transpose=True)
-                ts = as_array(ts_ds.read_band(1, window=tile, masked=False),
-                              dtype=numpy.float32, transpose=True)
-                edir_h = as_array(edir_h_ds.read_band(1, window=tile,
-                                                      masked=False),
-                                  dtype=numpy.float32, transpose=True)
-                edif_h = as_array(edif_h_ds.read_band(1, window=tile,
-                                                      masked=False),
-                                  dtype=numpy.float32, transpose=True)
+                    cast_shadow_satellite_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.int16,
+                    transpose=True,
+                )
+                solar_zenith = as_array(
+                    solar_zenith_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                solar_azimuth = as_array(
+                    solar_azimuth_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                satellite_view = as_array(
+                    satellite_view_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                relative_angle = as_array(
+                    relative_angle_ds.read_band(1, window=tile),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                slope = as_array(
+                    slope_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                aspect = as_array(
+                    aspect_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                incident_angle = as_array(
+                    incident_angle_ds.read_band(1, window=tile, msked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                exiting_angle = as_array(
+                    exiting_angle_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                relative_slope = as_array(
+                    relative_slope_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                a_mod = as_array(
+                    a_mod_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                b_mod = as_array(
+                    b_mod_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                s_mod = as_array(
+                    s_mod_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                fs = as_array(
+                    fs_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                fv = as_array(
+                    fv_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                ts = as_array(
+                    ts_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                edir_h = as_array(
+                    edir_h_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
+                edif_h = as_array(
+                    edif_h_ds.read_band(1, window=tile, masked=False),
+                    dtype=np.float32,
+                    transpose=True,
+                )
 
                 # Allocate the output arrays
                 # The output and work arrays could be allocated once
                 # outside of the loop. But for future proof, we may get a
                 # product where each acquisition could have different
                 # resolutions.
-                ref_lm = numpy.zeros((ysize, xsize), dtype='int16')
-                ref_brdf = numpy.zeros((ysize,xsize), dtype='int16')
-                ref_terrain = numpy.zeros((ysize, xsize), dtype='int16')
+                ref_lm = np.zeros((ysize, xsize), dtype="int16")
+                ref_brdf = np.zeros((ysize, xsize), dtype="int16")
+                ref_terrain = np.zeros((ysize, xsize), dtype="int16")
 
                 # Allocate the work arrays (single row of data)
-                band_work = numpy.zeros(xsize, dtype='int32')
-                ref_lm_work = numpy.zeros(xsize, dtype='float32')
-                ref_brdf_work = numpy.zeros(xsize, dtype='float32')
-                ref_terrain_work = numpy.zeros(xsize, dtype='float32')
+                band_work = np.zeros(xsize, dtype="int32")
+                ref_lm_work = np.zeros(xsize, dtype="float32")
+                ref_brdf_work = np.zeros(xsize, dtype="float32")
+                ref_terrain_work = np.zeros(xsize, dtype="float32")
 
                 # Run terrain correction
-                reflectance(xsize, ysize, rori, brdf0, brdf1, brdf2, bias,
-                            slope_ca, avg_reflectance_values[band_number],
-                            band_data, self_shadow, cast_shadow_sun,
-                            cast_shadow_satellite,
-                            solar_zenith, solar_azimuth, satellite_view,
-                            relative_angle, slope, aspect, incident_angle,
-                            exiting_angle, relative_slope, a_mod, b_mod,
-                            s_mod, fs, fv, ts, edir_h, edif_h, band_work,
-                            ref_lm_work, ref_brdf_work, ref_terrain_work,
-                            ref_lm.transpose(), ref_brdf.transpose(),
-                            ref_terrain.transpose())
-
+                reflectance(
+                    xsize,
+                    ysize,
+                    rori,
+                    brdf0,
+                    brdf1,
+                    brdf2,
+                    bias,
+                    slope_ca,
+                    avg_reflectance_values[band_number],
+                    band_data,
+                    self_shadow,
+                    cast_shadow_sun,
+                    cast_shadow_satellite,
+                    solar_zenith,
+                    solar_azimuth,
+                    satellite_view,
+                    relative_angle,
+                    slope,
+                    aspect,
+                    incident_angle,
+                    exiting_angle,
+                    relative_slope,
+                    a_mod,
+                    b_mod,
+                    s_mod,
+                    fs,
+                    fv,
+                    ts,
+                    edir_h,
+                    edif_h,
+                    band_work,
+                    ref_lm_work,
+                    ref_brdf_work,
+                    ref_terrain_work,
+                    ref_lm.transpose(),
+                    ref_brdf.transpose(),
+                    ref_terrain.transpose(),
+                )
 
                 # Write the current tile to disk
-                out_bands['lambertian'].WriteArray(ref_lm, xstart, ystart)
-                out_bands['lambertian'].FlushCache()
-                out_bands['brdf'].WriteArray(ref_brdf, xstart, ystart)
-                out_bands['brdf'].FlushCache()
-                out_bands['terrain'].WriteArray(ref_terrain, xstart,
-                                                ystart)
-                out_bands['terrain'].FlushCache()
+                out_bands["lambertian"].WriteArray(ref_lm, xstart, ystart)
+                out_bands["lambertian"].FlushCache()
+                out_bands["brdf"].WriteArray(ref_brdf, xstart, ystart)
+                out_bands["brdf"].FlushCache()
+                out_bands["terrain"].WriteArray(ref_terrain, xstart, ystart)
+                out_bands["terrain"].FlushCache()
 
         # Close the files to complete the writing
         for key in fnames:
