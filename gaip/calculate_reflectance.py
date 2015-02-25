@@ -224,10 +224,14 @@ def calculate_reflectance(
         # Initialise the tiling scheme for processing
         # Process 1 row of data at a time
         if X_TILE is None:
-            X_TILE = cols
+            x_tile = cols
+        else:
+            x_tile = X_TILE
         if Y_TILE is None:
-            Y_TILE = 1
-        tiles = tiling.generate_tiles(cols, rows, X_TILE, Y_TILE, Generator=False)
+            y_tile = 1
+        else:
+            y_tile = Y_TILE
+        tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, Generator=False)
 
         # Read the BRDF modis file for a given band
         brdf_modis_file = brdf_fname_format.format(band_num=acq.band_num)
@@ -272,7 +276,7 @@ def calculate_reflectance(
                 ystart = tile[0][0]
                 xstart = tile[1][0]
                 yend = tile[0][1]
-                xend = tile[1][0]
+                xend = tile[1][1]
 
                 # Tile size
                 ysize = yend - ystart
@@ -330,7 +334,7 @@ def calculate_reflectance(
                     transpose=True,
                 )
                 incident_angle = as_array(
-                    incident_angle_ds.read_band(1, window=tile, msked=False),
+                    incident_angle_ds.read_band(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )

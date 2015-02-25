@@ -267,7 +267,7 @@ def bilinear_interpolate(
     bilinear_outputs = {}
 
     # Base ENVI header file
-    (
+    hdr = (
         "ENVI\n"
         "samples = {samples}\n"
         "lines   = {lines}\n"
@@ -281,6 +281,10 @@ def bilinear_interpolate(
         for factor in factors:
             fname = output_fmt.format(factor=factor, band=band)
             fname = pjoin(workpath, fname)
+            hdr_fname = fname.replace(".bin", ".hdr")
+            with open(hdr_fname, "w") as outf:
+                for line in hdr:
+                    outf.write(line)
             bilinear_outputs[(band, factor)] = fname
             args = [
                 cmd,

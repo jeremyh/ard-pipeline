@@ -51,23 +51,33 @@ def self_shadow(incident_fname, exiting_fname, self_shadow_out_fname):
 
         # Initialise the tiling scheme for processing
         if X_TILE is None:
-            X_TILE = cols
+            x_tile = cols
+        else:
+            x_tile = X_TILE
         if Y_TILE is None:
-            Y_TILE = 1
-        tiles = tiling.generate_tiles(cols, rows, X_TILE, Y_TILE, Generator=False)
+            y_tile = 1
+        else:
+            y_tile = Y_TILE
+        tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, Generator=False)
 
         # Loop over each tile
         for tile in tiles:
             # Row and column start locations
             ystart = tile[0][0]
             xstart = tile[1][0]
+            yend = tile[0][1]
+            xend = tile[1][1]
+
+            # Tile size
+            ysize = yend - ystart
+            xsize = xend - xstart
 
             # Read the data for the current tile
             inc = np.radians(inc_ds.read_band(1, window=tile, masked=False))
             exi = np.radians(exi_ds.read_band(1, window=tile, masked=False))
 
             # Process the tile
-            mask = np.ones((rows, cols), dtype="uint8")
+            mask = np.ones((ysize, xsize), dtype="uint8")
             mask[inc <= 0.0] = 0
             mask[exi <= 0.0] = 0
 
