@@ -8,9 +8,6 @@ from osgeo import gdal
 
 from gaip import as_array, constants, reflectance, write_new_brdf_file
 
-X_TILE = None
-Y_TILE = 100
-
 
 def calculate_reflectance(
     acquisitions,
@@ -31,6 +28,8 @@ def calculate_reflectance(
     reflectance_filenames,
     brdf_fname_format,
     new_brdf_fname_format,
+    x_tile=None,
+    y_tile=None,
 ):
     """The workflow used to calculate lambertian, BRDF corrected and
     terrain corrected surface reflectance.
@@ -124,6 +123,14 @@ def calculate_reflectance(
         A string containing the new brdf filename format eg:
         new_brdf_modis_band_{band_num}.txt, where {band_num} will be
         substituted for the current band number.
+
+    :param x_tile:
+        Defines the tile size along the x-axis. Default is None which
+        equates to all elements along the x-axis.
+
+    :param y_tile:
+        Defines the tile size along the y-axis. Default is None which
+        equates to all elements along the y-axis.
 
     :return:
         None.
@@ -222,15 +229,10 @@ def calculate_reflectance(
             out_bands[key].SetNoDataValue(-999)
 
         # Initialise the tiling scheme for processing
-        # Process 1 row of data at a time
-        if X_TILE is None:
+        if x_tile is None:
             x_tile = cols
-        else:
-            x_tile = X_TILE
-        if Y_TILE is None:
-            y_tile = 1
-        else:
-            y_tile = Y_TILE
+        if y_tile is None:
+            y_tile = rows
         tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, Generator=False)
 
         # Read the BRDF modis file for a given band
