@@ -96,7 +96,7 @@ def run_aot_loader(filename, dt, ll_lat, ll_lon, ur_lat, ur_lon, aot_loader_path
     """
     filetype = splitext(filename)[1][1:]
     if not exists(filename):
-        log.error("Aerosol %s file (%s) not found", filetype, filename)
+        log.warning("Aerosol %s file (%s) not found", filetype, filename)
         return None
 
     if not aot_loader_path:
@@ -129,7 +129,7 @@ def run_aot_loader(filename, dt, ll_lat, ll_lon, ur_lat, ur_lon, aot_loader_path
     if m and m.group(1):
         return float(m.group(1).rstrip())
 
-    log.error("Aerosol file %s could not be parsed", filename)
+    log.warning("Aerosol file %s could not be parsed", filename)
     return None
 
 

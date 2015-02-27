@@ -20,12 +20,14 @@ setup(
             ],
         ),
         Extension(
-            name="_slope_self_shadow",
-            sources=[
-                "slope_self_shadow.f90",
-                "earth_rotation.f90",
-                "geo2metres_pixel_size.f90",
-            ],
+            name="_exiting_angle", sources=["exiting_angle.f90", "earth_rotation.f90"]
+        ),
+        Extension(
+            name="_incident_angle", sources=["incident_angle.f90", "earth_rotation.f90"]
+        ),
+        Extension(
+            name="_slope_aspect",
+            sources=["slope_aspect.f90", "geo2metres_pixel_size.f90"],
         ),
         Extension(
             name="_surface_reflectance",

@@ -4,7 +4,7 @@
 import numpy as np
 from scipy import ndimage
 
-from gaip import cast_shadow_main, slope_self_shadow, write_img
+from gaip import cast_shadow_main, write_img
 
 
 def filter_dsm(array):
