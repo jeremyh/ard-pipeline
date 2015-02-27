@@ -2,15 +2,11 @@
 -------------------.
 """
 
-import gdal
 import numpy as np
 import rasterio
 from EOtools import tiling
 
 from gaip import GriddedGeoBox
-
-X_TILE = None
-Y_TILE = 100
 
 
 def self_shadow(
@@ -47,24 +43,16 @@ def self_shadow(
         # Retrieve a geobox and image info
         geobox = GriddedGeoBox.from_rio_dataset(inc_ds)
         cols, rows = geobox.get_shape_xy()
-        prj = geobox.crs.ExportToWkt()
-        geoT = geobox.affine.to_gdal()
 
         # Initialise the output file
-        drv = gdal.GetDriverByName("ENVI")
-        out_dtype = gdal.GDT_Byte
-        nbands = 1
-        outds = drv.Create(self_shadow_out_fname, cols, rows, nbands, out_dtype)
-        outds.SetProjection(prj)
-        outds.SetGeoTransform(geoT)
-        outband = outds.GetRasterBand(1)
+        outds = tiling.TiledOutput(self_shadow_out_fname, cols, rows, geobox=geobox)
 
         # Initialise the tiling scheme for processing
         if x_tile is None:
             x_tile = cols
         if y_tile is None:
             y_tile = rows
-        tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, Generator=False)
+        tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, generator=False)
 
         # Loop over each tile
         for tile in tiles:
@@ -88,9 +76,9 @@ def self_shadow(
             mask[exi <= 0.0] = 0
 
             # Write the current tile to disk
-            outband.WriteArray(mask, xstart, ystart)
-            outband.FlushCache()
+            outds.write_tile(mask, tile)
 
         # Close the file
-        outband = None
+        outds.close()
+        # outband = None
         outds = None

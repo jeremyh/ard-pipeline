@@ -59,24 +59,19 @@ def incident_angles(
         cols, rows = geobox.get_shape_xy()
 
     # Initialise the output files
-    output_fnames = {
-        "incident": incident_out_fname,
-        "azimuth_incident": azimuth_incident_out_fname,
-    }
-    output_files = {}
-    out_bands = {}
-    drv = gdal.GetDriverByName("ENVI")
     out_dtype = gdal.GDT_Float32
-    nbands = 1
-    prj = geobox.crs.ExportToWkt()
-    geoT = geobox.affine.to_gdal()
-    for key in output_fnames:
-        fname = output_fnames[key]
-        output_files[key] = drv.Create(fname, cols, rows, nbands, out_dtype)
-        output_files[key].SetProjection(prj)
-        output_files[key].SetGeoTransform(geoT)
-        out_bands[key] = output_files[key].GetRasterBand(1)
-        out_bands[key].SetNoDataValue(-999)
+    no_data = -999
+    outds_incident = tiling.TiledOutput(
+        incident_out_fname, cols, rows, geobox=geobox, dtype=out_dtype, nodata=no_data
+    )
+    outds_azi_incident = tiling.TiledOutput(
+        azimuth_incident_out_fname,
+        cols,
+        rows,
+        geobox=geobox,
+        dtype=out_dtype,
+        nodata=no_data,
+    )
 
     # Open the files for reading
     with rasterio.open(solar_zenith_fname) as sol_z_ds, rasterio.open(
@@ -89,7 +84,7 @@ def incident_angles(
             x_tile = cols
         if y_tile is None:
             y_tile = rows
-        tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, Generator=False)
+        tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, generator=False)
 
         # Loop over each tile
         for tile in tiles:
@@ -143,18 +138,12 @@ def incident_angles(
             )
 
             # Write the current tile to disk
-            out_bands["incident"].WriteArray(incident, xstart, ystart)
-            out_bands["incident"].FlushCache()
-            out_bands["azimuth_incident"].WriteArray(azi_incident, xstart, ystart)
-            out_bands["azimuth_incident"].FlushCache()
+            outds_incident.write_tile(incident, tile)
+            outds_azi_incident.write_tile(azi_incident, tile)
 
     # Close the files to complete the writing
-    for key in output_fnames:
-        out_bands[key] = None
-        output_files[key] = None
-
-    out_bands = None
-    output_files = None
+    outds_incident.close()
+    outds_azi_incident.close()
 
 
 def exiting_angles(
@@ -208,24 +197,19 @@ def exiting_angles(
         cols, rows = geobox.get_shape_xy()
 
     # Initialise the output files
-    output_fnames = {
-        "exiting": exiting_out_fname,
-        "azimuth_exiting": azimuth_exiting_out_fname,
-    }
-    output_files = {}
-    out_bands = {}
-    drv = gdal.GetDriverByName("ENVI")
     out_dtype = gdal.GDT_Float32
-    nbands = 1
-    prj = geobox.crs.ExportToWkt()
-    geoT = geobox.affine.to_gdal()
-    for key in output_fnames:
-        fname = output_fnames[key]
-        output_files[key] = drv.Create(fname, cols, rows, nbands, out_dtype)
-        output_files[key].SetProjection(prj)
-        output_files[key].SetGeoTransform(geoT)
-        out_bands[key] = output_files[key].GetRasterBand(1)
-        out_bands[key].SetNoDataValue(-999)
+    no_data = -999
+    outds_exiting = tiling.TiledOutput(
+        exiting_out_fname, cols, rows, geobox=geobox, dtype=out_dtype, nodata=no_data
+    )
+    outds_azi_exiting = tiling.TiledOutput(
+        azimuth_exiting_out_fname,
+        cols,
+        rows,
+        geobox=geobox,
+        dtype=out_dtype,
+        nodata=no_data,
+    )
 
     # Open the files for reading
     with rasterio.open(satellite_view_fname) as sat_view_ds, rasterio.open(
@@ -238,7 +222,7 @@ def exiting_angles(
             x_tile = cols
         if y_tile is None:
             y_tile = rows
-        tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, Generator=False)
+        tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, generator=False)
 
         # Loop over each tile
         for tile in tiles:
@@ -292,18 +276,12 @@ def exiting_angles(
             )
 
             # Write the current to disk
-            out_bands["exiting"].WriteArray(exiting, xstart, ystart)
-            out_bands["exiting"].FlushCache()
-            out_bands["azimuth_exiting"].WriteArray(azi_exiting, xstart, ystart)
-            out_bands["azimuth_exiting"].FlushCache()
+            outds_exiting.write_tile(exiting, tile)
+            outds_azi_exiting.write_tile(azi_exiting, tile)
 
     # Close the files to complete the writing
-    for key in output_fnames:
-        out_bands[key] = None
-        output_files[key] = None
-
-    out_bands = None
-    output_files = None
+    outds_exiting.close()
+    outds_azi_exiting.close()
 
 
 def relative_azimuth(
@@ -344,32 +322,30 @@ def relative_azimuth(
         # Retrieve a geobox and image info
         geobox = GriddedGeoBox.from_rio_dataset(azi_inc_ds)
         cols, rows = geobox.get_shape_xy()
-        prj = geobox.crs.ExportToWkt()
-        geoT = geobox.affine.to_gdal()
+        # prj = geobox.crs.ExportToWkt()
+        # geoT = geobox.affine.to_gdal()
 
         # Initialise the output file
-        drv = gdal.GetDriverByName("ENVI")
         out_dtype = gdal.GDT_Float32
-        nbands = 1
-        outds = drv.Create(relative_azimuth_out_fname, cols, rows, nbands, out_dtype)
-        outds.SetProjection(prj)
-        outds.SetGeoTransform(geoT)
-        outband = outds.GetRasterBand(1)
-        outband.SetNoDataValue(-999)
+        no_data = -999
+        outds = tiling.TiledOutput(
+            relative_azimuth_out_fname,
+            cols,
+            rows,
+            geobox=geobox,
+            dtype=out_dtype,
+            nodata=no_data,
+        )
 
         # Initialise the tiling scheme for processing
         if x_tile is None:
             x_tile = cols
         if y_tile is None:
             y_tile = rows
-        tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, Generator=False)
+        tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, generator=False)
 
         # Loop over each tile
         for tile in tiles:
-            # Row and column start locations
-            ystart = tile[0][0]
-            xstart = tile[1][0]
-
             # Read the data for the current tile
             azi_inc = azi_inc_ds.read_band(1, window=tile, masked=False)
             azi_exi = azi_exi_ds.read_band(1, window=tile, masked=False)
@@ -380,9 +356,7 @@ def relative_azimuth(
             rel_azi[rel_azi > 180.0] -= 360.0
 
             # Write the current tile to disk
-            outband.WriteArray(rel_azi, xstart, ystart)
-            outband.FlushCache()
+            outds.write_tile(rel_azi, tile)
 
         # Close the file
-        outband = None
-        outds = None
+        outds.close()
