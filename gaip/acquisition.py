@@ -62,7 +62,7 @@ class Acquisition:
         the Acquisition's data will be read.
         for this acquisition.
         """
-        return gaip.data_and_box(self, out=out)
+        return gaip.data_and_box(self, out=out, window=window, masked=masked)
 
     def gridded_geo_box(self):
         """Return the `GriddedGeoBox` for this acquisition."""
