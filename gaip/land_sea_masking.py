@@ -106,7 +106,7 @@ def calc_land_sea_mask(
     return ls_arr.astype("bool")
 
 
-def setLandSeaBit(
+def set_land_sea_bit(
     gridded_geo_box,
     pq_const,
     pqaResult,
