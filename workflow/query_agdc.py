@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 
 import subprocess
 from datetime import date
@@ -135,9 +135,14 @@ def query(output_path):
     )
 
     # Output the shell script to disk
-    pbs_fname = pjoin(out_dir, CONFIG.get("outputs", "pbs_filename"))
+    pbs_fname = pjoin(output_path, CONFIG.get("pbs", "pbs_filename"))
     with open(pbs_fname, "w") as out_file:
         out_file.write(pbs_job)
 
     # Execute the job
     subprocess.check_call(["qsub", pbs_fname])
+
+
+if __name__ == "__main__":
+    out_dir = CONFIG.get("agdc", "output_directory")
+    query(out_dir)
