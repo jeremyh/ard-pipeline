@@ -10,6 +10,8 @@ import logging
 import os
 import re
 from glob import glob
+from os.path import basename
+from os.path import join as pjoin
 
 import luigi
 
@@ -386,9 +388,11 @@ def main(l1t_path, nbar_path, land_sea_path, outpath, nnodes=1, nodenum=1):
     l1t_files = sorted(
         [pjoin(l1t_path, f) for f in os.listdir(l1t_path) if "_OTH_" in f]
     )
-    l1t_files = [f for f in scatter(l1t_files, nnodes, nodenum)]
+    l1t_files = [basename(f) for f in scatter(l1t_files, nnodes, nodenum)]
     int(os.getenv("PBS_NCPUS", "1"))
+    tasks = []
     for l1t_file in l1t_files:
+        l1t_dataset_path = pjoin(l1t_path, l1t_file)
         nbar_dataset_path = pjoin(nbar_path, nbar_name_from_l1t(l1t_file))
         pqa_dataset_path = pjoin(outpath, pqa_name_from_l1t(l1t_file))
         tasks.append(
