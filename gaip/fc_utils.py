@@ -4,7 +4,7 @@ import gdal
 import numexpr
 import numpy as np
 from datacube.api.model import BANDS, DatasetType, Satellite
-from EOtools import tiling
+from eotools import tiling
 
 from gaip import GriddedGeoBox, LandsatAcquisition, endmembers, stack_data, unmiximage
 

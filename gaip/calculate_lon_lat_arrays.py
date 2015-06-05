@@ -6,7 +6,7 @@ from functools import partial
 
 import numpy as np
 import osr
-from EOtools.blrb import interpolate_grid
+from eotools.blrb import interpolate_grid
 
 from gaip import gridded_geo_box, write_img
 

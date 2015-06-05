@@ -3,7 +3,7 @@
 """
 import numpy as np
 import rasterio
-from EOtools import tiling
+from eotools import tiling
 from osgeo import gdal
 
 from gaip import as_array, constants, reflectance, write_new_brdf_file

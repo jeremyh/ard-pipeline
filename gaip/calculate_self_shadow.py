@@ -4,7 +4,7 @@
 
 import numpy as np
 import rasterio
-from EOtools import tiling
+from eotools import tiling
 
 from gaip import GriddedGeoBox
 
