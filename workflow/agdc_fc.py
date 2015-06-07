@@ -9,7 +9,7 @@ from os.path import join as pjoin
 import cPickle as pickle
 import luigi
 from datacube.api.model import DatasetType
-from EOtools.DatasetDrivers.stacked_dataset import StackedDataset
+from eotools.drivers.stacked_dataset import StackedDataset
 
 import gaip
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     if not exists(log_dir):
         os.makedirs(log_dir)
 
-    logfile = "{log_path}/run_wc_{uname}_{pid}.log"
+    logfile = "{log_path}/agdc_fc_{uname}_{pid}.log"
     logfile = logfile.format(log_path=log_dir, uname=os.uname()[1], pid=os.getpid())
     logging_level = logging.INFO
     logging.basicConfig(
