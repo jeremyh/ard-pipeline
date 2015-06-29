@@ -13,9 +13,6 @@ from eotools.drivers.stacked_dataset import StackedDataset
 
 import gaip
 
-CONFIG = luigi.configuration.get_config()
-CONFIG.add_config_path(pjoin(dirname(__file__), "fc.cfg"))
-
 
 class FractionalCoverTask(luigi.Task):
     """Computes fractional cover for a given input."""
@@ -101,9 +98,20 @@ if __name__ == "__main__":
     )
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument("--tile", type=int, help=hlp)
+    parse.add_argument("--cfg", help="Path to a user defined configuration file.")
 
     parsed_args = parser.parse_args()
     tile_idx = parsed_args.tile
+    cfg = parsed_args.cfg
+
+    # Setup the config file
+    global CONFIG
+    if cfg is None:
+        CONFIG = luigi.configuration.get_config()
+        CONFIG.add_config_path(pjoin(dirname(__file__), "fc.cfg"))
+    else:
+        CONFIG = luigi.configuration.get_config()
+        CONFIG.add_config_path(cfg)
 
     # setup logging
     log_dir = CONFIG.get("agdc", "logs_directory")
