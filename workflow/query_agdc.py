@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import subprocess
 from datetime import date
 from os.path import dirname
@@ -10,9 +11,6 @@ import luigi
 from datacube.api.model import DatasetType, Satellite
 from datacube.api.query import list_tiles_as_list
 from datacube.config import Config
-
-CONFIG = luigi.configuration.get_config()
-CONFIG.add_config_path(pjoin(dirname(__file__), "fc.cfg"))
 
 PBS_DSH = """#!/bin/bash
 
@@ -27,7 +25,7 @@ NNODES={nnodes}
 
 for i in $(seq 1 $NNODES); do
    pbsdsh -n $((16 *$i)) -- bash -l -c "{modules} python {pyfile} \
-   --tile $[$i - 1]" &
+   --tile $[$i - 1]{config}" &
 done;
 wait
 """
@@ -49,7 +47,7 @@ def create_tiles(array_size, tile_size=25):
     return idx_tiles
 
 
-def query(output_path):
+def query(output_path, cfg=None):
     """Queries the database based on the parameters given by the
     config file (default is fc.cfg).
     """
@@ -122,6 +120,10 @@ def query(output_path):
     walltime = CONFIG.get("pbs", "walltime")
     email = CONFIG.get("pbs", "email")
     py_file = pjoin(dirname(__file__), "agdc_fc.py")
+    if cfg is None:
+        cfg = ""
+    else:
+        cfg = f" --cfg {cfg}"
     pbs_job = PBS_DSH.format(
         project=project,
         queue=queue,
@@ -132,6 +134,7 @@ def query(output_path):
         nnodes=nnodes,
         modules=modules,
         pyfile=py_file,
+        config=cfg,
     )
 
     # Output the shell script to disk
@@ -144,5 +147,23 @@ def query(output_path):
 
 
 if __name__ == "__main__":
+    desc = (
+        "The database query mechanism used for processing " "NBAR to Fractional Cover."
+    )
+    parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument("--cfg", help="Path to a user defined configuration file.")
+
+    parsed_args = parser.parse_args()
+    cfg = parsed_args.cfg
+
+    # Setup the config file
+    global CONFIG
+    if cfg is None:
+        CONFIG = luigi.configuration.get_config()
+        CONFIG.add_config_path(pjoin(dirname(__file__), "fc.cfg"))
+    else:
+        CONFIG = luigi.configuration.get_config()
+        CONFIG.add_config_path(cfg)
+
     out_dir = CONFIG.get("agdc", "output_directory")
-    query(out_dir)
+    query(out_dir, cfg)
