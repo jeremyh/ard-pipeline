@@ -106,7 +106,7 @@ class ParameterisedTestCaseFiles(unittest.TestCase):
         decimal_precision=4,
         integer_precision=1,
     ):
-        super(ParameterisedTestCase, self).__init__(methodName)
+        super().__init__(methodName)
 
         # Reference and Testing directories
         self.reference_fname = reference_fname
