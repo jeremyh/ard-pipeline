@@ -28,6 +28,7 @@ class ParameterisedTestCase(unittest.TestCase):
         test_dir=None,
         decimal_precision=4,
         integer_precision=1,
+        output_directory="",
     ):
         super().__init__(methodName)
 
@@ -39,6 +40,9 @@ class ParameterisedTestCase(unittest.TestCase):
         self.decimal_precision = decimal_precision
         self.integer_precision = integer_precision
 
+        # Output directory
+        self.output_directory = output_directory
+
     @staticmethod
     def parameterise(
         testcase_klass,
@@ -46,6 +50,7 @@ class ParameterisedTestCase(unittest.TestCase):
         test_dir=None,
         decimal_precision=4,
         integer_precision=1,
+        output_directory="",
     ):
         """Create a suite containing all tests taken from the given
         subclass, passing them the parameters 'reference_dir,
@@ -71,6 +76,9 @@ class ParameterisedTestCase(unittest.TestCase):
             The intger precision to be used during array comparison.
             Default is 1, i.e. values must be correct within 1 integer
             in order to Pass.
+
+        :param output_directory:
+            The output directory to contain any results.
         """
         testloader = unittest.TestLoader()
         testnames = testloader.getTestCaseNames(testcase_klass)
@@ -83,6 +91,7 @@ class ParameterisedTestCase(unittest.TestCase):
                     test_dir=test_dir,
                     decimal_precision=decimal_precision,
                     integer_precision=integer_precision,
+                    output_directory=output_directory,
                 )
             )
         return suite
