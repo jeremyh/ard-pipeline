@@ -72,8 +72,8 @@ def self_shadow(
 
             # Process the tile
             mask = np.ones((ysize, xsize), dtype="uint8")
-            mask[inc <= 0.0] = 0
-            mask[exi <= 0.0] = 0
+            mask[np.cos(inc) <= 0.0] = 0
+            mask[np.cos(exi) <= 0.0] = 0
 
             # Write the current tile to disk
             outds.write_tile(mask, tile)
