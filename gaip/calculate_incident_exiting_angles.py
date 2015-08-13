@@ -284,10 +284,10 @@ def exiting_angles(
     outds_azi_exiting.close()
 
 
-def relative_azimuth(
+def relative_azimuth_slope(
     azimuth_incident_fname,
     azimuth_exiting_fname,
-    relative_azimuth_out_fname,
+    relative_azimuth_slope_out_fname,
     x_tile=None,
     y_tile=None,
 ):
@@ -301,7 +301,7 @@ def relative_azimuth(
         A string containing the full file path name to the azimuth
         exiting angle image.
 
-    :param relative_slope_out_fname:
+    :param relative_azimuth_slope_out_fname:
         A string containing the full file path name to be used for
         writing the relative azimuth angle image on disk.
 
@@ -329,7 +329,7 @@ def relative_azimuth(
         out_dtype = gdal.GDT_Float32
         no_data = -999
         outds = tiling.TiledOutput(
-            relative_azimuth_out_fname,
+            relative_azimuth_slope_out_fname,
             cols,
             rows,
             geobox=geobox,
