@@ -76,8 +76,8 @@ def slope_aspect_arrays(
     # Get the x and y pixel sizes
     _, y_origin = geobox.origin
     x_res, y_res = geobox.pixelsize
-    dresx = x_res + 2
-    dresy = y_res + 2
+    dresx = x_res
+    dresy = y_res
 
     # Get acquisition dimensions and add 1 pixel top, bottom, left & right
     cols, rows = geobox.get_shape_xy()
