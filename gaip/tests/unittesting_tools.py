@@ -28,6 +28,7 @@ class ParameterisedTestCase(unittest.TestCase):
         test_dir=None,
         decimal_precision=4,
         integer_precision=1,
+        output_directory="",
     ):
         super().__init__(methodName)
 
@@ -39,6 +40,9 @@ class ParameterisedTestCase(unittest.TestCase):
         self.decimal_precision = decimal_precision
         self.integer_precision = integer_precision
 
+        # Output directory
+        self.output_directory = output_directory
+
     @staticmethod
     def parameterise(
         testcase_klass,
@@ -46,6 +50,7 @@ class ParameterisedTestCase(unittest.TestCase):
         test_dir=None,
         decimal_precision=4,
         integer_precision=1,
+        output_directory="",
     ):
         """Create a suite containing all tests taken from the given
         subclass, passing them the parameters 'reference_dir,
@@ -71,6 +76,9 @@ class ParameterisedTestCase(unittest.TestCase):
             The intger precision to be used during array comparison.
             Default is 1, i.e. values must be correct within 1 integer
             in order to Pass.
+
+        :param output_directory:
+            The output directory to contain any results.
         """
         testloader = unittest.TestLoader()
         testnames = testloader.getTestCaseNames(testcase_klass)
@@ -83,6 +91,7 @@ class ParameterisedTestCase(unittest.TestCase):
                     test_dir=test_dir,
                     decimal_precision=decimal_precision,
                     integer_precision=integer_precision,
+                    output_directory=output_directory,
                 )
             )
         return suite
@@ -103,8 +112,8 @@ class ParameterisedTestCaseFiles(unittest.TestCase):
         methodName="runTest",
         reference_fname=None,
         test_fname=None,
-        decimal_precision=4,
-        integer_precision=1,
+        tolerance=3,
+        output_directory="",
     ):
         super().__init__(methodName)
 
@@ -112,17 +121,19 @@ class ParameterisedTestCaseFiles(unittest.TestCase):
         self.reference_fname = reference_fname
         self.test_fname = test_fname
 
-        # Allowable numerical precision
-        self.decimal_precision = decimal_precision
-        self.integer_precision = integer_precision
+        # Allowable tollerance
+        self.tolerance = tolerance
+
+        # Output directory
+        self.output_directory = output_directory
 
     @staticmethod
     def parameterise(
         testcase_klass,
         reference_fname=None,
         test_fname=None,
-        decimal_precision=4,
-        integer_precision=1,
+        tolerance=3,
+        output_directory="",
     ):
         """Create a suite containing all tests taken from the given
         subclass, passing them the parameters 'reference_fname,
@@ -139,15 +150,12 @@ class ParameterisedTestCaseFiles(unittest.TestCase):
             A full file pathname to the file containing the
             test data.
 
-        :param decimal_precision:
-            The decimal precision to be used during array comparison.
-            Default is 4, i.e. values must be correct up to 4 d.p. in
+        :param tolerance:
+            Default is 3, i.e. tolerance is 97% must be the same in
             order to Pass.
 
-        :param integer_precision:
-            The intger precision to be used during array comparison.
-            Default is 1, i.e. values must be correct within 1 integer
-            in order to Pass.
+        :param output_directory:
+            The output directory to contain any results.
         """
         testloader = unittest.TestLoader()
         testnames = testloader.getTestCaseNames(testcase_klass)
@@ -158,8 +166,8 @@ class ParameterisedTestCaseFiles(unittest.TestCase):
                     name,
                     reference_fname=reference_fname,
                     test_fname=test_fname,
-                    decimal_precision=decimal_precision,
-                    integer_precision=integer_precision,
+                    tolerance=tolerance,
+                    output_directory=output_directory,
                 )
             )
         return suite

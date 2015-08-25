@@ -72,7 +72,7 @@ def fractional_cover(acquisitions, x_tile, y_tile, out_fnames):
             rows,
             geobox=geobox,
             dtype=out_dtype,
-            nodata=no_data,
+            nodata=out_no_data,
             fmt=fmt,
         )
         outds_npv = tiling.TiledOutput(
@@ -81,7 +81,7 @@ def fractional_cover(acquisitions, x_tile, y_tile, out_fnames):
             rows,
             geobox=geobox,
             dtype=out_dtype,
-            nodata=no_data,
+            nodata=out_no_data,
             fmt=fmt,
         )
         outds_bs = tiling.TiledOutput(
@@ -90,7 +90,7 @@ def fractional_cover(acquisitions, x_tile, y_tile, out_fnames):
             rows,
             geobox=geobox,
             dtype=out_dtype,
-            nodata=no_data,
+            nodata=out_no_data,
             fmt=fmt,
         )
         outds_ue = tiling.TiledOutput(
@@ -99,7 +99,7 @@ def fractional_cover(acquisitions, x_tile, y_tile, out_fnames):
             rows,
             geobox=geobox,
             dtype=out_dtype,
-            nodata=no_data,
+            nodata=out_no_data,
             fmt=fmt,
         )
     else:
@@ -122,7 +122,7 @@ def fractional_cover(acquisitions, x_tile, y_tile, out_fnames):
             rows,
             geobox=geobox,
             dtype=out_dtype,
-            nodata=no_data,
+            nodata=out_no_data,
             fmt=fmt,
             bands=4,
         )
