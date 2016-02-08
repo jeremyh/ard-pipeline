@@ -2,6 +2,7 @@
 
 import logging
 import os
+import pwd
 import re
 import subprocess
 from datetime import datetime as dtime
@@ -38,7 +39,7 @@ def extract_ancillary_metadata(fname):
     res["change"] = dtime.utcfromtimestamp(fstat.st_ctime)
     res["modified"] = dtime.utcfromtimestamp(fstat.st_mtime)
     res["accessed"] = dtime.utcfromtimestamp(fstat.st_atime)
-    res["user"] = fstat.st_uid
+    res["user"] = pwd.getpwuid(fstat.st_uid).pw_name
     return res
 
 
@@ -279,11 +280,18 @@ def get_solar_dist(acquisition, sundist_path):
             index, dist = line.strip().split()
             index = int(index)
             if index == doy:
-                return {
+                res = {
                     "data_source": "Solar Distance",
                     "data_file": sundist_path,
-                    "distance": float(dist),
+                    "value": float(dist),
                 }
+
+            # ancillary metadata tracking
+            md = extract_ancillary_metadata(sundist_path)
+            for key in md:
+                res[key] = md[key]
+
+            return res
 
     raise OSError("Cannot load Earth-Sun distance")
 
