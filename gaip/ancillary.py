@@ -4,7 +4,9 @@ import logging
 import os
 import re
 import subprocess
+from datetime import datetime as dtime
 from datetime import timedelta
+from os.path import abspath, dirname, exists, pardir, splitext
 from os.path import join as pjoin
 from posixpath import join as ppjoin
 
@@ -17,6 +19,27 @@ from shapely.geometry import Point, Polygon
 import gaip
 
 log = logging.getLogger()
+
+
+def extract_ancillary_metadata(fname):
+    """Extracts the change (last metadata change), modified,
+    accessed, and owner user id.
+
+    :param fname:
+        A string containing the full file pathname to a file
+        on disk.
+
+    :return:
+        A `dictionary` with keys `change`, `modified`, `accessed`,
+        and `user`.
+    """
+    res = {}
+    fstat = os.stat(fname)
+    res["change"] = dtime.utcfromtimestamp(fstat.st_ctime)
+    res["modified"] = dtime.utcfromtimestamp(fstat.st_mtime)
+    res["accessed"] = dtime.utcfromtimestamp(fstat.st_atime)
+    res["user"] = fstat.st_uid
+    return res
 
 
 def get_aerosol_data_v2(acquisition, aerosol_fname):
@@ -55,12 +78,19 @@ def get_aerosol_data_v2(acquisition, aerosol_fname):
                 idx = pts.intersects(intersection)
                 value = df[idx]["aerosol"].mean()
                 if np.isfinite(value):
-                    return {
+                    res = {
                         "data_source": description,
                         "data_file": pathname,
                         "value": value,
                     }
 
+                    # ancillary metadata tracking
+                    md = extract_ancillary_metadata(aerosol_fname)
+                    for key in md:
+                        res[key] = md[key]
+
+                    store.close()
+                    return res
     store.close()
 
     raise OSError("No aerosol ancillary data found.")
@@ -86,7 +116,14 @@ def get_aerosol_data(acquisition, aerosol_path, aot_loader_path=None):
             filename, dt, ll_lat, ll_lon, ur_lat, ur_lon, aot_loader_path
         )
         if value:
-            return {"data_source": description, "data_file": filename, "value": value}
+            res = {"data_source": description, "data_file": filename, "value": value}
+
+            # ancillary metadata tracking
+            md = extract_ancillary_metadata(filename)
+            for key in md:
+                res[key] = md[key]
+
+            return res
 
     raise OSError("No aerosol ancillary data found.")
 
@@ -184,7 +221,15 @@ def get_elevation_data(lonlat, dem_path):
     """
     datafile = pjoin(dem_path, "DEM_one_deg.tif")
     value = gaip.get_pixel(datafile, lonlat) * 0.001  # scale to correct units
-    return {"data_source": "Elevation", "data_file": datafile, "value": value}
+
+    res = {"data_source": "Elevation", "data_file": datafile, "value": value}
+
+    # ancillary metadata tracking
+    md = extract_ancillary_metadata(datafile)
+    for key in md:
+        res[key] = md[key]
+
+    return res
 
 
 def get_ozone_data(ozone_path, lonlat, datetime):
@@ -194,7 +239,15 @@ def get_ozone_data(ozone_path, lonlat, datetime):
     filename = datetime.strftime("%b").lower() + ".tif"
     datafile = pjoin(ozone_path, filename)
     value = gaip.get_pixel(datafile, lonlat)
-    return {"data_source": "Ozone", "data_file": datafile, "value": value}
+
+    res = {"data_source": "Ozone", "data_file": datafile, "value": value}
+
+    # ancillary metadata tracking
+    md = extract_ancillary_metadata(datafile)
+    for key in md:
+        res[key] = md[key]
+
+    return res
 
 
 def get_solar_irrad(acquisitions, solar_path):
@@ -279,5 +332,10 @@ def get_water_vapour(acquisition, vapour_path, scale_factor=0.1):
         "data_file": datafile,
         "value": value,
     }
+
+    # ancillary metadata tracking
+    md = extract_ancillary_metadata(datafile)
+    for key in md:
+        water_vapour_data[key] = md[key]
 
     return water_vapour_data
