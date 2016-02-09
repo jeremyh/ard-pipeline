@@ -39,7 +39,7 @@ def extract_ancillary_metadata(fname):
     res["change"] = dtime.utcfromtimestamp(fstat.st_ctime)
     res["modified"] = dtime.utcfromtimestamp(fstat.st_mtime)
     res["accessed"] = dtime.utcfromtimestamp(fstat.st_atime)
-    res["user"] = pwd.getpwuid(fstat.st_uid).pw_name
+    res["user"] = pwd.getpwuid(fstat.st_uid).pw_gecos
     return res
 
 
@@ -286,12 +286,12 @@ def get_solar_dist(acquisition, sundist_path):
                     "value": float(dist),
                 }
 
-            # ancillary metadata tracking
-            md = extract_ancillary_metadata(sundist_path)
-            for key in md:
-                res[key] = md[key]
+                # ancillary metadata tracking
+                md = extract_ancillary_metadata(sundist_path)
+                for key in md:
+                    res[key] = md[key]
 
-            return res
+                return res
 
     raise OSError("Cannot load Earth-Sun distance")
 
