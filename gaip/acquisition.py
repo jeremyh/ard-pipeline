@@ -265,7 +265,7 @@ class Landsat5Acquisition(LandsatAcquisition):
     @property
     def row(self):
         """The acquisition row."""
-        return self.starting_row
+        return self.wrs_row
 
 
 class Landsat7Acquisition(LandsatAcquisition):
@@ -295,7 +295,7 @@ class Landsat7Acquisition(LandsatAcquisition):
     @property
     def row(self):
         """The acquisition row."""
-        return self.starting_row
+        return self.wrs_row
 
 
 class Landsat8Acquisition(LandsatAcquisition):
