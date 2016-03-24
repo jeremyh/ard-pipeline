@@ -3,6 +3,8 @@ import os
 import numpy as np
 from osgeo import gdal, osr
 
+from gaip import extract_ancillary_metadata
+
 
 def calc_land_sea_mask(
     geo_box, ancillary_path="/g/data/v10/eoancillarydata/Land_Sea_Rasters"
@@ -79,6 +81,12 @@ def calc_land_sea_mask(
     rasfile = os.path.join(ancillary_path, "WORLDzone%02d.tif" % abs(utm_zone))
     assert os.path.exists(rasfile), "ERROR: Raster File Not Found (%s)" % rasfile
 
+    md = extract_ancillary_metadata(rasfile)
+    md["data_source"] = "Rasterised Land/Sea Mask"
+    md["data_file"] = rasfile
+    metadata = {}
+    metadata["land_sea_mask"] = md
+
     geoTransform = geo_box.affine.to_gdal()
     if geoTransform is None:
         raise Exception("Image geotransformation Info is needed")
@@ -103,7 +111,7 @@ def calc_land_sea_mask(
 
     # Read in the land/sea array
     ls_arr = lsobj.ReadAsArray(xoff, yoff, xsize, ysize)
-    return ls_arr.astype("bool")
+    return (ls_arr.astype("bool"), metadata)
 
 
 def set_land_sea_bit(
@@ -112,6 +120,7 @@ def set_land_sea_bit(
     pqaResult,
     ancillary_path="/g/data/v10/eoancillarydata/Land_Sea_Rasters",
 ):
-    mask = calc_land_sea_mask(gridded_geo_box, ancillary_path)
+    mask, md = calc_land_sea_mask(gridded_geo_box, ancillary_path)
     bit_index = pq_const.land_sea
     pqaResult.set_mask(mask, bit_index)
+    return md
