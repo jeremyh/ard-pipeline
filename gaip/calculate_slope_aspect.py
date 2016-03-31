@@ -92,9 +92,7 @@ def slope_aspect_arrays(
 
     with rasterio.open(dsm_fname) as dsm_ds:
         dsm_subset = as_array(
-            dsm_ds.read_band(1, window=idx, masked=False),
-            dtype=np.float32,
-            transpose=True,
+            dsm_ds.read(1, window=idx, masked=False), dtype=np.float32, transpose=True
         )
 
     # Define an array of latitudes

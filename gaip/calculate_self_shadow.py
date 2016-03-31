@@ -67,8 +67,8 @@ def self_shadow(
             xsize = xend - xstart
 
             # Read the data for the current tile
-            inc = np.radians(inc_ds.read_band(1, window=tile, masked=False))
-            exi = np.radians(exi_ds.read_band(1, window=tile, masked=False))
+            inc = np.radians(inc_ds.read(1, window=tile, masked=False))
+            exi = np.radians(exi_ds.read(1, window=tile, masked=False))
 
             # Process the tile
             mask = np.ones((ysize, xsize), dtype="uint8")

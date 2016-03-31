@@ -283,102 +283,102 @@ def calculate_reflectance(
                     acq.data(window=tile, masked=False), dtype=np.int16, transpose=True
                 )
                 self_shadow = as_array(
-                    self_shadow_ds.read_band(1, window=tile, masked=False),
+                    self_shadow_ds.read(1, window=tile, masked=False),
                     dtype=np.int16,
                     transpose=True,
                 )
                 cast_shadow_sun = as_array(
-                    cast_shadow_sun_ds.read_band(1, window=tile, masked=False),
+                    cast_shadow_sun_ds.read(1, window=tile, masked=False),
                     dtype=np.int16,
                     transpose=True,
                 )
                 cast_shadow_satellite = as_array(
-                    cast_shadow_satellite_ds.read_band(1, window=tile, masked=False),
+                    cast_shadow_satellite_ds.read(1, window=tile, masked=False),
                     dtype=np.int16,
                     transpose=True,
                 )
                 solar_zenith = as_array(
-                    solar_zenith_ds.read_band(1, window=tile, masked=False),
+                    solar_zenith_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 solar_azimuth = as_array(
-                    solar_azimuth_ds.read_band(1, window=tile, masked=False),
+                    solar_azimuth_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 satellite_view = as_array(
-                    satellite_view_ds.read_band(1, window=tile, masked=False),
+                    satellite_view_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 relative_angle = as_array(
-                    relative_angle_ds.read_band(1, window=tile),
+                    relative_angle_ds.read(1, window=tile),
                     dtype=np.float32,
                     transpose=True,
                 )
                 slope = as_array(
-                    slope_ds.read_band(1, window=tile, masked=False),
+                    slope_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 aspect = as_array(
-                    aspect_ds.read_band(1, window=tile, masked=False),
+                    aspect_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 incident_angle = as_array(
-                    incident_angle_ds.read_band(1, window=tile, masked=False),
+                    incident_angle_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 exiting_angle = as_array(
-                    exiting_angle_ds.read_band(1, window=tile, masked=False),
+                    exiting_angle_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 relative_slope = as_array(
-                    relative_slope_ds.read_band(1, window=tile, masked=False),
+                    relative_slope_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 a_mod = as_array(
-                    a_mod_ds.read_band(1, window=tile, masked=False),
+                    a_mod_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 b_mod = as_array(
-                    b_mod_ds.read_band(1, window=tile, masked=False),
+                    b_mod_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 s_mod = as_array(
-                    s_mod_ds.read_band(1, window=tile, masked=False),
+                    s_mod_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 fs = as_array(
-                    fs_ds.read_band(1, window=tile, masked=False),
+                    fs_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 fv = as_array(
-                    fv_ds.read_band(1, window=tile, masked=False),
+                    fv_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 ts = as_array(
-                    ts_ds.read_band(1, window=tile, masked=False),
+                    ts_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 edir_h = as_array(
-                    edir_h_ds.read_band(1, window=tile, masked=False),
+                    edir_h_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
                 edif_h = as_array(
-                    edif_h_ds.read_band(1, window=tile, masked=False),
+                    edif_h_ds.read(1, window=tile, masked=False),
                     dtype=np.float32,
                     transpose=True,
                 )
