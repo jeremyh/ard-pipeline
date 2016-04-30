@@ -62,5 +62,6 @@ setup(
                 "satellite_solar_angles_main.f90",
             ],
         ),
+        Extension(name="_interpolation", sources=["bilinear_interpolation.f90"]),
     ],
 )
