@@ -1,29 +1,31 @@
-"""
-MODTRAN drivers
----------------
+"""MODTRAN drivers
+---------------.
 
 """
 import os
-from os.path import join as pjoin, exists, abspath, dirname
 import subprocess
+from os.path import abspath, dirname, exists
+from os.path import join as pjoin
 
-import numpy
-import pandas
+import numpy as np
+import pandas as pd
+import rasterio
+
 import gaip
 
-BIN_DIR = abspath(pjoin(dirname(__file__), '..', 'bin'))
+BIN_DIR = abspath(pjoin(dirname(__file__), "..", "bin"))
 
 
-def create_modtran_dirs(coords, albedos, modtran_root, modtran_exe_root,
-                        workpath_format, input_format):
+def create_modtran_dirs(
+    coords, albedos, modtran_root, modtran_exe_root, workpath_format, input_format
+):
     """Create all modtran subdirectories. and input files."""
-
     if not exists(modtran_root):
         os.makedirs(modtran_root)
 
-    data_dir = pjoin(modtran_exe_root, 'DATA')
+    data_dir = pjoin(modtran_exe_root, "DATA")
     if not exists(data_dir):
-        raise OSError('Cannot find MODTRAN')
+        raise OSError("Cannot find MODTRAN")
 
     for coord in coords:
         for albedo in albedos:
@@ -35,10 +37,10 @@ def create_modtran_dirs(coords, albedos, modtran_root, modtran_exe_root,
             if not exists(modtran_work):
                 os.makedirs(modtran_work)
 
-            with open(mod5root_in, 'w') as outfile:
-                outfile.write(coord + '_alb_' + albedo + '\n')
+            with open(mod5root_in, "w") as outfile:
+                outfile.write(coord + "_alb_" + albedo + "\n")
 
-            symlink_dir = pjoin(modtran_work, 'DATA')
+            symlink_dir = pjoin(modtran_work, "DATA")
             if exists(symlink_dir):
                 os.unlink(symlink_dir)
 
@@ -51,15 +53,16 @@ def create_satellite_filter_file(acquisitions, satfilter_path, target):
     filterfile = acquisitions[0].spectral_filter_file
     filterpath = os.path.join(satfilter_path, filterfile)
 
-    with open(target, 'w') as outfile:
+    with open(target, "w") as outfile:
         outfile.write("%i\n" % len(refbands))
         outfile.write("%s\n" % filterpath)
 
     return target
 
 
-def write_modtran_input(acquisitions, modtran_input_file, ozone, vapour,
-                        aerosol, elevation):
+def write_modtran_input(
+    acquisitions, modtran_input_file, ozone, vapour, aerosol, elevation
+):
     """Generate modtran input file."""
     acq = acquisitions[0]
     filter_file = acq.spectral_filter_file
@@ -67,47 +70,58 @@ def write_modtran_input(acquisitions, modtran_input_file, ozone, vapour,
     altitude = acq.altitude / 1000.0  # in km
     dechour = acq.decimal_hour
 
-    with open(modtran_input_file, 'w') as outfile:
+    with open(modtran_input_file, "w") as outfile:
         outfile.write("%f\n" % ozone)
         outfile.write("%f\n" % vapour)
         outfile.write("DATA/%s\n" % filter_file)
         outfile.write("-%f\n" % aerosol)
         outfile.write("%f\n" % elevation)
-        outfile.write("Annotation, %s\n" % cdate.strftime('%Y-%m-%d'))
+        outfile.write("Annotation, %s\n" % cdate.strftime("%Y-%m-%d"))
         outfile.write("%d\n" % altitude)
-        outfile.write("%d\n" % int(cdate.strftime('%j')))
+        outfile.write("%d\n" % int(cdate.strftime("%j")))
         outfile.write("%f\n" % dechour)
 
 
-def write_modtran_inputs(acquisition, coordinator, view_fname, azi_fname,
-                         lat_fname, lon_fname,  ozone, vapour, aerosol,
-                         elevation, coords, albedos, out_fname_fmt):
+def write_modtran_inputs(
+    acquisition,
+    coordinator,
+    view_fname,
+    azi_fname,
+    lat_fname,
+    lon_fname,
+    ozone,
+    vapour,
+    aerosol,
+    elevation,
+    coords,
+    albedos,
+    out_fname_fmt,
+):
     filter_file = acquisition.spectral_filter_file
     cdate = acquisition.scene_centre_date
     altitude = acquisition.altitude / 1000.0  # in km
     dechour = acquisition.decimal_hour
-    coord = pandas.read_csv(coordinator, header=None, sep=r'\s+\s+',
-                            engine='python', names=['row', 'col'])
+    coord = pd.read_csv(
+        coordinator, header=None, sep=r"\s+\s+", engine="python", names=["row", "col"]
+    )
 
-    with rasterio.open(view_fname) as view_ds, \
-        with rasterio.open(azi_fname) as azi_ds, \
-        with rasterio.open(lat_fname) as lat_ds, \
-        with rasterio.open(lon_fname) as lon_ds:
-
+    with rasterio.open(view_fname) as view_ds, rasterio.open(
+        azi_fname
+    ) as azi_ds, rasterio.open(lat_fname) as lat_ds, rasterio.open(lon_fname) as lon_ds:
         npoints = len(coords)
-        view = numpy.zeros(npoints, dtype='float32')
-        azi = numpy.zeros(npoints, dtype='float32')
-        lat = numpy.zeros(npoints, dtype='float64')
-        lon = numpy.zeros(npoints, dtype='float64')
+        view = np.zeros(npoints, dtype="float32")
+        azi = np.zeros(npoints, dtype="float32")
+        lat = np.zeros(npoints, dtype="float64")
+        lon = np.zeros(npoints, dtype="float64")
 
         for i in range(1, npoints + 1):
-            yidx = coord['row'][i]
-            xidx = coord['col'][i]
-            idx = ((yidx -1, yidx), (xidx -1, xidx))
-            view[i-1] = view_ds.read(1, window=idx)[0, 0]
-            azi[i-1] = azi_ds.read(1, window=idx)[0, 0]
-            lat[i-1] = lat_ds.read(1, window=idx)[0, 0]
-            lon[i-1] = lon_ds.read(1, window=idx)[0, 0]
+            yidx = coord["row"][i]
+            xidx = coord["col"][i]
+            idx = ((yidx - 1, yidx), (xidx - 1, xidx))
+            view[i - 1] = view_ds.read(1, window=idx)[0, 0]
+            azi[i - 1] = azi_ds.read(1, window=idx)[0, 0]
+            lat[i - 1] = lat_ds.read(1, window=idx)[0, 0]
+            lon[i - 1] = lon_ds.read(1, window=idx)[0, 0]
 
     view_cor = 180 - view
     azi_cor = azi + 180
@@ -125,54 +139,76 @@ def write_modtran_inputs(acquisition, coordinator, view_fname, azi_fname,
 
     for i, p in enumerate(coords):
         for alb in albedos:
-            out_fname = out_fname_fmt.format(p, alb)
-            with open(out_fname, 'w') as src:
-                src.write('%f\n' % float(alb))
-                src.write("%f\n" % ozone)
-                src.write("%f\n" % vapour)
-                src.write("DATA/%s\n" % filter_file)
-                src.write("-%f\n" % aerosol)
-                src.write("%f\n" % elevation)
-                src.write("Annotation, %s\n" % cdate.strftime('%Y-%m-%d'))
-                src.write("%d\n" % altitude)
-                src.write('%f\n' % view_cor[i])
-                src.write("%d\n" % int(cdate.strftime('%j')))
-                src.write('%f\n' % lat[i])
-                src.write('%f\n' % rlon[i])
-                src.write("%f\n" % dechour)
-                src.write('%f\n' % azi_cor[i])
+            out_fname = out_fname_fmt.format(coord=p, albedo=alb)
+            with open(out_fname, "w") as src:
+                src.write(f"{float(alb):.8f}\n")
+                src.write(f"{ozone:.14f}\n")
+                src.write(f"{vapour:.14f}\n")
+                src.write(f"DATA/{filter_file}\n")
+                src.write(f"-{aerosol:.14f}\n")
+                src.write(f"{elevation:.14f}\n")
+                src.write("Annotation, {}\n".format(cdate.strftime("%Y-%m-%d")))
+                src.write(f"{altitude:.14f}\n")
+                src.write(f"{view_cor[i]:f}\n")
+                src.write("{:d}\n".format(int(cdate.strftime("%j"))))
+                src.write(f"{lat[i]:.14f}\n")
+                src.write(f"{rlon[i]:.14f}\n")
+                src.write(f"{dechour:.14f}\n")
+                src.write(f"{azi_cor[i]:f}\n")
 
 
-def write_modis_brdf_files(acquisitions, fname_format, brdf_data,
-                           solar_irrad_data, solar_dist_data):
+def write_modis_brdf_files(
+    acquisitions, fname_format, brdf_data, solar_irrad_data, solar_dist_data
+):
     """Generate brdf input file."""
     ref_acqs = [a for a in acquisitions if a.band_type == gaip.REF]
 
     for acq in ref_acqs:
         band = acq.band_num
         modis_brdf_filename = fname_format.format(band_num=band)
-        with open(modis_brdf_filename, 'w') as outfile:
+        with open(modis_brdf_filename, "w") as outfile:
             msg = "{iso} {vol} {geo}\n"
-            msg = msg.format(iso=brdf_data[(band, 'iso')]['value'],
-                             vol=brdf_data[(band, 'vol')]['value'],
-                             geo=brdf_data[(band, 'geo')]['value'])
+            msg = msg.format(
+                iso=brdf_data[(band, "iso")]["value"],
+                vol=brdf_data[(band, "vol")]["value"],
+                geo=brdf_data[(band, "geo")]["value"],
+            )
             outfile.write(msg)
 
             msg = "{bias} {gain} {irrad} {dist}\n"
-            msg = msg.format(bias=acq.bias, gain=acq.gain,
-                             irrad=solar_irrad_data[band],
-                             dist=solar_dist_data)
+            msg = msg.format(
+                bias=acq.bias,
+                gain=acq.gain,
+                irrad=solar_irrad_data[band],
+                dist=solar_dist_data,
+            )
             outfile.write(msg)
 
 
-def generate_modtran_inputs(modtran_input, coordinator, sat_view_zenith,
-                            sat_azimuth, lon_grid, lat_grid, coords, albedos,
-                            fname_format, workdir):
+def generate_modtran_inputs(
+    modtran_input,
+    coordinator,
+    sat_view_zenith,
+    sat_azimuth,
+    lon_grid,
+    lat_grid,
+    coords,
+    albedos,
+    fname_format,
+    workdir,
+):
     """Generate MODTRAN input files."""
-    cmd = pjoin(BIN_DIR, 'generate_modtran_input')
+    cmd = pjoin(BIN_DIR, "generate_modtran_input")
 
-    args = [cmd, modtran_input, coordinator, sat_view_zenith, sat_azimuth,
-            lat_grid, lon_grid]
+    args = [
+        cmd,
+        modtran_input,
+        coordinator,
+        sat_view_zenith,
+        sat_azimuth,
+        lat_grid,
+        lon_grid,
+    ]
 
     targets = []
     for coord in coords:
@@ -187,10 +223,16 @@ def generate_modtran_inputs(modtran_input, coordinator, sat_view_zenith,
     return targets
 
 
-def reformat_as_tp5(coords, albedos, profile, input_format, output_format,
-                    workdir, cmd=pjoin(BIN_DIR, 'reformat_tp5_albedo')):
+def reformat_as_tp5(
+    coords,
+    albedos,
+    profile,
+    input_format,
+    output_format,
+    workdir,
+    cmd=pjoin(BIN_DIR, "reformat_tp5_albedo"),
+):
     """Reformat the MODTRAN input files in `tp5` format."""
-
     targets = []
     for coord in coords:
         for albedo in albedos:
@@ -205,12 +247,14 @@ def reformat_as_tp5(coords, albedos, profile, input_format, output_format,
     return targets
 
 
-def reformat_as_tp5_trans(coords, albedos, profile, input_format,
-                          output_format, workdir):
+def reformat_as_tp5_trans(
+    coords, albedos, profile, input_format, output_format, workdir
+):
     """Reformat the MODTRAN input files in `tp5` format in the trans case."""
-    cmd = pjoin(BIN_DIR, 'reformat_tp5_transmittance')
-    return reformat_as_tp5(coords, albedos, profile, input_format,
-                           output_format, workdir, cmd)
+    cmd = pjoin(BIN_DIR, "reformat_tp5_transmittance")
+    return reformat_as_tp5(
+        coords, albedos, profile, input_format, output_format, workdir, cmd
+    )
 
 
 def run_modtran(modtran_exe, workpath):
@@ -220,7 +264,7 @@ def run_modtran(modtran_exe, workpath):
 
 def extract_flux(coords, albedos, input_format, output_format, satfilter):
     """Extract the flux data."""
-    cmd = pjoin(BIN_DIR, 'read_flux_albedo')
+    cmd = pjoin(BIN_DIR, "read_flux_albedo")
 
     for coord in coords:
         for albedo in albedos:
@@ -233,7 +277,7 @@ def extract_flux(coords, albedos, input_format, output_format, satfilter):
 
 def extract_flux_trans(coords, input_format, output_format, satfilter):
     """Extract the flux data in the transmissive case."""
-    cmd = pjoin(BIN_DIR, 'read_flux_transmittance')
+    cmd = pjoin(BIN_DIR, "read_flux_transmittance")
 
     for coord in coords:
         src = input_format.format(coord=coord)
@@ -243,29 +287,30 @@ def extract_flux_trans(coords, input_format, output_format, satfilter):
         subprocess.check_call(args)
 
 
-def calc_coefficients(coords, chn_input_fmt, dir_input_fmt,
-                      output_fmt, satfilter, cwd):
+def calc_coefficients(coords, chn_input_fmt, dir_input_fmt, output_fmt, satfilter, cwd):
     """Calculate the coefficients from the MODTRAN output."""
-
-    cmd = pjoin(BIN_DIR, 'calculate_coefficients')
+    cmd = pjoin(BIN_DIR, "calculate_coefficients")
 
     for coord in coords:
-        args = [cmd, satfilter,
-                pjoin(cwd, chn_input_fmt.format(coord=coord, albedo=0)),
-                pjoin(cwd, chn_input_fmt.format(coord=coord, albedo=1)),
-                pjoin(cwd, dir_input_fmt.format(coord=coord, albedo=0)),
-                pjoin(cwd, dir_input_fmt.format(coord=coord, albedo=1)),
-                pjoin(cwd, dir_input_fmt.format(coord=coord, albedo='t')),
-                pjoin(cwd, output_fmt.format(coord=coord))]
+        args = [
+            cmd,
+            satfilter,
+            pjoin(cwd, chn_input_fmt.format(coord=coord, albedo=0)),
+            pjoin(cwd, chn_input_fmt.format(coord=coord, albedo=1)),
+            pjoin(cwd, dir_input_fmt.format(coord=coord, albedo=0)),
+            pjoin(cwd, dir_input_fmt.format(coord=coord, albedo=1)),
+            pjoin(cwd, dir_input_fmt.format(coord=coord, albedo="t")),
+            pjoin(cwd, output_fmt.format(coord=coord)),
+        ]
 
         subprocess.check_call(args, cwd=cwd)
 
 
-def reformat_atmo_params(acqs, coords, satfilter, factors, input_fmt,
-                         output_fmt, workpath):
+def reformat_atmo_params(
+    acqs, coords, satfilter, factors, input_fmt, output_fmt, workpath
+):
     """Reformat atmospheric parameters."""
-
-    cmd = pjoin(BIN_DIR, 'reformat_modtran_output')
+    cmd = pjoin(BIN_DIR, "reformat_modtran_output")
 
     bands = [str(a.band_num) for a in acqs]
 
@@ -280,24 +325,40 @@ def reformat_atmo_params(acqs, coords, satfilter, factors, input_fmt,
     subprocess.check_call(args, cwd=workpath)
 
 
-def bilinear_interpolate(acqs, factors, coordinator, boxline, centreline,
-                         input_fmt, output_fmt, workpath):
+def bilinear_interpolate(
+    acqs, factors, coordinator, boxline, centreline, input_fmt, output_fmt, workpath
+):
     """Perform bilinear interpolation."""
-
     bands = [a.band_num for a in acqs]
     geobox = gaip.gridded_geo_box(acqs[0])
     cols, rows = geobox.get_shape_xy()
 
     # dataframes for the coords, scene centreline, boxline
-    coords = pandas.read_csv(coordinator, header=None, sep=r'\s+\s+',
-                             engine='python', skiprows=1, names=['row', 'col'])
-    cent = pandas.read_csv(centreline, skiprows=2, header=None, sep=r'\s+\s+',
-                           engine='python',
-                           names=['line', 'centre', 'npoints', 'lat', 'lon'])
-    box = pandas.read_csv(boxline, header=None, sep=r'\s+\s+', engine='python',
-                          names=['line', 'cstart', 'cend'])
+    coords = pd.read_csv(
+        coordinator,
+        header=None,
+        sep=r"\s+\s+",
+        engine="python",
+        skiprows=1,
+        names=["row", "col"],
+    )
+    cent = pd.read_csv(
+        centreline,
+        skiprows=2,
+        header=None,
+        sep=r"\s+\s+",
+        engine="python",
+        names=["line", "centre", "npoints", "lat", "lon"],
+    )
+    box = pd.read_csv(
+        boxline,
+        header=None,
+        sep=r"\s+\s+",
+        engine="python",
+        names=["line", "cstart", "cend"],
+    )
 
-    coord = numpy.zeros((9, 2), dtype='int')
+    coord = np.zeros((9, 2), dtype="int")
     coord[:, 0] = coords.row.values
     coord[:, 1] = coords.col.values
     centre = cent.centre.values
@@ -315,9 +376,13 @@ def bilinear_interpolate(acqs, factors, coordinator, boxline, centreline,
             bilinear_outputs[(band, factor)] = fname
 
             # atmospheric paramaters
-            atmos = pandas.read_csv(atmospheric_fname, header=None,
-                                    sep=r'\s+\s+', engine='python',
-                                    names=['s1', 's2', 's3', 's4'])
+            atmos = pd.read_csv(
+                atmospheric_fname,
+                header=None,
+                sep=r"\s+\s+",
+                engine="python",
+                names=["s1", "s2", "s3", "s4"],
+            )
 
             # get the individual atmospheric components
             s1 = atmos.s1.values
@@ -325,9 +390,10 @@ def bilinear_interpolate(acqs, factors, coordinator, boxline, centreline,
             s3 = atmos.s3.values
             s4 = atmos.s4.values
 
-            res = numpy.zeros((rows, cols), dtype='float32')
-            gaip.bilinear(cols, rows, coord, s1, s2, s3, s4, start, end,
-                          centre, res.transpose())
+            res = np.zeros((rows, cols), dtype="float32")
+            gaip.bilinear(
+                cols, rows, coord, s1, s2, s3, s4, start, end, centre, res.transpose()
+            )
 
             # Output the result to disk
             gaip.write_img(res, fname, geobox=geobox, nodata=-999)
