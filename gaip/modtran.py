@@ -60,6 +60,7 @@ def create_satellite_filter_file(acquisitions, satfilter_path, target):
     return target
 
 
+# TODO: once validated, this can function can be deprecated
 def write_modtran_input(
     acquisitions, modtran_input_file, ozone, vapour, aerosol, elevation
 ):
@@ -82,6 +83,8 @@ def write_modtran_input(
         outfile.write("%f\n" % dechour)
 
 
+# TODO: once validated, this can function can be deprecated
+# as we can write direct to the tp5 template
 def write_modtran_inputs(
     acquisition,
     coordinator,
