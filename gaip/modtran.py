@@ -188,6 +188,7 @@ def write_modis_brdf_files(
             outfile.write(msg)
 
 
+# TODO: remove
 def generate_modtran_inputs(
     modtran_input,
     coordinator,
