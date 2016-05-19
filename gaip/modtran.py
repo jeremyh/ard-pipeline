@@ -12,6 +12,12 @@ import pandas as pd
 import rasterio
 
 import gaip
+from gaip import (
+    MIDLAT_SUMMER_ALBEDO,
+    MIDLAT_SUMMER_TRANSMITTANCE,
+    TROPICAL_ALBEDO,
+    TROPICAL_TRANSMITTANCE,
+)
 
 BIN_DIR = abspath(pjoin(dirname(__file__), "..", "bin"))
 
@@ -228,7 +234,7 @@ def generate_modtran_inputs(
     return targets
 
 
-def write_tp5_albedo_transmittance(
+def write_tp5(
     acquisition,
     coordinator,
     view_fname,
@@ -244,6 +250,7 @@ def write_tp5_albedo_transmittance(
     out_fname_fmt,
 ):
     """Writes the tp5 files for the albedo (0, 1) and transmittance (t)."""
+    geobox = acquisition.gridded_geo_box()
     filter_file = acquisition.spectral_filter_file
     cdate = acquisition.scene_centre_date
     doy = int(cdate.strftime("%j"))
@@ -287,7 +294,6 @@ def write_tp5_albedo_transmittance(
     azi_cor[wh] -= 360
 
     # get the modtran profiles to use based on the centre latitude
-    geobox = acqs[0].gridded_geo_box()
     centre_lon, centre_lat = geobox.centre_lonlat
     if centre_lat < -23.0:
         albedo_profile = MIDLAT_SUMMER_ALBEDO
@@ -306,12 +312,12 @@ def write_tp5_albedo_transmittance(
                     water=vapour,
                     ozone=ozone,
                     filter_function=filter_file,
-                    visibility=aerosol,
+                    visibility=-aerosol,
                     elevation=elevation,
                     sat_height=altitude,
                     sat_view=view_cor[i],
                     doy=doy,
-                    sat_view_offset=180.0 - azi_cor[i],
+                    sat_view_offset=180.0 - view_cor[i],
                 )
             else:
                 data = albedo_profile.format(
@@ -319,7 +325,7 @@ def write_tp5_albedo_transmittance(
                     water=vapour,
                     ozone=ozone,
                     filter_function=filter_file,
-                    visibility=aerosol,
+                    visibility=-aerosol,
                     elevation=elevation,
                     sat_height=altitude,
                     sat_view=view_cor[i],
