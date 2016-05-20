@@ -21,7 +21,7 @@ from gaip import set_times
 from gaip import boxline
 
 CRS = "EPSG:4326"
-TLE_DIR = '/g/data/v10/eoancillarydata/sensor-specific'
+TLE_DIR = "/g/data/v10/eoancillarydata/sensor-specific"
 
 # To be used as a template while gaip is restructured
 
@@ -42,38 +42,50 @@ def sat_sol_grid_workflow(l1t_path, work_path, lonlat_path):
     # Find and open the longitude and lattitude files
     # Avoiding DataManger here. find_file will be used sparingly until a
     # proper workflow is written.
-    lon_fname = find_file(lonlat_path, 'LON.bin')
-    lat_fname = find_file(lonlat_path, 'LAT.bin')
+    lon_fname = find_file(lonlat_path, "LON.bin")
+    lat_fname = find_file(lonlat_path, "LAT.bin")
 
     # Get the array dimensions from the first acquisistion
     # The dimensions should match for all bands except the panchromatic
     cols = acqs[0].samples
 
     # Define the output file names
-    sat_view_zenith_fname = os.path.join(work_path, 'SATELLITE_VIEW.bin')
-    sat_azimuth_fname = os.path.join(work_path, 'SATELLITE_AZIMUTH.bin')
-    solar_zenith_fname = os.path.join(work_path, 'SOLAR_ZENITH.bin')
-    solar_azimuth_fname = os.path.join(work_path, 'SOLAR_AZIMUTH.bin')
-    relative_azimuth_fname = os.path.join(work_path, 'RELATIVE_AZIMUTH.bin')
-    time_fname = os.path.join(work_path, 'TIME.bin')
+    sat_view_zenith_fname = os.path.join(work_path, "SATELLITE_VIEW.bin")
+    sat_azimuth_fname = os.path.join(work_path, "SATELLITE_AZIMUTH.bin")
+    solar_zenith_fname = os.path.join(work_path, "SOLAR_ZENITH.bin")
+    solar_azimuth_fname = os.path.join(work_path, "SOLAR_AZIMUTH.bin")
+    relative_azimuth_fname = os.path.join(work_path, "RELATIVE_AZIMUTH.bin")
+    time_fname = os.path.join(work_path, "TIME.bin")
 
-    out_fnames = [sat_view_zenith_fname, sat_azimuth_fname,
-                  solar_zenith_fname, solar_azimuth_fname,
-                  relative_azimuth_fname, time_fname]
+    out_fnames = [
+        sat_view_zenith_fname,
+        sat_azimuth_fname,
+        solar_zenith_fname,
+        solar_azimuth_fname,
+        relative_azimuth_fname,
+        time_fname,
+    ]
 
     # Get the angles, time, & satellite track coordinates
-    (satellite_zenith, satellite_azimuth, solar_zenith,
-     solar_azimuth, relative_azimuth, time,
-     y_cent, x_cent, n_cent) = calculate_angles(acqs[0], lon_fname,
-                                                lat_fname, npoints=12,
-                                                to_disk=out_fnames)
+    (
+        satellite_zenith,
+        satellite_azimuth,
+        solar_zenith,
+        solar_azimuth,
+        relative_azimuth,
+        time,
+        y_cent,
+        x_cent,
+        n_cent,
+    ) = calculate_angles(
+        acqs[0], lon_fname, lat_fname, npoints=12, out_fnames=out_fnames
+    )
 
     # Write out the CENTRELINE file
     create_centreline_file(geobox, y_cent, x_cent, n_cent, cols, view_max=9.0)
 
 
-def create_centreline_file(geobox, y, x, n, cols, view_max,
-                           outfname='CENTRELINE'):
+def create_centreline_file(geobox, y, x, n, cols, view_max, outfname="CENTRELINE"):
     """
     Creates the centre line text file.
 
@@ -114,24 +126,22 @@ def create_centreline_file(geobox, y, x, n, cols, view_max,
     sr = osr.SpatialReference()
     sr.SetFromUserInput(CRS)
 
-    with open(outfname, 'w') as outfile:
-
+    with open(outfname, "w") as outfile:
         # Right justified with length of 14 per item
-        outfile.write('{view_max:>14}\n'.format(view_max=view_max))
-        outfile.write('{rows:>14}{cols:>14}\n'.format(rows=rows, cols=cols))
+        outfile.write("{view_max:>14}\n".format(view_max=view_max))
+        outfile.write("{rows:>14}{cols:>14}\n".format(rows=rows, cols=cols))
 
         for r in range(rows):
             # We offset by -1 to get the zero based col and row id
             mapXY = geobox.convert_coordinates((x[r] - 1, y[r] - 1))
             lon, lat = geobox.transform_coordinates(mapXY, to_crs=sr)
             # Right justified at various lengths
-            msg = '{row:>14}{col:>14}{n:>14}{lat:>21}{lon:>21}\n'
-            msg = msg.format(row=int(y[r]), col=int(x[r]), n=n[r], lat=lat,
-                             lon=lon)
+            msg = "{row:>14}{col:>14}{n:>14}{lat:>21}{lon:>21}\n"
+            msg = msg.format(row=int(y[r]), col=int(x[r]), n=n[r], lat=lat, lon=lon)
             outfile.write(msg)
 
 
-def create_header_angle_file(acquisition, view_max, outfname='HEADERANGLE'):
+def create_header_angle_file(acquisition, view_max, outfname="HEADERANGLE"):
     """
     Creates the header angle text file.
 
@@ -160,8 +170,7 @@ def create_header_angle_file(acquisition, view_max, outfname='HEADERANGLE'):
         orb_radius = acquisition.semi_major_axis
         # angular velocity (rad sec-1)
         omega = acquisition.omega
-        orbital_elements = np.array([orb_incl, orb_radius, omega],
-                                    dtype='float')
+        orbital_elements = np.array([orb_incl, orb_radius, omega], dtype="float")
     else:
         dt = acquisition.scene_center_datetime
         orbital_elements = setup_orbital_elements(sat_ephemeral, dt)
@@ -181,24 +190,41 @@ def create_header_angle_file(acquisition, view_max, outfname='HEADERANGLE'):
     samples, lines = geobox.get_shape_xy()
 
     # Output to disk
-    with open(outfname, 'w') as outfile:
-        header_file = ("{year} {month} {day} {hours}\n"
-                       "{lines} {samples}\n"
-                       "{centre_lat} {centre_lon}\n"
-                       "{radius} {inclination} {velocity}\n"
-                       "{max_angle}")
+    with open(outfname, "w") as outfile:
+        header_file = (
+            "{year} {month} {day} {hours}\n"
+            "{lines} {samples}\n"
+            "{centre_lat} {centre_lon}\n"
+            "{radius} {inclination} {velocity}\n"
+            "{max_angle}"
+        )
 
-        outfile.write(header_file.format(year=year, month=month, day=day,
-                                         hours=hours, lines=lines,
-                                         samples=samples, centre_lat=cy,
-                                         centre_lon=cx, radius=orb_radius,
-                                         inclination=orb_incl,
-                                         velocity=omega, max_angle=view_max))
+        outfile.write(
+            header_file.format(
+                year=year,
+                month=month,
+                day=day,
+                hours=hours,
+                lines=lines,
+                samples=samples,
+                centre_lat=cy,
+                centre_lon=cx,
+                radius=orb_radius,
+                inclination=orb_incl,
+                velocity=omega,
+                max_angle=view_max,
+            )
+        )
 
 
-def create_boxline_file(view_angle_fname, line, ncentre, max_angle=9.0,
-                        boxline_fname='BOXLINE',
-                        coordinator_fname='COORDINATOR'):
+def create_boxline_file(
+    view_angle_fname,
+    line,
+    ncentre,
+    max_angle=9.0,
+    boxline_fname="BOXLINE",
+    coordinator_fname="COORDINATOR",
+):
     """
     Creates the BOXLINE text file.
 
@@ -230,27 +256,26 @@ def create_boxline_file(view_angle_fname, line, ncentre, max_angle=9.0,
         cols = ds.width
 
     # allocate the output arrays
-    istart = np.zeros(rows, dtype='int')
-    iend = np.zeros(rows, dtype='int')
+    istart = np.zeros(rows, dtype="int")
+    iend = np.zeros(rows, dtype="int")
 
     # calculate the column start and end indices
-    boxline(cols, rows, max_angle, view_angle.transpose(), line, ncentre,
-            istart, iend)
+    boxline(cols, rows, max_angle, view_angle.transpose(), line, ncentre, istart, iend)
 
     # output the boxline file
-    with open(boxline_fname, 'w') as src:
+    with open(boxline_fname, "w") as src:
         # Right justified at various lengths
-        msg = '{line:>12}{istart:>12}{iend:>12}\n'
+        msg = "{line:>12}{istart:>12}{iend:>12}\n"
         for i in range(rows):
             src.write(msg.format(line=line[i], istart=istart[i], iend=iend[i]))
 
     # output the coordinator file
-    with open(coordinator_fname, 'w') as src:
+    with open(coordinator_fname, "w") as src:
         # get the middle index (account for the 0-based index)
         mid = rows // 2 - 1
 
         # Right justified at various lengths
-        msg = '{row:>13}{column:>13}\n'
+        msg = "{row:>13}{column:>13}\n"
         src.write(msg.format(row=rows, column=cols))
         src.write(msg.format(row=int(line[0]), column=int(istart[0])))
         src.write(msg.format(row=int(line[0]), column=int(ncentre[0])))
@@ -374,7 +399,7 @@ def setup_orbital_elements(ephemeral, datetime):
 
     # semi_major radius (m)
     # http://smallsats.org/2012/12/06/two-line-element-set-tle/
-    orbital_elements[1] = (mu / (2 * pi * n / s) ** 2) ** (1. / 3)
+    orbital_elements[1] = (mu / (2 * pi * n / s) ** 2) ** (1.0 / 3)
 
     # angular velocity (rad sec-1)
     orbital_elements[2] = (2 * pi * n) / s
@@ -499,13 +524,11 @@ def setup_times(ymin, ymax, spheroid, orbital_elements, smodel, npoints=12):
             * Index 7 skew.
     """
 
-    track, _ = set_times(ymin, ymax, npoints, spheroid, orbital_elements,
-                         smodel)
+    track, _ = set_times(ymin, ymax, npoints, spheroid, orbital_elements, smodel)
     return track
 
 
-def calculate_angles(acquisition, lon_fname, lat_fname, npoints=12,
-                     to_disk=None):
+def calculate_angles(acquisition, lon_fname, lat_fname, npoints=12, out_fnames=None):
     """
     Calculate the satellite view, satellite azimuth, solar zenith,
     solar azimuth, and relative aziumth angle grids, as well as the
@@ -528,9 +551,9 @@ def calculate_angles(acquisition, lon_fname, lat_fname, npoints=12,
         The number of time sample points to be calculated along the
         satellite track. Default is 12
 
-    :param to_disk:
+    :param out_fnames:
         If set to None (default) then the results will be returned
-        in memory and no disk space will be used. Otherwise to_disk
+        in memory and no disk space will be used. Otherwise out_fnames
         should be a list of length 6 containing file path names for
         the computed arrays. These arrays will be written directly
         to disk in a tiled fashion. Setting this keyword reduces
@@ -593,17 +616,20 @@ def calculate_angles(acquisition, lon_fname, lat_fname, npoints=12,
         orb_radius = acquisition.semi_major_axis
         # angular velocity (rad sec-1)
         omega = acquisition.omega
-        orbital_elements = np.array([orb_incl, orb_radius, omega],
-                                    dtype='float')
+        orbital_elements = np.array([orb_incl, orb_radius, omega], dtype="float")
     else:
         orbital_elements = setup_orbital_elements(sat_ephemeral, dt)
 
     # Min and Max lat extents
     # This method should handle northern and southern hemispheres
-    min_lat = min(min(geobox.ul_lonlat[1], geobox.ur_lonlat[1]),
-                  min(geobox.ll_lonlat[1], geobox.lr_lonlat[1]))
-    max_lat = max(max(geobox.ul_lonlat[1], geobox.ur_lonlat[1]),
-                  max(geobox.ll_lonlat[1], geobox.lr_lonlat[1]))
+    min_lat = min(
+        min(geobox.ul_lonlat[1], geobox.ur_lonlat[1]),
+        min(geobox.ll_lonlat[1], geobox.lr_lonlat[1]),
+    )
+    max_lat = max(
+        max(geobox.ul_lonlat[1], geobox.ur_lonlat[1]),
+        max(geobox.ll_lonlat[1], geobox.lr_lonlat[1]),
+    )
 
     # Scene centre in time stamp in decimal hours
     hours = acquisition.decimal_hour
@@ -616,135 +642,120 @@ def calculate_angles(acquisition, lon_fname, lat_fname, npoints=12,
     # view_max = 9.0
 
     # Get the satellite model paramaters
-    smodel = setup_smodel(
-        centre_xy[0], centre_xy[1], spheroid, orbital_elements)
+    smodel = setup_smodel(centre_xy[0], centre_xy[1], spheroid, orbital_elements)
 
     # Get the times and satellite track information
-    track = setup_times(
-        min_lat, max_lat, spheroid, orbital_elements, smodel, npoints)
+    track = setup_times(min_lat, max_lat, spheroid, orbital_elements, smodel, npoints)
 
     # Array dimensions
     cols = acquisition.samples
     rows = acquisition.lines
     dims = (rows, cols)
 
-    if to_disk is None:
-        # Initialise 2D arrays to hold the angles
-        view = np.zeros(dims, dtype='float32')
-        azi = np.zeros(dims, dtype='float32')
-        asol = np.zeros(dims, dtype='float32')
-        soazi = np.zeros(dims, dtype='float32')
-        rela_angle = np.zeros(dims, dtype='float32')
-        time = np.zeros(dims, dtype='float32')
-    else:
-        # Initialise 1D arrays to hold the angles
-        view = np.zeros((1, cols), dtype='float32')
-        azi = np.zeros((1, cols), dtype='float32')
-        asol = np.zeros((1, cols), dtype='float32')
-        soazi = np.zeros((1, cols), dtype='float32')
-        rela_angle = np.zeros((1, cols), dtype='float32')
-        time = np.zeros((1, cols), dtype='float32')
+    # Initialise 1D arrays to hold the angles
+    out_dtype = "float32"
+    view = np.zeros((1, cols), dtype=out_dtype)
+    azi = np.zeros((1, cols), dtype=out_dtype)
+    asol = np.zeros((1, cols), dtype=out_dtype)
+    soazi = np.zeros((1, cols), dtype=out_dtype)
+    rela_angle = np.zeros((1, cols), dtype=out_dtype)
+    time = np.zeros((1, cols), dtype=out_dtype)
 
-        if len(to_disk) != 6:
-            print "Incorrect number of filenames!"
-            print "Results will be returned as np arrays"
-            to_disk = None
-
-        # Initialise the output files
-        out_dtype = 'float32'
-        kwargs = {'driver': 'GTiff',
-                  'width': cols,
-                  'height': rows,
-                  'count': 1,
-                  'crs': prj,
-                  'transform': geobox.affine,
-                  'dtype': out_dtype,
-                  'compress': 'deflate',
-                  'zlevel': 1,
-                  'predictor': 3}
-        outds_sat_v = rasterio.open(to_disk[0], 'w', **kwargs)
-        outds_sat_az = rasterio.open(to_disk[1], 'w', **kwargs)
-        outds_sol_z = rasterio.open(to_disk[2], 'w', **kwargs)
-        outds_sol_az = rasterio.open(to_disk[3], 'w', **kwargs)
-        outds_rel_az = rasterio.open(to_disk[4], 'w', **kwargs)
-        outds_time = rasterio.open(to_disk[5], 'w', **kwargs)
+    # Initialise the output files
+    no_data = -999
+    kwargs = {
+        "driver": "GTiff",
+        "width": cols,
+        "height": rows,
+        "count": 1,
+        "crs": prj,
+        "transform": geobox.affine,
+        "dtype": out_dtype,
+        "nodata": no_data,
+        "compress": "deflate",
+        "zlevel": 1,
+        "predictor": 3,
+    }
+    outds_sat_v = rasterio.open(out_fnames[0], "w", **kwargs)
+    outds_sat_az = rasterio.open(out_fnames[1], "w", **kwargs)
+    outds_sol_z = rasterio.open(out_fnames[2], "w", **kwargs)
+    outds_sol_az = rasterio.open(out_fnames[3], "w", **kwargs)
+    outds_rel_az = rasterio.open(out_fnames[4], "w", **kwargs)
+    outds_time = rasterio.open(out_fnames[5], "w", **kwargs)
 
     # Set to null value
-    view[:] = -999
-    azi[:] = -999
-    asol[:] = -999
-    soazi[:] = -999
-    rela_angle[:] = -999
-    time[:] = -999
+    view[:] = no_data
+    azi[:] = no_data
+    asol[:] = no_data
+    soazi[:] = no_data
+    rela_angle[:] = no_data
+    time[:] = no_data
 
     # Initialise centre line variables
-    y_cent = np.arange(1, rows + 1).astype('float32')
-    x_cent = np.zeros((rows), dtype='float32')
-    n_cent = np.zeros((rows), dtype='float32')
+    y_cent = np.arange(1, rows + 1).astype("float32")
+    x_cent = np.zeros((rows), dtype="float32")
+    n_cent = np.zeros((rows), dtype="float32")
 
     # Initialise the tile generator for processing
     # Process 1 row of data at a time
     tiles = tiling.generate_tiles(cols, rows, cols, 1, generator=True)
 
-    # Rather than do 8000+ if checks within the loop, we'll construct two
-    # seperate loops
-    if to_disk is None:
-        with rasterio.open(lon_fname) as lon, rasterio.open(lat_fname) as lat:
-            # Loop over each row
-            for i in range(rows):
-                # Get the current tile
-                tile = tiles.next()
+    with rasterio.open(lon_fname) as lon, rasterio.open(lat_fname) as lat:
+        # Loop over each row
+        for i in range(rows):
+            # Get the current tile
+            tile = tiles.next()
 
-                # Read the lon and lat tile
-                lon_array = lon.read(1, window=tile)
-                lat_array = lat.read(1, window=tile)
+            # Read the lon and lat tile
+            lon_array = lon.read(1, window=tile)
+            lat_array = lat.read(1, window=tile)
 
-                angle(cols, rows, i + 1, lat_array, lon_array,
-                      spheroid, orbital_elements, hours, century,
-                      npoints, smodel, track, view[i], azi[i],
-                      asol[i], soazi[i], rela_angle[i], time[i],
-                      x_cent, n_cent)
-    else:
-        with rasterio.open(lon_fname) as lon, rasterio.open(lat_fname) as lat:
-            # Loop over each row
-            for i in range(rows):
-                # Get the current tile
-                tile = tiles.next()
+            # Set to null value
+            view[:] = -999
+            azi[:] = -999
+            asol[:] = -999
+            soazi[:] = -999
+            rela_angle[:] = -999
+            time[:] = -999
 
-                # Read the lon and lat tile
-                lon_array = lon.read(1, window=tile)
-                lat_array = lat.read(1, window=tile)
+            angle(
+                cols,
+                rows,
+                i + 1,
+                lat_array,
+                lon_array,
+                spheroid,
+                orbital_elements,
+                hours,
+                century,
+                npoints,
+                smodel,
+                track,
+                view[0],
+                azi[0],
+                asol[0],
+                soazi[0],
+                rela_angle[0],
+                time[0],
+                x_cent,
+                n_cent,
+            )
 
-                # Set to null value
-                view[:] = -999
-                azi[:] = -999
-                asol[:] = -999
-                soazi[:] = -999
-                rela_angle[:] = -999
-                time[:] = -999
+            # Output to disk
+            outds_sat_v.write(view, 1, window=tile)
+            outds_sat_az.write(azi, 1, window=tile)
+            outds_sol_z.write(asol, 1, window=tile)
+            outds_sol_az.write(soazi, 1, window=tile)
+            outds_rel_az.write(rela_angle, 1, window=tile)
+            outds_time.write(time, 1, window=tile)
 
-                angle(cols, rows, i + 1, lat_array, lon_array,
-                      spheroid, orbital_elements, hours, century,
-                      npoints, smodel, track, view[0], azi[0],
-                      asol[0], soazi[0], rela_angle[0], time[0],
-                      x_cent, n_cent)
-
-                # Output to disk
-                outds_sat_v.write(view, 1, window=tile)
-                outds_sat_az.write(azi, 1, window=tile)
-                outds_sol_z.write(asol, 1, window=tile)
-                outds_sol_az.write(soazi, 1, window=tile)
-                outds_rel_az.write(rela_angle, 1, window=tile)
-                outds_time.write(time, 1, window=tile)
-
-    if to_disk is not None:
-        # Close all image files opened for writing
-        outds_sat_v.close()
-        outds_sat_az.close()
-        outds_sol_z.close()
-        outds_sol_az.close()
-        outds_rel_az.close()
-        outds_time.close()
+    # Close all image files opened for writing
+    outds_sat_v.close()
+    outds_sat_az.close()
+    outds_sol_z.close()
+    outds_sol_az.close()
+    outds_rel_az.close()
+    outds_time.close()
 
     # Centreline
     # here need code to write the track in the image as an ascii file
@@ -767,13 +778,15 @@ def calculate_angles(acquisition, lon_fname, lat_fname, npoints=12,
     y_cent = np.rint(y_cent)
     x_cent = np.rint(x_cent)
 
-    # If we didn't write to disk return np arrays otherwise
-    # return the filepath names
-    if to_disk is None:
-        result = (view, azi, asol, soazi, rela_angle, time, y_cent, x_cent,
-                  n_cent)
-        return result
-    else:
-        result = (to_disk[0], to_disk[1], to_disk[2], to_disk[3], to_disk[4],
-                  to_disk[5], y_cent, x_cent, n_cent)
-        return result
+    result = (
+        out_fnames[0],
+        out_fnames[1],
+        out_fnames[2],
+        out_fnames[3],
+        out_fnames[4],
+        out_fnames[5],
+        y_cent,
+        x_cent,
+        n_cent,
+    )
+    return result
