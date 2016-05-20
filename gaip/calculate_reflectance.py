@@ -4,7 +4,6 @@
 import numpy as np
 import rasterio
 from eotools import tiling
-from osgeo import gdal
 
 from gaip import as_array, constants, reflectance, write_new_brdf_file
 
@@ -201,6 +200,7 @@ def calculate_reflectance(
         cols = acq.samples
         band_number = acq.band_num
         geobox = acq.gridded_geo_box()
+        crs = geobox.crs.ExportToWkt()
 
         # Filenames for lambertian, brdf & terrain corrected reflectance
         lmbrt_fname = reflectance_filenames[(band_number, "reflectance_lambertian")]
@@ -208,17 +208,24 @@ def calculate_reflectance(
         tc_fname = reflectance_filenames[(band_number, "reflectance_terrain")]
 
         # Initialise the output files
-        out_dtype = gdal.GDT_Int16
+        out_dtype = "int16"
         no_data = -999
-        outds_lmbrt = tiling.TiledOutput(
-            lmbrt_fname, cols, rows, geobox=geobox, dtype=out_dtype, nodata=no_data
-        )
-        outds_brdf = tiling.TiledOutput(
-            brdf_fname, cols, rows, geobox=geobox, dtype=out_dtype, nodata=no_data
-        )
-        outds_tc = tiling.TiledOutput(
-            tc_fname, cols, rows, geobox=geobox, dtype=out_dtype, nodata=no_data
-        )
+        kwargs = {
+            "driver": "GTiff",
+            "width": cols,
+            "height": rows,
+            "count": 1,
+            "crs": crs,
+            "transform": geobox.affine,
+            "dtype": out_dtype,
+            "nodata": no_data,
+            "compress": "deflate",
+            "zlevel": 1,
+            "predictor": 2,
+        }
+        outds_lmbrt = rasterio.open(lmbrt_fname, "w", **kwargs)
+        outds_brdf = rasterio.open(brdf_fname, "w", **kwargs)
+        outds_tc = rasterio.open(tc_fname, "w", **kwargs)
 
         # Initialise the tiling scheme for processing
         if x_tile is None:
@@ -440,9 +447,9 @@ def calculate_reflectance(
                 )
 
                 # Write the current tile to disk
-                outds_lmbrt.write_tile(ref_lm, tile)
-                outds_brdf.write_tile(ref_brdf, tile)
-                outds_tc.write_tile(ref_terrain, tile)
+                outds_lmbrt.write(ref_lm, 1, window=tile)
+                outds_brdf.write(ref_brdf, 1, window=tile)
+                outds_tc.write(ref_terrain, 1, window=tile)
 
         # Close the files to complete the writing
         outds_lmbrt.close()
