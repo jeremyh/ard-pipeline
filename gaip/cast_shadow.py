@@ -80,4 +80,11 @@ def calculate_cast_shadow(
     )
 
     # Output the result to disk
-    write_img(mask, outfname, geobox=geobox, nodata=-999)
+    write_img(
+        mask,
+        outfname,
+        geobox=geobox,
+        nodata=-999,
+        compress="deflate",
+        options={"zlevel": 1},
+    )
