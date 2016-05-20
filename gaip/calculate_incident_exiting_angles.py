@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import gdal
 import numpy as np
 import rasterio
 from eotools import tiling
@@ -57,21 +56,26 @@ def incident_angles(
     with rasterio.open(solar_zenith_fname) as ds:
         geobox = GriddedGeoBox.from_rio_dataset(ds)
         cols, rows = geobox.get_shape_xy()
+        crs = geobox.crs.ExportToWkt()
 
     # Initialise the output files
-    out_dtype = gdal.GDT_Float32
+    out_dtype = "float32"
     no_data = -999
-    outds_incident = tiling.TiledOutput(
-        incident_out_fname, cols, rows, geobox=geobox, dtype=out_dtype, nodata=no_data
-    )
-    outds_azi_incident = tiling.TiledOutput(
-        azimuth_incident_out_fname,
-        cols,
-        rows,
-        geobox=geobox,
-        dtype=out_dtype,
-        nodata=no_data,
-    )
+    kwargs = {
+        "driver": "GTiff",
+        "width": cols,
+        "height": rows,
+        "count": 1,
+        "crs": crs,
+        "transform": geobox.affine,
+        "dtype": out_dtype,
+        "nodata": no_data,
+        "compress": "deflate",
+        "zlevel": 1,
+        "predictor": 3,
+    }
+    outds_incident = rasterio.open(incident_out_fname, "w", **kwargs)
+    outds_azi_incident = rasterio.open(azimuth_incident_out_fname, "w", **kwargs)
 
     # Open the files for reading
     with rasterio.open(solar_zenith_fname) as sol_z_ds, rasterio.open(
@@ -138,8 +142,8 @@ def incident_angles(
             )
 
             # Write the current tile to disk
-            outds_incident.write_tile(incident, tile)
-            outds_azi_incident.write_tile(azi_incident, tile)
+            outds_incident.write(incident, 1, window=tile)
+            outds_azi_incident.write(azi_incident, 1, window=tile)
 
     # Close the files to complete the writing
     outds_incident.close()
@@ -195,21 +199,26 @@ def exiting_angles(
     with rasterio.open(satellite_view_fname) as ds:
         geobox = GriddedGeoBox.from_rio_dataset(ds)
         cols, rows = geobox.get_shape_xy()
+        crs = geobox.crs.ExportToWkt()
 
     # Initialise the output files
-    out_dtype = gdal.GDT_Float32
+    out_dtype = "float32"
     no_data = -999
-    outds_exiting = tiling.TiledOutput(
-        exiting_out_fname, cols, rows, geobox=geobox, dtype=out_dtype, nodata=no_data
-    )
-    outds_azi_exiting = tiling.TiledOutput(
-        azimuth_exiting_out_fname,
-        cols,
-        rows,
-        geobox=geobox,
-        dtype=out_dtype,
-        nodata=no_data,
-    )
+    kwargs = {
+        "driver": "GTiff",
+        "width": cols,
+        "height": rows,
+        "count": 1,
+        "crs": crs,
+        "transform": geobox.affine,
+        "dtype": out_dtype,
+        "nodata": no_data,
+        "compress": "deflate",
+        "zlevel": 1,
+        "predictor": 3,
+    }
+    outds_exiting = rasterio.open(exiting_out_fname, "w", **kwargs)
+    outds_azi_exiting = rasterio.open(azimuth_exiting_out_fname, "w", **kwargs)
 
     # Open the files for reading
     with rasterio.open(satellite_view_fname) as sat_view_ds, rasterio.open(
@@ -276,8 +285,8 @@ def exiting_angles(
             )
 
             # Write the current to disk
-            outds_exiting.write_tile(exiting, tile)
-            outds_azi_exiting.write_tile(azi_exiting, tile)
+            outds_exiting.write(exiting, 1, window=tile)
+            outds_azi_exiting.write(azi_exiting, 1, window=tile)
 
     # Close the files to complete the writing
     outds_exiting.close()
@@ -322,20 +331,25 @@ def relative_azimuth_slope(
         # Retrieve a geobox and image info
         geobox = GriddedGeoBox.from_rio_dataset(azi_inc_ds)
         cols, rows = geobox.get_shape_xy()
-        # prj = geobox.crs.ExportToWkt()
-        # geoT = geobox.affine.to_gdal()
+        crs = geobox.crs.ExportToWkt()
 
         # Initialise the output file
-        out_dtype = gdal.GDT_Float32
+        out_dtype = "float32"
         no_data = -999
-        outds = tiling.TiledOutput(
-            relative_azimuth_slope_out_fname,
-            cols,
-            rows,
-            geobox=geobox,
-            dtype=out_dtype,
-            nodata=no_data,
-        )
+        kwargs = {
+            "driver": "GTiff",
+            "width": cols,
+            "height": rows,
+            "count": 1,
+            "crs": crs,
+            "transform": geobox.affine,
+            "dtype": out_dtype,
+            "nodata": no_data,
+            "compress": "deflate",
+            "zlevel": 1,
+            "predictor": 3,
+        }
+        outds = rasterio.open(relative_azimuth_slope_out_fname, "w", **kwargs)
 
         # Initialise the tiling scheme for processing
         if x_tile is None:
@@ -356,7 +370,7 @@ def relative_azimuth_slope(
             rel_azi[rel_azi > 180.0] -= 360.0
 
             # Write the current tile to disk
-            outds.write_tile(rel_azi, tile)
+            outds.write(rel_azi, 1, window=tile)
 
         # Close the file
         outds.close()
