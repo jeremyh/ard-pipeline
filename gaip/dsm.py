@@ -70,6 +70,7 @@ def get_dsm(acquisition, national_dsm, margins, fname_subset, fname_smoothed):
     write_img(
         dsm_data,
         fname_subset,
+        fmt="GTiff",
         geobox=dem_geobox,
         compress="deflate",
         options={"zlevel": 1},
@@ -82,6 +83,7 @@ def get_dsm(acquisition, national_dsm, margins, fname_subset, fname_smoothed):
     write_img(
         dsm_data,
         fname_smoothed,
+        fmt="GTiff",
         geobox=dem_geobox,
         compress="deflate",
         options={"zlevel": 1},

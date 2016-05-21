@@ -88,6 +88,7 @@ def calculate_cast_shadow(
     write_img(
         mask,
         outfname,
+        fmt="GTiff",
         geobox=geobox,
         nodata=-999,
         compress="deflate",

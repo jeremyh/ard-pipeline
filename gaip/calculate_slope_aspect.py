@@ -124,6 +124,7 @@ def slope_aspect_arrays(
     write_img(
         slope,
         slope_out_fname,
+        fmt="GTiff",
         geobox=geobox,
         nodata=-999,
         compress="deflate",
@@ -132,6 +133,7 @@ def slope_aspect_arrays(
     write_img(
         aspect,
         aspect_out_fname,
+        fmt="GTiff",
         geobox=geobox,
         nodata=-999,
         compress="deflate",
