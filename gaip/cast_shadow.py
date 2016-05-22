@@ -2,7 +2,9 @@
 --------------.
 """
 
-from gaip import ImageMargins, read_img, run_castshadow, setup_spheroid, write_img
+import rasterio
+
+from gaip import ImageMargins, run_castshadow, setup_spheroid, write_img
 
 
 def calculate_cast_shadow(
@@ -60,9 +62,12 @@ def calculate_cast_shadow(
     spheroid = setup_spheroid(geobox.crs.ExportToWkt())
 
     # Read the dsm and angle arrays into memory
-    dsm = read_img(dsm_fname)
-    view_angle = read_img(view_angle_fname)
-    azimuth_angle = read_img(azimuth_angle_fname)
+    with rasterio.open(dsm_fname) as ds:
+        dsm = ds.read(1)
+    with rasterio.open(view_angle_fname) as ds:
+        view_angle = ds.read(1)
+    with rasterio.open(azimuth_angle_fname) as ds:
+        azimuth_angle = ds.read(1)
 
     # Define Top, Bottom, Left, Right pixel margins
     pixel_buf = ImageMargins(margins)
@@ -80,4 +85,12 @@ def calculate_cast_shadow(
     )
 
     # Output the result to disk
-    write_img(mask, outfname, geobox=geobox, nodata=-999)
+    write_img(
+        mask,
+        outfname,
+        fmt="GTiff",
+        geobox=geobox,
+        nodata=-999,
+        compress="deflate",
+        options={"zlevel": 1},
+    )
