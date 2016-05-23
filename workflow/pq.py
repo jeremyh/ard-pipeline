@@ -13,8 +13,9 @@ import subprocess
 from datetime import datetime as dt
 from enum import Enum
 from glob import glob
-from os.path import basename, exists
+from os.path import basename, dirname, exists
 from os.path import join as pjoin
+from pathlib import Path
 
 import luigi
 import yaml
