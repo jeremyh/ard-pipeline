@@ -23,6 +23,7 @@ import cPickle as pickle
 import luigi
 import numpy as np
 import yaml
+from eodatasets import type as ptype
 from eodatasets.drivers import PACKAGE_DRIVERS
 from eodatasets.run import package_newly_processed_data_folder
 from yaml.representer import Representer
@@ -1909,6 +1910,13 @@ def main(inpath, outpath, workpath, nnodes=1, nodenum=1):
         product_dir = pjoin(outpath, product)
         if not exists(product_dir):
             os.makedirs(product_dir)
+
+    # Setup Software Versions for Packaging
+    ptype.register_software_version(
+        "gaip",
+        gaip.get_version(),
+        repo_url="https://github.com/GeoscienceAustralia/ga-neo-landsat-processor.git",
+    )
 
     l1t_files = [f for f in scatter(filtered_l1t, nnodes, nodenum)]
     nbar_files = [

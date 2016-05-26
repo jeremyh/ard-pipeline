@@ -19,6 +19,7 @@ from pathlib import Path
 
 import luigi
 import yaml
+from eodatasets import type as ptype
 from eodatasets.drivers import PACKAGE_DRIVERS
 from eodatasets.run import package_newly_processed_data_folder
 
@@ -510,6 +511,14 @@ def main(l1t_path, nbar_path, land_sea_path, outpath, nnodes=1, nodenum=1):
     files = [f for f in scatter(files, nnodes, nodenum)]
     int(os.getenv("PBS_NCPUS", "1"))
     tasks = []
+
+    # Setup Software Versions for Packaging
+    ptype.register_software_version(
+        "gaip",
+        gaip.get_version(),
+        repo_url="https://github.com/GeoscienceAustralia/ga-neo-landsat-processor.git",
+    )
+
     for l1t, nbar in files:
         pqa_dataset_path = pjoin(outpath, pqa_name_from_l1t(basename(l1t)))
         tasks.append(PackagePQ(l1t, nbar, land_sea_path, pqa_dataset_path))
