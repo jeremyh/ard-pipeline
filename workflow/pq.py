@@ -444,6 +444,7 @@ class PackagePQ(luigi.Task):
             "input_data_paths": [Path(self.pq_path)],
             "destination_path": Path(pjoin(out_path, "pqa")),
             "parent_dataset_paths": [Path(self.l1t_path), Path(self.nbar_path)],
+            "metadata_expand_fn": lambda dataset: dataset.lineage.machine.note_current_system_software(),
             "hard_link": False,
         }
         package_newly_processed_data_folder(**kwargs)
