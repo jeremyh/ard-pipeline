@@ -645,6 +645,7 @@ def cloud_shadow(
         ri = h["ri"]
         hist = h["histogram"]
 
+        temp_array = None  # quick fix for cases of removal before assignment
         for i in np.arange(h["loc"].shape[0]):
             if ri[i + 1] > ri[i]:
                 temp_array = flatwsum[ri[ri[i] : ri[i + 1]]]
