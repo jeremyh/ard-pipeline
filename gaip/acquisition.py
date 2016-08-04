@@ -835,8 +835,8 @@ class Sentinel2aAcquisition(Acquisition):
     # TODO: update nbar_constants for new sensor
     @property
     def spacecraft_id(self):
-        raise NotImplementedError
+        return "Sentinel2A"
 
     @property
     def sensor_id(self):
-        raise NotImplementedError
+        return "MSI"
