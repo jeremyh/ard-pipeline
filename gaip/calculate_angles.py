@@ -158,7 +158,7 @@ def create_header_angle_file(acquisition, view_max, outfname="HEADERANGLE"):
         directory..
     """
     # Get the satellite orbital elements
-    sat_ephemeral = load_tle(acquisition, TLE_DIR)
+    sat_ephemeral = None  # load_tle(acquisition, TLE_DIR)
 
     # If we have None, then no suitable TLE was found, so use values gathered
     # by the acquisition object
@@ -273,17 +273,25 @@ def create_boxline_file(
         # get the middle index (account for the 0-based index)
         mid = rows // 2 - 1
 
+        mid_col = rows // 2
+        UMx = mid_col if int(ncentre[0]) == 0 else int(ncentre[0])
+        MMx = mid_col if int(ncentre[mid]) == 0 else int(ncentre[mid])
+        BMx = mid_col if int(ncentre[-1]) == 0 else int(ncentre[-1])
+
         # Right justified at various lengths
         msg = "{row:>13}{column:>13}\n"
         src.write(msg.format(row=rows, column=cols))
         src.write(msg.format(row=int(line[0]), column=int(istart[0])))
-        src.write(msg.format(row=int(line[0]), column=int(ncentre[0])))
+        # src.write(msg.format(row=int(line[0]), column=int(ncentre[0])))
+        src.write(msg.format(row=int(line[0]), column=UMx))
         src.write(msg.format(row=int(line[0]), column=int(iend[0])))
         src.write(msg.format(row=int(line[mid]), column=int(istart[mid])))
-        src.write(msg.format(row=int(line[mid]), column=int(ncentre[mid])))
+        # src.write(msg.format(row=int(line[mid]), column=int(ncentre[mid])))
+        src.write(msg.format(row=int(line[mid]), column=MMx))
         src.write(msg.format(row=int(line[mid]), column=int(iend[mid])))
         src.write(msg.format(row=int(line[-1]), column=int(istart[-1])))
-        src.write(msg.format(row=int(line[-1]), column=int(ncentre[-1])))
+        # src.write(msg.format(row=int(line[-1]), column=int(ncentre[-1])))
+        src.write(msg.format(row=int(line[-1]), column=BMx))
         src.write(msg.format(row=int(line[-1]), column=int(iend[-1])))
 
 
@@ -597,14 +605,33 @@ def calculate_angles(acquisition, lon_fname, lat_fname, npoints=12, out_fnames=N
     # Image projection
     prj = geobox.crs.ExportToWkt()
 
+    # Min and Max lat extents
+    # This method should handle northern and southern hemispheres
+    min_lat = min(
+        min(geobox.ul_lonlat[1], geobox.ur_lonlat[1]),
+        min(geobox.ll_lonlat[1], geobox.lr_lonlat[1]),
+    )
+    max_lat = max(
+        max(geobox.ul_lonlat[1], geobox.ur_lonlat[1]),
+        max(geobox.ll_lonlat[1], geobox.lr_lonlat[1]),
+    )
+
     # Get the lat/lon of the scene centre
-    centre_xy = geobox.centre_lonlat
+    # check if we have a file with GPS satellite track points
+    # which can be used for cases of image granules/tiles, eg Sentinel-2A
+    if acquisition.gps_file:
+        points = acquisition.read_gps_file()
+        subs = points[(points.lat >= min_lat) & (points.lat <= max_lat)]
+        idx = subs.shape[0] // 2 - 1
+        centre_xy = (subs.iloc[idx].lon, subs.iloc[idx].lat)
+    else:
+        centre_xy = geobox.centre_lonlat
 
     # Get the earth spheroidal paramaters
     spheroid = setup_spheroid(prj)
 
     # Get the satellite orbital elements
-    sat_ephemeral = load_tle(acquisition, TLE_DIR)
+    sat_ephemeral = None  # load_tle(acquisition, TLE_DIR)
 
     # If we have None, then no suitable TLE was found, so use values gathered
     # by the acquisition object
@@ -618,17 +645,6 @@ def calculate_angles(acquisition, lon_fname, lat_fname, npoints=12, out_fnames=N
         orbital_elements = np.array([orb_incl, orb_radius, omega], dtype="float")
     else:
         orbital_elements = setup_orbital_elements(sat_ephemeral, dt)
-
-    # Min and Max lat extents
-    # This method should handle northern and southern hemispheres
-    min_lat = min(
-        min(geobox.ul_lonlat[1], geobox.ur_lonlat[1]),
-        min(geobox.ll_lonlat[1], geobox.lr_lonlat[1]),
-    )
-    max_lat = max(
-        max(geobox.ul_lonlat[1], geobox.ur_lonlat[1]),
-        max(geobox.ll_lonlat[1], geobox.lr_lonlat[1]),
-    )
 
     # Scene centre in time stamp in decimal hours
     hours = acquisition.decimal_hour
