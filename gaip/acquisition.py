@@ -6,7 +6,7 @@ import json
 import os
 import re
 from functools import total_ordering
-from os.path import basename, dirname, isdir
+from os.path import basename, dirname, exists, isdir
 from os.path import join as pjoin
 
 import pandas as pd
@@ -474,10 +474,18 @@ def acquisitions(path):
 
     The search will include the `path` directory and its children.
     """
+    # try:
+    #     acqs = acquisitions_via_mtl(path)
+    # except OSError:
+    #     acqs = acquisitions_via_geotiff(path)
+
     try:
-        acqs = acquisitions_via_mtl(path)
+        acqs = acquisitions_via_safe(path)
     except OSError:
-        acqs = acquisitions_via_geotiff(path)
+        try:
+            acqs = acquisitions_via_mtl(path)
+        except OSError:
+            acqs = acquisitions_via_geotiff(path)
 
     return acqs
 
@@ -725,6 +733,8 @@ def acquisitions_via_safe(path):
     gps_fname = pjoin(dirname(dirname(path)), "GPS_points")
 
     img_dir = pjoin(path, "IMG_DATA")
+    if not exists(img_dir):
+        raise OSError(f"IMG_DATA directory not found: {img_dir}")
     res_dirs = ["R10m", "R20m", "R60m"]
     for res_dir in res_dirs:
         sensor = f"MSI-{res_dir}"
@@ -822,6 +832,7 @@ def acquisitions_via_safe(path):
 
             band_type = db_copy["type_desc"]
             band_md["BAND_INFO"]["band_type"] = BAND_TYPE[band_type]
+            band_md["band_type"] = BAND_TYPE[band_type]
 
             band_md["band_name"] = f"band_{bnum}"
             if "a" in bnum:
@@ -880,6 +891,10 @@ class Sentinel2aAcquisition(Acquisition):
 
     @property
     def scene_center_datetime(self):
+        return self.SENSING_TIME
+
+    @property
+    def scene_centre_date(self):
         return self.SENSING_TIME
 
     @property
