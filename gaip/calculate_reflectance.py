@@ -5,13 +5,14 @@ import numpy as np
 import rasterio
 from eotools import tiling
 
-from gaip import as_array, constants, reflectance, write_new_brdf_file
+from gaip import as_array, constants, reflectance
 
 
 def calculate_reflectance(
     acquisitions,
     bilinear_ortho_filenames,
     rori,
+    brdf_data,
     self_shadow_fname,
     cast_shadow_sun_fname,
     cast_shadow_satellite_fname,
@@ -25,8 +26,6 @@ def calculate_reflectance(
     exiting_angle_fname,
     relative_slope_fname,
     reflectance_filenames,
-    brdf_fname_format,
-    new_brdf_fname_format,
     x_tile=None,
     y_tile=None,
 ):
@@ -54,6 +53,10 @@ def calculate_reflectance(
 
     :param rori:
         Threshold for terrain correction.
+
+    :param brdf_data:
+        A dictionary with keys specified via a tuple of
+        (band_number, factor), with valid factors being (iso, vol, geo).
 
     :param self_shadow_fname:
         A string containing the full file path name to the self
@@ -112,16 +115,6 @@ def calculate_reflectance(
             * 1. ref_lm -> Lambertian reflectance
             * 2. ref_brdf -> BRDF corrected reflectance
             * 3. ref_terrain -> Terrain corrected reflectance
-
-    :param brdf_fname_format:
-        A string containing the brdf filename format eg:
-        brdf_modis_band_{band_num}.txt, where {band_num} will be
-        substituted for the current band number.
-
-    :param new_brdf_fname_format:
-        A string containing the new brdf filename format eg:
-        new_brdf_modis_band_{band_num}.txt, where {band_num} will be
-        substituted for the current band number.
 
     :param x_tile:
         Defines the tile size along the x-axis. Default is None which
@@ -234,26 +227,14 @@ def calculate_reflectance(
             y_tile = rows
         tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, generator=False)
 
-        # Read the BRDF modis file for a given band
-        brdf_modis_file = brdf_fname_format.format(band_num=acq.band_num)
-        with open(brdf_modis_file) as param_file:
-            (brdf0, brdf1, brdf2, bias, slope_ca, esun, dd) = map(
-                float, " ".join(param_file.readlines()).split()
-            )
+        # get the brdf values for each factor
+        brdf0 = brdf_data[(band_number, "iso")]["value"]
+        brdf1 = brdf_data[(band_number, "vol")]["value"]
+        brdf2 = brdf_data[(band_number, "geo")]["value"]
 
-        # Output the new format of the brdf file (QA/QC)
-        write_new_brdf_file(
-            new_brdf_fname_format.format(band_num=band_number),
-            rori,
-            brdf0,
-            brdf1,
-            brdf2,
-            bias,
-            slope_ca,
-            esun,
-            dd,
-            avg_reflectance_values[band_number],
-        )
+        # bias and gain for the acquisition
+        bias = acq.bias
+        slope_ca = acq.gain
 
         # Open all the bilinear interpolated files for the current band
         with rasterio.open(boo_fnames[(band_number, "a")]) as a_mod_ds, rasterio.open(
