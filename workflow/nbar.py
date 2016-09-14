@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-"""NBAR Workflow
--------------.
+"""
+NBAR Workflow
+-------------
 
 Workflow settings can be configured in `nbar.cfg` file.
 
@@ -8,34 +9,32 @@ Workflow settings can be configured in `nbar.cfg` file.
 # pylint: disable=missing-docstring,no-init,too-many-function-args
 # pylint: disable=too-many-locals
 
-import argparse
-import logging
-import os
-import shutil
-import subprocess
-import tempfile
 from datetime import datetime as dt
-from os.path import basename, dirname, exists
-from os.path import join as pjoin
-from pathlib import Path
-
 import cPickle as pickle
-import luigi
-import numpy as np
+import os
+from os.path import join as pjoin, basename, dirname, exists
+import subprocess
+import string
+import logging
+import glob
+import shutil
+import tempfile
+import argparse
 import yaml
-from eodatasets import type as ptype
-from eodatasets.drivers import PACKAGE_DRIVERS
-from eodatasets.run import package_newly_processed_data_folder
 from yaml.representer import Representer
-
+import luigi
+from pathlib import Path
+import numpy
+from eodatasets.run import package_newly_processed_data_folder
+from eodatasets.drivers import PACKAGE_DRIVERS
+from eodatasets import type as ptype
 import gaip
 
 
 def save(target, value):
     """Save `value` to `target` where `target` is a `luigi.Target` object. If
     the target filename ends with `pkl` then pickle the data. Otherwise, save
-    as text.
-    """
+    as text."""
     with target.open("w") as outfile:
         if target.fn.endswith("pkl"):
             pickle.dump(value, outfile)
@@ -46,7 +45,7 @@ def save(target, value):
 def load(target):
     """Load data from `target` where `target` is a `luigi.Target`."""
     if not target.fn.endswith("pkl"):
-        raise OSError("Cannot load non-pickled object")
+        raise IOError("Cannot load non-pickled object")
     with target.open("r") as infile:
         return pickle.load(infile)
 
@@ -63,6 +62,7 @@ def load_value(target):
 
 
 class GetElevationAncillaryData(luigi.Task):
+
     """Get ancillary elevation data."""
 
     l1t_path = luigi.Parameter()
@@ -85,6 +85,7 @@ class GetElevationAncillaryData(luigi.Task):
 
 
 class GetOzoneAncillaryData(luigi.Task):
+
     """Get ancillary ozone data."""
 
     l1t_path = luigi.Parameter()
@@ -109,6 +110,7 @@ class GetOzoneAncillaryData(luigi.Task):
 
 
 class GetWaterVapourAncillaryData(luigi.Task):
+
     """Get ancillary water vapour data."""
 
     l1t_path = luigi.Parameter()
@@ -130,6 +132,7 @@ class GetWaterVapourAncillaryData(luigi.Task):
 
 
 class GetAerosolAncillaryData(luigi.Task):
+
     """Get ancillary aerosol data."""
 
     l1t_path = luigi.Parameter()
@@ -153,6 +156,7 @@ class GetAerosolAncillaryData(luigi.Task):
 
 
 class GetBrdfAncillaryData(luigi.Task):
+
     """Get ancillary BRDF data."""
 
     l1t_path = luigi.Parameter()
@@ -176,6 +180,7 @@ class GetBrdfAncillaryData(luigi.Task):
 
 
 class GetAncillaryData(luigi.Task):
+
     """Get all ancillary data. This a helper task."""
 
     l1t_path = luigi.Parameter()
@@ -195,6 +200,7 @@ class GetAncillaryData(luigi.Task):
 
 
 class CalculateLonGrid(luigi.Task):
+
     """Calculate the longitude grid."""
 
     l1t_path = luigi.Parameter()
@@ -215,6 +221,7 @@ class CalculateLonGrid(luigi.Task):
 
 
 class CalculateLatGrid(luigi.Task):
+
     """Calculate the latitude grid."""
 
     l1t_path = luigi.Parameter()
@@ -235,6 +242,7 @@ class CalculateLatGrid(luigi.Task):
 
 
 class CalculateLatLonGrids(luigi.Task):
+
     """Calculate the longitude and latitude grids. This is a helper task."""
 
     l1t_path = luigi.Parameter()
@@ -248,6 +256,7 @@ class CalculateLatLonGrids(luigi.Task):
 
 
 class CalculateSatelliteAndSolarGrids(luigi.Task):
+
     """Calculate the satellite and solar grids."""
 
     l1t_path = luigi.Parameter()
@@ -336,6 +345,7 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
 
 
 class CalculateGridsTask(luigi.Task):
+
     """Calculate all the grids. This is a helper task."""
 
     l1t_path = luigi.Parameter()
@@ -349,6 +359,7 @@ class CalculateGridsTask(luigi.Task):
 
 
 class CreateModtranDirectories(luigi.Task):
+
     """Create the MODTRAN work directories and input driver files."""
 
     out_path = luigi.Parameter()
@@ -385,6 +396,7 @@ class CreateModtranDirectories(luigi.Task):
 
 
 class CreateSatelliteFilterFile(luigi.Task):
+
     """Create the satellite filter file."""
 
     l1t_path = luigi.Parameter()
@@ -405,6 +417,7 @@ class CreateSatelliteFilterFile(luigi.Task):
 
 # Keep around for testing; for the time being
 class CreateModtranInputFile(luigi.Task):
+
     """Create the MODTRAN input file."""
 
     l1t_path = luigi.Parameter()
@@ -435,6 +448,7 @@ class CreateModtranInputFile(luigi.Task):
 
 # Keep around for testing; for the time being
 class GenerateModtranInputFiles(luigi.Task):
+
     """Generate the MODTRAN input files."""
 
     l1t_path = luigi.Parameter()
@@ -466,7 +480,9 @@ class GenerateModtranInputFiles(luigi.Task):
     def run(self):
         out_path = self.out_path
         # sources
-        pjoin(out_path, CONFIG.get("work", "modtran_input_target"))
+        modtran_input_target = pjoin(
+            out_path, CONFIG.get("work", "modtran_input_target")
+        )
         coordinator_target = pjoin(out_path, CONFIG.get("work", "coordinator_target"))
         sat_view_zenith_target = pjoin(out_path, CONFIG.get("work", "sat_view_target"))
         sat_azimuth_target = pjoin(out_path, CONFIG.get("work", "sat_azimuth_target"))
@@ -506,6 +522,7 @@ class GenerateModtranInputFiles(luigi.Task):
 
 
 class WriteTp5(luigi.Task):
+
     """Output the `tp5` formatted files."""
 
     l1t_path = luigi.Parameter()
@@ -580,6 +597,7 @@ class WriteTp5(luigi.Task):
 
 
 class PrepareModtranInput(luigi.Task):
+
     """Prepare MODTRAN inputs. This is a helper task."""
 
     l1t_path = luigi.Parameter()
@@ -600,9 +618,9 @@ class PrepareModtranInput(luigi.Task):
 
 
 class RunModtranCase(luigi.Task):
+
     """Run MODTRAN for a specific `coord` and `albedo`. This task is
-    parameterised this way to allow parallel instances of MODTRAN to run.
-    """
+    parameterised this way to allow parallel instances of MODTRAN to run."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -633,6 +651,7 @@ class RunModtranCase(luigi.Task):
 
 
 class RunModtran(luigi.Task):
+
     """Run MODTRAN for all coords and albedos. This is a helper task."""
 
     l1t_path = luigi.Parameter()
@@ -652,9 +671,9 @@ class RunModtran(luigi.Task):
 
 
 class ExtractFlux(luigi.Task):
+
     """Extract the flux data from the MODTRAN outputs. This runs the
-    Fortran binary `read_flux_albedo`.
-    """
+    Fortran binary `read_flux_albedo`."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -691,9 +710,9 @@ class ExtractFlux(luigi.Task):
 
 
 class ExtractFluxTrans(luigi.Task):
+
     """Extract the flux data from the MODTRAN output in the transmissive
-    case. This runs the Fortran binary `read_flux_transmittance`.
-    """
+    case. This runs the Fortran binary `read_flux_transmittance`."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -727,9 +746,9 @@ class ExtractFluxTrans(luigi.Task):
 
 
 class CalculateCoefficients(luigi.Task):
+
     """Calculate the atmospheric parameters needed by BRDF and atmospheric
-    correction model. This runs the Fortran binary `calculate_coefficients`.
-    """
+    correction model. This runs the Fortran binary `calculate_coefficients`."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -772,10 +791,10 @@ class CalculateCoefficients(luigi.Task):
 
 
 class ReformatAtmosphericParameters(luigi.Task):
+
     """Reformat the atmospheric parameters produced by MODTRAN for four boxes.
     These are needed to conduct bilinear interpolation. This runs the binary
-    `reformat_modtran_output`.
-    """
+    `reformat_modtran_output`."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -853,7 +872,9 @@ class ReformatAtmosphericParameters(luigi.Task):
 
 
 class BilinearInterpolationBand(luigi.Task):
-    """Runs the bilinear interpolation function for a given band."""
+    """
+    Runs the bilinear interpolation function for a given band.
+    """
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -891,10 +912,10 @@ class BilinearInterpolationBand(luigi.Task):
         acqs = [acq for acq in acqs if acq.band_num == self.band_num]
 
         # Retrieve the satellite and sensor for the acquisition
-        acqs[0].spacecraft_id
-        acqs[0].sensor_id
+        satellite = acqs[0].spacecraft_id
+        sensor = acqs[0].sensor_id
 
-        gaip.bilinear_interpolate(
+        bilinear_fnames = gaip.bilinear_interpolate(
             acqs,
             [self.factor],
             coordinator,
@@ -907,7 +928,8 @@ class BilinearInterpolationBand(luigi.Task):
 
 
 class BilinearInterpolation(luigi.Task):
-    """Issues BilinearInterpolationBand tasks.
+    """
+    Issues BilinearInterpolationBand tasks.
     This is a helper task.
     """
 
@@ -983,7 +1005,8 @@ class BilinearInterpolation(luigi.Task):
 
 
 class CreateTCRflDirs(luigi.Task):
-    """Setup the directories to contain the Intermediate files
+    """
+    Setup the directories to contain the Intermediate files
     produced for terrain corection.
     """
 
@@ -1011,7 +1034,9 @@ class CreateTCRflDirs(luigi.Task):
 
 
 class DEMExctraction(luigi.Task):
-    """Extract the DEM covering the acquisition extents plus an
+
+    """
+    Extract the DEM covering the acquisition extents plus an
     arbitrary buffer. The subset is then smoothed with a gaussian
     filter.
     """
@@ -1049,7 +1074,10 @@ class DEMExctraction(luigi.Task):
 
 
 class SlopeAndAspect(luigi.Task):
-    """Compute the slope and aspect images."""
+
+    """
+    Compute the slope and aspect images.
+    """
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -1105,7 +1133,10 @@ class SlopeAndAspect(luigi.Task):
 
 
 class IncidentAngles(luigi.Task):
-    """Compute the incident angles."""
+
+    """
+    Compute the incident angles.
+    """
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -1169,7 +1200,10 @@ class IncidentAngles(luigi.Task):
 
 
 class ExitingAngles(luigi.Task):
-    """Compute the exiting angles."""
+
+    """
+    Compute the exiting angles.
+    """
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -1233,7 +1267,10 @@ class ExitingAngles(luigi.Task):
 
 
 class RelativeAzimuthSlope(luigi.Task):
-    """Compute the relative azimuth angle on the slope surface."""
+
+    """
+    Compute the relative azimuth angle on the slope surface.
+    """
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -1287,7 +1324,10 @@ class RelativeAzimuthSlope(luigi.Task):
 
 
 class SelfShadow(luigi.Task):
-    """Calculate the self shadow mask."""
+
+    """
+    Calculate the self shadow mask.
+    """
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -1333,6 +1373,7 @@ class SelfShadow(luigi.Task):
 
 
 class CalculateCastShadow(luigi.Task):
+
     """Calculate cast shadow masks. This is a helper task."""
 
     l1t_path = luigi.Parameter()
@@ -1349,7 +1390,9 @@ class CalculateCastShadow(luigi.Task):
 
 
 class CalculateCastShadowSun(luigi.Task):
-    """Calculates the Cast shadow mask in the direction back to the
+
+    """
+    Calculates the Cast shadow mask in the direction back to the
     sun.
     """
 
@@ -1407,7 +1450,9 @@ class CalculateCastShadowSun(luigi.Task):
 
 
 class CalculateCastShadowSatellite(luigi.Task):
-    """Calculates the Cast shadow mask in the direction back to the
+
+    """
+    Calculates the Cast shadow mask in the direction back to the
     sun.
     """
 
@@ -1466,6 +1511,7 @@ class CalculateCastShadowSatellite(luigi.Task):
 
 
 class RunTCBand(luigi.Task):
+
     """Run the terrain correction over a given band."""
 
     l1t_path = luigi.Parameter()
@@ -1586,6 +1632,7 @@ class RunTCBand(luigi.Task):
 
 
 class TerrainCorrection(luigi.Task):
+
     """Perform the terrain correction."""
 
     l1t_path = luigi.Parameter()
@@ -1614,6 +1661,7 @@ class TerrainCorrection(luigi.Task):
 
 
 class WriteMetadata(luigi.Task):
+
     """Write metadata."""
 
     l1t_path = luigi.Parameter()
@@ -1705,9 +1753,9 @@ class WriteMetadata(luigi.Task):
         metadata["algorithm_information"] = algorithm
 
         # Account for NumPy dtypes
-        yaml.add_representer(float, Representer.represent_float)
-        yaml.add_representer(np.float32, Representer.represent_float)
-        yaml.add_representer(np.float64, Representer.represent_float)
+        yaml.add_representer(numpy.float, Representer.represent_float)
+        yaml.add_representer(numpy.float32, Representer.represent_float)
+        yaml.add_representer(numpy.float64, Representer.represent_float)
 
         # output
         with self.output().open("w") as src:
@@ -1715,6 +1763,7 @@ class WriteMetadata(luigi.Task):
 
 
 class Packager(luigi.Task):
+
     """Packages an nbar or nbart product."""
 
     l1t_path = luigi.Parameter()
@@ -1744,10 +1793,11 @@ class Packager(luigi.Task):
 
         # output a checkpoint
         with self.output().open("w") as src:
-            src.write(f"{self.product} packaging completed")
+            src.write("{} packaging completed".format(self.product))
 
 
 class PackageTC(luigi.Task):
+
     """Issues nbar &/or nbart packaging depending on the config."""
 
     l1t_path = luigi.Parameter()
@@ -1780,16 +1830,17 @@ class PackageTC(luigi.Task):
             shutil.rmtree(self.work_path)
 
 
-def is_valid_directory(parser, arg):
-    """Used by argparse."""
+def is_valid_path(parser, arg):
+    """Used by argparse"""
     if not exists(arg):
-        parser.error(f"{arg} does not exist")
+        parser.error("{path} does not exist".format(path=arg))
     else:
         return arg
 
 
 def scatter(iterable, P=1, p=1):
-    """Scatter an iterator across `P` processors where `p` is the index
+    """
+    Scatter an iterator across `P` processors where `p` is the index
     of the current processor. This partitions the work evenly across
     processors.
     """
@@ -1798,27 +1849,21 @@ def scatter(iterable, P=1, p=1):
     return itertools.islice(iterable, p - 1, None, P)
 
 
-def main(inpath, outpath, workpath, nnodes=1, nodenum=1):
-    l1t_files = sorted([pjoin(inpath, f) for f in os.listdir(inpath) if "_OTH_" in f])
-    filtered_l1t = []
-    for l1t in l1t_files:
-        acq = gaip.acquisitions(l1t)[0]
-        if (87 <= acq.path <= 116) & (67 <= acq.row <= 91):
-            completed = pjoin(
-                workpath, (basename(l1t).replace("OTH", "NBAR") + ".completed")
-            )
-            if not exists(completed):
-                filtered_l1t.append(l1t)
-        else:
-            msg = f"Skipping {acq.dir_name}"
-            logging.info(msg)
-
-    # create product output dirs
-    products = CONFIG.get("packaging", "products").split(",")
-    for product in products:
-        product_dir = pjoin(outpath, product)
-        if not exists(product_dir):
-            os.makedirs(product_dir)
+def main(l1t_path, outpath, workpath, l1t_list, nnodes=1, nodenum=1):
+    # allow to use "{year}" and "{month}" in l1t_path, outpath, and workpath
+    # first determine "{year}" and "{month}" positions
+    year_pos = month_pos = -1
+    formatter = string.Formatter()
+    tmp = formatter.parse(l1t_path)
+    pos = 0
+    for lstr, fname, fs, cv in tmp:
+        pos += len(lstr)
+        if fname == "year":
+            year_pos = pos
+            pos += 4
+        if fname == "month":
+            month_pos = pos
+            pos += 2
 
     # Setup Software Versions for Packaging
     ptype.register_software_version(
@@ -1832,13 +1877,46 @@ def main(inpath, outpath, workpath, nnodes=1, nodenum=1):
         repo_url="http://www.ontar.com/software/productdetails.aspx?item=modtran",
     )
 
-    l1t_files = [f for f in scatter(filtered_l1t, nnodes, nodenum)]
-    nbar_files = [
-        pjoin(workpath, os.path.basename(f).replace("OTH", "NBAR")) for f in l1t_files
-    ]
-    # tasks = [TerrainCorrection(l1t, nbar) for l1t, nbar in
-    # tasks = [WriteMetadata(l1t, nbar) for l1t, nbar in
-    tasks = [PackageTC(l1t, nbar, outpath) for l1t, nbar in zip(l1t_files, nbar_files)]
+    tasks = []
+    products = CONFIG.get("packaging", "products").split(",")
+    for l1t in open(l1t_list).readlines():
+        l1t = l1t.strip()
+        if l1t == "":
+            continue
+        # get {year} and {month} values
+        year = month = 0
+        if year_pos > -1:
+            year = int(l1t[year_pos : year_pos + 4])
+        if month_pos > -1:
+            month = int(l1t[month_pos : month_pos + 2])
+        bf = basename(l1t)
+
+        acq = gaip.acquisitions(l1t)[0]
+        workdir = workpath.format(year=year, month=month)
+        if not exists(workdir):
+            os.makedirs(workdir)
+        if (87 <= acq.path <= 116) & (67 <= acq.row <= 91):
+            completed = pjoin(workdir, (bf.replace("OTH", "NBAR") + ".completed"))
+            if exists(completed):
+                msg = "Skipping {}".format(l1t)
+                logging.info(msg)
+                continue
+
+        # create product output dirs
+        outdir = outpath.format(year=year, month=month)
+        if not exists(outdir):
+            os.makedirs(outdir)
+            os.makedirs(pjoin(outdir, "nbar"))
+            os.makedirs(pjoin(outdir, "nbart"))
+        for product in products:
+            product_dir = pjoin(outdir, product)
+            if not exists(product_dir):
+                os.makedirs(product_dir)
+
+        nbar = pjoin(workdir, bf.replace("OTH", "NBAR"))
+        tasks.append(PackageTC(l1t, nbar, outdir))
+
+    tasks = [f for f in scatter(tasks, nnodes, nodenum)]
     ncpus = int(os.getenv("PBS_NCPUS", "1"))
     luigi.build(tasks, local_scheduler=True, workers=ncpus / nnodes)
 
@@ -1849,20 +1927,24 @@ if __name__ == "__main__":
         "--l1t_path",
         help=("Path to directory containing L1T " "datasets"),
         required=True,
-        type=lambda x: is_valid_directory(parser, x),
     )
     parser.add_argument(
         "--out_path",
         help=("Path to directory where NBAR " "dataset are to be written"),
         required=True,
-        type=lambda x: is_valid_directory(parser, x),
     )
     parser.add_argument("--cfg", help="Path to a user defined configuration file.")
     parser.add_argument(
         "--log_path",
         help=("Path to directory where where log" " files will be written"),
         default=".",
-        type=lambda x: is_valid_directory(parser, x),
+        type=lambda x: is_valid_path(parser, x),
+    )
+    parser.add_argument(
+        "--l1t_list",
+        help="A file listing full path of L1T datasets",
+        required=True,
+        type=lambda x: is_valid_path(parser, x),
     )
     parser.add_argument(
         "--debug",
@@ -1874,7 +1956,6 @@ if __name__ == "__main__":
         "--work_path",
         help=("Path to a directory where the " "intermediate files will be written."),
         required=False,
-        type=lambda x: is_valid_directory(parser, x),
     )
 
     args = parser.parse_args()
@@ -1905,18 +1986,16 @@ if __name__ == "__main__":
         datefmt="%H:%M:%S",
     )
 
-    # use the disk of the local node if we can
-    # working directly off the lustre drive seems to flaky
     if args.work_path is None:
-        work_path = tempfile.mkdtemp()
-    else:
         work_path = args.out_path
+    else:
+        work_path = args.work_path
 
     logging.info("nbar.py started")
-    logging.info(f"l1t_path={args.l1t_path}")
-    logging.info(f"out_path={args.out_path}")
-    logging.info(f"log_path={args.log_path}")
+    logging.info("l1t_path={path}".format(path=args.l1t_path))
+    logging.info("out_path={path}".format(path=args.out_path))
+    logging.info("log_path={path}".format(path=args.log_path))
 
     size = int(os.getenv("PBS_NNODES", "1"))
     rank = int(os.getenv("PBS_VNODENUM", "1"))
-    main(args.l1t_path, args.out_path, work_path, size, rank)
+    main(args.l1t_path, args.out_path, work_path, args.l1t_list, size, rank)
