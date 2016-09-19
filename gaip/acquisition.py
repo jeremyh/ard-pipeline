@@ -244,7 +244,7 @@ class LandsatAcquisition(Acquisition):
         ]["type_desc"]
 
     @property
-    def gps_track(self):
+    def gps_file(self):
         return False
 
 
