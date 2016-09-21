@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-"""
-NBAR Workflow
--------------
+"""NBAR Workflow
+-------------.
 
 Workflow settings can be configured in `nbar.cfg` file.
 
@@ -9,32 +8,34 @@ Workflow settings can be configured in `nbar.cfg` file.
 # pylint: disable=missing-docstring,no-init,too-many-function-args
 # pylint: disable=too-many-locals
 
-from datetime import datetime as dt
-import cPickle as pickle
-import os
-from os.path import join as pjoin, basename, dirname, exists
-import subprocess
-import string
-import logging
-import glob
-import shutil
-import tempfile
 import argparse
-import yaml
-from yaml.representer import Representer
-import luigi
+import logging
+import os
+import shutil
+import string
+import subprocess
+from datetime import datetime as dt
+from os.path import basename, dirname, exists
+from os.path import join as pjoin
 from pathlib import Path
-import numpy
-from eodatasets.run import package_newly_processed_data_folder
-from eodatasets.drivers import PACKAGE_DRIVERS
+
+import cPickle as pickle
+import luigi
+import numpy as np
+import yaml
 from eodatasets import type as ptype
+from eodatasets.drivers import PACKAGE_DRIVERS
+from eodatasets.run import package_newly_processed_data_folder
+from yaml.representer import Representer
+
 import gaip
 
 
 def save(target, value):
     """Save `value` to `target` where `target` is a `luigi.Target` object. If
     the target filename ends with `pkl` then pickle the data. Otherwise, save
-    as text."""
+    as text.
+    """
     with target.open("w") as outfile:
         if target.fn.endswith("pkl"):
             pickle.dump(value, outfile)
@@ -45,7 +46,7 @@ def save(target, value):
 def load(target):
     """Load data from `target` where `target` is a `luigi.Target`."""
     if not target.fn.endswith("pkl"):
-        raise IOError("Cannot load non-pickled object")
+        raise OSError("Cannot load non-pickled object")
     with target.open("r") as infile:
         return pickle.load(infile)
 
@@ -62,7 +63,6 @@ def load_value(target):
 
 
 class GetElevationAncillaryData(luigi.Task):
-
     """Get ancillary elevation data."""
 
     l1t_path = luigi.Parameter()
@@ -85,7 +85,6 @@ class GetElevationAncillaryData(luigi.Task):
 
 
 class GetOzoneAncillaryData(luigi.Task):
-
     """Get ancillary ozone data."""
 
     l1t_path = luigi.Parameter()
@@ -110,7 +109,6 @@ class GetOzoneAncillaryData(luigi.Task):
 
 
 class GetWaterVapourAncillaryData(luigi.Task):
-
     """Get ancillary water vapour data."""
 
     l1t_path = luigi.Parameter()
@@ -132,7 +130,6 @@ class GetWaterVapourAncillaryData(luigi.Task):
 
 
 class GetAerosolAncillaryData(luigi.Task):
-
     """Get ancillary aerosol data."""
 
     l1t_path = luigi.Parameter()
@@ -156,7 +153,6 @@ class GetAerosolAncillaryData(luigi.Task):
 
 
 class GetBrdfAncillaryData(luigi.Task):
-
     """Get ancillary BRDF data."""
 
     l1t_path = luigi.Parameter()
@@ -180,7 +176,6 @@ class GetBrdfAncillaryData(luigi.Task):
 
 
 class GetAncillaryData(luigi.Task):
-
     """Get all ancillary data. This a helper task."""
 
     l1t_path = luigi.Parameter()
@@ -200,7 +195,6 @@ class GetAncillaryData(luigi.Task):
 
 
 class CalculateLonGrid(luigi.Task):
-
     """Calculate the longitude grid."""
 
     l1t_path = luigi.Parameter()
@@ -221,7 +215,6 @@ class CalculateLonGrid(luigi.Task):
 
 
 class CalculateLatGrid(luigi.Task):
-
     """Calculate the latitude grid."""
 
     l1t_path = luigi.Parameter()
@@ -242,7 +235,6 @@ class CalculateLatGrid(luigi.Task):
 
 
 class CalculateLatLonGrids(luigi.Task):
-
     """Calculate the longitude and latitude grids. This is a helper task."""
 
     l1t_path = luigi.Parameter()
@@ -256,7 +248,6 @@ class CalculateLatLonGrids(luigi.Task):
 
 
 class CalculateSatelliteAndSolarGrids(luigi.Task):
-
     """Calculate the satellite and solar grids."""
 
     l1t_path = luigi.Parameter()
@@ -345,7 +336,6 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
 
 
 class CalculateGridsTask(luigi.Task):
-
     """Calculate all the grids. This is a helper task."""
 
     l1t_path = luigi.Parameter()
@@ -359,7 +349,6 @@ class CalculateGridsTask(luigi.Task):
 
 
 class CreateModtranDirectories(luigi.Task):
-
     """Create the MODTRAN work directories and input driver files."""
 
     out_path = luigi.Parameter()
@@ -395,134 +384,7 @@ class CreateModtranDirectories(luigi.Task):
         )
 
 
-class CreateSatelliteFilterFile(luigi.Task):
-
-    """Create the satellite filter file."""
-
-    l1t_path = luigi.Parameter()
-    out_path = luigi.Parameter()
-
-    def output(self):
-        out_path = self.out_path
-        target = pjoin(out_path, CONFIG.get("work", "sat_filter_target"))
-        return luigi.LocalTarget(target)
-
-    def run(self):
-        out_path = self.out_path
-        acqs = gaip.acquisitions(self.l1t_path)
-        satfilterpath = CONFIG.get("ancillary", "satfilter_path")
-        target = pjoin(out_path, CONFIG.get("work", "sat_filter_target"))
-        gaip.create_satellite_filter_file(acqs, satfilterpath, target)
-
-
-# Keep around for testing; for the time being
-class CreateModtranInputFile(luigi.Task):
-
-    """Create the MODTRAN input file."""
-
-    l1t_path = luigi.Parameter()
-    out_path = luigi.Parameter()
-
-    def requires(self):
-        return [GetAncillaryData(self.l1t_path, self.out_path)]
-
-    def output(self):
-        out_path = self.out_path
-        target = pjoin(out_path, CONFIG.get("work", "modtran_input_target"))
-        return luigi.LocalTarget(target)
-
-    def run(self):
-        out_path = self.out_path
-        ozone_target = pjoin(out_path, CONFIG.get("work", "ozone_target"))
-        vapour_target = pjoin(out_path, CONFIG.get("work", "vapour_target"))
-        aerosol_target = pjoin(out_path, CONFIG.get("work", "aerosol_target"))
-        elevation_target = pjoin(out_path, CONFIG.get("work", "dem_target"))
-        acqs = gaip.acquisitions(self.l1t_path)
-        target = self.output().fn
-        ozone = load_value(ozone_target)
-        vapour = load_value(vapour_target)
-        aerosol = load_value(aerosol_target)
-        elevation = load_value(elevation_target)
-        gaip.write_modtran_input(acqs, target, ozone, vapour, aerosol, elevation)
-
-
-# Keep around for testing; for the time being
-class GenerateModtranInputFiles(luigi.Task):
-
-    """Generate the MODTRAN input files."""
-
-    l1t_path = luigi.Parameter()
-    out_path = luigi.Parameter()
-
-    def requires(self):
-        return [
-            CreateModtranDirectories(self.out_path),
-            GetAncillaryData(self.l1t_path, self.out_path),
-            CalculateSatelliteAndSolarGrids(self.l1t_path, self.out_path),
-            CalculateLatGrid(self.l1t_path, self.out_path),
-            CalculateLonGrid(self.l1t_path, self.out_path),
-        ]
-
-    def output(self):
-        out_path = self.out_path
-        coords = CONFIG.get("input_modtran", "coords").split(",")
-        albedos = CONFIG.get("input_modtran", "albedos").split(",")
-        output_format = CONFIG.get("input_modtran", "output_format")
-        workdir = pjoin(out_path, CONFIG.get("work", "input_modtran_cwd"))
-        output_format = pjoin(workdir, output_format)
-
-        targets = []
-        for coord in coords:
-            for albedo in albedos:
-                targets.append(output_format.format(coord=coord, albedo=albedo))
-        return [luigi.LocalTarget(t) for t in targets]
-
-    def run(self):
-        out_path = self.out_path
-        # sources
-        modtran_input_target = pjoin(
-            out_path, CONFIG.get("work", "modtran_input_target")
-        )
-        coordinator_target = pjoin(out_path, CONFIG.get("work", "coordinator_target"))
-        sat_view_zenith_target = pjoin(out_path, CONFIG.get("work", "sat_view_target"))
-        sat_azimuth_target = pjoin(out_path, CONFIG.get("work", "sat_azimuth_target"))
-        lon_grid_target = pjoin(out_path, CONFIG.get("work", "lon_grid_target"))
-        lat_grid_target = pjoin(out_path, CONFIG.get("work", "lat_grid_target"))
-
-        coords = CONFIG.get("input_modtran", "coords").split(",")
-        albedos = CONFIG.get("input_modtran", "albedos").split(",")
-        fname_format = CONFIG.get("input_modtran", "output_format")
-        workdir = pjoin(out_path, CONFIG.get("work", "input_modtran_cwd"))
-
-        acqs = gaip.acquisitions(self.l1t_path)
-        ozone_target = pjoin(out_path, CONFIG.get("work", "ozone_target"))
-        vapour_target = pjoin(out_path, CONFIG.get("work", "vapour_target"))
-        aerosol_target = pjoin(out_path, CONFIG.get("work", "aerosol_target"))
-        elevation_target = pjoin(out_path, CONFIG.get("work", "dem_target"))
-        ozone = load_value(ozone_target)
-        vapour = load_value(vapour_target)
-        aerosol = load_value(aerosol_target)
-        elevation = load_value(elevation_target)
-        out_fname_fmt = pjoin(workdir, fname_format)
-        gaip.write_modtran_inputs(
-            acqs[0],
-            coordinator_target,
-            sat_view_zenith_target,
-            sat_azimuth_target,
-            lat_grid_target,
-            lon_grid_target,
-            ozone,
-            vapour,
-            aerosol,
-            elevation,
-            coords,
-            albedos,
-            out_fname_fmt,
-        )
-
-
 class WriteTp5(luigi.Task):
-
     """Output the `tp5` formatted files."""
 
     l1t_path = luigi.Parameter()
@@ -596,31 +458,134 @@ class WriteTp5(luigi.Task):
         )
 
 
-class PrepareModtranInput(luigi.Task):
+class FilesRequiredByFugin(luigi.Task):
+    """A task that isn't required for production, but is required
+    for Fuqin to undergo validation. The files produced by this
+    task are neccessary for her version of NBAR to run, whereas
+    the production version skips producing file `a` and goes direct
+    to file `b`, or simply is not used by the system and hence has
+    been removed from production.
+    """
 
+    l1t_path = luigi.Parameter()
+    out_path = luigi.Parameter()
+
+    def requires(self):
+        tasks = [
+            GetAncillaryData(self.l1t_path, self.out_path),
+            GetAncillaryData(self.l1t_path, self.out_path),
+            CreateModtranDirectories(self.out_path),
+            CalculateSatelliteAndSolarGrids(self.l1t_path, self.out_path),
+            CalculateLatGrid(self.l1t_path, self.out_path),
+            CalculateLonGrid(self.l1t_path, self.out_path),
+        ]
+
+        return tasks
+
+    def output(self):
+        out_path = self.out_path
+        targets = []
+        filter_fname = CONFIG.get("fuqin_requires", "sat_filter_target")
+        targets.append(pjoin(out_path, filter_fname))
+
+        input_fname = CONFIG.get("fuqin_requires", "modtran_input_target")
+        targets.append(pjoin(out_path, input_fname))
+
+        coords = CONFIG.get("fuqin_requires", "coords").split(",")
+        albedos = CONFIG.get("fuqin_requires", "albedos").split(",")
+        output_format = CONFIG.get("fuqin_requires", "output_format")
+        workdir = pjoin(out_path, CONFIG.get("work", "modtran_root"))
+        output_format = pjoin(workdir, output_format)
+
+        for coord in coords:
+            for albedo in albedos:
+                targets.append(output_format.format(coord=coord, albedo=albedo))
+
+        return [luigi.LocalTarget(t) for t in targets]
+
+    def run(self):
+        out_path = self.out_path
+        acqs = gaip.acquisitions(self.l1t_path)
+
+        # satellite filter file
+        satfilterpath = CONFIG.get("ancillary", "satfilter_path")
+        filter_fname = CONFIG.get("fuqin_requires", "sat_filter_target")
+        target = pjoin(out_path, filter_fname)
+        gaip.create_satellite_filter_file(acqs, satfilterpath, target)
+
+        # modtran input file
+        ozone_target = pjoin(out_path, CONFIG.get("work", "ozone_target"))
+        vapour_target = pjoin(out_path, CONFIG.get("work", "vapour_target"))
+        aerosol_target = pjoin(out_path, CONFIG.get("work", "aerosol_target"))
+        elevation_target = pjoin(out_path, CONFIG.get("work", "dem_target"))
+        input_fname = CONFIG.get("fuqin_requires", "modtran_input_target")
+        target = pjoin(out_path, input_fname)
+        ozone = load_value(ozone_target)
+        vapour = load_value(vapour_target)
+        aerosol = load_value(aerosol_target)
+        elevation = load_value(elevation_target)
+        gaip.write_modtran_input(acqs, target, ozone, vapour, aerosol, elevation)
+
+        # modtran input files
+        coordinator_target = pjoin(out_path, CONFIG.get("work", "coordinator_target"))
+        sat_view_zenith_target = pjoin(out_path, CONFIG.get("work", "sat_view_target"))
+        sat_azimuth_target = pjoin(out_path, CONFIG.get("work", "sat_azimuth_target"))
+        lon_grid_target = pjoin(out_path, CONFIG.get("work", "lon_grid_target"))
+        lat_grid_target = pjoin(out_path, CONFIG.get("work", "lat_grid_target"))
+
+        coords = CONFIG.get("fuqin_requires", "coords").split(",")
+        albedos = CONFIG.get("fuqin_requires", "albedos").split(",")
+        fname_format = CONFIG.get("fuqin_requires", "output_format")
+        workdir = pjoin(out_path, CONFIG.get("work", "modtran_root"))
+
+        out_fname_fmt = pjoin(workdir, fname_format)
+        gaip.write_modtran_inputs(
+            acqs[0],
+            coordinator_target,
+            sat_view_zenith_target,
+            sat_azimuth_target,
+            lat_grid_target,
+            lon_grid_target,
+            ozone,
+            vapour,
+            aerosol,
+            elevation,
+            coords,
+            albedos,
+            out_fname_fmt,
+        )
+
+
+class PrepareModtranInput(luigi.Task):
     """Prepare MODTRAN inputs. This is a helper task."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
 
     def requires(self):
-        # retain for testing; for the time being.
-        # CreateModtranInputFile(self.l1t_path, self.out_path),
-        # GenerateModtranInputFiles(self.l1t_path, self.out_path),
-        return [
-            CreateModtranDirectories(self.out_path),
-            CreateSatelliteFilterFile(self.l1t_path, self.out_path),
-            WriteTp5(self.l1t_path, self.out_path),
-        ]
+        # are we running a validation suite for Fuqin?
+        if bool(int(CONFIG.get("fuqin_requires", "required"))):
+            tasks = [
+                CreateModtranDirectories(self.out_path),
+                FilesRequiredByFugin(self.l1t_path, self.out_path),
+                WriteTp5(self.l1t_path, self.out_path),
+            ]
+        else:
+            tasks = [
+                CreateModtranDirectories(self.out_path),
+                WriteTp5(self.l1t_path, self.out_path),
+            ]
+
+        return tasks
 
     def complete(self):
         return all([t.complete() for t in self.requires()])
 
 
 class RunModtranCase(luigi.Task):
-
     """Run MODTRAN for a specific `coord` and `albedo`. This task is
-    parameterised this way to allow parallel instances of MODTRAN to run."""
+    parameterised this way to allow parallel instances of MODTRAN to run.
+    """
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -651,7 +616,6 @@ class RunModtranCase(luigi.Task):
 
 
 class RunModtran(luigi.Task):
-
     """Run MODTRAN for all coords and albedos. This is a helper task."""
 
     l1t_path = luigi.Parameter()
@@ -671,9 +635,7 @@ class RunModtran(luigi.Task):
 
 
 class RunAccumulateSolarIrradianceCase(luigi.Task):
-
-    """
-    Run calculate_solar_radiation for a given case, with case being
+    """Run calculate_solar_radiation for a given case, with case being
     a given albedo and coordinate.
     """
 
@@ -712,9 +674,7 @@ class RunAccumulateSolarIrradianceCase(luigi.Task):
 
 
 class AccumulateSolarIrradiance(luigi.Task):
-
-    """
-    Extract the flux data from the MODTRAN outputs, and calculate
+    """Extract the flux data from the MODTRAN outputs, and calculate
     the accumulative solar irradiance for a given spectral
     response function.
 
@@ -748,9 +708,7 @@ class AccumulateSolarIrradiance(luigi.Task):
 
 
 class CalculateCoefficients(luigi.Task):
-
-    """
-    Calculate the atmospheric parameters needed by BRDF and atmospheric
+    """Calculate the atmospheric parameters needed by BRDF and atmospheric
     correction model.
     """
 
@@ -792,9 +750,7 @@ class CalculateCoefficients(luigi.Task):
 
 
 class BilinearInterpolationBand(luigi.Task):
-    """
-    Runs the bilinear interpolation function for a given band.
-    """
+    """Runs the bilinear interpolation function for a given band."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -832,10 +788,10 @@ class BilinearInterpolationBand(luigi.Task):
         acqs = [acq for acq in acqs if acq.band_num == self.band_num]
 
         # Retrieve the satellite and sensor for the acquisition
-        satellite = acqs[0].spacecraft_id
-        sensor = acqs[0].sensor_id
+        acqs[0].spacecraft_id
+        acqs[0].sensor_id
 
-        bilinear_fnames = gaip.bilinear_interpolate(
+        gaip.bilinear_interpolate(
             acqs,
             [self.factor],
             coordinator,
@@ -848,8 +804,7 @@ class BilinearInterpolationBand(luigi.Task):
 
 
 class BilinearInterpolation(luigi.Task):
-    """
-    Issues BilinearInterpolationBand tasks.
+    """Issues BilinearInterpolationBand tasks.
     This is a helper task.
     """
 
@@ -925,8 +880,7 @@ class BilinearInterpolation(luigi.Task):
 
 
 class CreateTCRflDirs(luigi.Task):
-    """
-    Setup the directories to contain the Intermediate files
+    """Setup the directories to contain the Intermediate files
     produced for terrain corection.
     """
 
@@ -954,9 +908,7 @@ class CreateTCRflDirs(luigi.Task):
 
 
 class DEMExctraction(luigi.Task):
-
-    """
-    Extract the DEM covering the acquisition extents plus an
+    """Extract the DEM covering the acquisition extents plus an
     arbitrary buffer. The subset is then smoothed with a gaussian
     filter.
     """
@@ -994,10 +946,7 @@ class DEMExctraction(luigi.Task):
 
 
 class SlopeAndAspect(luigi.Task):
-
-    """
-    Compute the slope and aspect images.
-    """
+    """Compute the slope and aspect images."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -1053,10 +1002,7 @@ class SlopeAndAspect(luigi.Task):
 
 
 class IncidentAngles(luigi.Task):
-
-    """
-    Compute the incident angles.
-    """
+    """Compute the incident angles."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -1120,10 +1066,7 @@ class IncidentAngles(luigi.Task):
 
 
 class ExitingAngles(luigi.Task):
-
-    """
-    Compute the exiting angles.
-    """
+    """Compute the exiting angles."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -1187,10 +1130,7 @@ class ExitingAngles(luigi.Task):
 
 
 class RelativeAzimuthSlope(luigi.Task):
-
-    """
-    Compute the relative azimuth angle on the slope surface.
-    """
+    """Compute the relative azimuth angle on the slope surface."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -1244,10 +1184,7 @@ class RelativeAzimuthSlope(luigi.Task):
 
 
 class SelfShadow(luigi.Task):
-
-    """
-    Calculate the self shadow mask.
-    """
+    """Calculate the self shadow mask."""
 
     l1t_path = luigi.Parameter()
     out_path = luigi.Parameter()
@@ -1293,7 +1230,6 @@ class SelfShadow(luigi.Task):
 
 
 class CalculateCastShadow(luigi.Task):
-
     """Calculate cast shadow masks. This is a helper task."""
 
     l1t_path = luigi.Parameter()
@@ -1310,9 +1246,7 @@ class CalculateCastShadow(luigi.Task):
 
 
 class CalculateCastShadowSun(luigi.Task):
-
-    """
-    Calculates the Cast shadow mask in the direction back to the
+    """Calculates the Cast shadow mask in the direction back to the
     sun.
     """
 
@@ -1370,9 +1304,7 @@ class CalculateCastShadowSun(luigi.Task):
 
 
 class CalculateCastShadowSatellite(luigi.Task):
-
-    """
-    Calculates the Cast shadow mask in the direction back to the
+    """Calculates the Cast shadow mask in the direction back to the
     sun.
     """
 
@@ -1431,7 +1363,6 @@ class CalculateCastShadowSatellite(luigi.Task):
 
 
 class RunTCBand(luigi.Task):
-
     """Run the terrain correction over a given band."""
 
     l1t_path = luigi.Parameter()
@@ -1552,7 +1483,6 @@ class RunTCBand(luigi.Task):
 
 
 class TerrainCorrection(luigi.Task):
-
     """Perform the terrain correction."""
 
     l1t_path = luigi.Parameter()
@@ -1581,7 +1511,6 @@ class TerrainCorrection(luigi.Task):
 
 
 class WriteMetadata(luigi.Task):
-
     """Write metadata."""
 
     l1t_path = luigi.Parameter()
@@ -1673,9 +1602,9 @@ class WriteMetadata(luigi.Task):
         metadata["algorithm_information"] = algorithm
 
         # Account for NumPy dtypes
-        yaml.add_representer(numpy.float, Representer.represent_float)
-        yaml.add_representer(numpy.float32, Representer.represent_float)
-        yaml.add_representer(numpy.float64, Representer.represent_float)
+        yaml.add_representer(float, Representer.represent_float)
+        yaml.add_representer(np.float32, Representer.represent_float)
+        yaml.add_representer(np.float64, Representer.represent_float)
 
         # output
         with self.output().open("w") as src:
@@ -1683,7 +1612,6 @@ class WriteMetadata(luigi.Task):
 
 
 class Packager(luigi.Task):
-
     """Packages an nbar or nbart product."""
 
     l1t_path = luigi.Parameter()
@@ -1713,11 +1641,10 @@ class Packager(luigi.Task):
 
         # output a checkpoint
         with self.output().open("w") as src:
-            src.write("{} packaging completed".format(self.product))
+            src.write(f"{self.product} packaging completed")
 
 
 class PackageTC(luigi.Task):
-
     """Issues nbar &/or nbart packaging depending on the config."""
 
     l1t_path = luigi.Parameter()
@@ -1751,16 +1678,15 @@ class PackageTC(luigi.Task):
 
 
 def is_valid_path(parser, arg):
-    """Used by argparse"""
+    """Used by argparse."""
     if not exists(arg):
-        parser.error("{path} does not exist".format(path=arg))
+        parser.error(f"{arg} does not exist")
     else:
         return arg
 
 
 def scatter(iterable, P=1, p=1):
-    """
-    Scatter an iterator across `P` processors where `p` is the index
+    """Scatter an iterator across `P` processors where `p` is the index
     of the current processor. This partitions the work evenly across
     processors.
     """
@@ -1818,7 +1744,7 @@ def main(l1t_path, outpath, workpath, l1t_list, nnodes=1, nodenum=1):
         if (87 <= acq.path <= 116) & (67 <= acq.row <= 91):
             completed = pjoin(workdir, (bf.replace("OTH", "NBAR") + ".completed"))
             if exists(completed):
-                msg = "Skipping {}".format(l1t)
+                msg = f"NBAR for {l1t} already exists...skipping"
                 logging.info(msg)
                 continue
 
@@ -1912,9 +1838,9 @@ if __name__ == "__main__":
         work_path = args.work_path
 
     logging.info("nbar.py started")
-    logging.info("l1t_path={path}".format(path=args.l1t_path))
-    logging.info("out_path={path}".format(path=args.out_path))
-    logging.info("log_path={path}".format(path=args.log_path))
+    logging.info(f"l1t_path={args.l1t_path}")
+    logging.info(f"out_path={args.out_path}")
+    logging.info(f"log_path={args.log_path}")
 
     size = int(os.getenv("PBS_NNODES", "1"))
     rank = int(os.getenv("PBS_VNODENUM", "1"))
