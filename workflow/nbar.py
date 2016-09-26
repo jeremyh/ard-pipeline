@@ -176,7 +176,7 @@ class GetBrdfAncillaryData(luigi.Task):
     def output(self):
         out_path = self.out_path
         out_path = pjoin(out_path, CONFIG.get("work", "targets_root"))
-        target = pjoin(out_path, "GetAerosolAncillaryData.task")
+        target = pjoin(out_path, "GetBrdfAncillaryData.task")
         return luigi.LocalTarget(target)
 
     def run(self):
@@ -431,10 +431,10 @@ class WriteTp5(luigi.Task):
         lat_fname = pjoin(out_path, CONFIG.get("work", "lat_grid_fname"))
 
         # load the ancillary point values
-        ozone_fname = pjoin(out_path, CONFIG.get("work", "ozone_target"))
-        vapour_fname = pjoin(out_path, CONFIG.get("work", "vapour_target"))
-        aerosol_fname = pjoin(out_path, CONFIG.get("work", "aerosol_target"))
-        elevation_fname = pjoin(out_path, CONFIG.get("work", "dem_target"))
+        ozone_fname = pjoin(out_path, CONFIG.get("work", "ozone_fname"))
+        vapour_fname = pjoin(out_path, CONFIG.get("work", "vapour_fname"))
+        aerosol_fname = pjoin(out_path, CONFIG.get("work", "aerosol_fname"))
+        elevation_fname = pjoin(out_path, CONFIG.get("work", "dem_fname"))
         ozone = load_value(ozone_fname)
         vapour = load_value(vapour_fname)
         aerosol = load_value(aerosol_fname)
@@ -1338,7 +1338,7 @@ class RunTCBand(luigi.Task):
         tc_path = pjoin(out_path, CONFIG.get("work", "tc_intermediates"))
         outdir = pjoin(out_path, CONFIG.get("work", "rfl_output_dir"))
         bilinear_fname = pjoin(out_path, CONFIG.get("work", "bilinear_outputs_fname"))
-        load_value(bilinear_fname)
+        bilinear_data = load_value(bilinear_fname)
         rori = float(CONFIG.get("terrain_correction", "rori"))
 
         brdf_fname = pjoin(out_path, CONFIG.get("work", "brdf_fname"))
@@ -1389,7 +1389,7 @@ class RunTCBand(luigi.Task):
         # calculate reflectance for lambertian, brdf, and terrain correction
         gaip.calculate_reflectance(
             acqs,
-            bilinear_fname,
+            bilinear_data,
             rori,
             brdf_data,
             self_shadow_fname,
@@ -1453,7 +1453,7 @@ class WriteMetadata(luigi.Task):
         out_path = self.out_path
         out_path = pjoin(out_path, CONFIG.get("work", "targets_root"))
         target = pjoin(out_path, "WriteMetadata.task")
-        return luigi.LocalTarget(target.format(band=self.band_num))
+        return luigi.LocalTarget(target)
 
     def run(self):
         acqs = gaip.acquisitions(self.l1t_path)
@@ -1557,7 +1557,7 @@ class Packager(luigi.Task):
         return [WriteMetadata(self.l1t_path, self.work_path)]
 
     def output(self):
-        out_path = pjoin(self.out_path, CONFIG.get("work", "targets_root"))
+        out_path = pjoin(self.work_path, CONFIG.get("work", "targets_root"))
         target = pjoin(out_path, "Packager_{}.task")
         return luigi.LocalTarget(target.format(self.product))
 
