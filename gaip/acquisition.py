@@ -593,7 +593,7 @@ def acquisitions_via_geotiff(path):
 
                 acqs.append(acqtype(new))
 
-    return sorted(acqs)
+    return {"product": sorted(acqs)}
 
 
 def acquisitions_via_mtl(path):
@@ -722,13 +722,14 @@ def acquisitions_via_mtl(path):
 
         acqs.append(acqtype(new))
 
-    return sorted(acqs)
+    return {"product": sorted(acqs)}
 
 
 def acquisitions_via_safe(path):
     """Collect the TOA Radiance images for a given granule."""
     resolutions = {}
     spacecraft = "SENTINEL-2A"
+    sensor = "MSI"
 
     gps_fname = pjoin(dirname(dirname(path)), "GPS_points")
 
@@ -737,7 +738,7 @@ def acquisitions_via_safe(path):
         raise OSError(f"IMG_DATA directory not found: {img_dir}")
     res_dirs = ["R10m", "R20m", "R60m"]
     for res_dir in res_dirs:
-        sensor = f"MSI-{res_dir}"
+        # sensor = "MSI-{}".format(res_dir)
         acqs = []
         data_dir = pjoin(img_dir, res_dir)
         cwd = os.getcwd()
@@ -785,7 +786,7 @@ def acquisitions_via_safe(path):
 
         metadata["GPS_Filename"] = gps_fname
 
-        metadata["sensor_id"] = f"MSI-{res_dir}"
+        metadata["sensor_id"] = "MSI"
 
         data = {}
         data["PRODUCT_METADATA"] = copy.deepcopy(metadata)
@@ -835,10 +836,10 @@ def acquisitions_via_safe(path):
             band_md["band_type"] = BAND_TYPE[band_type]
 
             band_md["band_name"] = f"band_{bnum}"
-            if "a" in bnum:
-                bnum = 82
-            else:
-                bnum = int(bnum)
+            # if 'a' in bnum:
+            #     bnum = 82
+            # else:
+            #     bnum = int(bnum)
             band_md["band_num"] = bnum
 
             # acqs.append(Sentinel2aAcquisition({'PRODUCT_METADATA': band_md}))
