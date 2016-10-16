@@ -60,12 +60,25 @@ class Acquisition:
         else:
             return self.band_name.replace("band", "")
 
-    def data(self, out=None, window=None, masked=False):
+    def data(
+        self,
+        out=None,
+        window=None,
+        masked=False,
+        apply_gain_offset=False,
+        out_no_data=-999,
+    ):
         """Return `numpy.array` of the data for this acquisition.
         If `out` is supplied, it must be a numpy.array into which
         the Acquisition's data will be read.
         """
-        return gaip.data(self, out=out, window=window, masked=masked)
+        return gaip.data(
+            self,
+            out=out,
+            window=window,
+            masked=masked,
+            apply_gain_offset=apply_gain_offset,
+        )
 
     def data_and_box(self, out=None, window=None, masked=False):
         """Return a tuple comprising the `numpy.array` of the data for this
@@ -84,6 +97,15 @@ class Acquisition:
     def no_data(self):
         """Return the no_data value for this acquisition."""
         return gaip.no_data(self)
+
+    @property
+    def gps_file(self):
+        return False
+
+    @property
+    def scaled_radiance(self):
+        """Do we have a scaled "at sensor radiance" unit?."""
+        return False
 
 
 class LandsatAcquisition(Acquisition):
@@ -244,8 +266,9 @@ class LandsatAcquisition(Acquisition):
         ]["type_desc"]
 
     @property
-    def gps_file(self):
-        return False
+    def scaled_radiance(self):
+        """Do we have a scaled "at sensor radiance" unit?."""
+        return True
 
 
 class Landsat5Acquisition(LandsatAcquisition):
