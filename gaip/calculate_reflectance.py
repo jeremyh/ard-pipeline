@@ -201,8 +201,6 @@ def calculate_reflectance(
         tc_fname = reflectance_filenames[(band_number, "reflectance_terrain")]
 
         # Initialise the output files
-        out_dtype = "int16"
-        no_data = -999
         kwargs = {
             "driver": "GTiff",
             "width": cols,
@@ -210,8 +208,8 @@ def calculate_reflectance(
             "count": 1,
             "crs": crs,
             "transform": geobox.affine,
-            "dtype": out_dtype,
-            "nodata": no_data,
+            "dtype": "int16",
+            "nodata": -999,
             "compress": "deflate",
             "zlevel": 1,
             "predictor": 2,
@@ -231,10 +229,6 @@ def calculate_reflectance(
         brdf0 = brdf_data[(band_number, "iso")]["value"]
         brdf1 = brdf_data[(band_number, "vol")]["value"]
         brdf2 = brdf_data[(band_number, "geo")]["value"]
-
-        # bias and gain for the acquisition
-        bias = acq.bias
-        slope_ca = acq.gain
 
         # Open all the bilinear interpolated files for the current band
         with rasterio.open(boo_fnames[(band_number, "a")]) as a_mod_ds, rasterio.open(
@@ -264,112 +258,45 @@ def calculate_reflectance(
                 ysize = yend - ystart
                 xsize = xend - xstart
 
+                # define some static arguments
+                acq_args = {
+                    "window": tile,
+                    "masked": False,
+                    "apply_gain_offset": acq.scaled_radiance,
+                }
+                args = {"window": tile, "masked": False}
+                i16_args = {"dtype": np.int16, "transpose": True}
+                f32_args = {"dtype": np.float32, "transpose": True}
+
                 # Read the data corresponding to the current tile for all
                 # files
                 # Convert the datatype if required and transpose
-                band_data = as_array(
-                    acq.data(window=tile, masked=False), dtype=np.int16, transpose=True
-                )
-                self_shadow = as_array(
-                    self_shadow_ds.read(1, window=tile, masked=False),
-                    dtype=np.int16,
-                    transpose=True,
-                )
+                band_data = as_array(acq.data(**acq_args), **f32_args)
+
+                self_shadow = as_array(self_shadow_ds.read(1, **args), **i16_args)
                 cast_shadow_sun = as_array(
-                    cast_shadow_sun_ds.read(1, window=tile, masked=False),
-                    dtype=np.int16,
-                    transpose=True,
+                    cast_shadow_sun_ds.read(1, **args), **i16_args
                 )
                 cast_shadow_satellite = as_array(
-                    cast_shadow_satellite_ds.read(1, window=tile, masked=False),
-                    dtype=np.int16,
-                    transpose=True,
+                    cast_shadow_satellite_ds.read(1, **args), **i16_args
                 )
-                solar_zenith = as_array(
-                    solar_zenith_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                solar_azimuth = as_array(
-                    solar_azimuth_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                satellite_view = as_array(
-                    satellite_view_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                relative_angle = as_array(
-                    relative_angle_ds.read(1, window=tile),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                slope = as_array(
-                    slope_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                aspect = as_array(
-                    aspect_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                incident_angle = as_array(
-                    incident_angle_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                exiting_angle = as_array(
-                    exiting_angle_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                relative_slope = as_array(
-                    relative_slope_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                a_mod = as_array(
-                    a_mod_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                b_mod = as_array(
-                    b_mod_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                s_mod = as_array(
-                    s_mod_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                fs = as_array(
-                    fs_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                fv = as_array(
-                    fv_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                ts = as_array(
-                    ts_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                edir_h = as_array(
-                    edir_h_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
-                edif_h = as_array(
-                    edif_h_ds.read(1, window=tile, masked=False),
-                    dtype=np.float32,
-                    transpose=True,
-                )
+                solar_zenith = as_array(solar_zenith_ds.read(1, **args), **f32_args)
+                solar_azimuth = as_array(solar_azimuth_ds.read(1, **args), **f32_args)
+                satellite_view = as_array(satellite_view_ds.read(1, **args), **f32_args)
+                relative_angle = as_array(relative_angle_ds.read(1, **args), **f32_args)
+                slope = as_array(slope_ds.read(1, **args), **f32_args)
+                aspect = as_array(aspect_ds.read(1, **args), **f32_args)
+                incident_angle = as_array(incident_angle_ds.read(1, **args), **f32_args)
+                exiting_angle = as_array(exiting_angle_ds.read(1, **args), **f32_args)
+                relative_slope = as_array(relative_slope_ds.read(1, **args), **f32_args)
+                a_mod = as_array(a_mod_ds.read(1, **args), **f32_args)
+                b_mod = as_array(b_mod_ds.read(1, **args), **f32_args)
+                s_mod = as_array(s_mod_ds.read(1, **args), **f32_args)
+                fs = as_array(fs_ds.read(1, **args), **f32_args)
+                fv = as_array(fv_ds.read(1, **args), **f32_args)
+                ts = as_array(ts_ds.read(1, **args), **f32_args)
+                edir_h = as_array(edir_h_ds.read(1, **args), **f32_args)
+                edif_h = as_array(edif_h_ds.read(1, **args), **f32_args)
 
                 # Allocate the output arrays
                 # The output and work arrays could be allocated once
@@ -381,7 +308,6 @@ def calculate_reflectance(
                 ref_terrain = np.zeros((ysize, xsize), dtype="int16")
 
                 # Allocate the work arrays (single row of data)
-                band_work = np.zeros(xsize, dtype="int32")
                 ref_lm_work = np.zeros(xsize, dtype="float32")
                 ref_brdf_work = np.zeros(xsize, dtype="float32")
                 ref_terrain_work = np.zeros(xsize, dtype="float32")
@@ -394,8 +320,6 @@ def calculate_reflectance(
                     brdf0,
                     brdf1,
                     brdf2,
-                    bias,
-                    slope_ca,
                     avg_reflectance_values[band_number],
                     band_data,
                     self_shadow,
@@ -418,7 +342,6 @@ def calculate_reflectance(
                     ts,
                     edir_h,
                     edif_h,
-                    band_work,
                     ref_lm_work,
                     ref_brdf_work,
                     ref_terrain_work,
