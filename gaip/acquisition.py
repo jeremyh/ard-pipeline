@@ -105,7 +105,10 @@ class Acquisition:
 
     @property
     def scaled_radiance(self):
-        """Do we have a scaled "at sensor radiance" unit?."""
+        """Do we have a scaled "at sensor radiance" unit?
+        If `True`, then this property needs to be overridden, and define
+        the bias and gain properties.
+        """
         return False
 
 
@@ -962,3 +965,16 @@ class Sentinel2aAcquisition(Acquisition):
     def read_gps_file(self):
         df = pd.read_csv(self.GPS_Filename, sep=" ", names=["lon", "lat"], header=None)
         return df
+
+    @property
+    def gain(self):
+        return 0.01
+
+    @property
+    def bias(self):
+        return 0.0
+
+    @property
+    def scaled_radiance(self):
+        """Do we have a scaled "at sensor radiance" unit?."""
+        return True
