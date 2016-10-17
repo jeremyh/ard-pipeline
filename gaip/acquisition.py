@@ -78,6 +78,7 @@ class Acquisition:
             window=window,
             masked=masked,
             apply_gain_offset=apply_gain_offset,
+            out_no_data=out_no_data,
         )
 
     def data_and_box(self, out=None, window=None, masked=False):
