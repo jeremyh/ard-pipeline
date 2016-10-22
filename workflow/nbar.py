@@ -109,7 +109,7 @@ class CreateWorkingDirectoryTree(luigi.Task):
             if not exists(brdf_path):
                 os.makedirs(brdf_path)
 
-            for group in groups:
+            for group in container.groups:
                 grp_path = pjoin(out_path, group)
 
                 # group level output targets
@@ -341,7 +341,9 @@ class CalculateLonGrid(luigi.Task):
     def run(self):
         container = gaip.acquisitions(self.l1t_path)
         acqs = container.get_acquisitions(group=self.group, granule=self.granule)
-        out_path = container.get_root(self.out_path, group=group, granule=granule)
+        out_path = container.get_root(
+            self.out_path, group=self.group, granule=self.granule
+        )
 
         out_fname = pjoin(out_path, CONFIG.get("work", "lon_grid_fname"))
         gaip.create_lon_grid(acqs[0], out_fname)
@@ -372,7 +374,9 @@ class CalculateLatGrid(luigi.Task):
     def run(self):
         container = gaip.acquisitions(self.l1t_path)
         acqs = container.get_acquisitions(group=self.group, granule=self.granule)
-        out_path = container.get_root(self.out_path, group=group, granule=granule)
+        out_path = container.get_root(
+            self.out_path, group=self.group, granule=self.granule
+        )
 
         out_fname = pjoin(out_path, CONFIG.get("work", "lat_grid_fname"))
         gaip.create_lat_grid(acqs[0], out_fname)
@@ -693,7 +697,7 @@ class LegacyOutputs(luigi.Task):
         gaip.write_modtran_input(acqs, out_fname, ozone, vapour, aerosol, elevation)
 
         for granule in container.granules:
-            for group in groups:
+            for group in container.groups:
                 acqs = container.get_acquisitions(group=group, granule=granule)
                 grp_path = container.get_root(group=group, granule=granule)
 
@@ -749,9 +753,9 @@ class PrepareModtranInput(luigi.Task):
 
     def requires(self):
         args = [self.l1t_path, self.out_path]
-        # do need to output the legacy files?
+        # do we need to output the legacy files?
         if CONFIG.getboolean("legacy_outputs", "required"):
-            tasks = [FilesRequiredByFugin(*args), WriteTp5(*args)]
+            tasks = [LegacyOutputs(*args), WriteTp5(*args)]
         else:
             tasks = [WriteTp5(*args)]
 
@@ -847,13 +851,16 @@ class RunAccumulateSolarIrradianceCase(luigi.Task):
     def run(self):
         container = gaip.acquisitions(self.l1t_path)
         out_path = container.get_root(self.out_path, granule=self.granule)
+        acqs = container.get_acquisitions(granule=self.granule)
 
         modtran_root = pjoin(out_path, CONFIG.get("work", "modtran_root"))
         input_format = CONFIG.get("extract_flux", "input_format")
         input_format = pjoin(modtran_root, input_format)
         flux_fname = input_format.format(coord=self.coord, albedo=self.albedo)
+
         satfilterpath = CONFIG.get("ancillary", "satfilter_path")
         response_fname = pjoin(satfilterpath, acqs[0].spectral_filter_file)
+
         output_format = CONFIG.get("extract_flux", "output_format")
         output_format = pjoin(modtran_root, output_format)
         out_fname = output_format.format(coord=self.coord, albedo=self.albedo)
@@ -1714,10 +1721,10 @@ class WriteMetadata(luigi.Task):
     out_path = luigi.Parameter()
 
     def requires(self):
-        gaip.acquisitions(self.l1t_path)
+        container = gaip.acquisitions(self.l1t_path)
         tasks = []
-        for granule in acqs.granules:
-            for group in acqs.groups:
+        for granule in container.granules:
+            for group in container.groups:
                 tasks.append(
                     TerrainCorrection(self.l1t_path, self.out_path, granule, group)
                 )
