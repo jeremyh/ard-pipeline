@@ -733,7 +733,7 @@ def calculate_angles(acquisition, lon_fname, lat_fname, npoints=12, out_fnames=N
             rela_angle[:] = -999
             time[:] = -999
 
-            angle(
+            stat = angle(
                 cols,
                 rows,
                 i + 1,
@@ -755,6 +755,10 @@ def calculate_angles(acquisition, lon_fname, lat_fname, npoints=12, out_fnames=N
                 x_cent,
                 n_cent,
             )
+
+            if stat != 0:
+                msg = "Error in calculating angles at row: {}."
+                raise RuntimeError(msg.format(i))
 
             # Output to disk
             outds_sat_v.write(view, 1, window=tile)
