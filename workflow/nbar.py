@@ -464,6 +464,7 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
             satellite_zenith,
             y_cent,
             x_cent,
+            n_cent,
             boxline_fname=boxline_fname,
             max_angle=view_max,
             coordinator_fname=coordinator_fname,
