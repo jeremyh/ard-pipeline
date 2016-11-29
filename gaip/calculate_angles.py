@@ -616,6 +616,10 @@ def calculate_angles(acquisition, lon_fname, lat_fname, npoints=12, out_fnames=N
         max(geobox.ll_lonlat[1], geobox.lr_lonlat[1]),
     )
 
+    # temporary lat/lon buffer for satellite track calculations
+    min_lat -= 1
+    max_lat += 1
+
     # Get the lat/lon of the scene centre
     # check if we have a file with GPS satellite track points
     # which can be used for cases of image granules/tiles, eg Sentinel-2A
