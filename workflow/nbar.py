@@ -61,6 +61,11 @@ def load_value(target):
         return data
 
 
+def get_buffer(group):
+    buf = {"product": 250, "R10m": 700, "R20m": 350, "R60m": 120}
+    return buf[group]
+
+
 class CreateWorkingDirectoryTree(luigi.Task):
     """Creates the output working directory tree."""
 
@@ -1133,7 +1138,8 @@ class DEMExctraction(luigi.Task):
         national_dsm = CONFIG.get("ancillary", "dem_tc")
         subset_fname = CONFIG.get("extract_dsm", "dsm_subset")
         smoothed_fname = CONFIG.get("extract_dsm", "dsm_smooth_subset")
-        buffer = int(CONFIG.get("extract_dsm", "dsm_buffer_width"))
+        # buffer = int(CONFIG.get('extract_dsm', 'dsm_buffer_width'))
+        buffer = get_buffer(self.group)
         dsm_subset_fname = pjoin(work_path, subset_fname)
         dsm_subset_smooth_fname = pjoin(work_path, smoothed_fname)
 
@@ -1178,7 +1184,8 @@ class SlopeAndAspect(luigi.Task):
         smoothed_dsm_fname = pjoin(
             work_path, CONFIG.get("extract_dsm", "dsm_smooth_subset")
         )
-        margins = int(CONFIG.get("extract_dsm", "dsm_buffer_width"))
+        # margins = int(CONFIG.get('extract_dsm', 'dsm_buffer_width'))
+        margins = get_buffer(self.group)
 
         # Output filenames
         slope_fname = pjoin(work_path, CONFIG.get("self_shadow", "slope_fname"))
@@ -1470,7 +1477,8 @@ class CalculateCastShadowSun(luigi.Task):
         )
         solar_zenith_fname = pjoin(out_path, CONFIG.get("work", "solar_zenith_fname"))
         solar_azimuth_fname = pjoin(out_path, CONFIG.get("work", "solar_azimuth_fname"))
-        buffer = int(CONFIG.get("extract_dsm", "dsm_buffer_width"))
+        # buffer = int(CONFIG.get('extract_dsm', 'dsm_buffer_width'))
+        buffer = get_buffer(self.group)
         window_height = int(
             CONFIG.get("terrain_correction", "shadow_sub_matrix_height")
         )
@@ -1534,7 +1542,8 @@ class CalculateCastShadowSatellite(luigi.Task):
         satellite_azimuth_fname = pjoin(
             out_path, CONFIG.get("work", "sat_azimuth_fname")
         )
-        buffer = int(CONFIG.get("extract_dsm", "dsm_buffer_width"))
+        # buffer = int(CONFIG.get('extract_dsm', 'dsm_buffer_width'))
+        buffer = get_buffer(self.group)
         window_height = int(
             CONFIG.get("terrain_correction", "shadow_sub_matrix_height")
         )
