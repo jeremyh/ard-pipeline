@@ -2,10 +2,8 @@
 
 import logging
 import os
-import pwd
 import re
 import subprocess
-from datetime import datetime as dtime
 from datetime import timedelta
 from os.path import abspath, dirname, exists, pardir, splitext
 from os.path import join as pjoin
@@ -20,27 +18,6 @@ from shapely.geometry import Point, Polygon
 import gaip
 
 log = logging.getLogger()
-
-
-def extract_ancillary_metadata(fname):
-    """Extracts the change (last metadata change), modified,
-    accessed, and owner user id.
-
-    :param fname:
-        A string containing the full file pathname to a file
-        on disk.
-
-    :return:
-        A `dictionary` with keys `change`, `modified`, `accessed`,
-        and `user`.
-    """
-    res = {}
-    fstat = os.stat(fname)
-    res["change"] = dtime.utcfromtimestamp(fstat.st_ctime)
-    res["modified"] = dtime.utcfromtimestamp(fstat.st_mtime)
-    res["accessed"] = dtime.utcfromtimestamp(fstat.st_atime)
-    res["user"] = pwd.getpwuid(fstat.st_uid).pw_gecos
-    return res
 
 
 def get_aerosol_data_v2(acquisition, aerosol_fname):
@@ -86,7 +63,7 @@ def get_aerosol_data_v2(acquisition, aerosol_fname):
                     }
 
                     # ancillary metadata tracking
-                    md = extract_ancillary_metadata(aerosol_fname)
+                    md = gaip.extract_ancillary_metadata(aerosol_fname)
                     for key in md:
                         res[key] = md[key]
 
@@ -120,7 +97,7 @@ def get_aerosol_data(acquisition, aerosol_path, aot_loader_path=None):
             res = {"data_source": description, "data_file": filename, "value": value}
 
             # ancillary metadata tracking
-            md = extract_ancillary_metadata(filename)
+            md = gaip.extract_ancillary_metadata(filename)
             for key in md:
                 res[key] = md[key]
 
@@ -231,7 +208,7 @@ def get_elevation_data(lonlat, dem_path):
     res = {"data_source": "Elevation", "data_file": datafile, "value": value}
 
     # ancillary metadata tracking
-    md = extract_ancillary_metadata(datafile)
+    md = gaip.extract_ancillary_metadata(datafile)
     for key in md:
         res[key] = md[key]
 
@@ -249,7 +226,7 @@ def get_ozone_data(ozone_path, lonlat, datetime):
     res = {"data_source": "Ozone", "data_file": datafile, "value": value}
 
     # ancillary metadata tracking
-    md = extract_ancillary_metadata(datafile)
+    md = gaip.extract_ancillary_metadata(datafile)
     for key in md:
         res[key] = md[key]
 
@@ -302,7 +279,7 @@ def get_water_vapour(acquisition, vapour_path, scale_factor=0.1):
     }
 
     # ancillary metadata tracking
-    md = extract_ancillary_metadata(datafile)
+    md = gaip.extract_ancillary_metadata(datafile)
     for key in md:
         water_vapour_data[key] = md[key]
 
