@@ -50,7 +50,6 @@ def _incident_angles_wrapper(
         )
 
     fid.close()
-
     return
 
 
@@ -243,7 +242,6 @@ def _exiting_angles_wrapper(
         )
 
     fid.close()
-
     return
 
 
@@ -436,7 +434,6 @@ def _relative_azimuth_slope_wrapper(
         )
 
     fid.close()
-
     return
 
 
