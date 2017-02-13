@@ -458,6 +458,9 @@ def relative_azimuth_slope(
         and returns a `NumPy` dataset containing the azimuthal
         exiting angles when index/sliced.
 
+    :param geobox:
+        An instance of a `GriddedGeoBox` object.
+
     :param out_fname:
         If set to None (default) then the results will be returned
         as an in-memory hdf5 file, i.e. the `core` driver.
