@@ -170,6 +170,7 @@ def create_lon_lat_grids(
     lat_dset = fid.create_dataset("latitude", data=result, **kwargs)
     attach_image_attributes(lat_dset, attrs)
 
+    fid.flush()
     return fid
 
 
@@ -253,6 +254,7 @@ def create_lon_grid(
     dset = fid.create_dataset("longitude", data=lon_grid, **kwargs)
     attach_image_attributes(dset, attrs)
 
+    fid.flush()
     return fid
 
 
@@ -310,4 +312,5 @@ def create_lat_grid(
     dset = fid.create_dataset("latitude", data=lat_grid, **kwargs)
     attach_image_attributes(dset, attrs)
 
+    fid.flush()
     return fid
