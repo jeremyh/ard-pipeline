@@ -1010,5 +1010,4 @@ def calculate_angles(
     attach_table_attributes(coord_dset, title="Coordinator", attrs=attrs)
 
     fid.flush()
-
     return fid
