@@ -24,12 +24,10 @@ from gaip import attach_table_attributes
 CRS = "EPSG:4326"
 
 
-def _calculate_angles_wrapper(
+def _calculate_angles(
     acquisition,
     lon_fname,
-    lon_dname,
     lat_fname,
-    lat_dname,
     out_fname,
     npoints=12,
     compression="lzf",
@@ -40,10 +38,12 @@ def _calculate_angles_wrapper(
     A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
+    lon_dset_name = "longitude"
+    lat_dset_name = "latitude"
     if lon_fname == lat_fname:
         with h5py.File(lon_fname, "r") as src:
-            lon_ds = src[lon_dname]
-            lat_ds = src[lat_dname]
+            lon_ds = src[lon_dset_name]
+            lat_ds = src[lat_dset_name]
             fid = calculate_angles(
                 acquisition,
                 lon_ds,
@@ -56,8 +56,8 @@ def _calculate_angles_wrapper(
             )
     else:
         with h5py.File(lon_fname, "r") as lon_src, h5py.File(lat_fname, "r") as lat_src:
-            lon_ds = lon_src[lon_dname]
-            lat_ds = lat_src[lat_dname]
+            lon_ds = lon_src[lon_dset_name]
+            lat_ds = lat_src[lat_dset_name]
             fid = calculate_angles(
                 acquisition,
                 lon_ds,
