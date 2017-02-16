@@ -63,6 +63,5 @@ setup(
             ],
         ),
         Extension(name="_interpolation", sources=["bilinear_interpolation.f90"]),
-        Extension(name="_start_end_coordinates", sources=["start_end_coordinates.f90"]),
     ],
 )

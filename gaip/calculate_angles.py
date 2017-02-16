@@ -18,7 +18,6 @@ from gaip import load_tle
 from gaip import angle
 from gaip import set_satmod
 from gaip import set_times
-from gaip import cstart_cend
 
 CRS = "EPSG:4326"
 TLE_DIR = "/g/data/v10/eoancillarydata/sensor-specific"
@@ -217,6 +216,23 @@ def create_header_angle_file(acquisition, view_max, outfname="HEADERANGLE"):
         )
 
 
+def swathe_edges(threshold, array):
+    """
+    Find left and right edges of swathe.
+
+    Takes raster array, compares values against threshold, and returns a pair
+    of vectors which represent the indices of the first and last pixel in
+    each row of the array.
+    """
+    start = np.empty(array.shape[0], dtype="int")
+    end = np.empty(array.shape[0], dtype="int")
+    for i, row in enumerate(array):
+        (indices,) = np.nonzero(row <= threshold)
+        start[i] = indices[0]
+        end[i] = indices[-1]
+    return start + 1, end + 1  # index not from zero
+
+
 def create_boxline_file(
     view_angle_fname,
     line,
@@ -260,14 +276,8 @@ def create_boxline_file(
         rows = ds.height
         cols = ds.width
 
-    # allocate the output arrays
-    istart = np.zeros(rows, dtype="int")
-    iend = np.zeros(rows, dtype="int")
-
     # calculate the column start and end indices
-    cstart_cend(
-        cols, rows, max_angle, view_angle.transpose(), line, ncentre, istart, iend
-    )
+    istart, iend = swathe_edges(max_angle, view_angle.T)
 
     # TODO: Fuqin to document, and these results are only used for
     # granules that do not contain the satellite track path
