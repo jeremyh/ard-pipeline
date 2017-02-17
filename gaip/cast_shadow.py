@@ -15,7 +15,7 @@ from gaip import (
 )
 
 
-def _calculate_cast_shadow_wrapper(
+def _calculate_cast_shadow(
     acquisition,
     dsm_fname,
     margins,
