@@ -17,8 +17,13 @@ from gaip import (
 )
 
 
-def _incident_angles_wrapper(
-    satellite_solar_fname, slope_aspect_fname, out_fname, x_tile=None, y_tile=None
+def _incident_angles(
+    satellite_solar_fname,
+    slope_aspect_fname,
+    out_fname,
+    compression="lzf",
+    x_tile=None,
+    y_tile=None,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -45,6 +50,7 @@ def _incident_angles_wrapper(
             aspect_dset,
             geobox,
             out_fname,
+            compression,
             x_tile,
             y_tile,
         )
@@ -209,8 +215,13 @@ def incident_angles(
     return fid
 
 
-def _exiting_angles_wrapper(
-    satellite_solar_fname, slope_aspect_fname, out_fname, x_tile=None, y_tile=None
+def _exiting_angles(
+    satellite_solar_fname,
+    slope_aspect_fname,
+    out_fname,
+    compression="lzf",
+    x_tile=None,
+    y_tile=None,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -230,13 +241,14 @@ def _exiting_angles_wrapper(
         pixelsize = (abs(transform[1]), abs(transform[5]))
         geobox = GriddedGeoBox(shape, origin, pixelsize, crs)
 
-        fid = incident_angles(
+        fid = exiting_angles(
             sat_view_dset,
             sat_azi_dset,
             slope_dset,
             aspect_dset,
             geobox,
             out_fname,
+            compression,
             x_tile,
             y_tile,
         )
@@ -405,7 +417,7 @@ def exiting_angles(
     return fid
 
 
-def _relative_azimuth_slope_wrapper(
+def _relative_azimuth_slope(
     incident_angles_fname,
     exiting_angles_fname,
     out_fname,
@@ -430,7 +442,7 @@ def _relative_azimuth_slope_wrapper(
         geobox = GriddedGeoBox(shape, origin, pixelsize, crs)
 
         fid = relative_azimuth_slope(
-            azi_inci_dset, azi_exit_dset, geobox, out_fname, x_tile, y_tile
+            azi_inci_dset, azi_exit_dset, geobox, out_fname, compression, x_tile, y_tile
         )
 
     fid.close()
