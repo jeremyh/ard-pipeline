@@ -11,7 +11,7 @@ from eotools import tiling
 from gaip import GriddedGeoBox, attach_image_attributes, dataset_compression_kwargs
 
 
-def _self_shadow_wrapper(
+def _self_shadow(
     incident_angles_fname,
     exiting_angles_fname,
     out_fname,
