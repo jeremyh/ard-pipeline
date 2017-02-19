@@ -1,66 +1,55 @@
 #!/usr/bin/env python
 
-"""Functions for calculating cast shadow from both the sun and satellite
----------------------------------------------------------------------.
+"""
+Functions for calculating cast shadow from both the sun and satellite
+---------------------------------------------------------------------
 
 as source directions, as well as self shadow masks.
 ---------------------------------------------------
 """
 
+import numpy
 import h5py
-import numpy as np
+
 from eotools import tiling
-
-from gaip import (
-    GriddedGeoBox,
-    ImageMargins,
-    attach_image_attributes,
-    dataset_compression_kwargs,
-    run_castshadow,
-    setup_spheroid,
-)
+from gaip import GriddedGeoBox
+from gaip import ImageMargins
+from gaip import setup_spheroid
+from gaip import run_castshadow
+from gaip import dataset_compression_kwargs
+from gaip import attach_image_attributes
 
 
-def _self_shadow(
-    incident_angles_fname,
-    exiting_angles_fname,
-    out_fname,
-    compression="lzf",
-    x_tile=None,
-    y_tile=None,
-):
-    """A private wrapper for dealing with the internal custom workings of the
+def _self_shadow(incident_angles_fname, exiting_angles_fname, out_fname,
+                 compression='lzf', x_tile=None, y_tile=None):
+    """
+    A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
-    with h5py.File(incident_angles_fname, "r") as inci_angles, h5py.File(
-        exiting_angles_fname, "r"
-    ) as exit_angles:
-        inci_dset = inci_angles["incident"]
-        exit_dset = exit_angles["exiting"]
+    with h5py.File(incident_angles_fname, 'r') as inci_angles,\
+        h5py.File(exiting_angles_fname, 'r') as exit_angles:
+
+        inci_dset = inci_angles['incident']
+        exit_dset = exit_angles['exiting']
 
         shape = inci_dset.shape
-        transform = inci_dset.attrs["geotransform"]
+        transform = inci_dset.attrs['geotransform']
         origin = (transform[0], transform[3])
-        crs = inci_dset.attrs["crs_wkt"]
+        crs = inci_dset.attrs['crs_wkt']
         pixelsize = (abs(transform[1]), abs(transform[5]))
         geobox = GriddedGeoBox(shape, origin, pixelsize, crs)
 
-        fid = self_shadow(inci_dset, exit_dset, geobox, out_fname, x_tile, y_tile)
+        fid = self_shadow(inci_dset, exit_dset, geobox, out_fname, x_tile,
+                          y_tile)
 
     fid.close()
     return
 
 
-def self_shadow(
-    incident_dataset,
-    exiting_dataset,
-    geobox,
-    out_fname,
-    compression="lzf",
-    x_tile=None,
-    y_tile=None,
-):
-    """Computes the self shadow mask.
+def self_shadow(incident_dataset, exiting_dataset, geobox, out_fname,
+                compression='lzf', x_tile=None, y_tile=None):
+    """
+    Computes the self shadow mask.
 
     :param incident_dataset:
         A `NumPy` or `NumPy` like dataset that allows indexing
@@ -109,27 +98,25 @@ def self_shadow(
     """
     # Initialise the output files
     if out_fname is None:
-        fid = h5py.File("self-shadow.h5", driver="core", backing_store=False)
+        fid = h5py.File('self-shadow.h5', driver='core',
+                        backing_store=False)
     else:
-        fid = h5py.File(out_fname, "w")
+        fid = h5py.File(out_fname, 'w')
 
-    kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(1, geobox.x_size())
-    )
+    kwargs = dataset_compression_kwargs(compression=compression,
+                                        chunks=(1, geobox.x_size()))
     cols, rows = geobox.get_shape_xy()
-    kwargs["shape"] = (rows, cols)
-    kwargs["dtype"] = "uint8"
+    kwargs['shape'] = (rows, cols)
+    kwargs['dtype'] = 'bool'
 
     # output dataset
-    out_dset = fid.create_dataset("self-shadow", **kwargs)
+    out_dset = fid.create_dataset('self-shadow', **kwargs)
 
     # attach some attributes to the image datasets
-    attrs = {
-        "crs_wkt": geobox.crs.ExportToWkt(),
-        "geotransform": geobox.affine.to_gdal(),
-    }
+    attrs = {'crs_wkt': geobox.crs.ExportToWkt(),
+             'geotransform': geobox.affine.to_gdal()}
     desc = "Self shadow mask derived using the incident and exiting angles."
-    attrs["Description"] = desc
+    attrs['Description'] = desc
     attach_image_attributes(out_dset, attrs)
 
     # Initialise the tiling scheme for processing
@@ -144,20 +131,16 @@ def self_shadow(
         # Row and column start locations
         ystart, yend = tile[0]
         xstart, xend = tile[1]
-        idx = slice(ystart, yend, slice(xstart, xend))
-
-        # Tile size
-        ysize = yend - ystart
-        xsize = xend - xstart
+        idx = (slice(ystart, yend, slice(xstart, xend)))
 
         # Read the data for the current tile
-        inc = np.radians(incident_dataset[idx])
-        exi = np.radians(exiting_dataset[idx])
+        inc = numpy.radians(incident_dataset[idx])
+        exi = numpy.radians(exiting_dataset[idx])
 
         # Process the tile
-        mask = np.ones((ysize, xsize), dtype="uint8")
-        mask[np.cos(inc) <= 0.0] = 0
-        mask[np.cos(exi) <= 0.0] = 0
+        mask = numpy.ones(inc.shape, xsize), dtype='uint8')
+        mask[numpy.cos(inc) <= 0.0] = 0
+        mask[numpy.cos(exi) <= 0.0] = 0
 
         # Write the current tile to disk
         out_dset[idx] = mask
@@ -166,65 +149,42 @@ def self_shadow(
     return fid
 
 
-def _calculate_cast_shadow(
-    acquisition,
-    dsm_fname,
-    margins,
-    block_height,
-    block_width,
-    satellite_solar_angles_fname,
-    out_fname,
-    compression="lzf",
-    solar_source=True,
-):
-    """A private wrapper for dealing with the internal custom workings of the
+def _calculate_cast_shadow(acquisition, dsm_fname, margins, block_height,
+                           block_width, satellite_solar_angles_fname,
+                           out_fname, compression='lzf', solar_source=True):
+    """
+    A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
-    with h5py.File(dsm_fname, "r") as dsm_src, h5py.File(
-        satellite_solar_angles_fname, "r"
-    ) as sat_sol:
-        dsm_dset = dsm_src["dsm-smoothed"]
+    with h5py.File(dsm_fname, 'r') as dsm_src,\
+        h5py.File(satellite_solar_angles_fname, 'r') as sat_sol:
+
+        dsm_dset = dsm_src['dsm-smoothed']
 
         if solar_source:
-            view_name = "solar-zenith"
-            azimuth_name = "solar-azimuth"
+            view_name = 'solar-zenith'
+            azimuth_name = 'solar-azimuth'
         else:
-            view_name = "satellite-view"
-            azimuth_name = "satellite-azimuth"
+            view_name = 'satellite-view'
+            azimuth_name = 'satellite-azimuth'
 
         view_dset = sat_sol[view_name]
         azi_dset = sat_sol[azimuth_name]
 
-    fid = calculate_cast_shadow(
-        acquisition,
-        dsm_dset,
-        margins,
-        block_height,
-        block_width,
-        view_dset,
-        azi_dset,
-        out_fname,
-        compression,
-        solar_source,
-    )
+    fid = calculate_cast_shadow(acquisition, dsm_dset, margins, block_height,
+                                block_width, view_dset, azi_dset, out_fname,
+                                compression, solar_source)
 
     fid.close()
     return
 
 
-def calculate_cast_shadow(
-    acquisition,
-    dsm_dataset,
-    margins,
-    block_height,
-    block_width,
-    view_angle_dataset,
-    azimuth_angle_dataset,
-    out_fname=None,
-    compression="lzf",
-    solar_source=True,
-):
-    """:param acquisition:
+def calculate_cast_shadow(acquisition, dsm_dataset, margins, block_height,
+                          block_width, view_angle_dataset,
+                          azimuth_angle_dataset, out_fname=None,
+                          compression='lzf', solar_source=True):
+    """
+    :param acquisition:
         An instance of an acquisition object.
 
     :param dsm_dataset:
@@ -300,45 +260,31 @@ def calculate_cast_shadow(
     pixel_buf = ImageMargins(margins)
 
     # Compute the cast shadow mask
-    mask = run_castshadow(
-        acquisition,
-        dsm,
-        view_angle,
-        azimuth_angle,
-        pixel_buf,
-        block_height,
-        block_width,
-        spheroid,
-    )
+    mask = run_castshadow(acquisition, dsm, view_angle, azimuth_angle,
+                          pixel_buf, block_height, block_width, spheroid)
 
-    source_dir = "sun" if solar_source else "satellite"
+    source_dir = 'sun' if solar_source else 'satellite'
 
     # Initialise the output files
     if out_fname is None:
-        fid = h5py.File(
-            f"cast-shadow-{source_dir}.h5", driver="core", backing_store=False
-        )
+        fid = h5py.File('cast-shadow-{}.h5'.format(source_dir), driver='core',
+                        backing_store=False)
     else:
-        fid = h5py.File(out_fname, "w")
+        fid = h5py.File(out_fname, 'w')
 
-    kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(1, geobox.x_size())
-    )
-    no_data = -999
-    kwargs["fillvalue"] = no_data
-    kwargs["no_data_value"] = no_data
+    kwargs = dataset_compression_kwargs(compression=compression,
+                                        chunks=(1, geobox.x_size()))
+    kwargs['dtype'] = 'bool'
 
-    out_dset = fid.create_dataset(f"cast-shadow-{source_dir}", data=mask, **kwargs)
+    out_dset = fid.create_dataset('cast-shadow-{}'.format(source_dir),
+                                  data=mask, **kwargs)
 
     # attach some attributes to the image datasets
-    attrs = {
-        "crs_wkt": geobox.crs.ExportToWkt(),
-        "geotransform": geobox.affine.to_gdal(),
-    }
-    desc = (
-        "The cast shadow mask determined using the {} " "as the source direction."
-    ).format(source_dir)
-    attrs["Description"] = desc
+    attrs = {'crs_wkt': geobox.crs.ExportToWkt(),
+             'geotransform': geobox.affine.to_gdal()}
+    desc = ("The cast shadow mask determined using the {} "
+            "as the source direction.").format(source_dir)
+    attrs['Description'] = desc
     attach_image_attributes(out_dset, attrs)
 
     fid.flush()
