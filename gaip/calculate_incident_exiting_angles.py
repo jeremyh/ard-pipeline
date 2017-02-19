@@ -104,8 +104,8 @@ def incident_angles(
 
         The dataset names will be as follows:
 
-        * incident-angle
-        * azimuthal-incident-angle
+        * incident
+        * azimuthal-incident
 
     :param compression:
         The compression filter to use. Default is 'lzf'.
@@ -147,8 +147,8 @@ def incident_angles(
     kwargs["dtype"] = "float32"
 
     # output datasets
-    incident_dset = fid.create_dataset("incident-angle", **kwargs)
-    azi_inc_dset = fid.create_dataset("azimuthal-incident-angle", **kwargs)
+    incident_dset = fid.create_dataset("incident", **kwargs)
+    azi_inc_dset = fid.create_dataset("azimuthal-incident", **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
@@ -302,8 +302,8 @@ def exiting_angles(
 
         The dataset names will be as follows:
 
-        * exiting-angle
-        * azimuthal-exiting-angle
+        * exiting
+        * azimuthal-exiting
 
     :param compression:
         The compression filter to use. Default is 'lzf'.
@@ -345,8 +345,8 @@ def exiting_angles(
     kwargs["dtype"] = "float32"
 
     # output datasets
-    exiting_dset = fid.create_dataset("exiting-angle", **kwargs)
-    azi_exit_dset = fid.create_dataset("azimuthal-exiting-angle", **kwargs)
+    exiting_dset = fid.create_dataset("exiting", **kwargs)
+    azi_exit_dset = fid.create_dataset("azimuthal-exiting", **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
@@ -431,8 +431,8 @@ def _relative_azimuth_slope(
     with h5py.File(incident_angles_fname, "r") as inci_angles, h5py.File(
         exiting_angles_fname, "r"
     ) as exit_angles:
-        azi_inci_dset = inci_angles["azimuthal-incident-angle"]
-        azi_exit_dset = exit_angles["azimuthal-exiting-angle"]
+        azi_inci_dset = inci_angles["azimuthal-incident"]
+        azi_exit_dset = exit_angles["azimuthal-exiting"]
 
         shape = azi_inci_dset.shape
         transform = azi_inci_dset.attrs["geotransform"]
@@ -482,7 +482,7 @@ def relative_azimuth_slope(
 
         The dataset names will be as follows:
 
-        * relative-azimuth-angle
+        * relative-slope
 
     :param compression:
         The compression filter to use. Default is 'lzf'.
@@ -526,7 +526,7 @@ def relative_azimuth_slope(
     kwargs["dtype"] = "float32"
 
     # output datasets
-    out_dset = fid.create_dataset("relative-azimuth-angle", **kwargs)
+    out_dset = fid.create_dataset("relative-slope", **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
