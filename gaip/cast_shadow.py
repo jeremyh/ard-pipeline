@@ -113,7 +113,7 @@ def calculate_cast_shadow(
 
         The dataset names will be as follows:
 
-        * cast_shadow_{source} where source is either the sun or satellite
+        * cast-shadow-{source} where source is either the sun or satellite
 
     :param compression:
         The compression filter to use. Default is 'lzf'.
@@ -165,7 +165,7 @@ def calculate_cast_shadow(
     # Initialise the output files
     if out_fname is None:
         fid = h5py.File(
-            f"cast_shadow_{source_dir}.h5", driver="core", backing_store=False
+            f"cast-shadow-{source_dir}.h5", driver="core", backing_store=False
         )
     else:
         fid = h5py.File(out_fname, "w")
@@ -177,7 +177,7 @@ def calculate_cast_shadow(
     kwargs["fillvalue"] = no_data
     kwargs["no_data_value"] = no_data
 
-    out_dset = fid.create_dataset(f"cast_shadow_{source_dir}", data=mask, **kwargs)
+    out_dset = fid.create_dataset(f"cast-shadow-{source_dir}", data=mask, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
