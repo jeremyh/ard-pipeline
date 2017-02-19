@@ -25,8 +25,8 @@ def _self_shadow(
     with h5py.File(incident_angles_fname, "r") as inci_angles, h5py.File(
         exiting_angles_fname, "r"
     ) as exit_angles:
-        inci_dset = inci_angles["incident-angle"]
-        exit_dset = exit_angles["exiting-angle"]
+        inci_dset = inci_angles["incident"]
+        exit_dset = exit_angles["exiting"]
 
         shape = inci_dset.shape
         transform = inci_dset.attrs["geotransform"]
@@ -74,7 +74,7 @@ def self_shadow(
 
         The dataset names will be as follows:
 
-        * self-shadow-mask
+        * self-shadow
 
     :param compression:
         The compression filter to use. Default is 'lzf'.
@@ -111,7 +111,7 @@ def self_shadow(
     kwargs["dtype"] = "uint8"
 
     # output dataset
-    out_dset = fid.create_dataset("self-shadow-mask", **kwargs)
+    out_dset = fid.create_dataset("self-shadow", **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
