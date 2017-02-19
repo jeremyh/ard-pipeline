@@ -26,11 +26,9 @@ def _calculate_reflectance(
     relative_slope_fname,
     incident_angles_fname,
     exiting_angles_fname,
-    self_shadow_fname,
-    cast_shadow_sun_fname,
-    cast_shadow_satellite_fname,
-    rori,
+    shadow_masks_fname,
     ancillary_fname,
+    rori,
     out_fname,
     compression="lzf",
     x_tile=None,
@@ -49,12 +47,8 @@ def _calculate_reflectance(
     ) as fid_inc, h5py.File(
         exiting_angles_fname, "r"
     ) as fid_exi, h5py.File(
-        self_shadow_fname, "r"
-    ) as fid_slf_shd, h5py.File(
-        cast_shadow_sun_fname, "r"
-    ) as fid_cst_sun, h5py.File(
-        cast_shadow_satellite_fname, "r"
-    ) as fid_cst_sat, h5py.File(
+        shadow_masks_fname, "r"
+    ) as fid_shadow, h5py.File(
         ancillary_fname, "r"
     ) as fid_anc:
         fv_dset = fid_bil[f"fv-band-{band_num}"]
@@ -74,9 +68,9 @@ def _calculate_reflectance(
         rel_slp_dset = fid_rel_slp["relative-slope"]
         inc_dset = fid_inc["incident-angle"]
         exi_dset = fid_exi["exiting-angle"]
-        slf_shad_dset = fid_slf_shd["self-shadow"]
-        sun_shad_dset = fid_cst_sun["cast-shadow-sun"]
-        sat_shad_dset = fid_cst_sat["cast-shadow-sat"]
+        slf_shad_dset = fid_shadow["self-shadow"]
+        sun_shad_dset = fid_shadow["cast-shadow-sun"]
+        sat_shad_dset = fid_shadow["cast-shadow-sat"]
 
         dname = "BRDF-Band-{band}-{factor}"
         brdf_iso = fid_anc[dname.format(band=band_num, factor="iso")][()]
