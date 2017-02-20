@@ -415,11 +415,11 @@ class AggregateAncillary(luigi.Task):
 
         reqs = self.requires()
         for key in reqs:
-            reqs[key].input()
-            ozone_fname = value["ozone"].path
-            vapour_fname = value["vapour"].path
-            aerosol_fname = value["aerosol"].path
-            elevation_fname = value["elevation"].path
+            inputs = reqs[key].input()
+            ozone_fname = inputs["ozone"].path
+            vapour_fname = inputs["vapour"].path
+            aerosol_fname = inputs["aerosol"].path
+            elevation_fname = inputs["elevation"].path
 
             ozone += load_value(ozone_fname)
             vapour += load_value(vapour_fname)
