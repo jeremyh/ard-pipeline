@@ -22,6 +22,12 @@ import gaip
 log = logging.getLogger()
 
 
+def _get_4d_idx(day):
+    start = 1 + 37 * (day - 1)
+    stop = start + 37
+    return range(start, stop, 1)
+
+
 def _collect_ancillary_data(
     acquisition,
     aerosol_path,
@@ -409,10 +415,10 @@ def ecwmf_temperature_2metre(input_path, lonlat, time):
     files = glob.glob(pjoin(input_path, f"{product}_*.grib"))
     value = None
     for f in files:
-        start, end = splitext(basename(f)).split("_")[1:]
+        start, end = splitext(basename(f))[0].split("_")[1:]
         start = datetime.datetime.strptime(start, "%Y-%m-%d")
         end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= time:
+        if start <= time <= end:
             value = gaip.get_pixel(f, lonlat, time.day)
 
             data = {
@@ -440,10 +446,10 @@ def ecwmf_dewpoint_temperature(input_path, lonlat, time):
     files = glob.glob(pjoin(input_path, f"{product}_*.grib"))
     value = None
     for f in files:
-        start, end = splitext(basename(f)).split("_")[1:]
+        start, end = splitext(basename(f))[0].split("_")[1:]
         start = datetime.datetime.strptime(start, "%Y-%m-%d")
         end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= time:
+        if start <= time <= end:
             value = gaip.get_pixel(f, lonlat, time.day)
 
             data = {
@@ -472,10 +478,10 @@ def ecwmf_surface_pressure(input_path, lonlat, time):
     files = glob.glob(pjoin(input_path, f"{product}_*.grib"))
     value = None
     for f in files:
-        start, end = splitext(basename(f)).split("_")[1:]
+        start, end = splitext(basename(f))[0].split("_")[1:]
         start = datetime.datetime.strptime(start, "%Y-%m-%d")
         end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= time:
+        if start <= time <= end:
             value = gaip.get_pixel(f, lonlat, time.day)
 
             data = {
@@ -495,9 +501,45 @@ def ecwmf_surface_pressure(input_path, lonlat, time):
         raise OSError("No Surface Pressure ancillary data found.")
 
 
-def ecwmf_temperature(input_path, lonlat, time, atmosphere_layer):
-    """Retrieve a pixel value from the ECWMF Temperature
+def ecwmf_water_vapour(input_path, latlon, time):
+    """Retrieve a pixel value from the ECWMF Total Column Water Vapour
     collection.
+    """
+    product = "water-vapour"
+    files = glob.glob(pjoin(input_path, f"{product}_*.grib"))
+    value = None
+    for f in files:
+        start, end = splitext(basename(f)).split("_")[1:]
+        start = datetime.datetime.strptime(start, "%Y-%m-%d")
+        end = datetime.datetime.strptime(end, "%Y-%m-%d")
+        if start <= time <= time:
+            value = gaip.get_pixel(f, lonlat, time.day)
+
+            data = {
+                "data_source": "ECWMF Total Column Water Vapour",
+                "data_file": f,
+                "value": value,
+            }
+
+            # ancillary metadata tracking
+            md = gaip.extract_ancillary_metadata(f)
+            for key in md:
+                data[key] = md[key]
+
+            return data
+
+    if value is None:
+        msg = "No ECWMF Total Column Water Vapour ancillary data found."
+        raise OSError(msg)
+
+
+def ecwmf_temperature(input_path, lonlat, time):
+    """Retrieve a pixel value from the ECWMF Temperature collection
+    across 37 height pressure levels, for a given longitude,
+    latitude and time.
+
+    Reverses the order of elements
+    (1000 -> 1 mb, rather than 1 -> 1000 mb) before returning.
     """
     product = "temperature"
     files = glob.glob(pjoin(input_path, f"{product}_*.grib"))
@@ -506,9 +548,9 @@ def ecwmf_temperature(input_path, lonlat, time, atmosphere_layer):
         start, end = splitext(basename(f))[0].split("_")[1:]
         start = datetime.datetime.strptime(start, "%Y-%m-%d")
         end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= time:
-            idx = range(atmosphere_layer, end.day * 37, 37)[end.day - 1]
-            value = gaip.get_pixel(f, lonlat, idx)
+        if start <= time <= end:
+            bands = _get_4d_idx(time.day)
+            value = gaip.get_pixel(f, lonlat, bands)[::-1]
 
             data = {"data_source": "ECWMF Temperature", "data_file": f, "value": value}
 
@@ -523,9 +565,14 @@ def ecwmf_temperature(input_path, lonlat, time, atmosphere_layer):
         raise OSError("No Temperature ancillary data found.")
 
 
-def ecwmf_geo_potential(input_path, lonlat, time, atmosphere_layer):
-    """Retrieve a pixel value from the ECWMF Geo-Potential
-    collection.
+def ecwmf_geo_potential(input_path, lonlat, time):
+    """Retrieve a pixel value from the ECWMF Geo-Potential collection
+    across 37 height pressure levels, for a given longitude,
+    latitude and time.
+
+    Converts to geo-potential height in KM, and reverses the order of
+    the elements (1000 -> 1 mb, rather than 1 -> 1000 mb) before
+    returning.
     """
     product = "geo-potential"
     files = glob.glob(pjoin(input_path, f"{product}_*.grib"))
@@ -534,9 +581,9 @@ def ecwmf_geo_potential(input_path, lonlat, time, atmosphere_layer):
         start, end = splitext(basename(f))[0].split("_")[1:]
         start = datetime.datetime.strptime(start, "%Y-%m-%d")
         end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= time:
-            idx = range(atmosphere_layer, end.day * 37, 37)[end.day - 1]
-            value = gaip.get_pixel(f, lonlat, idx)
+        if start <= time <= end:
+            bands = _get_4d_idx(time.day)
+            value = gaip.get_pixel(f, lonlat, bands)[::-1] / 9.80665 / 1000.0
 
             data = {
                 "data_source": "ECWMF Geo-Potential",
@@ -555,9 +602,13 @@ def ecwmf_geo_potential(input_path, lonlat, time, atmosphere_layer):
         raise OSError("No Geo-Potential ancillary data found.")
 
 
-def ecwmf_relative_humidity(input_path, lonlat, time, atmosphere_layer):
-    """Retrieve a pixel value from the ECWMF Relative Humidity
-    collection.
+def ecwmf_relative_humidity(input_path, lonlat, time):
+    """Retrieve a pixel value from the ECWMF Relative Humidity collection
+    across 37 height pressure levels, for a given longitude,
+    latitude and time.
+
+    Reverses the order of elements
+    (1000 -> 1 mb, rather than 1 -> 1000 mb) before returning.
     """
     product = "relative-humidity"
     files = glob.glob(pjoin(input_path, f"{product}_*.grib"))
@@ -566,9 +617,9 @@ def ecwmf_relative_humidity(input_path, lonlat, time, atmosphere_layer):
         start, end = splitext(basename(f))[0].split("_")[1:]
         start = datetime.datetime.strptime(start, "%Y-%m-%d")
         end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= time:
-            idx = range(atmosphere_layer, end.day * 37, 37)[end.day - 1]
-            value = gaip.get_pixel(f, lonlat, idx)
+        if start <= time <= end:
+            bands = _get_4d_idx(time.day)
+            value = gaip.get_pixel(f, lonlat, bands)[::-1]
 
             data = {
                 "data_source": "ECWMF Relative Humidity",
@@ -585,6 +636,3 @@ def ecwmf_relative_humidity(input_path, lonlat, time, atmosphere_layer):
 
     if value is None:
         raise OSError("No Relative Humidity ancillary data found.")
-
-
-# def ecwmf_water_vapout(input_path, latlon, time, atmosphere_layer):
