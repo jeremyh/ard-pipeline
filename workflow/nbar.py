@@ -8,11 +8,8 @@ Workflow settings can be configured in `nbar.cfg` file.
 # pylint: disable=missing-docstring,no-init,too-many-function-args
 # pylint: disable=too-many-locals
 
-import argparse
-import logging
-import os
 import shutil
-from os.path import basename, dirname, exists, splitext
+from os.path import basename, dirname, splitext
 from os.path import join as pjoin
 from pathlib import Path
 
@@ -22,6 +19,18 @@ from eodatasets.drivers import PACKAGE_DRIVERS
 from eodatasets.run import package_newly_processed_data_folder
 
 import gaip
+
+# Setup Software Versions for Packaging
+ptype.register_software_version(
+    software_code="gaip",
+    version=gaip.get_version(),
+    repo_url="https://github.com/GeoscienceAustralia/ga-neo-landsat-processor.git",
+)
+ptype.register_software_version(
+    software_code="modtran",
+    version=CONFIG.get("modtran", "version"),
+    repo_url="http://www.ontar.com/software/productdetails.aspx?item=modtran",
+)
 
 
 def get_buffer(group):
@@ -1016,6 +1025,7 @@ class TerrainCorrection(luigi.WrapperTask):
             yield RunTCBand(self.level1, self.nbar_root, self.granule, self.group, band)
 
 
+# TODO: re-work with modified I/O
 class WriteMetadata(luigi.Task):
     """Write metadata."""
 
@@ -1136,12 +1146,17 @@ class PackageTC(luigi.Task):
             shutil.rmtree(self.nbar_root)
 
 
-def is_valid_path(parser, arg):
-    """Used by argparse."""
-    if not exists(arg):
-        parser.error(f"{arg} does not exist")
-    else:
-        return arg
+class RunGaip(luigi.WrapperTask):
+    level1_list = luigi.Parameter()
+    work_root = luigi.Parameter()
+    nbar_root = luigi.Parameter()
+
+    def requires(self):
+        with open(self.level1_list) as src:
+            scenes = src.readlines()
+        for level1 in scenes:
+            nbar_root = pjoin(work_root, basename(level1) + ".nbar-work")
+            yield PackageTC(level1, self.work_root, nbar_root)
 
 
 def scatter(iterable, P=1, p=1):
@@ -1154,103 +1169,5 @@ def scatter(iterable, P=1, p=1):
     return itertools.islice(iterable, p - 1, None, P)
 
 
-def main(level1_list, work_root, nnodes=1, nodenum=1):
-    # Setup Software Versions for Packaging
-    ptype.register_software_version(
-        software_code="gaip",
-        version=gaip.get_version(),
-        repo_url="https://github.com/GeoscienceAustralia/ga-neo-landsat-processor.git",
-    )
-    ptype.register_software_version(
-        software_code="modtran",
-        version=CONFIG.get("modtran", "version"),
-        repo_url="http://www.ontar.com/software/productdetails.aspx?item=modtran",
-    )
-
-    # create product output dirs
-    products = CONFIG.get("packaging", "products").split(",")
-    for product in products:
-        product_dir = pjoin(work_root, product)
-        if not exists(product_dir):
-            os.makedirs(product_dir)
-
-    tasks = []
-    for level1 in open(level1_list).readlines():
-        level1 = level1.strip()
-        if level1 == "":
-            continue
-        bf = basename(level1)
-
-        # create a workpath for the given level1 dataset
-        nbar_root = pjoin(work_root, bf + ".nbar-work")
-        tasks.append(PackageTC(level1, work_root, nbar_root))
-
-    tasks = [f for f in scatter(tasks, nnodes, nodenum)]
-    ncpus = int(os.getenv("PBS_NCPUS", "1"))
-    luigi.build(tasks, local_scheduler=True, workers=ncpus / nnodes)
-
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--level1_list",
-        help="A full file path listing of level1 datasets",
-        required=True,
-        type=lambda x: is_valid_path(parser, x),
-    )
-    parser.add_argument(
-        "--work_root",
-        help=("Path to directory where NBAR " "datasets are to be written"),
-        required=True,
-    )
-    parser.add_argument("--cfg_file", help="Path to a user defined configuration file.")
-    parser.add_argument(
-        "--log_path",
-        help=("Path to directory where log" " files will be written"),
-        default=".",
-        type=lambda x: is_valid_path(parser, x),
-    )
-    parser.add_argument(
-        "--debug",
-        help=("Selects more detail logging (default" " is INFO)"),
-        default=False,
-        action="store_true",
-    )
-
-    args = parser.parse_args()
-
-    # TODO: save the cfg file in a HDF5(???) dataset somewhere
-    cfg = args.cfg_file
-
-    # Setup the config file
-    global CONFIG
-    if cfg is None:
-        CONFIG = luigi.configuration.get_config()
-        CONFIG.add_config_path(pjoin(dirname(__file__), "nbar.cfg"))
-    else:
-        CONFIG = luigi.configuration.get_config()
-        CONFIG.add_config_path(cfg)
-
-    # setup logging
-    logfile = "{log_path}/run_nbar_{uname}_{pid}.log"
-    logfile = logfile.format(
-        log_path=args.log_path, uname=os.uname()[1], pid=os.getpid()
-    )
-    logging_level = logging.INFO
-    if args.debug:
-        logging_level = logging.DEBUG
-    logging.basicConfig(
-        filename=logfile,
-        level=logging_level,
-        format=("%(asctime)s: [%(name)s] (%(levelname)s) " "%(message)s "),
-        datefmt="%H:%M:%S",
-    )
-
-    # TODO: save the input list into a HDF5(???) dataset somewhere
-    logging.info("nbar.py started")
-    logging.info(f"out_path={args.work_root}")
-    logging.info(f"log_path={args.log_path}")
-
-    size = int(os.getenv("PBS_NNODES", "1"))
-    rank = int(os.getenv("PBS_VNODENUM", "1"))
-    main(args.level1_list, args.work_root, size, rank)
+    luigi.run()
