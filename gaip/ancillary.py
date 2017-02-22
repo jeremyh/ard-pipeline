@@ -1,4 +1,4 @@
-"""Ancillary datasets."""
+"""Ancillary dataset retrieval and storage."""
 
 import datetime
 import glob
@@ -18,14 +18,43 @@ from geopandas import GeoSeries
 from shapely.geometry import Point, Polygon
 
 import gaip
+from gaip import attach_attrs
 
 log = logging.getLogger()
 
 
-def _get_4d_idx(day):
+def get_4d_idx(day):
+    """A small utility function for indexing into a 4D dataset
+    represented as a 3D dataset.
+    [month, level, y, x], where level contains 37 levels, and day
+    contains 28, 29, 30 or 31 days.
+    """
     start = 1 + 37 * (day - 1)
     stop = start + 37
     return range(start, stop, 1)
+
+
+def kelvin_2_celcius(kelvin):
+    """A small utility function for converting degrees Kelvin to
+    degrees Celcius.
+    """
+    return kelvin - 273.15
+
+
+def relative_humdity(surface_temp, dewpoint_temp, kelvin=True):
+    """Calculates relative humidity given a surface temperature and
+    dewpoint temperature.
+    """
+    if kelvin:
+        surf_t = kelvin_2_celcius(surface_temp)
+        dew_t = kelvin_2_celcius(dewpoint_temp)
+    else:
+        surf_t = surface_temp
+        dew_t = dewpoint_temp
+
+    rh = 100 * ((112.0 - 0.1 * surf_t + dew_t) / (112.0 + 0.9 * surf_t)) ** 8
+
+    return rh
 
 
 def _collect_ancillary_data(
@@ -42,15 +71,19 @@ def _collect_ancillary_data(
     NBAR workflow.
     """
 
-    def _write_scalar(fid, dataset_path, data, factor):
+    def _format_brdf_attrs(factor):
         scattering_names = {"iso": "isometric", "vol": "volumetric", "geo": "geometric"}
 
+        attrs = {}
         description = (
             "Bidirectional Reflectance Distribution Function "
             "for the {} scattering fraction."
         )
-        data["Description"] = description.format(scattering_names[factor])
+        attrs["Description"] = description.format(scattering_names[factor])
 
+        return attrs
+
+    def _write_scalar(fid, dataset_path, data):
         value = data.pop("value")
         dset = fid.create_dataset(dataset_path, data=value)
         for key in data:
@@ -86,9 +119,10 @@ def _collect_ancillary_data(
         dname_format = "BRDF-Band-{band}-{factor}"
         for key in data:
             band, factor = key
-            _write_scalar(
-                fid, dname_format.format(band=band, factor=factor), data[key], factor
-            )
+            attrs = _format_brdf_attrs(factor)
+            for k in attrs:
+                data[key][k] = attrs[k]
+            _write_scalar(fid, dname_format.format(band=band, factor=factor), data[key])
 
     return
 
@@ -407,6 +441,27 @@ def get_water_vapour(acquisition, vapour_path, scale_factor=0.1):
     return water_vapour_data
 
 
+def ecwmf_elevation(datafile, lonlat):
+    """Retrieve a pixel from the ECWMF invariant geo-potential
+    dataset.
+    Converts to Geo-Potential height in KM.
+    """
+    value = gaip.get_pixel(datafile, lonlat) / 9.80665 / 1000.0
+
+    res = {
+        "data_source": "ECWMF Invariant Geo-Potential",
+        "data_file": datafile,
+        "value": value,
+    }
+
+    # ancillary metadata tracking
+    md = gaip.extract_ancillary_metadata(datafile)
+    for key in md:
+        res[key] = md[key]
+
+    return res
+
+
 def ecwmf_temperature_2metre(input_path, lonlat, time):
     """Retrieve a pixel value from the ECWMF 2 metre Temperature
     collection.
@@ -473,6 +528,7 @@ def ecwmf_dewpoint_temperature(input_path, lonlat, time):
 def ecwmf_surface_pressure(input_path, lonlat, time):
     """Retrieve a pixel value from the ECWMF Surface Pressure
     collection.
+    Scales the result by 100 before returning.
     """
     product = "surface-pressure"
     files = glob.glob(pjoin(input_path, f"{product}_*.grib"))
@@ -482,10 +538,10 @@ def ecwmf_surface_pressure(input_path, lonlat, time):
         start = datetime.datetime.strptime(start, "%Y-%m-%d")
         end = datetime.datetime.strptime(end, "%Y-%m-%d")
         if start <= time <= end:
-            value = gaip.get_pixel(f, lonlat, time.day)
+            value = gaip.get_pixel(f, lonlat, time.day) / 100.0
 
             data = {
-                "data_source": "ECWMF Temperature 2 metre",
+                "data_source": "ECWMF Surface Pressure",
                 "data_file": f,
                 "value": value,
             }
@@ -501,7 +557,7 @@ def ecwmf_surface_pressure(input_path, lonlat, time):
         raise OSError("No Surface Pressure ancillary data found.")
 
 
-def ecwmf_water_vapour(input_path, latlon, time):
+def ecwmf_water_vapour(input_path, lonlat, time):
     """Retrieve a pixel value from the ECWMF Total Column Water Vapour
     collection.
     """
@@ -549,7 +605,7 @@ def ecwmf_temperature(input_path, lonlat, time):
         start = datetime.datetime.strptime(start, "%Y-%m-%d")
         end = datetime.datetime.strptime(end, "%Y-%m-%d")
         if start <= time <= end:
-            bands = _get_4d_idx(time.day)
+            bands = get_4d_idx(time.day)
             value = gaip.get_pixel(f, lonlat, bands)[::-1]
 
             data = {"data_source": "ECWMF Temperature", "data_file": f, "value": value}
@@ -582,7 +638,7 @@ def ecwmf_geo_potential(input_path, lonlat, time):
         start = datetime.datetime.strptime(start, "%Y-%m-%d")
         end = datetime.datetime.strptime(end, "%Y-%m-%d")
         if start <= time <= end:
-            bands = _get_4d_idx(time.day)
+            bands = get_4d_idx(time.day)
             value = gaip.get_pixel(f, lonlat, bands)[::-1] / 9.80665 / 1000.0
 
             data = {
@@ -618,7 +674,7 @@ def ecwmf_relative_humidity(input_path, lonlat, time):
         start = datetime.datetime.strptime(start, "%Y-%m-%d")
         end = datetime.datetime.strptime(end, "%Y-%m-%d")
         if start <= time <= end:
-            bands = _get_4d_idx(time.day)
+            bands = get_4d_idx(time.day)
             value = gaip.get_pixel(f, lonlat, bands)[::-1]
 
             data = {
