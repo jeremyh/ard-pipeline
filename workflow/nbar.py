@@ -70,6 +70,7 @@ class GetAncillaryData(luigi.Task):
         dem_path = CONFIG.get("ancillary", "dem_path")
         brdf_path = CONFIG.get("ancillary", "brdf_path")
         brdf_premodis_path = CONFIG.get("ancillary", "brdf_premodis_path")
+        compression = CONFIG.get("work", "compression")
 
         with self.output().temporary_path() as out_fname:
             gaip._collect_ancillary_data(
@@ -81,6 +82,8 @@ class GetAncillaryData(luigi.Task):
                 brdf_path,
                 brdf_premodis_path,
                 out_fname,
+                compression,
+                self.nbar_root,
             )
 
 
@@ -596,8 +599,6 @@ class SlopeAndAspect(luigi.Task):
 
     def run(self):
         container = gaip.acquisitions(self.level1)
-        container.get_root(self.nbar_root, group=self.group, granule=self.granule)
-
         acqs = container.get_acquisitions(group=self.group, granule=self.granule)
 
         dsm_fname = self.input().path
@@ -1056,7 +1057,7 @@ class WriteMetadata(luigi.Task):
         acq = container.get_acquisitions()[0]
         out_path = self.nbar_root
 
-        targets = [
+        [
             pjoin(out_path, CONFIG.get("work", "aerosol_fname")),
             pjoin(out_path, CONFIG.get("work", "vapour_fname")),
             pjoin(out_path, CONFIG.get("work", "ozone_fname")),
@@ -1064,11 +1065,12 @@ class WriteMetadata(luigi.Task):
             pjoin(out_path, CONFIG.get("work", "brdf_fname")),
         ]
 
-        aerosol_data = load(luigi.LocalTarget(targets[0]))
-        water_vapour_data = load(luigi.LocalTarget(targets[1]))
-        ozone_data = load(luigi.LocalTarget(targets[2]))
-        elevation_data = load(luigi.LocalTarget(targets[3]))
-        brdf_data = load(luigi.LocalTarget(targets[4]))
+        # TODO: define a proper requires and read from proper sources
+        # aerosol_data = load(luigi.LocalTarget(targets[0]))
+        # water_vapour_data = load(luigi.LocalTarget(targets[1]))
+        # ozone_data = load(luigi.LocalTarget(targets[2]))
+        # elevation_data = load(luigi.LocalTarget(targets[3]))
+        # brdf_data = load(luigi.LocalTarget(targets[4]))
 
         # output
         with self.output().temporary_path() as out_fname:
@@ -1112,7 +1114,8 @@ class Packager(luigi.Task):
         }
         package_newly_processed_data_folder(**kwargs)
 
-        save(self.output(), "completed")
+        with self.output().open("w") as src:
+            src.write("completed")
 
 
 class PackageTC(luigi.Task):
@@ -1155,7 +1158,7 @@ class RunGaip(luigi.WrapperTask):
         with open(self.level1_list) as src:
             scenes = src.readlines()
         for level1 in scenes:
-            nbar_root = pjoin(work_root, basename(level1) + ".nbar-work")
+            nbar_root = pjoin(self.work_root, basename(level1) + ".nbar-work")
             yield PackageTC(level1, self.work_root, nbar_root)
 
 
