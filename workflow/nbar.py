@@ -361,19 +361,19 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
                 outfname=cent_fname,
             )
 
-        with outputs["boxline"].temporary_path() as boxline_fname, outputs[
-            "coordinator"
-        ].temporary_path() as coord_fname:
-            satellite_zenith = outputs["sat_view"].path
-            gaip.create_boxline_file(
-                satellite_zenith,
-                y_cent,
-                x_cent,
-                n_cent,
-                boxline_fname=boxline_fname,
-                max_angle=view_max,
-                coordinator_fname=coord_fname,
-            )
+            with outputs["boxline"].temporary_path() as boxline_fname, outputs[
+                "coordinator"
+            ].temporary_path() as coord_fname:
+                satellite_zenith = outputs["sat_view"].path
+                gaip.create_boxline_file(
+                    satellite_zenith,
+                    y_cent,
+                    x_cent,
+                    n_cent,
+                    boxline_fname=boxline_fname,
+                    max_angle=view_max,
+                    coordinator_fname=coord_fname,
+                )
 
 
 class AggregateAncillary(luigi.Task):
