@@ -277,7 +277,7 @@ def create_boxline_file(
         cols = ds.width
 
     # calculate the column start and end indices
-    istart, iend = swathe_edges(max_angle, view_angle.T)
+    istart, iend = swathe_edges(max_angle, view_angle)
 
     # TODO: Fuqin to document, and these results are only used for
     # granules that do not contain the satellite track path
