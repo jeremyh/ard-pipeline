@@ -44,8 +44,7 @@ class GetAncillaryData(luigi.Task):
         return luigi.LocalTarget(pjoin(out_path, "ancillary.h5"))
 
     def run(self):
-        container = gaip.acquisitions(self.level1)
-        acqs = container.get_acquisitions(granule=self.granule)
+        acqs = acquisitions(self.level1).get_acquisitions(self.group, self.granule)
 
         with self.output().temporary_path() as out_fname:
             gaip._collect_ancillary_data(
@@ -78,8 +77,7 @@ class CalculateLonGrid(luigi.Task):
         return luigi.LocalTarget(pjoin(out_path, "longitude.h5"))
 
     def run(self):
-        container = gaip.acquisitions(self.level1)
-        acqs = container.get_acquisitions(group=self.group, granule=self.granule)
+        acqs = acquisitions(self.level1).get_acquisitions(self.group, self.granule)
 
         with self.output().temporary_path() as out_fname:
             gaip.create_lon_grid(acqs[0], out_fname, self.compression)
@@ -96,8 +94,7 @@ class CalculateLatGrid(luigi.Task):
         return luigi.LocalTarget(pjoin(out_path, "latitude.h5"))
 
     def run(self):
-        container = gaip.acquisitions(self.level1)
-        acqs = container.get_acquisitions(group=self.group, granule=self.granule)
+        acqs = acquisitions(self.level1).get_acquisitions(self.group, self.granule)
 
         with self.output().temporary_path() as out_fname:
             gaip.create_lat_grid(acqs[0], out_fname, self.compression)
@@ -120,8 +117,7 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
         return luigi.LocalTarget(pjoin(out_path, "satellite-solar.h5"))
 
     def run(self):
-        container = gaip.acquisitions(self.level1)
-        acqs = container.get_acquisitions(group=self.group, granule=self.granule)
+        acqs = acquisitions(self.level1).get_acquisitions(self.group, self.granule)
         lat_fname = self.input()["lat"].path
         lon_fname = self.input()["lon"].path
 
@@ -236,15 +232,16 @@ class RunModtranCase(luigi.Task):
 
     def output(self):
         out_path = acquisitions(self.level1).get_root(
-            self.nbar_root, self.group, self.granule
+            self.nbar_root, granule=self.granule
         )
         output_format = "{point}/alb_{albedo}/{point}_alb_{albedo}_b.flx"
         out_fname = output_format.format(coord=self.coord, albedo=self.albedo)
         return luigi.LocalTarget(pjoin(out_path, self.base_dir, out_fname))
 
     def run(self):
-        container = gaip.acquisitions(self.level1)
-        out_path = container.get_root(self.nbar_root, granule=self.granule)
+        out_path = acquisitions(self.level1).get_root(
+            self.nbar_root, granule=self.granule
+        )
 
         workpath_format = "{coord}/alb_{albedo}"
         workpath = workpath_format.format(coord=self.coord, albedo=self.albedo)
@@ -262,15 +259,13 @@ class RunAccumulateSolarIrradianceCase(luigi.Task):
 
     def output(self):
         out_path = acquisitions(self.level1).get_root(
-            self.nbar_root, self.group, self.granule
+            self.nbar_root, granule=self.granule
         )
         fname = f"{self.coord}-alb-{self.albedo}.h5"
         out_fname = pjoin(out_path, self.base_dir, fname)
         return luigi.LocalTarget(out_fname)
 
     def run(self):
-        acqs = acquisitions(self.level1).get_acquisitions(self.group, self.granule)
-
         flux_fname = self.input().path
         transmittance = True if self.albedo == "t" else False
 
@@ -302,7 +297,7 @@ class AccumulateSolarIrradiance(luigi.Task):
 
     def output(self):
         out_path = acquisitions(self.level1).get_root(
-            self.nbar_root, self.group, self.granule
+            self.nbar_root, granule=self.granule
         )
         out_fname = "accumulated-solar-irradiance.h5"
         return luigi.LocalTarget(pjoin(out_path, self.base_dir, out_fname))
@@ -324,7 +319,7 @@ class CalculateCoefficients(luigi.Task):
 
     def output(self):
         out_path = acquisitions(self.level1).get_root(
-            self.nbar_root, self.group, self.granule
+            self.nbar_root, granule=self.granule
         )
         out_fname = pjoin(out_path, self.base_dir, "coefficients.h5")
         return luigi.LocalTarget(out_fname)
