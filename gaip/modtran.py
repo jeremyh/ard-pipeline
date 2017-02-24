@@ -657,25 +657,27 @@ def read_modtran_flux(fname):
 
 
 def _calculate_solar_radiation(
-    flux_fname, response_fname, transmittance, out_fname, compression="lzf"
+    flux_fnames, response_fname, out_fname, compression="lzf"
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
-    df = calculate_solar_radiation(flux_fname, response_fname, transmittance)
-    dset_name = splitext(basename(out_fname))[0]
-    coordinate, _, albedo = dset_name.split("-")
-
+    description = "Accumulated solar irradiation for point {} " "and albedo {}."
     with h5py.File(out_fname, "w") as fid:
-        description = (
-            "Accumulated solar irradiation for coordinate {} " "and albedo {}."
-        )
-        attrs = {
-            "Description": description.format(coordinate, albedo),
-            "Coordinate": coordinate,
-            "Albedo": albedo,
-        }
-        write_dataframe(df, dset_name, fid, compression, attrs=attrs)
+        for key in flux_fnames:
+            point, albedo = key
+            dset_name = f"point-{point}-albedo-{albedo}"
+            attrs = {
+                "Description": description.format(point, albedo),
+                "Point": point,
+                "Albedo": albedo,
+            }
+
+            transmittance = True if albedo == "t" else False
+            df = calculate_solar_radiation(
+                flux_fnames[key], response_fname, transmittance
+            )
+            write_dataframe(df, dset_name, fid, compression, attrs=attrs)
 
     return
 
