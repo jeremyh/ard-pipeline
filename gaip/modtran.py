@@ -2,10 +2,12 @@
 ---------------.
 
 """
+import glob
 import os
 import subprocess
 from os.path import basename, dirname, exists, splitext
 from os.path import join as pjoin
+from posixpath import join as ppjoin
 
 import h5py
 import numpy as np
@@ -234,9 +236,46 @@ def format_tp5(
     return tp5_data, metadata
 
 
+def _run_modtran(modtran_exe, workpath, point, albedo, out_fname, compression="lzf"):
+    """A private wrapper for dealing with the internal custom workings of the
+    NBAR workflow.
+    """
+    flux_data, altitudes, channel_data = run_modtran(modtran_exe, workpath)
+
+    # initial attributes
+    attrs = {"Point": point, "Albedo": albedo}
+
+    with h5py.File(out_fname, "w") as fid:
+        # ouput the flux data
+        dset_name = ppjoin(point, albedo, "flux")
+        attrs["Description"] = "Flux output from MODTRAN"
+        write_dataframe(flux_data, dset_name, fid, attrs=attrs)
+
+        # output the channel data
+        attrs["Description"] = "Channel output from MODTRAN"
+        dset_name = ppjoin(point, albedo, "channel")
+        write_dataframe(channel_data, dset_name, fid, attrs=attrs)
+
+        # output the altitude data
+        attrs["Description"] = "Altitudes output from MODTRAN"
+        attrs["altitude levels"] = altitudes.shape[0]
+        attrs["units"] = "km"
+        dset_name = ppjoin(point, albedo, "altitudes")
+        write_dataframe(altitudes, dset_name, fid, attrs=attrs)
+
+    return
+
+
 def run_modtran(modtran_exe, workpath):
-    """Run MODTRAN."""
+    """Run MODTRAN and return the flux and channel results."""
     subprocess.check_call([modtran_exe], cwd=workpath)
+    flux_fname = glob.glob(pjoin(workpath, "*_b.flx"))[0]
+    chn_fname = glob.glob(pjoin(workpath, "*.chn"))[0]
+
+    flux_data, altitudes = read_modtran_flux(flux_fname)
+    chn_data = pd.read_csv(chn_fname, skiprows=5, header=None, delim_whitespace=True)
+
+    return flux_data, altitudes, chn_data
 
 
 def _calculate_coefficients(
@@ -272,6 +311,7 @@ def _calculate_coefficients(
     return
 
 
+# TODO: rework to use h5py inputs
 def calculate_coefficients(npoints, chn_input_fmt, dir_input_fmt, mod_root):
     """Calculate the atmospheric coefficients from the MODTRAN output
     and used in the BRDF and atmospheric correction.
@@ -666,32 +706,47 @@ def _calculate_solar_radiation(
     with h5py.File(out_fname, "w") as fid:
         for key in flux_fnames:
             point, albedo = key
-            dset_name = f"point-{point}-albedo-{albedo}"
+            transmittance = True if albedo == "t" else False
+            flux_dset_name = ppjoin(point, albedo, "flux")
+            atmos_dset_name = ppjoin(point, albedo, "altitudes")
+
+            # retrieve the flux data and the number of atmospheric levels
+            with h5py.File(flux_fnames[key], "r") as fid2:
+                flux_data = fid2[flux_dset_name][:]
+                levels = fid2[atmos_dset_name].attrs["altitude levels"]
+
+            # accumulate solar irradiance
+            df = calculate_solar_radiation(
+                flux_data, response_fname, levels, transmittance
+            )
+
+            # output
+            dset_name = ppjoin(point, albedo, "solar-irradiance")
             attrs = {
                 "Description": description.format(point, albedo),
                 "Point": point,
                 "Albedo": albedo,
             }
-
-            transmittance = True if albedo == "t" else False
-            df = calculate_solar_radiation(
-                flux_fnames[key], response_fname, transmittance
-            )
             write_dataframe(df, dset_name, fid, compression, attrs=attrs)
 
     return
 
 
-def calculate_solar_radiation(flux_fname, response_fname, transmittance=False):
+def calculate_solar_radiation(
+    flux_data, response_fname, levels=36, transmittance=False
+):
     """Retreive the flux data from the MODTRAN output `*.flx`, and
     calculate the solar radiation.
 
     The solar radiation will be calculated for each of the bands
     contained within the spectral response dataset.
 
-    :param flux_fname:
-        A `str` containing the full file path name of the flux dataset
-        output by MODTRAN.
+    :param flux_data:
+        A `pandas.DataFrame` formatted as such read from the
+        `read_modtran_flux` function.
+
+    :param levels:
+        The number of atmospheric levels. Default is 36.
 
     :param response_fname:
         A `str` containing the full file path name of the spectral
@@ -705,12 +760,10 @@ def calculate_solar_radiation(flux_fname, response_fname, transmittance=False):
         A `pandas.DataFrame` containing the solar radiation
         accumulation.
     """
-    # get the flux and spectral response datasets
-    flux_data, altitudes = read_modtran_flux(flux_fname)
+    # read the spectral response dataset
     response = read_spectral_response(response_fname)
 
-    # No. of atmospheric levels & index location of the top atmospheric level
-    levels = altitudes.shape[0]
+    # index location of the top atmospheric level
     idx = levels - 1
 
     # group via the available bands
