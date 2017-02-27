@@ -286,6 +286,7 @@ class AccumulateSolarIrradiance(luigi.Task):
 
     def run(self):
         # TODO: have filter functions within gaip code
+        acqs = acquisitions(self.level1).get_acquisitions(self.group, self.granule)
         satfilterpath = "/g/data/v10/eoancillarydata/lookup_tables/satellite_filter"
         response_fname = pjoin(satfilterpath, acqs[0].spectral_filter_file)
 
@@ -309,18 +310,11 @@ class CalculateCoefficients(luigi.Task):
         return luigi.LocalTarget(out_fname)
 
     def run(self):
-        chn_input_fmt = "{coord}/alb_{albedo}/{coord}_alb_{albedo}.chn"
         accumulated_fname = self.input().path
 
-        # TODO: re-wire in the accumulated_fname rather than the dir_input_fmt
         with self.output().temporary_path() as out_fname:
             gaip._calculate_coefficients(
-                self.npoints,
-                chn_input_fmt,
-                accumulated_fname,
-                self.base_dir,
-                out_fname,
-                self.compression,
+                accumulated_fname, self.npoints, out_fname, self.compression
             )
 
 
