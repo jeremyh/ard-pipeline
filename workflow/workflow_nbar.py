@@ -47,7 +47,7 @@ class GetAncillaryData(luigi.Task):
         acqs = acquisitions(self.level1).get_acquisitions(self.group, self.granule)
 
         with self.output().temporary_path() as out_fname:
-            gaip._collect_ancillary_data(
+            gaip.collect_ancillary_data(
                 acqs[0],
                 self.aerosol_path,
                 self.water_vapour_path,
