@@ -610,7 +610,8 @@ def read_spectral_response(fname):
     MODTRAN processing.
 
     :param fname:
-        A `str` containing the full file path name.
+        A `str` containing the full file path name, or an opened
+        `file` buffer.
 
     :return:
         A `pd.DataFrame` containing the spectral response
@@ -766,14 +767,14 @@ def read_modtran_channel(fname):
 
 
 def _calculate_solar_radiation(
-    flux_fnames, response_fname, out_fname, compression="lzf"
+    acquisition, flux_fnames, response_fname, out_fname, compression="lzf"
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
     description = "Accumulated solar irradiation for point {} " "and albedo {}."
 
-    spectral_response = read_spectral_response(response_fname)
+    spectral_response = acq.spectral_response()
 
     with h5py.File(out_fname, "w") as fid:
         for key in flux_fnames:
