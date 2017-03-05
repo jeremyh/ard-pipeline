@@ -23,9 +23,6 @@ def calc_land_sea_mask(
     :return:
         A 2D Numpy Boolean array. True = Land, False = Sea.
 
-    :author:
-        Josh Sixsmith, joshua.sixsmith@ga.gov.au
-
     :note:
         The function does not currently support reprojections. The
         GriddedGeoBox must have CRS and Pixelsize matching the

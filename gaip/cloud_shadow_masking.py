@@ -75,9 +75,6 @@ def cloud_shadow(
     :return:
         An 2D np array mask with 0 for Shadow and the relevant bit
         specified in bitpos for Not Shadow.
-
-    :author:
-       Josh Sixsmith, joshua.sixsmith@ga.gov.au
     """
     # Distinguish between potentially concurrent executions for different
     # cloud masks

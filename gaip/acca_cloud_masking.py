@@ -200,9 +200,6 @@ def acca_2nd_pass(
         stick with the cloud identified in the first pass), or a cloud
         mask with with 1 as cloud and 0 as not cloud.
         Note: Any caller-supplied aux_data dict will be updated
-
-    :author:
-        Josh Sixsmith, joshua.sixsmith@ga.gov.au
     """
     logging.info("ACCA Pass Two Engaged")
     aux_data["acca_pass_2"] = "engaged"
@@ -381,9 +378,6 @@ def acca(
         An 2D Numpy array cloud mask, with True for non-cloud and False
         for cloud.
         Note: Any caller-supplied aux_data dict will be updated
-
-    :author:
-        Josh Sixsmith, joshua.sixsmith@ga.gov.au
     """
     dims = reflectance_stack.shape
 
