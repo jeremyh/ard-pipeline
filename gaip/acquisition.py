@@ -756,7 +756,7 @@ def acquisitions_via_geotiff(path):
 
                 acqs.append(acqtype(new))
 
-    return {"product": sorted(acqs)}
+    return AcquisitionsContainer(groups={"product": sorted(acqs)})
 
 
 def acquisitions_via_mtl(path):
