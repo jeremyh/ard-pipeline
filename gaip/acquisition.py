@@ -240,7 +240,8 @@ class Acquisition:
         """
         return False
 
-    def read_spectral_reponse(self):
+    def spectral_reponse(self):
+        """Reads the spectral response for the sensor."""
         fname = "spectral_response/%s" % self.spectral_filter_file
         with resource_stream(__name__, fname) as src:
             df = gaip.read_spectral_response(src)
