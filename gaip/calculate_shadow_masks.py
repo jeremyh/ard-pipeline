@@ -173,7 +173,7 @@ class FortranError(Exception):
 
 
 class CastShadowError(FortranError):
-    """Class that deals with errors from :py:func:`run_castshadow`."""
+    """Class that deals with errors from :py:func:`calculate_cast_shadow`."""
 
     def __init__(self, code):
         super().__init__(
