@@ -263,6 +263,8 @@ class LandsatAcquisition(Acquisition):
             return self.product_samples_thm
         if self.band_type == PAN:
             return self.product_samples_pan
+        if self.band_type == BQA:
+            return self.product_samples_ref
 
     @property
     def lines(self):
@@ -273,6 +275,8 @@ class LandsatAcquisition(Acquisition):
             return self.product_lines_thm
         if self.band_type == PAN:
             return self.product_lines_pan
+        if self.band_type == BQA:
+            return self.product_lines_ref
 
     @property
     def grid_cell_size(self):
@@ -823,11 +827,8 @@ def acquisitions_via_mtl(path):
 
         # set band name and number
         new["PRODUCT_METADATA"]["band_name"] = band
-        try:
-            band_num = int(band.replace("band", "").strip("_"))
-            new["PRODUCT_METADATA"]["band_num"] = band_num
-        except ValueError:
-            new["PRODUCT_METADATA"]["band_num"] = None
+        band_num = band.replace("band", "").strip("_")
+        new["PRODUCT_METADATA"]["band_num"] = band_num
 
         product = new["PRODUCT_METADATA"]
         spacecraft = fixname(product["spacecraft_id"])
