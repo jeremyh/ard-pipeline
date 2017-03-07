@@ -14,10 +14,13 @@ from glob import glob
 from os.path import basename
 from os.path import join as pjoin
 
+import h5py
 import luigi
+import numpy as np
 import yaml
 
 import gaip
+from gaip.calculate_reflectance import DATASET_NAME_FMT
 from gaip.nbar_workflow import TerrainCorrection
 
 
@@ -43,7 +46,6 @@ class PixelQualityTask(luigi.Task):
     granule = luigi.Parameter()
     group = luigi.Parameter()
     land_sea_path = luigi.Parameter()
-    # pq_path = luigi.Parameter()
 
     def output(self):
         return luigi.LocalTarget(pjoin(self.work_root, "pq.h5"))
@@ -67,6 +69,8 @@ class PixelQualityTask(luigi.Task):
 
         # constants to be use for this PQA computation
         pq_const = gaip.PQAConstants(sensor)
+        nbar_const = gaip.constants.NBARConstants(spacecraft_id, sensor)
+        avail_bands = nbar_const.get_nbar_lut()
 
         # track the bits that have been set (tests that have been run)
         tests_run = {
@@ -135,14 +139,11 @@ class PixelQualityTask(luigi.Task):
             )
 
         # read NBAR data
-        # TODO: read from new input
-        h5py.File(self.input(), "r")
-        nbar_acqs = gaip.acquisitions(self.work_root).get_acquisitions(group="product")
-
-        # get the selected acquisitions and associated band data and
-        # GriddedGeoBox. The latter provides the spatial context for the
-        # band data
-        nbar_data, geo_box = gaip.stack_data(nbar_acqs)
+        nbar_fid = h5py.File(self.input(), "r")
+        nbar_data = np.zeros(geo_box.shape, dtype="int16")
+        for i, bn in enumerate(avail_bands):
+            dataset_name = DATASET_NAME_FMT.format(product="brdf", band=bn)
+            nbar_fid[dataset_name].read_direct(nbar_data[i])
 
         # acca cloud mask
         if pq_const.run_cloud:
@@ -326,7 +327,7 @@ class PQ(luigi.WrapperTask):
         for scene in level1_scenes:
             work_name = basename(scene) + self.work_extension
             work_root = pjoin(self.output_directory, work_name)
-            container = acquisitions(scene)
+            container = gaip.acquisitions(scene)
             for granule in container.granules:
                 for group in container.groups:
                     yield PixelQualityTask(scene, work_root, granule, group)
