@@ -13,9 +13,12 @@ from gaip import (
     as_array,
     attach_image_attributes,
     constants,
+    create_external_link,
     dataset_compression_kwargs,
     reflectance,
 )
+
+DATASET_NAME_FMT = "{product}-reflectance-band-{band}"
 
 
 def _calculate_reflectance(
@@ -275,9 +278,9 @@ def calculate_reflectance(
 
         The dataset names will be as follows:
 
-        * lambertian-reflectance
-        * brdf-reflectance
-        * terrain-reflectance
+        * lambertian-reflectance-band-{number}
+        * brdf-reflectance-band-{number}
+        * terrain-reflectance-band-{number}
 
     :param compression:
         The compression filter to use. Default is 'lzf'.
@@ -301,43 +304,48 @@ def calculate_reflectance(
         `core` driver, or on disk.
     """
     # Retrieve info about the acquisition
-    satellite = acquisition.spacecraft_id
-    sensor = acquisition.sensor_id
     rows = acquisition.lines
     cols = acquisition.samples
-    band_number = acquisition.band_num
     geobox = acquisition.gridded_geo_box()
 
     # Get the average reflectance values per band
-    nbar_constants = constants.NBARConstants(satellite, sensor)
+    nbar_constants = constants.NBARConstants(
+        acquisition.spacecraft_id, acquisition.sensor_id
+    )
     avg_reflectance_values = nbar_constants.get_avg_ref_lut()
 
-    # Initialise the output files
+    # Initialise the output file
     if out_fname is None:
         fid = h5py.File("satellite-solar-angles.h5", driver="core", backing_store=False)
     else:
         fid = h5py.File(out_fname, "w")
 
-    no_data = -999
-    out_dtype = "int16"
     kwargs = dataset_compression_kwargs(compression=compression, chunks=(1, cols))
     kwargs["shape"] = (rows, cols)
-    kwargs["fillvalue"] = no_data
-    kwargs["dtype"] = out_dtype
+    kwargs["fillvalue"] = -999
+    kwargs["dtype"] = "int16"
 
-    lmbrt_dset = fid.create_dataset("lambertian-reflectance", **kwargs)
-    brdf_dset = fid.create_dataset("brdf-reflectance", **kwargs)
-    tc_dset = fid.create_dataset("terrain-reflectance", **kwargs)
+    # create the datasets
+    dataset_name = DATASET_NAME_FMT.format(
+        product="lambertian", band=acquisition.band_num
+    )
+    lmbrt_dset = fid.create_dataset(dataset_name, **kwargs)
+
+    dataset_name = DATASET_NAME_FMT.format(product="brdf", band=acquisition.band_num)
+    brdf_dset = fid.create_dataset(dataset_name, **kwargs)
+
+    dataset_name = DATASET_NAME_FMT.format(product="terrain", band=acquisition.band_num)
+    tc_dset = fid.create_dataset(dataset_name, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
         "crs_wkt": geobox.crs.ExportToWkt(),
         "geotransform": geobox.affine.to_gdal(),
-        "no_data_value": no_data,
+        "no_data_value": kwargs["fillvalue"],
         "rori threshold setting": rori,
-        "sattelite": satellite,
-        "sensor": sensor,
-        "band number": band_number,
+        "sattelite": acquisition.spacecraft_id,
+        "sensor": acquisition.sensor_id,
+        "band number": acquisition.band_num,
     }
 
     desc = "Contains the lambertian reflectance data scaled by 10000."
@@ -371,7 +379,7 @@ def calculate_reflectance(
             "window": tile,
             "masked": False,
             "apply_gain_offset": acquisition.scaled_radiance,
-            "out_no_data": no_data,
+            "out_no_data": kwargs["fillvalue"],
         }
         i16_args = {"dtype": np.int16, "transpose": True}
         f32_args = {"dtype": np.float32, "transpose": True}
@@ -420,8 +428,8 @@ def calculate_reflectance(
             brdf_iso,
             brdf_vol,
             brdf_geo,
-            avg_reflectance_values[band_number],
-            no_data,
+            avg_reflectance_values[acquisition.band_num],
+            kwargs["fillvalue"],
             band_data,
             self_shadow,
             cast_shadow_sun,
@@ -457,3 +465,16 @@ def calculate_reflectance(
         tc_dset[idx] = ref_terrain
 
     return fid
+
+
+def link_reflectance_data(input_fnames, out_fname):
+    # TODO: incorporate linking for multi-granule and multi-group
+    #       datasets
+    """Links the individual reflectance results into a
+    single file for easier access.
+    """
+    for fname in input_fnames:
+        with h5py.File(fname, "r") as fid:
+            dataset_names = fid.keys()
+        for dname in dataset_names:
+            create_external_link(fname, dname, out_fname, dname)
