@@ -46,6 +46,7 @@ class PixelQualityTask(luigi.Task):
     granule = luigi.Parameter()
     group = luigi.Parameter()
     land_sea_path = luigi.Parameter()
+    compression = luigi.Parameter(default="lzf", significant=False)
 
     def output(self):
         return luigi.LocalTarget(pjoin(self.work_root, "pq.h5"))
@@ -281,10 +282,6 @@ class PixelQualityTask(luigi.Task):
                 ).format(sensor)
             )
 
-        # write PQA file as output
-        pqa_output_path = os.path.join(self.work_root, "pqa.tif")
-        pqaResult.save_as_tiff(pqa_output_path)
-
         # metadata
         system_info = {}
         proc = subprocess.Popen(["uname", "-a"], stdout=subprocess.PIPE)
@@ -311,6 +308,10 @@ class PixelQualityTask(luigi.Task):
 
         with open(pjoin(self.work_root, "pq_metadata.yaml"), "w") as src:
             yaml.dump(metadata, src, default_flow_style=False)
+
+        # write PQA file as output
+        with self.output().temporary_path() as out_fname:
+            pqaResult.save_as_h5_dataset(out_fname, self.compression)
 
 
 class PQ(luigi.WrapperTask):
