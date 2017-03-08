@@ -209,7 +209,7 @@ def create_boxline_coordinator(
     rows, cols = view_angle_dataset.shape
 
     # calculate the column start and end indices
-    istart, iend = swathe_edges(max_angle, view_angle)
+    istart, iend = swathe_edges(max_angle, view_angle_dataset)
 
     # TODO: Fuqin to document, and these results are only used for
     # granules that do not contain the satellite track path
@@ -406,7 +406,7 @@ def setup_spheroid(proj_wkt):
     dset["inverse_flattening"] = sr.GetInvFlattening()
 
     # Eccentricity squared
-    dset["eccentricity_squared"] = 1.0 - (1.0 - 1.0 / spheroid[1]) ** 2
+    dset["eccentricity_squared"] = 1.0 - (1.0 - 1.0 / dset["inverse_flattening"]) ** 2
 
     # Earth rotational angular velocity rad/sec
     # Other sources such as:
