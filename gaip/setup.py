@@ -12,7 +12,7 @@ def configuration(parent_package="", top_path=None):
     config.add_data_files("sensors.json")
     config.add_data_dir("spectral_response")
     config.add_extension(
-        "_cast_shadow_mask",
+        "__cast_shadow_mask",
         [
             "sys_variables.f90",
             "cast_shadow_main.f90",
@@ -23,7 +23,7 @@ def configuration(parent_package="", top_path=None):
         ],
     ),
     config.add_extension(
-        "_exiting_angle",
+        "__exiting_angle",
         [
             "sys_variables.f90",
             "exiting_angle.f90",
@@ -31,14 +31,14 @@ def configuration(parent_package="", top_path=None):
         ],
     ),
     config.add_extension(
-        "_incident_angle",
+        "__incident_angle",
         [
             "incident_angle.f90",
             "earth_rotation.f90",
         ],
     ),
     config.add_extension(
-        "_slope_aspect",
+        "__slope_aspect",
         [
             "sys_variables.f90",
             "slope_aspect.f90",
@@ -46,7 +46,7 @@ def configuration(parent_package="", top_path=None):
         ],
     ),
     config.add_extension(
-        "_surface_reflectance",
+        "__surface_reflectance",
         [
             "surface_reflectance.f90",
             "white_sky.f90",
@@ -55,7 +55,7 @@ def configuration(parent_package="", top_path=None):
         ],
     ),
     config.add_extension(
-        "_satellite_model",
+        "__satellite_model",
         [
             "sys_variables.f90",
             "geo2metres_pixel_size.f90",
@@ -63,7 +63,7 @@ def configuration(parent_package="", top_path=None):
         ],
     ),
     config.add_extension(
-        "_track_time_info",
+        "__track_time_info",
         [
             "sys_variables.f90",
             "geod2geo.f90",
@@ -74,7 +74,7 @@ def configuration(parent_package="", top_path=None):
         ],
     ),
     config.add_extension(
-        "_sat_sol_angles",
+        "__sat_sol_angles",
         [
             "sys_variables.f90",
             "solar_angle.f90",
@@ -85,7 +85,7 @@ def configuration(parent_package="", top_path=None):
         ],
     ),
     config.add_extension(
-        "_interpolation",
+        "__interpolation",
         [
             "bilinear_interpolation.f90",
         ],
