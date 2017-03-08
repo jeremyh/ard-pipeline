@@ -23,99 +23,14 @@ class ParameterisedTestCase(unittest.TestCase):
 
     def __init__(
         self,
-        methodName="runTest",
-        reference_dir=None,
-        test_dir=None,
-        decimal_precision=4,
-        integer_precision=1,
-        output_directory="",
-    ):
-        super().__init__(methodName)
-
-        # Reference and Testing directories
-        self.reference_dir = reference_dir
-        self.test_dir = test_dir
-
-        # Allowable numerical precision
-        self.decimal_precision = decimal_precision
-        self.integer_precision = integer_precision
-
-        # Output directory
-        self.output_directory = output_directory
-
-    @staticmethod
-    def parameterise(
-        testcase_klass,
-        reference_dir=None,
-        test_dir=None,
-        decimal_precision=4,
-        integer_precision=1,
-        output_directory="",
-    ):
-        """Create a suite containing all tests taken from the given
-        subclass, passing them the parameters 'reference_dir,
-        test_dir, decimal_precision, integer_precision'.
-
-        :param testcase_klass:
-            A unittest.TestCase Class
-
-        :param reference_dir:
-            A full file pathname to the directory containing the
-            reference data.
-
-        :param test_dir:
-            A full file pathname to the directory containing the
-            test data.
-
-        :param decimal_precision:
-            The decimal precision to be used during array comparison.
-            Default is 4, i.e. values must be correct up to 4 d.p. in
-            order to Pass.
-
-        :param integer_precision:
-            The intger precision to be used during array comparison.
-            Default is 1, i.e. values must be correct within 1 integer
-            in order to Pass.
-
-        :param output_directory:
-            The output directory to contain any results.
-        """
-        testloader = unittest.TestLoader()
-        testnames = testloader.getTestCaseNames(testcase_klass)
-        suite = unittest.TestSuite()
-        for name in testnames:
-            suite.addTest(
-                testcase_klass(
-                    name,
-                    reference_dir=reference_dir,
-                    test_dir=test_dir,
-                    decimal_precision=decimal_precision,
-                    integer_precision=integer_precision,
-                    output_directory=output_directory,
-                )
-            )
-        return suite
-
-
-class ParameterisedTestCaseFiles(unittest.TestCase):
-    """TestCase classes that want to be parameterised should
-    inherit from this class.
-
-    Source for this code taken from:
-    http://eli.thegreenplace.net/2011/08/02/python-unit-testing-parametrized-test-cases/
-
-    Modified to suit our given parameters.
-    """
-
-    def __init__(
-        self,
-        methodName="runTest",
+        method_name="runTest",
         reference_fname=None,
         test_fname=None,
         tolerance=3,
-        output_directory="",
+        decimal_precision=4,
+        integer_precision=1,
     ):
-        super().__init__(methodName)
+        super().__init__(method_name)
 
         # Reference and Testing directories
         self.reference_fname = reference_fname
@@ -124,8 +39,9 @@ class ParameterisedTestCaseFiles(unittest.TestCase):
         # Allowable tollerance
         self.tolerance = tolerance
 
-        # Output directory
-        self.output_directory = output_directory
+        # Allowable numerical precision
+        self.decimal_precision = decimal_precision
+        self.integer_precision = integer_precision
 
     @staticmethod
     def parameterise(
@@ -133,7 +49,8 @@ class ParameterisedTestCaseFiles(unittest.TestCase):
         reference_fname=None,
         test_fname=None,
         tolerance=3,
-        output_directory="",
+        decimal_precision=4,
+        integer_precision=1,
     ):
         """Create a suite containing all tests taken from the given
         subclass, passing them the parameters 'reference_fname,
@@ -154,8 +71,15 @@ class ParameterisedTestCaseFiles(unittest.TestCase):
             Default is 3, i.e. tolerance is 97% must be the same in
             order to Pass.
 
-        :param output_directory:
-            The output directory to contain any results.
+        :param decimal_precision:
+            The decimal precision to be used during array comparison.
+            Default is 4, i.e. values must be correct up to 4 d.p. in
+            order to Pass.
+
+        :param integer_precision:
+            The intger precision to be used during array comparison.
+            Default is 1, i.e. values must be correct within 1 integer
+            in order to Pass.
         """
         testloader = unittest.TestLoader()
         testnames = testloader.getTestCaseNames(testcase_klass)
@@ -167,7 +91,8 @@ class ParameterisedTestCaseFiles(unittest.TestCase):
                     reference_fname=reference_fname,
                     test_fname=test_fname,
                     tolerance=tolerance,
-                    output_directory=output_directory,
+                    decimal_precision=decimal_precision,
+                    integer_precision=integer_precision,
                 )
             )
         return suite
@@ -240,7 +165,7 @@ def createTestImage(
     return (img, geobox)
 
 
-def randomPixelLocations(dimensions, nPixels=100):
+def random_pixel_locations(dimensions, npixels=100):
     """Given a tuple of (y, x) dimensions, generate a random index of
     pixel locations.
     Returns a standard NumPy tuple index i.e. (y, x) where y & x are
@@ -251,7 +176,7 @@ def randomPixelLocations(dimensions, nPixels=100):
         interest. The dimensions are used to confine the pixel
         indices to the 2D space.
 
-    :param nPixels:
+    :param npixels:
         An integer representing the desired number of random pixels.
         Default is 100 pixels.
 
