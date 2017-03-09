@@ -36,8 +36,7 @@ if __name__ == "__main__":
         "Unittests for `gaip.relative_azimuth_slope` function.\n"
         "Comparisons tests will occur for the following "
         "datasets: \n"
-        "\t* exiting\n"
-        "\t* azimuthal-exiting\n"
+        "\t* relative-slope\n"
     )
 
     parser = argparse.ArgumentParser(
