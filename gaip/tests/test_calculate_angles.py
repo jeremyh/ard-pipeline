@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Unittesting framework for the `gaip.calculate_angles` function."""
 
 import argparse
 import unittest
