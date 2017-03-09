@@ -3,7 +3,7 @@
 
 import h5py
 import numpy as np
-from rasterio.warp import RESAMPLING
+from rasterio.warp import Resampling
 from scipy import ndimage
 
 from gaip import (
@@ -109,7 +109,7 @@ def get_dsm(acquisition, national_dsm, margins, out_fname=None, compression="lzf
 
     # Retrive the DSM data
     dsm_data = reproject_file_to_array(
-        national_dsm, dst_geobox=dem_geobox, resampling=RESAMPLING.bilinear
+        national_dsm, dst_geobox=dem_geobox, resampling=Resampling.bilinear
     )
 
     # Output the reprojected result

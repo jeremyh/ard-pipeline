@@ -9,7 +9,7 @@ import numpy as np
 import rasterio
 from osgeo import gdal
 from rasterio import crs
-from rasterio.warp import RESAMPLING, reproject
+from rasterio.warp import Resampling, reproject
 
 import gaip
 
@@ -439,7 +439,7 @@ def find_file(path, filename):
 
 
 def reproject_file_to_array(
-    src_filename, src_band=1, dst_geobox=None, resampling=RESAMPLING.nearest
+    src_filename, src_band=1, dst_geobox=None, resampling=Resampling.nearest
 ):
     """Given an image on file, reproject to the desired coordinate
     reference system.
@@ -492,7 +492,7 @@ def reproject_file_to_array(
 
 
 def reproject_img_to_img(
-    src_img, src_geobox, dst_geobox, resampling=RESAMPLING.nearest
+    src_img, src_geobox, dst_geobox, resampling=Resampling.nearest
 ):
     """Reprojects an image/array to the desired co-ordinate reference system.
 
