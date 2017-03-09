@@ -322,7 +322,7 @@ def exiting_angles(
 
     # Initialise the output files
     if out_fname is None:
-        fid = h5py.File("incident-angles.h5", driver="core", backing_store=False)
+        fid = h5py.File("exiting-angles.h5", driver="core", backing_store=False)
     else:
         fid = h5py.File(out_fname, "w")
 
