@@ -1,6 +1,6 @@
-import fmask_cloud_masking as _fmask
-
 from gaip import majority_filter
+
+from . import fmask_cloud_masking as _fmask
 
 
 def fmask_cloud_mask(

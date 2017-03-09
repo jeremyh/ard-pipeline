@@ -69,88 +69,88 @@ class Landsat5MTL1ParserTest(unittest.TestCase):
     def test_load(self):
         tree = gaip.load_mtl(L5_MTL1)
         assert len(tree) == 9
-        assert tree.has_key("METADATA_FILE_INFO")
-        assert tree.has_key("PRODUCT_METADATA")
-        assert tree.has_key("MIN_MAX_RADIANCE")
-        assert tree.has_key("MIN_MAX_PIXEL_VALUE")
-        assert tree.has_key("PRODUCT_PARAMETERS")
-        assert tree.has_key("CORRECTIONS_APPLIED")
-        assert tree.has_key("PROJECTION_PARAMETERS")
-        assert tree.has_key("UTM_PARAMETERS")
+        assert "METADATA_FILE_INFO" in tree
+        assert "PRODUCT_METADATA" in tree
+        assert "MIN_MAX_RADIANCE" in tree
+        assert "MIN_MAX_PIXEL_VALUE" in tree
+        assert "PRODUCT_PARAMETERS" in tree
+        assert "CORRECTIONS_APPLIED" in tree
+        assert "PROJECTION_PARAMETERS" in tree
+        assert "UTM_PARAMETERS" in tree
 
 
 class Landsat5MTL2ParserTest(unittest.TestCase):
     def test_load(self):
         tree = gaip.load_mtl(L5_MTL2)
         assert len(tree) == 10
-        assert tree.has_key("METADATA_FILE_INFO")
-        assert tree.has_key("PRODUCT_METADATA")
-        assert tree.has_key("MIN_MAX_RADIANCE")
-        assert tree.has_key("MIN_MAX_REFLECTANCE")
-        assert tree.has_key("MIN_MAX_PIXEL_VALUE")
-        assert tree.has_key("PRODUCT_PARAMETERS")
-        assert tree.has_key("PROJECTION_PARAMETERS")
-        assert tree.has_key("IMAGE_ATTRIBUTES")
-        assert tree.has_key("THERMAL_CONSTANTS")
+        assert "METADATA_FILE_INFO" in tree
+        assert "PRODUCT_METADATA" in tree
+        assert "MIN_MAX_RADIANCE" in tree
+        assert "MIN_MAX_REFLECTANCE" in tree
+        assert "MIN_MAX_PIXEL_VALUE" in tree
+        assert "PRODUCT_PARAMETERS" in tree
+        assert "PROJECTION_PARAMETERS" in tree
+        assert "IMAGE_ATTRIBUTES" in tree
+        assert "THERMAL_CONSTANTS" in tree
 
 
 class Landsat7MTL1ParserTest(unittest.TestCase):
     def test_load(self):
         tree = gaip.load_mtl(L7_MTL1)
         assert len(tree) == 8
-        assert tree.has_key("METADATA_FILE_INFO")
-        assert tree.has_key("PRODUCT_METADATA")
-        assert tree.has_key("MIN_MAX_RADIANCE")
-        assert tree.has_key("MIN_MAX_PIXEL_VALUE")
-        assert tree.has_key("PRODUCT_PARAMETERS")
-        assert tree.has_key("CORRECTIONS_APPLIED")
-        assert tree.has_key("PROJECTION_PARAMETERS")
-        assert tree.has_key("UTM_PARAMETERS")
+        assert "METADATA_FILE_INFO" in tree
+        assert "PRODUCT_METADATA" in tree
+        assert "MIN_MAX_RADIANCE" in tree
+        assert "MIN_MAX_PIXEL_VALUE" in tree
+        assert "PRODUCT_PARAMETERS" in tree
+        assert "CORRECTIONS_APPLIED" in tree
+        assert "PROJECTION_PARAMETERS" in tree
+        assert "UTM_PARAMETERS" in tree
 
 
 class Landsat7MTL2ParserTest(unittest.TestCase):
     def test_load(self):
         tree = gaip.load_mtl(L7_MTL2)
         assert len(tree) == 10
-        assert tree.has_key("METADATA_FILE_INFO")
-        assert tree.has_key("PRODUCT_METADATA")
-        assert tree.has_key("MIN_MAX_RADIANCE")
-        assert tree.has_key("MIN_MAX_REFLECTANCE")
-        assert tree.has_key("MIN_MAX_PIXEL_VALUE")
-        assert tree.has_key("PRODUCT_PARAMETERS")
-        assert tree.has_key("PROJECTION_PARAMETERS")
-        assert tree.has_key("IMAGE_ATTRIBUTES")
-        assert tree.has_key("THERMAL_CONSTANTS")
+        assert "METADATA_FILE_INFO" in tree
+        assert "PRODUCT_METADATA" in tree
+        assert "MIN_MAX_RADIANCE" in tree
+        assert "MIN_MAX_REFLECTANCE" in tree
+        assert "MIN_MAX_PIXEL_VALUE" in tree
+        assert "PRODUCT_PARAMETERS" in tree
+        assert "PROJECTION_PARAMETERS" in tree
+        assert "IMAGE_ATTRIBUTES" in tree
+        assert "THERMAL_CONSTANTS" in tree
 
 
 class Landsat8MTL1ParserTest(unittest.TestCase):
     def test_load(self):
         tree = gaip.load_mtl(L8_MTL1)
         assert len(tree) == 9
-        assert tree.has_key("METADATA_FILE_INFO")
-        assert tree.has_key("PRODUCT_METADATA")
-        assert tree.has_key("IMAGE_ATTRIBUTES")
-        assert tree.has_key("MIN_MAX_RADIANCE")
-        assert tree.has_key("MIN_MAX_REFLECTANCE")
-        assert tree.has_key("MIN_MAX_PIXEL_VALUE")
-        assert tree.has_key("RADIOMETRIC_RESCALING")
-        assert tree.has_key("TIRS_THERMAL_CONSTANTS")
-        assert tree.has_key("PROJECTION_PARAMETERS")
+        assert "METADATA_FILE_INFO" in tree
+        assert "PRODUCT_METADATA" in tree
+        assert "IMAGE_ATTRIBUTES" in tree
+        assert "MIN_MAX_RADIANCE" in tree
+        assert "MIN_MAX_REFLECTANCE" in tree
+        assert "MIN_MAX_PIXEL_VALUE" in tree
+        assert "RADIOMETRIC_RESCALING" in tree
+        assert "TIRS_THERMAL_CONSTANTS" in tree
+        assert "PROJECTION_PARAMETERS" in tree
 
 
 class Landsat8MTL2ParserTest(unittest.TestCase):
     def test_load(self):
         tree = gaip.load_mtl(L8_MTL2)
         assert len(tree) == 9
-        assert tree.has_key("METADATA_FILE_INFO")
-        assert tree.has_key("PRODUCT_METADATA")
-        assert tree.has_key("IMAGE_ATTRIBUTES")
-        assert tree.has_key("MIN_MAX_RADIANCE")
-        assert tree.has_key("MIN_MAX_REFLECTANCE")
-        assert tree.has_key("MIN_MAX_PIXEL_VALUE")
-        assert tree.has_key("RADIOMETRIC_RESCALING")
-        assert tree.has_key("TIRS_THERMAL_CONSTANTS")
-        assert tree.has_key("PROJECTION_PARAMETERS")
+        assert "METADATA_FILE_INFO" in tree
+        assert "PRODUCT_METADATA" in tree
+        assert "IMAGE_ATTRIBUTES" in tree
+        assert "MIN_MAX_RADIANCE" in tree
+        assert "MIN_MAX_REFLECTANCE" in tree
+        assert "MIN_MAX_PIXEL_VALUE" in tree
+        assert "RADIOMETRIC_RESCALING" in tree
+        assert "TIRS_THERMAL_CONSTANTS" in tree
+        assert "PROJECTION_PARAMETERS" in tree
 
 
 if __name__ == "__main__":

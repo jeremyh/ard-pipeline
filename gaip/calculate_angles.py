@@ -1,25 +1,26 @@
 #!/usr/bin/env python
 
-"""
-Satellite and Solar angle claculations over a 2D grid.
-"""
+"""Satellite and Solar angle claculations over a 2D grid."""
 
 import math
-import ephem
-import numpy as np
-import h5py
-import pandas
 
-from osgeo import osr
+import ephem
+import h5py
+import numpy as np
+import pandas as pd
 from eotools import tiling
-from gaip import gridded_geo_box
-from gaip import load_tle
-from gaip import angle
-from gaip import set_satmod
-from gaip import set_times
-from gaip import dataset_compression_kwargs
-from gaip import attach_image_attributes
-from gaip import attach_table_attributes
+from osgeo import osr
+
+from gaip import (
+    angle,
+    attach_image_attributes,
+    attach_table_attributes,
+    dataset_compression_kwargs,
+    gridded_geo_box,
+    load_tle,
+    set_satmod,
+    set_times,
+)
 
 CRS = "EPSG:4326"
 
@@ -34,8 +35,7 @@ def _calculate_angles(
     max_angle=9.0,
     tle_path=None,
 ):
-    """
-    A private wrapper for dealing with the internal custom workings of the
+    """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
     lon_dset_name = "longitude"
@@ -75,8 +75,7 @@ def _calculate_angles(
 
 
 def create_centreline_dataset(geobox, y, x, n):
-    """
-    Creates the centre line dataset.
+    """Creates the centre line dataset.
 
     :param geobox:
         An instance of a GriddedGeoBox object.
@@ -132,10 +131,10 @@ def create_centreline_dataset(geobox, y, x, n):
 
 
 def first_and_last(array):
-    """
-    Utility to find indices of first and last true value in an array.
+    """Utility to find indices of first and last true value in an array.
 
     Example:
+    -------
                             0 1 2 3 4 5 6 7 8 9
                                 |       |
         >>> first_and_last([0,0,1,1,0,1,1,0,0,0])
@@ -148,8 +147,7 @@ def first_and_last(array):
 
 
 def swathe_edges(threshold, array):
-    """
-    Find left and right edges of swathe.
+    """Find left and right edges of swathe.
 
     Takes raster array, compares values against threshold, and returns a pair
     of vectors which represent the indices of the first and last pixel in
@@ -165,8 +163,7 @@ def swathe_edges(threshold, array):
 def create_boxline_coordinator(
     view_angle_dataset, line, ncentre, npoints, max_angle=9.0
 ):
-    """
-    Creates the boxline and coordinator datasets.
+    """Creates the boxline and coordinator datasets.
 
     :param view_angle_dataset:
         A `NumPy` or `NumPy` like dataset that allows indexing
@@ -233,7 +230,7 @@ def create_boxline_coordinator(
     np.maximum(istart, start_col, out=start_col)
     np.minimum(iend, end_col, out=end_col)
 
-    df = pandas.DataFrame({"line": line, "bisection": ncentre, "npoints": npoints})
+    df = pd.DataFrame({"line": line, "bisection": ncentre, "npoints": npoints})
 
     # do we have a hit with the satellite track falling within the granule
     if npoints[0] > 0.5:
@@ -326,8 +323,7 @@ def create_boxline_coordinator(
 
 
 def calculate_julian_century(datetime):
-    """
-    Given a datetime object return the julian century from the 2000 epoch.
+    """Given a datetime object return the julian century from the 2000 epoch.
 
     :param datetime:
         A datetime object containing the date to be converted to a
@@ -337,13 +333,12 @@ def calculate_julian_century(datetime):
         A floating point value representing the Julian centuries since
         the 2000/01/01 12:00 epoch.
     """
-
     # Convert the scene timestamp to a julian date
     d = ephem.date(datetime)
     jdate = ephem.julian_date(d)
 
     # Get the J2000 epoch
-    epoch = ephem.date((2000, 01, 01, 12.00))
+    epoch = ephem.date((2000, 1, 1, 12.00))
     j2_epoch = ephem.julian_date(epoch)
 
     # Note:
@@ -358,8 +353,7 @@ def calculate_julian_century(datetime):
 
 
 def setup_spheroid(proj_wkt):
-    """
-    Given a WKT projection string, determine the spheroid paramaters
+    """Given a WKT projection string, determine the spheroid paramaters
     that will be used in calcultating the angle grids.
 
     :param proj_wkt:
@@ -393,7 +387,7 @@ def setup_spheroid(proj_wkt):
     dset = np.zeros(1, dtype=dtype)
 
     # Initialise the spheroid array
-    spheroid = np.zeros((4))
+    np.zeros(4)
 
     # Define the spatial reference
     sr = osr.SpatialReference()
@@ -418,8 +412,7 @@ def setup_spheroid(proj_wkt):
 
 
 def setup_orbital_elements(ephemeral, datetime, acquisition):
-    """
-    Given an ephemeral object and a datetime object, calculate the
+    """Given an ephemeral object and a datetime object, calculate the
     satellite orbital paramaters used for calculating the angle grids.
 
     :param ephemeral:
@@ -486,8 +479,7 @@ def setup_orbital_elements(ephemeral, datetime, acquisition):
 
 
 def setup_smodel(centre_lon, centre_lat, spheroid, orbital_elements):
-    """
-    Setup the satellite model.
+    """Setup the satellite model.
     A wrapper routine for the `set_satmod` Fortran module built via
     ``F2Py``.
 
@@ -563,8 +555,7 @@ def setup_smodel(centre_lon, centre_lat, spheroid, orbital_elements):
 
 
 def setup_times(ymin, ymax, spheroid, orbital_elements, smodel, npoints=12):
-    """
-    Setup the satellite track times.
+    """Setup the satellite track times.
     A wrapper routine for the ``set_times`` Fortran module built via
     ``F2Py``.
 
@@ -652,8 +643,7 @@ def setup_times(ymin, ymax, spheroid, orbital_elements, smodel, npoints=12):
 def _store_parameter_settings(
     fid, spheriod, orbital_elements, satellite_model, satellite_track, params
 ):
-    """
-    An internal function for storing the parameter settings for the
+    """An internal function for storing the parameter settings for the
     calculate_angles workflow.
     """
     group = fid.create_group("parameters")
@@ -705,8 +695,7 @@ def calculate_angles(
     max_angle=9.0,
     tle_path=None,
 ):
-    """
-    Calculate the satellite view, satellite azimuth, solar zenith,
+    """Calculate the satellite view, satellite azimuth, solar zenith,
     solar azimuth, and relative aziumth angle grids, as well as the
     time grid. All grids are output as float32 ENVI files.
     A wrapper routine for the ``angle_all`` Fortran module built via

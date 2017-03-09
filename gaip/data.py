@@ -1,26 +1,25 @@
-"""
-Data access functions
----------------------
+"""Data access functions
+---------------------.
 """
 
-import subprocess
+import os
+from os.path import join as pjoin
+
 import numpy as np
 import rasterio
-import gaip
-import os
-
 from osgeo import gdal
 from rasterio import crs
-from rasterio.warp import reproject
-from rasterio.warp import RESAMPLING
-from os.path import join as pjoin
+from rasterio.warp import RESAMPLING, reproject
+
+import gaip
 
 
 def get_pixel(filename, lonlat, band=1):
     """Return a pixel from `filename` at the longitude and latitude given
-    by the tuple `lonlat`. Optionally, the `band` can be specified."""
+    by the tuple `lonlat`. Optionally, the `band` can be specified.
+    """
     with rasterio.open(filename) as src:
-        x, y = [int(v) for v in ~src.affine * lonlat]
+        x, y = (int(v) for v in ~src.affine * lonlat)
         if isinstance(band, list):
             data = src.read(band, window=((y, y + 1), (x, x + 1))).ravel()
         else:
@@ -29,13 +28,12 @@ def get_pixel(filename, lonlat, band=1):
 
 
 def no_data(acq):
-    """
-    Read the supplied acquisition's no data value and return to caller.
+    """Read the supplied acquisition's no data value and return to caller.
     The parameter `acq` should behave like a `gaip.Acquisition` object.
     """
     dirname = acq.dir_name
     filename = acq.file_name
-    with rasterio.open(pjoin(dirname, filename), 'r') as fo:
+    with rasterio.open(pjoin(dirname, filename), "r") as fo:
         nodata_list = fo.nodatavals
         # currently we don't support multi-band GeoTiffs
         # idx = acq.band_num-1
@@ -43,10 +41,11 @@ def no_data(acq):
         idx = 0
         return nodata_list[idx]
 
-def data(acq, out=None, window=None, masked=False, apply_gain_offset=False,
-         out_no_data=-999):
-    """
-    Read the supplied acquisition's data into the `out` array if provided,
+
+def data(
+    acq, out=None, window=None, masked=False, apply_gain_offset=False, out_no_data=-999
+):
+    """Read the supplied acquisition's data into the `out` array if provided,
     otherwise return a new `numpy.array` containing the data.
     The parameter `acq` should behave like a `gaip.Acquisition` object.
     The parameter `window` defines a subset ((ystart, yend), (xstart, xend))
@@ -56,7 +55,7 @@ def data(acq, out=None, window=None, masked=False, apply_gain_offset=False,
     """
     dirname = acq.dir_name
     filename = acq.file_name
-    with rasterio.open(pjoin(dirname, filename), 'r') as fo:
+    with rasterio.open(pjoin(dirname, filename), "r") as fo:
         # convert to at sensor radiance as required
         if apply_gain_offset:
             if out is None:
@@ -79,8 +78,7 @@ def data(acq, out=None, window=None, masked=False, apply_gain_offset=False,
 
 
 def data_and_box(acq, out=None, window=None, masked=False):
-    """
-    Return a tuple comprising the `numpy.array` containing the data of
+    """Return a tuple comprising the `numpy.array` containing the data of
     the acquisition `acq` together with the associated GriddedGeoBox describing
     the data extent.
     The parameter `acq` should behave like a `gaip.Acquisition` object.
@@ -93,7 +91,7 @@ def data_and_box(acq, out=None, window=None, masked=False):
     """
     dirname = acq.dir_name
     filename = acq.file_name
-    with rasterio.open(pjoin(dirname, filename), 'r') as fo:
+    with rasterio.open(pjoin(dirname, filename), "r") as fo:
         box = gaip.GriddedGeoBox.from_dataset(fo)
         if window is not None:
             rows = window[0][1] - window[0][0]
@@ -102,24 +100,25 @@ def data_and_box(acq, out=None, window=None, masked=False):
             res = fo.res
             # Get the new UL co-ordinates of the array
             ul_x, ul_y = fo.affine * (window[1][0], window[0][0])
-            box = gaip.GriddedGeoBox(shape=(rows, cols), origin=(ul_x, ul_y),
-                                     pixelsize=res, crs=prj)
+            box = gaip.GriddedGeoBox(
+                shape=(rows, cols), origin=(ul_x, ul_y), pixelsize=res, crs=prj
+            )
         return (fo.read(1, out=out, window=window, masked=masked), box)
 
 
 def gridded_geo_box(acq):
     """Return a GriddedGeoBox instance representing the spatial extent and
     grid associated with the acquisition `acq`.
-    The parameter `acq` should behave like a `gaip.Acquisition` object."""
+    The parameter `acq` should behave like a `gaip.Acquisition` object.
+    """
     dirname = acq.dir_name
     filename = acq.file_name
-    with rasterio.open(pjoin(dirname, filename), 'r') as fo:
+    with rasterio.open(pjoin(dirname, filename), "r") as fo:
         return gaip.GriddedGeoBox.from_dataset(fo)
 
 
 def select_acquisitions(acqs_list, fn=(lambda acq: True)):
-    """
-    Given a list of acquisitions, apply the supplied fn to select the
+    """Given a list of acquisitions, apply the supplied fn to select the
     desired acquisitions.
     """
     acqs = [acq for acq in acqs_list if fn(acq)]
@@ -127,8 +126,7 @@ def select_acquisitions(acqs_list, fn=(lambda acq: True)):
 
 
 def stack_data(acqs_list, fn=(lambda acq: True), window=None, masked=False):
-    """
-    Given a list of acquisitions, return the data from each acquisition
+    """Given a list of acquisitions, return the data from each acquisition
     collected in a 3D numpy array (first index is the acquisition number).
     If window is defined, then the subset contained within the window is
     returned along with a GriddedGeoBox instance detailing the
@@ -176,10 +174,17 @@ def stack_data(acqs_list, fn=(lambda acq: True), window=None, masked=False):
     return stack, geo_box
 
 
-def write_img(array, filename, fmt='ENVI', geobox=None, nodata=None,
-              compress=None, tags=None, options=None):
-    """
-    Writes a 2D/3D image to disk using rasterio.
+def write_img(
+    array,
+    filename,
+    fmt="ENVI",
+    geobox=None,
+    nodata=None,
+    compress=None,
+    tags=None,
+    options=None,
+):
+    """Writes a 2D/3D image to disk using rasterio.
 
     :param array:
         A 2D/3D NumPy array.
@@ -211,9 +216,9 @@ def write_img(array, filename, fmt='ENVI', geobox=None, nodata=None,
     dtype = array.dtype.name
 
     # Check for excluded datatypes
-    excluded_dtypes = ['int64', 'int8', 'uint64']
+    excluded_dtypes = ["int64", "int8", "uint64"]
     if dtype in excluded_dtypes:
-        msg = "Datatype not supported: {dt}".format(dt=dtype)
+        msg = f"Datatype not supported: {dtype}"
         raise TypeError(msg)
 
     ndims = array.ndim
@@ -229,8 +234,8 @@ def write_img(array, filename, fmt='ENVI', geobox=None, nodata=None,
         lines = dims[1]
         bands = dims[0]
     else:
-        print 'Input array is not of 2 or 3 dimensions!!!'
-        err = 'Array dimensions: {dims}'.format(dims=ndims)
+        print("Input array is not of 2 or 3 dimensions!!!")
+        err = f"Array dimensions: {ndims}"
         raise IndexError(err)
 
     # If we have a geobox, then retrieve the geotransform and projection
@@ -241,36 +246,40 @@ def write_img(array, filename, fmt='ENVI', geobox=None, nodata=None,
         transform = None
         projection = None
 
-    kwargs = {'count': bands,
-              'width': samples,
-              'height': lines,
-              'crs': projection,
-              'transform': transform,
-              'dtype': dtype,
-              'driver': fmt,
-              'nodata': nodata}
+    kwargs = {
+        "count": bands,
+        "width": samples,
+        "height": lines,
+        "crs": projection,
+        "transform": transform,
+        "dtype": dtype,
+        "driver": fmt,
+        "nodata": nodata,
+    }
 
     # compression predictor choices
-    predictor = {'int8': 2,
-                 'uint8': 2,
-                 'int16': 2,
-                 'uint16': 2,
-                 'int32': 2,
-                 'uint32': 2,
-                 'int64': 2,
-                 'uint64': 2,
-                 'float32': 3,
-                 'float64': 3}
+    predictor = {
+        "int8": 2,
+        "uint8": 2,
+        "int16": 2,
+        "uint16": 2,
+        "int32": 2,
+        "uint32": 2,
+        "int64": 2,
+        "uint64": 2,
+        "float32": 3,
+        "float64": 3,
+    }
 
-    if fmt == 'GTiff' and compress is not None:
-        kwargs['compress'] = compress
-        kwargs['predictor'] = predictor[dtype]
+    if fmt == "GTiff" and compress is not None:
+        kwargs["compress"] = compress
+        kwargs["predictor"] = predictor[dtype]
 
     if options is not None:
         for key in options:
             kwargs[key] = options[key]
 
-    with rasterio.open(filename, 'w', **kwargs) as outds:
+    with rasterio.open(filename, "w", **kwargs) as outds:
         if bands == 1:
             outds.write(array, 1)
         else:
@@ -281,8 +290,7 @@ def write_img(array, filename, fmt='ENVI', geobox=None, nodata=None,
 
 
 def read_subset(fname, ul_xy, ur_xy, lr_xy, ll_xy, bands=1):
-    """
-    Return a 2D or 3D NumPy array subsetted to the given bounding
+    """Return a 2D or 3D NumPy array subsetted to the given bounding
     extents.
 
     :param fname:
@@ -331,10 +339,8 @@ def read_subset(fname, ul_xy, ur_xy, lr_xy, ll_xy, bands=1):
         i.e. xend = 270 + 1
         to account for Python's [inclusive, exclusive) index notation.
     """
-
     # Open the file
     with rasterio.open(fname) as src:
-
         # Get the inverse transform of the affine co-ordinate reference
         inv = ~src.affine
 
@@ -343,10 +349,10 @@ def read_subset(fname, ul_xy, ur_xy, lr_xy, ll_xy, bands=1):
         rows = src.height
 
         # Convert each map co-ordinate to image/array co-ordinates
-        img_ul_x, img_ul_y = [int(v) for v in inv * ul_xy]
-        img_ur_x, img_ur_y = [int(v) for v in inv * ur_xy]
-        img_lr_x, img_lr_y = [int(v) for v in inv * lr_xy]
-        img_ll_x, img_ll_y = [int(v) for v in inv * ll_xy]
+        img_ul_x, img_ul_y = (int(v) for v in inv * ul_xy)
+        img_ur_x, img_ur_y = (int(v) for v in inv * ur_xy)
+        img_lr_x, img_lr_y = (int(v) for v in inv * lr_xy)
+        img_ll_x, img_ll_y = (int(v) for v in inv * ll_xy)
 
         # Calculate the min and max array extents
         # The ending array extents have +1 to account for Python's
@@ -357,10 +363,11 @@ def read_subset(fname, ul_xy, ur_xy, lr_xy, ll_xy, bands=1):
         yend = max(img_ll_y, img_lr_y) + 1
 
         # Check for out of bounds
-        if (((xstart < 0) or (ystart < 0)) or
-            ((xend -1 > cols) or (yend -1 > rows))):
-            msg = ("Error! Attempt to read a subset that is outside of the"
-                   "image domain. Index: ({ys}, {ye}), ({xs}, {xe}))")
+        if ((xstart < 0) or (ystart < 0)) or ((xend - 1 > cols) or (yend - 1 > rows)):
+            msg = (
+                "Error! Attempt to read a subset that is outside of the"
+                "image domain. Index: ({ys}, {ye}), ({xs}, {xe}))"
+            )
             msg = msg.format(ys=ystart, ye=yend, xs=xstart, xe=xend)
             raise IndexError(msg)
 
@@ -376,15 +383,15 @@ def read_subset(fname, ul_xy, ur_xy, lr_xy, ll_xy, bands=1):
         # Get the x & y pixel resolution
         res = src.res
 
-        geobox = gaip.GriddedGeoBox(shape=subs.shape, origin=(ul_x, ul_y),
-                                    pixelsize=res, crs=prj)
+        geobox = gaip.GriddedGeoBox(
+            shape=subs.shape, origin=(ul_x, ul_y), pixelsize=res, crs=prj
+        )
 
     return (subs, geobox)
 
 
 def read_img(fname):
-    """
-    A small and simple routine to read a GDAL compliant image.
+    """A small and simple routine to read a GDAL compliant image.
     This is only intended for reading the raw file into a NumPy memory
     variable.
     Largely used in the unittesting suite.
@@ -397,7 +404,6 @@ def read_img(fname):
         A NumPy array containing the full dimensions and specific
         datatype of the image represented on disk.
     """
-
     ds = gdal.Open(fname)
 
     img = ds.ReadAsArray()
@@ -408,8 +414,7 @@ def read_img(fname):
 
 
 def find_file(path, filename):
-    """
-    A simple routine for checking existance of files on disk.
+    """A simple routine for checking existance of files on disk.
     No error catching, it'll bail out of the main level program
     as it is designed for the unittests.
 
@@ -429,14 +434,14 @@ def find_file(path, filename):
     if os.path.isfile(fname):
         return fname
     else:
-        err = "Error! file not found: {filename}".format(filename=fname)
-        raise IOError(err)
+        err = f"Error! file not found: {fname}"
+        raise OSError(err)
 
 
-def reproject_file_to_array(src_filename, src_band=1, dst_geobox=None,
-                            resampling=RESAMPLING.nearest):
-    """
-    Given an image on file, reproject to the desired coordinate
+def reproject_file_to_array(
+    src_filename, src_band=1, dst_geobox=None, resampling=RESAMPLING.nearest
+):
+    """Given an image on file, reproject to the desired coordinate
     reference system.
 
     :param src_filename:
@@ -460,9 +465,8 @@ def reproject_file_to_array(src_filename, src_band=1, dst_geobox=None,
     :return:
         A NumPy array containing the reprojected result.
     """
-
     if not isinstance(dst_geobox, gaip.GriddedGeoBox):
-        msg = 'dst_geobox must be an instance of a GriddedGeoBox! Type: {}'
+        msg = "dst_geobox must be an instance of a GriddedGeoBox! Type: {}"
         msg = msg.format(type(dst_geobox))
         raise TypeError(msg)
 
@@ -476,16 +480,21 @@ def reproject_file_to_array(src_filename, src_band=1, dst_geobox=None,
         # Get the rasterio proj4 styled dict
         prj = crs.from_string(dst_geobox.crs.ExportToProj4())
 
-        reproject(rio_band, dst_arr, dst_transform=dst_geobox.affine,
-                  dst_crs=prj, resampling=resampling)
+        reproject(
+            rio_band,
+            dst_arr,
+            dst_transform=dst_geobox.affine,
+            dst_crs=prj,
+            resampling=resampling,
+        )
 
     return dst_arr
 
 
-def reproject_img_to_img(src_img, src_geobox, dst_geobox,
-                         resampling=RESAMPLING.nearest):
-    """
-    Reprojects an image/array to the desired co-ordinate reference system.
+def reproject_img_to_img(
+    src_img, src_geobox, dst_geobox, resampling=RESAMPLING.nearest
+):
+    """Reprojects an image/array to the desired co-ordinate reference system.
 
     :param src_img:
         A NumPy array containing the source image.
@@ -507,14 +516,13 @@ def reproject_img_to_img(src_img, src_geobox, dst_geobox,
     :return:
         A NumPy array containing the reprojected result.
     """
-
     if not isinstance(dst_geobox, gaip.GriddedGeoBox):
-        msg = 'dst_geobox must be an instance of a GriddedGeoBox! Type: {}'
+        msg = "dst_geobox must be an instance of a GriddedGeoBox! Type: {}"
         msg = msg.format(type(dst_geobox))
         raise TypeError(msg)
 
     if not isinstance(src_geobox, gaip.GriddedGeoBox):
-        msg = 'src_geobox must be an instance of a GriddedGeoBox! Type: {}'
+        msg = "src_geobox must be an instance of a GriddedGeoBox! Type: {}"
         msg = msg.format(type(src_geobox))
         raise TypeError(msg)
 
@@ -529,16 +537,21 @@ def reproject_img_to_img(src_img, src_geobox, dst_geobox,
     # Define the output NumPy array
     dst_arr = np.zeros(dst_geobox.shape, dtype=src_img.dtype)
 
-    reproject(src_img, dst_arr, src_transform=src_trans,
-              src_crs=src_prj, dst_transform=dst_trans, dst_crs=dst_prj,
-              resampling=resampling)
+    reproject(
+        src_img,
+        dst_arr,
+        src_transform=src_trans,
+        src_crs=src_prj,
+        dst_transform=dst_trans,
+        dst_crs=dst_prj,
+        resampling=resampling,
+    )
 
     return dst_arr
 
 
 def as_array(array, dtype, transpose=False):
-    """
-    Given an array and dtype, array will be converted to dtype if
+    """Given an array and dtype, array will be converted to dtype if
     and only if array.dtype != dtype. If transpose is set to True
     then array will be transposed before returning.
 
@@ -574,8 +587,7 @@ def as_array(array, dtype, transpose=False):
 
 
 def read_meatadata_tags(fname, bands):
-    """
-    Retrieves the metadata tags for a list of bands from a `GDAL`
+    """Retrieves the metadata tags for a list of bands from a `GDAL`
     compliant dataset.
     """
     with rasterio.open(fname) as ds:

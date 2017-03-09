@@ -1,1 +1,1 @@
-from nbar import *
+from .nbar import *
