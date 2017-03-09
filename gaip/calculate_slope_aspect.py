@@ -15,9 +15,7 @@ from gaip import (
 )
 
 
-def _slope_aspect_arrays_wrapper(
-    acquisition, dsm_fname, margins, out_fname, compression="lzf"
-):
+def _slope_aspect_arrays(acquisition, dsm_fname, margins, out_fname, compression="lzf"):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
