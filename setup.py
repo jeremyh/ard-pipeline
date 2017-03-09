@@ -1,6 +1,9 @@
 """Setup gaip."""
 
+
 from numpy.distutils.core import setup
+
+import versioneer
 
 
 def configuration(parent_package="", top_path=None):
@@ -14,11 +17,12 @@ def configuration(parent_package="", top_path=None):
     )
 
     config.add_subpackage("gaip")
-    # config.get_version('gaip/version.py') # sets config.version
     return config
 
 
 setup(
     name="gaip",
     configuration=configuration,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
 )
