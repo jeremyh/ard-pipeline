@@ -8,8 +8,9 @@ import h5py
 import osr
 import rasterio as rio
 from affine import Affine
-from eotools.bodies.bodies import earth
-from eotools.bodies.vincenty import vinc_dist
+
+from gaip import setup_spheroid
+from gaip.vincenty import vinc_dist
 
 # Landsat tranforms have very small determinants
 # the following setting is required, and there is a
@@ -362,16 +363,28 @@ class GriddedGeoBox:
 
         (x, y) = xy
 
+        _, shperoid = setup_spheroid(self.crs.ExportToWkt())
+
         (lon1, lat1) = self.affine * (x, y + 0.5)
         (lon2, lat2) = self.affine * (x + 1, y + 0.5)
         x_size, _az_to, _az_from = vinc_dist(
-            earth.F, earth.A, radians(lat1), radians(lon1), radians(lat2), radians(lon2)
+            shperoid[1],
+            shperoid[0],
+            radians(lat1),
+            radians(lon1),
+            radians(lat2),
+            radians(lon2),
         )
 
         (lon1, lat1) = self.affine * (x + 0.5, y)
         (lon2, lat2) = self.affine * (x + 0.5, y + 1)
         y_size, _az_to, _az_from = vinc_dist(
-            earth.F, earth.A, radians(lat1), radians(lon1), radians(lat2), radians(lon2)
+            shperoid[1],
+            shperoid[0],
+            radians(lat1),
+            radians(lon1),
+            radians(lat2),
+            radians(lon2),
         )
 
         return (x_size, y_size)
