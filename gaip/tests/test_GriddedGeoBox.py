@@ -3,10 +3,13 @@
 import unittest
 
 import affine
+import gdal
+import h5py
 import rasterio as rio
-from osgeo import gdal, osr
+from osgeo import gdal
 
 from gaip import GriddedGeoBox
+from gaip.tests import unittesting_tools as ut
 
 affine.EPSILON = 1e-9
 affine.EPSILON2 = 1e-18
@@ -26,7 +29,6 @@ class TestGriddedGeoBox(unittest.TestCase):
         origin = (150.0, -34.0)
         corner = (shape[1] * scale + origin[0], origin[1] - shape[0] * scale)
         ggb = GriddedGeoBox(shape, origin)
-        assert ggb is not None
         assert shape == ggb.shape
         assert origin == ggb.origin
         assert corner == ggb.corner
@@ -48,15 +50,12 @@ class TestGriddedGeoBox(unittest.TestCase):
 
         corner = (shape[1] * scale + 150, -34 - shape[0] * scale)
         ggb = GriddedGeoBox(shape, origin, pixelsize=(scale, scale))
-        # print "ggb=%s" % str(ggb)
-        assert ggb is not None
         assert shape == ggb.shape
         assert corner == ggb.corner
 
         # now get UTM equilavent
 
         utm_ggb = ggb.copy(crs="EPSG:32756")
-        # print "utm_ggb=%s" % str(utm_ggb)
 
         self.assertAlmostEqual(utm_ggb.origin[0], 222908.70452156663)
         self.assertAlmostEqual(utm_ggb.origin[1], 6233785.283900621)
@@ -77,220 +76,86 @@ class TestGriddedGeoBox(unittest.TestCase):
         )
 
         ggb = GriddedGeoBox.from_corners(flindersOrigin, flindersCorner)
-        assert ggb is not None
         assert shapeShouldBe == ggb.shape
         self.assertAlmostEqual(originShouldBe[0], ggb.origin[0])
         self.assertAlmostEqual(originShouldBe[1], ggb.origin[1])
         self.assertAlmostEqual(cornerShouldBe[0], ggb.corner[0])
         self.assertAlmostEqual(cornerShouldBe[1], ggb.corner[1])
 
-    def _land_sea_GGB_asserts(self, aGGB):
-        assert aGGB is not None
-        # print "aGGB.origin=",aGGB.origin
-        # print "aGGB.corner=",aGGB.corner
-        # print "aGGB.pixelsize=",aGGB.pixelsize
-        # print "aGGB.shape=",aGGB.shape
-        assert aGGB.origin == (-221573.33728165628, 9850031.808687024)
-        assert aGGB.corner == (1088726.6627183438, 936806.8086870238)
-        # self.assertTrue(aGGB.pixelsize == (25.0, 25.0))
-        assert isinstance(aGGB.crs, osr.SpatialReference)
-
     def test_ggb_from_rio_dataset(self):
-        # get Land/Sea data file for this bounding box
-        utmZone = 56
-        utmDataPath = "/g/data/v10/eoancillarydata/Land_Sea_Rasters/WORLDzone%d.tif" % (
-            utmZone,
-        )
+        img, geobox = ut.create_test_image()
+        kwargs = {
+            "driver": "Memory",
+            "width": img.shape[1],
+            "height": img.shape[0],
+            "count": 1,
+            "transform": geobox.affine,
+            "crs": geobox.crs.ExportToWkt(),
+            "dtype": img.dtype.name,
+        }
 
-        # read the data for the Flinders islet region
-        with rio.open(utmDataPath) as ds:
-            # get the gridded box for the full data extent
-            datasetGGB = GriddedGeoBox.from_dataset(ds)
-            # print
-            # print "For Land/Sea read via rasterio:"
-            self._land_sea_GGB_asserts(datasetGGB)
+        with rio.open("tmp.tif", "w", **kwargs) as ds:
+            new_geobox = GriddedGeoBox.from_rio_dataset(ds)
+
+            self.assrtTrue(new_geobox.affine == geobox.affine)
+            self.assrtTrue(new_geobox.crs.ExportToWkt() == geobox.crs.ExportToWkt())
+            self.assrtTrue(new_geobox.shape == img.shape)
 
     def test_ggb_from_gdal_dataset(self):
-        # get Land/Sea data file for this bounding box
-        utmZone = 56
-        utmDataPath = "/g/data/v10/eoancillarydata/Land_Sea_Rasters/WORLDzone%d.tif" % (
-            utmZone,
-        )
+        img, geobox = ut.create_test_image()
+        drv = gdal.GetDriverByName("MEM")
+        ds = drv.Create("tmp.tif", img.shape[1], img.shape[0], 1, 1)
+        ds.SetGeoTransform(geobox.affine.to_gdal())
+        ds.SetProjection(geobox.crs.ExportToWkt())
 
-        # read the data for the Flinders islet region
-        ds = gdal.Open(utmDataPath)
+        new_geobox = GriddedGeoBox.from_gdal_dataset(ds)
+        self.assrtTrue(new_geobox.affine == geobox.affine)
+        self.assrtTrue(new_geobox.crs.ExportToWkt() == geobox.crs.ExportToWkt())
+        self.assrtTrue(new_geobox.shape == img.shape)
+        drv = None
+        ds = None
 
-        # get the gridded box for the full data extent
-        datasetGGB = GriddedGeoBox.from_dataset(ds)
-        # print
-        # print "For Land/Sea read via GDAL:"
-        self._land_sea_GGB_asserts(datasetGGB)
+    def test_ggb_from_h5_dataset(self):
+        img, geobox = ut.create_test_image()
+        with h5py.File("tmp.h5", driver="core", backing_store=False) as fid:
+            ds = fid.create_dataset("test", data=img)
+            ds.attrs["geotransform"] = geobox.affine.to_gdal()
+            ds.attrs["crs_wkt"] = geobox.crs.ExportToWkt()
 
-    def no_test_ggb_subsets(self):
-        # get Land/Sea data file for this bounding box
-        utmZone = 56
-        utmDataPath = "/g/data/v10/eoancillarydata/Land_Sea_Rasters/WORLDzone%d.tif" % (
-            utmZone,
-        )
-
-        # read the data for the Flinders islet region
-        with rio.open(utmDataPath) as ds:
-            # get the gridded box for the full data extent
-            GriddedGeoBox.from_dataset(ds)
-
-            getFlindersIsletGGB()
-            scale = 0.00025
-            shapeYX = (3, 3)
-            origin = (150.0, -34.0)
-            corner = (shapeYX[1] * scale + origin[0], origin[1] - shapeYX[0] * scale)
-            ggb = GriddedGeoBox(shapeYX, origin)
-            assert ggb is not None
-            assert shapeYX == ggb.shape
-            assert origin == ggb.origin
-            assert corner == ggb.corner
-
-    def no_test_ggb_copy_and_rereference(self):
-        # get Land/Sea data file for this bounding box
-        utmZone = 56
-        utmDataPath = "/g/data/v10/eoancillarydata/Land_Sea_Rasters/WORLDzone%d.tif" % (
-            utmZone,
-        )
-
-        # read the data for the Flinders islet region
-        with rio.open(utmDataPath) as ds:
-            # get the gridded box for the full data extent
-            datasetGGB = GriddedGeoBox.from_dataset(ds)
-
-            # dataset will be UTM
-
-            # print datasetGGB
-
-            # copy to WSG84
-
-            datasetGGB.copy(crs="EPSG:4326")
-            # print newGGB
-
-    # TODO: define this test -- currently there are projection problems
-    def no_test_ggb_subsets(self):
-        # get Land/Sea data file for this bounding box
-        utmZone = 56
-        utmDataPath = "/g/data/v10/eoancillarydata/Land_Sea_Rasters/WORLDzone%d.tif" % (
-            utmZone,
-        )
-
-        # read the data for the Flinders islet region
-        with rio.open(utmDataPath) as ds:
-            # get the gridded box for the full data extent
-            datasetGGB = GriddedGeoBox.from_dataset(ds)
-
-            flindersGGB = getFlindersIsletGGB()
-
-            window = datasetGGB.window(flindersGGB)
-            print("window=", window)
-
-            windowShape = (window[1][1] - window[1][0], window[0][1] - window[0][0])
-            print(windowShape)
-
-            # transform the origin of the window
-
-            windowOriginXY = (window[1][0], window[0][0])
-            print("windowOriginXY=", windowOriginXY)
-
-            windowOriginUTM = datasetGGB.affine * windowOriginXY
-            print("windowOriginUTM=", windowOriginUTM)
-
-            utm2wgs84 = osr.CoordinateTransformation(datasetGGB.crs, flindersGGB.crs)
-
-            windowOrigin = utm2wgs84.TransformPoint(
-                windowOriginUTM[0], windowOriginUTM[1]
-            )
-            print("windowOrigin=", windowOrigin)
-
-            flindersOrigin = (150.927659, -34.453309)
-            print("flindersOrigin=", flindersOrigin)
-
-            diff = (
-                flindersOrigin[0] - windowOrigin[0],
-                flindersOrigin[1] - windowOrigin[1],
-            )
-            print("diff=", diff)
-
-            wgs842utm = osr.CoordinateTransformation(flindersGGB.crs, datasetGGB.crs)
-
-            (xUtm, yUtm, zzz) = wgs842utm.TransformPoint(
-                flindersOrigin[0], flindersOrigin[1]
-            )
-
-            (xWgs84, yWgs84, zzz) = utm2wgs84.TransformPoint(xUtm, yUtm)
-
-            print("(xUtm, yUtm)=    ", (xUtm, yUtm))
-            print("(xWgs84, yWgs84)=", (xWgs84, yWgs84))
-
-            if not windowShape == flindersGGB.shape:
-                self.fail(f"{windowShape} == {flindersGGB.shape}")
+            new_geobox = GriddedGeoBox.from_h5_dataset(ds)
+            self.assrtTrue(new_geobox.affine == geobox.affine)
+            self.assrtTrue(new_geobox.crs.ExportToWkt() == geobox.crs.ExportToWkt())
+            self.assrtTrue(new_geobox.shape == img.shape)
 
     def test_convert_coordinate_to_map(self):
         """Test that an input image/array co-ordinate is correctly
         converted to a map co-cordinate.
         Simple case: The first pixel.
         """
-        # get Land/Sea data file for this bounding box
-        utmZone = 56
-        utmDataPath = "/g/data/v10/eoancillarydata/Land_Sea_Rasters/WORLDzone%d.tif" % (
-            utmZone,
-        )
-
-        # read the data for the Flinders islet region
-        with rio.open(utmDataPath) as ds:
-            # get the gridded box for the full data extent
-            datasetGGB = GriddedGeoBox.from_dataset(ds)
-
-            xmap, ymap = datasetGGB.convert_coordinates((0, 0))
-
-            assert datasetGGB.origin == (xmap, ymap)
+        _, geobox = ut.create_test_image()
+        xmap, ymap = geobox.convert_coordinates((0, 0))
+        assert geobox.origin == (xmap, ymap)
 
     def test_convert_coordinate_to_image(self):
         """Test that an input image/array co-ordinate is correctly
         converted to a map co-cordinate.
         Simple case: The first pixel.
         """
-        # get Land/Sea data file for this bounding box
-        utmZone = 56
-        utmDataPath = "/g/data/v10/eoancillarydata/Land_Sea_Rasters/WORLDzone%d.tif" % (
-            utmZone,
-        )
-
-        # read the data for the Flinders islet region
-        with rio.open(utmDataPath) as ds:
-            # get the gridded box for the full data extent
-            datasetGGB = GriddedGeoBox.from_dataset(ds)
-
-            ximg, yimg = datasetGGB.convert_coordinates(datasetGGB.origin, to_map=False)
-
-            assert (0, 0) == (ximg, yimg)
+        _, geobox = ut.create_test_image()
+        ximg, yimg = geobox.convert_coordinates(geobox.origin, to_map=False)
+        assert (0, 0) == (ximg, yimg)
 
     def test_convert_coordinate_to_map_offset(self):
         """Test that an input image/array co-ordinate is correctly
         converted to a map co-cordinate using a pixel centre offset.
         Simple case: The first pixel.
         """
-        # get Land/Sea data file for this bounding box
-        utmZone = 56
-        utmDataPath = "/g/data/v10/eoancillarydata/Land_Sea_Rasters/WORLDzone%d.tif" % (
-            utmZone,
-        )
+        _, geobox = ut.create_test_image()
+        xmap, ymap = geobox.convert_coordinates((0, 0), centre=True)
 
-        # read the data for the Flinders islet region
-        with rio.open(utmDataPath) as ds:
-            # get the gridded box for the full data extent
-            datasetGGB = GriddedGeoBox.from_dataset(ds)
-
-            xmap, ymap = datasetGGB.convert_coordinates((0, 0), centre=True)
-
-            # Get the actual centre co-ordinate of the first pixel
-            xcentre, ycentre = datasetGGB.convert_coordinates((0.5, 0.5))
-
-            assert (xcentre, ycentre) == (xmap, ymap)
+        # Get the actual centre co-ordinate of the first pixel
+        xcentre, ycentre = geobox.convert_coordinates((0.5, 0.5))
+        assert (xcentre, ycentre) == (xmap, ymap)
 
     def test_pixelscale_metres(self):
         scale = 0.00025
