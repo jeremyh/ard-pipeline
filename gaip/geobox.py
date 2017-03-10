@@ -84,7 +84,7 @@ class GriddedGeoBox:
         bbshape = dataset.shape
         origin = (dataset.affine[2], dataset.affine[5])
         pixelsize = dataset.res
-        crsString = bytes(dataset.crs_wkt)
+        crsString = bytes(dataset.crs.wkt)
 
         return GriddedGeoBox(bbshape, origin, pixelsize, crsString)
 
@@ -363,13 +363,13 @@ class GriddedGeoBox:
 
         (x, y) = xy
 
-        _, shperoid = setup_spheroid(self.crs.ExportToWkt())
+        spheroid, _ = setup_spheroid(self.crs.ExportToWkt())
 
         (lon1, lat1) = self.affine * (x, y + 0.5)
         (lon2, lat2) = self.affine * (x + 1, y + 0.5)
         x_size, _az_to, _az_from = vinc_dist(
-            shperoid[1],
-            shperoid[0],
+            spheroid[1],
+            spheroid[0],
             radians(lat1),
             radians(lon1),
             radians(lat2),
@@ -379,8 +379,8 @@ class GriddedGeoBox:
         (lon1, lat1) = self.affine * (x + 0.5, y)
         (lon2, lat2) = self.affine * (x + 0.5, y + 1)
         y_size, _az_to, _az_from = vinc_dist(
-            shperoid[1],
-            shperoid[0],
+            spheroid[1],
+            spheroid[0],
             radians(lat1),
             radians(lon1),
             radians(lat2),
