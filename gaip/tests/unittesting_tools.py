@@ -98,7 +98,7 @@ class ParameterisedTestCase(unittest.TestCase):
         return suite
 
 
-def createTestImage(
+def create_test_image(
     dimensions=(1000, 1000),
     geotransform=None,
     projection=None,

@@ -19,7 +19,7 @@ class TestReadSubset(unittest.TestCase):
         within the image bounds and half contained outside the image
         bounds.
         """
-        img, geobox = ut.createTestImage()
+        img, geobox = ut.create_test_image()
 
         # Temporarily write the image to disk
         temp_dir = tempfile.mkdtemp()
@@ -45,7 +45,7 @@ class TestReadSubset(unittest.TestCase):
         The subset attempts to read a 20 by 20 block with half contained
         within the image bounds and half contained outside the image.
         """
-        img, geobox = ut.createTestImage()
+        img, geobox = ut.create_test_image()
 
         cols, rows = geobox.get_shape_xy()
 
@@ -73,7 +73,7 @@ class TestReadSubset(unittest.TestCase):
         The subset attempts to read a 20 by 20 block with half contained
         within the image bounds and half contained outside the image.
         """
-        img, geobox = ut.createTestImage()
+        img, geobox = ut.create_test_image()
 
         # Temporarily write the image to disk
         temp_dir = tempfile.mkdtemp()
@@ -99,7 +99,7 @@ class TestReadSubset(unittest.TestCase):
         The subset attempts to read a 20 by 20 block with half contained
         within the image bounds and half contained outside the image.
         """
-        img, geobox = ut.createTestImage()
+        img, geobox = ut.create_test_image()
 
         cols, rows = geobox.get_shape_xy()
 
@@ -125,7 +125,7 @@ class TestReadSubset(unittest.TestCase):
         """Test that the subset is what we expect.
         Read a 10 by 10 starting at the UL corner.
         """
-        img, geobox = ut.createTestImage()
+        img, geobox = ut.create_test_image()
 
         cols, rows = geobox.get_shape_xy()
 
