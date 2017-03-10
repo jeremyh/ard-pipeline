@@ -4,8 +4,7 @@ import gdal
 import numexpr
 import numpy as np
 
-# from eotools import tiling
-from gaip import GriddedGeoBox, LandsatAcquisition, endmembers, stack_data
+from gaip import GriddedGeoBox, LandsatAcquisition, endmembers, stack_data, tiling
 
 # from datacube.api.model import BANDS
 # from datacube.api.model import DatasetType, Satellite
@@ -134,7 +133,7 @@ def fractional_cover(acquisitions, x_tile, y_tile, out_fnames):
         x_tile = cols
     if y_tile is None:
         y_tile = rows
-    tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, generator=False)
+    tiles = generate_tiles(cols, rows, x_tile, y_tile)
 
     # Scarth 20090810 14:06:35 CEST
     # Define the weight of the sum to one constraint

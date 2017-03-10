@@ -8,7 +8,6 @@ import ephem
 import h5py
 import numpy as np
 import pandas as pd
-from eotools import tiling
 from osgeo import osr
 
 from gaip import (
@@ -21,6 +20,7 @@ from gaip import (
     set_satmod,
     set_times,
 )
+from gaip.tiling import generate_tiles
 
 CRS = "EPSG:4326"
 
@@ -909,7 +909,7 @@ def calculate_angles(
 
     # Initialise the tile generator for processing
     # Process 1 row of data at a time
-    tiles = tiling.generate_tiles(cols, rows, cols, 1)
+    tiles = generate_tiles(cols, rows, cols, 1)
 
     for i, tile in enumerate(tiles):
         idx = (slice(tile[0][0], tile[0][1]), slice(tile[1][0], tile[1][1]))

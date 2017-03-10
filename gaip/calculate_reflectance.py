@@ -7,7 +7,6 @@ reflectance
 
 import h5py
 import numpy as np
-from eotools import tiling
 
 from gaip import (
     as_array,
@@ -17,6 +16,7 @@ from gaip import (
     dataset_compression_kwargs,
     reflectance,
 )
+from gaip.tiling import generate_tiles
 
 DATASET_NAME_FMT = "{product}-reflectance-band-{band}"
 
@@ -367,7 +367,7 @@ def calculate_reflectance(
         x_tile = cols
     if y_tile is None:
         y_tile = rows
-    tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, generator=False)
+    tiles = generate_tiles(cols, rows, x_tile, y_tile)
 
     # Loop over each tile
     for tile in tiles:

@@ -4,8 +4,6 @@
 
 import h5py
 import numpy as np
-from eotools import tiling
-from eotools.geobox import GriddedGeoBox
 
 from gaip import (
     GriddedGeoBox,
@@ -15,6 +13,8 @@ from gaip import (
     exiting_angle,
     incident_angle,
 )
+from gaip.geobox import GriddedGeoBox
+from gaip.tiling import generate_tiles
 
 
 def _incident_angles(
@@ -164,7 +164,7 @@ def incident_angles(
         x_tile = cols
     if y_tile is None:
         y_tile = rows
-    tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, generator=False)
+    tiles = generate_tiles(cols, rows, x_tile, y_tile)
 
     # Loop over each tile
     for tile in tiles:
@@ -357,7 +357,7 @@ def exiting_angles(
         x_tile = cols
     if y_tile is None:
         y_tile = rows
-    tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, generator=False)
+    tiles = generate_tiles(cols, rows, x_tile, y_tile)
 
     # Loop over each tile
     for tile in tiles:
@@ -528,7 +528,7 @@ def relative_azimuth_slope(
         x_tile = cols
     if y_tile is None:
         y_tile = rows
-    tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, generator=False)
+    tiles = generate_tiles(cols, rows, x_tile, y_tile)
 
     # Loop over each tile
     for tile in tiles:

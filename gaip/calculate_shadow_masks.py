@@ -9,7 +9,6 @@ as source directions, as well as self shadow masks.
 
 import h5py
 import numpy as np
-from eotools import tiling
 
 from gaip import (
     GriddedGeoBox,
@@ -19,6 +18,7 @@ from gaip import (
     dataset_compression_kwargs,
     setup_spheroid,
 )
+from gaip.tiling import generate_tiles
 
 
 def _self_shadow(
@@ -132,7 +132,7 @@ def self_shadow(
         x_tile = cols
     if y_tile is None:
         y_tile = rows
-    tiles = tiling.generate_tiles(cols, rows, x_tile, y_tile, generator=False)
+    tiles = generate_tiles(cols, rows, x_tile, y_tile)
 
     # Loop over each tile
     for tile in tiles:
