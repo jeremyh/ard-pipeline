@@ -6,7 +6,8 @@ import numpy as np
 import osr
 import rasterio as rio
 
-from gaip import GriddedGeoBox, write_img
+from gaip.data import write_img
+from gaip.geobox import GriddedGeoBox
 
 
 def get_utm_zone(pos_longlat):

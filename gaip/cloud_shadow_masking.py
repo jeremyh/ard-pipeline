@@ -10,7 +10,7 @@ import numpy as np
 from idl_functions import histogram
 from scipy import ndimage
 
-from gaip import majority_filter
+from gaip.acca_cloud_masking import majority_filter
 
 
 def cloud_shadow(

@@ -10,17 +10,17 @@ import numpy as np
 import pandas as pd
 from osgeo import osr
 
-from gaip import (
-    angle,
+from gaip.__sat_sol_angles import angle
+from gaip.__satellite_model import set_satmod
+from gaip.__track_time_info import set_times
+from gaip.data import gridded_geo_box
+from gaip.hdf5 import (
     attach_image_attributes,
     attach_table_attributes,
     dataset_compression_kwargs,
-    gridded_geo_box,
-    load_tle,
-    set_satmod,
-    set_times,
 )
 from gaip.tiling import generate_tiles
+from gaip.tle import load_tle
 
 CRS = "EPSG:4326"
 

@@ -10,14 +10,11 @@ as source directions, as well as self shadow masks.
 import h5py
 import numpy as np
 
-from gaip import (
-    GriddedGeoBox,
-    ImageMargins,
-    attach_image_attributes,
-    cast_shadow_main,
-    dataset_compression_kwargs,
-    setup_spheroid,
-)
+from gaip.__cast_shadow_mask import cast_shadow_main
+from gaip.calculate_angles import setup_spheroid
+from gaip.geobox import GriddedGeoBox
+from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
+from gaip.margins import ImageMargins
 from gaip.tiling import generate_tiles
 
 

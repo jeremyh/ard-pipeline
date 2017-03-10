@@ -5,14 +5,11 @@
 import h5py
 import numpy as np
 
-from gaip import (
-    ImageMargins,
-    as_array,
-    attach_image_attributes,
-    dataset_compression_kwargs,
-    setup_spheroid,
-    slope_aspect,
-)
+from gaip.__slope_aspect import slope_aspect
+from gaip.calculate_angles import setup_spheroid
+from gaip.data import as_array
+from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
+from gaip.margins import ImageMargins
 
 
 def _slope_aspect_arrays(acquisition, dsm_fname, margins, out_fname, compression="lzf"):

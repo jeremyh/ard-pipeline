@@ -11,7 +11,7 @@ import h5py
 import numpy as np
 import rasterio as rio
 
-from gaip import dataset_compression_kwargs, write_h5_image
+from gaip.hdf5 import dataset_compression_kwargs, write_h5_image
 
 
 class PQAResult:

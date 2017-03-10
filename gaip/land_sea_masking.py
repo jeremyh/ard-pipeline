@@ -3,7 +3,7 @@ import os
 import numpy as np
 from osgeo import gdal, osr
 
-from gaip import extract_ancillary_metadata
+from gaip.metadata import extract_ancillary_metadata
 
 
 def calc_land_sea_mask(

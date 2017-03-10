@@ -12,9 +12,9 @@ from os.path import join as pjoin
 import pandas as pd
 from pkg_resources import resource_stream
 
-import gaip
-
-# RESPONSE_PATH = resource_filename('gaip', 'spectral_response')
+from gaip.data import data, data_and_box, gridded_geo_box, no_data
+from gaip.modtran import read_spectral_response
+from gaip.mtl import load_mtl
 
 REF, THM, PAN, ATM, BQA = range(5)
 
@@ -201,7 +201,7 @@ class Acquisition:
         If `out` is supplied, it must be a numpy.array into which
         the Acquisition's data will be read.
         """
-        return gaip.data(
+        return data(
             self,
             out=out,
             window=window,
@@ -217,16 +217,16 @@ class Acquisition:
         the Acquisition's data will be read.
         for this acquisition.
         """
-        return gaip.data_and_box(self, out=out, window=window, masked=masked)
+        return data_and_box(self, out=out, window=window, masked=masked)
 
     def gridded_geo_box(self):
         """Return the `GriddedGeoBox` for this acquisition."""
-        return gaip.gridded_geo_box(self)
+        return gridded_geo_box(self)
 
     @property
     def no_data(self):
         """Return the no_data value for this acquisition."""
-        return gaip.no_data(self)
+        return no_data(self)
 
     @property
     def gps_file(self):
@@ -244,7 +244,7 @@ class Acquisition:
         """Reads the spectral response for the sensor."""
         fname = "spectral_response/%s" % self.spectral_filter_file
         with resource_stream(__name__, fname) as src:
-            df = gaip.read_spectral_response(src)
+            df = read_spectral_response(src)
         return df
 
 
@@ -387,25 +387,25 @@ class LandsatAcquisition(Acquisition):
 
     @property
     def wavelength(self):
-        return gaip.SENSORS[self.spacecraft_id]["sensors"][self.sensor_id]["bands"][
+        return SENSORS[self.spacecraft_id]["sensors"][self.sensor_id]["bands"][
             str(self.band_num)
         ]["wavelength"]
 
     @property
     def band_desc(self):
-        return gaip.SENSORS[self.spacecraft_id]["sensors"][self.sensor_id]["bands"][
+        return SENSORS[self.spacecraft_id]["sensors"][self.sensor_id]["bands"][
             str(self.band_num)
         ]["desc"]
 
     @property
     def resolution(self):
-        return gaip.SENSORS[self.spacecraft_id]["sensors"][self.sensor_id]["bands"][
+        return SENSORS[self.spacecraft_id]["sensors"][self.sensor_id]["bands"][
             str(self.band_num)
         ]["resolution"]
 
     @property
     def band_type_desc(self):
-        return gaip.SENSORS[self.spacecraft_id]["sensors"][self.sensor_id]["bands"][
+        return SENSORS[self.spacecraft_id]["sensors"][self.sensor_id]["bands"][
             str(self.band_num)
         ]["type_desc"]
 
@@ -776,7 +776,7 @@ def acquisitions_via_mtl(path):
     if filename is None:
         raise OSError("Cannot find MTL file in %s" % path)
 
-    data = gaip.load_mtl(filename)
+    data = load_mtl(filename)
     bandfiles = [
         k for k in data["PRODUCT_METADATA"].keys() if "band" in k and "file_name" in k
     ]

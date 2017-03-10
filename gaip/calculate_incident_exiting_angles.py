@@ -5,15 +5,11 @@
 import h5py
 import numpy as np
 
-from gaip import (
-    GriddedGeoBox,
-    as_array,
-    attach_image_attributes,
-    dataset_compression_kwargs,
-    exiting_angle,
-    incident_angle,
-)
+from gaip.__exiting_angle import exiting_angle
+from gaip.__incident_angle import incident_angle
+from gaip.data import as_array
 from gaip.geobox import GriddedGeoBox
+from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
 from gaip.tiling import generate_tiles
 
 

@@ -8,13 +8,13 @@ reflectance
 import h5py
 import numpy as np
 
-from gaip import (
-    as_array,
+from gaip import constants
+from gaip.__surface_reflectance import reflectance
+from gaip.data import as_array
+from gaip.hdf5 import (
     attach_image_attributes,
-    constants,
     create_external_link,
     dataset_compression_kwargs,
-    reflectance,
 )
 from gaip.tiling import generate_tiles
 
