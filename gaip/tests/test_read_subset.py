@@ -32,7 +32,7 @@ class TestReadSubset(unittest.TestCase):
         LR = geobox.convert_coordinates((9, 10))
         LL = geobox.convert_coordinates((-9, 10))
 
-        kwds = {"fname": fname, "ul xy": UL, "ur xy": UR, "lr xy": LR, "ll xy": LL}
+        kwds = {"fname": fname, "ul_xy": UL, "ur_xy": UR, "lr_xy": LR, "ll_xy": LL}
 
         self.assertRaises(IndexError, read_subset, **kwds)
 
