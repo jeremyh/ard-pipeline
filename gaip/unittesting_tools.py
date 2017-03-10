@@ -188,8 +188,8 @@ def random_pixel_locations(dimensions, npixels=100):
 
     cols = dimensions[1]
     rows = dimensions[0]
-    x = np.random.randint(0, cols, nPixels)
-    y = np.random.randint(0, rows, nPixels)
+    x = np.random.randint(0, cols, npixels)
+    y = np.random.randint(0, rows, npixels)
 
     index = (y, x)
     return index
