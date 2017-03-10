@@ -14,13 +14,12 @@ import numpy as np
 import pandas as pd
 from scipy.io import FortranFile
 
-from gaip import (
+from gaip import read_table, write_dataframe
+from gaip.modtran_profiles import (
     MIDLAT_SUMMER_ALBEDO,
     MIDLAT_SUMMER_TRANSMITTANCE,
     TROPICAL_ALBEDO,
     TROPICAL_TRANSMITTANCE,
-    read_table,
-    write_dataframe,
 )
 
 
