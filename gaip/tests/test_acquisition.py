@@ -2,7 +2,16 @@ import datetime
 import os
 import unittest
 
-import gaip
+from gaip.acquisition import (
+    ATM,
+    BQA,
+    PAN,
+    REF,
+    THM,
+    Landsat8Acquisition,
+    LandsatAcquisition,
+    acquisitions,
+)
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
@@ -16,92 +25,92 @@ L8_MTL2 = os.path.join(DATA_DIR, "LC80990842016277LGN00_MTL.txt")
 
 class AcquisitionLoadMtlTest(unittest.TestCase):
     def test_load_acquisitions_l5_mtl1(self):
-        acq = gaip.acquisitions(L5_MTL1).get_acquisitions()
+        acq = acquisitions(L5_MTL1).get_acquisitions()
         assert len(acq) == 7
 
     def test_load_acquisitions_l5_mtl2(self):
-        acq = gaip.acquisitions(L5_MTL2).get_acquisitions()
+        acq = acquisitions(L5_MTL2).get_acquisitions()
         assert len(acq) == 8
 
     def test_load_acquisitions_l7_mtl1(self):
-        acq = gaip.acquisitions(L7_MTL1).get_acquisitions()
+        acq = acquisitions(L7_MTL1).get_acquisitions()
         assert len(acq) == 9
 
     def test_load_acquisitions_l7_mtl2(self):
-        acq = gaip.acquisitions(L7_MTL2).get_acquisitions()
+        acq = acquisitions(L7_MTL2).get_acquisitions()
         assert len(acq) == 10
 
     def test_load_acquisitions_l8_mtl1(self):
-        acq = gaip.acquisitions(L8_MTL1).get_acquisitions()
+        acq = acquisitions(L8_MTL1).get_acquisitions()
         assert len(acq) == 10
 
     def test_load_acquisitions_l8_mtl2(self):
-        acq = gaip.acquisitions(L8_MTL2).get_acquisitions()
+        acq = acquisitions(L8_MTL2).get_acquisitions()
         assert len(acq) == 12
 
 
 class AcquisitionsContainerTest(unittest.TestCase):
     def test_groups_l5_mtl1(self):
-        scene = gaip.acquisitions(L5_MTL1)
+        scene = acquisitions(L5_MTL1)
         assert len(scene.groups) == 1
 
     def test_groups_l5_mtl2(self):
-        scene = gaip.acquisitions(L5_MTL2)
+        scene = acquisitions(L5_MTL2)
         assert len(scene.groups) == 1
 
     def test_groups_l7_mtl1(self):
-        scene = gaip.acquisitions(L7_MTL1)
+        scene = acquisitions(L7_MTL1)
         assert len(scene.groups) == 1
 
     def test_groups_l7_mtl2(self):
-        scene = gaip.acquisitions(L7_MTL2)
+        scene = acquisitions(L7_MTL2)
         assert len(scene.groups) == 1
 
     def test_groups_l8_mtl1(self):
-        scene = gaip.acquisitions(L8_MTL1)
+        scene = acquisitions(L8_MTL1)
         assert len(scene.groups) == 1
 
     def test_granules_ls5_mtl1(self):
-        scene = gaip.acquisitions(L5_MTL1)
+        scene = acquisitions(L5_MTL1)
         assert scene.granules[0] is None
 
     def test_granules_ls5_mtl2(self):
-        scene = gaip.acquisitions(L5_MTL2)
+        scene = acquisitions(L5_MTL2)
         assert scene.granules[0] is None
 
     def test_granules_ls7_mtl1(self):
-        scene = gaip.acquisitions(L7_MTL1)
+        scene = acquisitions(L7_MTL1)
         assert scene.granules[0] is None
 
     def test_granules_ls7_mtl2(self):
-        scene = gaip.acquisitions(L7_MTL2)
+        scene = acquisitions(L7_MTL2)
         assert scene.granules[0] is None
 
     def test_granules_ls8_mtl1(self):
-        scene = gaip.acquisitions(L8_MTL1)
+        scene = acquisitions(L8_MTL1)
         assert scene.granules[0] is None
 
     def test_granules_ls8_mtl2(self):
-        scene = gaip.acquisitions(L8_MTL2)
+        scene = acquisitions(L8_MTL2)
         assert scene.granules[0] is None
 
 
 class Landsat5Mtl1AcquisitionTest(unittest.TestCase):
     def setUp(self):
-        self.acqs = gaip.acquisitions(L5_MTL1).get_acquisitions()
+        self.acqs = acquisitions(L5_MTL1).get_acquisitions()
 
     def test_type(self):
         for acq in self.acqs:
-            assert isinstance(acq, gaip.LandsatAcquisition)
+            assert isinstance(acq, LandsatAcquisition)
 
     def test_band_type(self):
-        assert self.acqs[0].band_type == gaip.REF
-        assert self.acqs[1].band_type == gaip.REF
-        assert self.acqs[2].band_type == gaip.REF
-        assert self.acqs[3].band_type == gaip.REF
-        assert self.acqs[4].band_type == gaip.REF
-        assert self.acqs[5].band_type == gaip.THM
-        assert self.acqs[6].band_type == gaip.REF
+        assert self.acqs[0].band_type == REF
+        assert self.acqs[1].band_type == REF
+        assert self.acqs[2].band_type == REF
+        assert self.acqs[3].band_type == REF
+        assert self.acqs[4].band_type == REF
+        assert self.acqs[5].band_type == THM
+        assert self.acqs[6].band_type == REF
 
     # TODO: need extra name mappings to get the different names across versions
     # def test_grid_cell_size(self):
@@ -173,21 +182,21 @@ class Landsat5Mtl1AcquisitionTest(unittest.TestCase):
 
 class Landsat5Mtl2AcquisitionTest(unittest.TestCase):
     def setUp(self):
-        self.acqs = gaip.acquisitions(L5_MTL2).get_acquisitions()
+        self.acqs = acquisitions(L5_MTL2).get_acquisitions()
 
     def test_type(self):
         for acq in self.acqs:
-            assert isinstance(acq, gaip.LandsatAcquisition)
+            assert isinstance(acq, LandsatAcquisition)
 
     def test_band_type(self):
-        assert self.acqs[0].band_type == gaip.REF
-        assert self.acqs[1].band_type == gaip.REF
-        assert self.acqs[2].band_type == gaip.REF
-        assert self.acqs[3].band_type == gaip.REF
-        assert self.acqs[4].band_type == gaip.REF
-        assert self.acqs[5].band_type == gaip.THM
-        assert self.acqs[6].band_type == gaip.REF
-        assert self.acqs[7].band_type == gaip.BQA
+        assert self.acqs[0].band_type == REF
+        assert self.acqs[1].band_type == REF
+        assert self.acqs[2].band_type == REF
+        assert self.acqs[3].band_type == REF
+        assert self.acqs[4].band_type == REF
+        assert self.acqs[5].band_type == THM
+        assert self.acqs[6].band_type == REF
+        assert self.acqs[7].band_type == BQA
 
     # TODO: need extra name mappings to get the different names across versions
     # def test_grid_cell_size(self):
@@ -247,22 +256,22 @@ class Landsat5Mtl2AcquisitionTest(unittest.TestCase):
 
 class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
     def setUp(self):
-        self.acqs = gaip.acquisitions(L7_MTL1).get_acquisitions()
+        self.acqs = acquisitions(L7_MTL1).get_acquisitions()
 
     def test_type(self):
         for acq in self.acqs:
-            assert isinstance(acq, gaip.LandsatAcquisition)
+            assert isinstance(acq, LandsatAcquisition)
 
     def test_band_type(self):
-        assert self.acqs[0].band_type == gaip.REF
-        assert self.acqs[1].band_type == gaip.REF
-        assert self.acqs[2].band_type == gaip.REF
-        assert self.acqs[3].band_type == gaip.REF
-        assert self.acqs[4].band_type == gaip.REF
-        assert self.acqs[5].band_type == gaip.THM
-        assert self.acqs[6].band_type == gaip.THM
-        assert self.acqs[7].band_type == gaip.REF
-        assert self.acqs[8].band_type == gaip.PAN
+        assert self.acqs[0].band_type == REF
+        assert self.acqs[1].band_type == REF
+        assert self.acqs[2].band_type == REF
+        assert self.acqs[3].band_type == REF
+        assert self.acqs[4].band_type == REF
+        assert self.acqs[5].band_type == THM
+        assert self.acqs[6].band_type == THM
+        assert self.acqs[7].band_type == REF
+        assert self.acqs[8].band_type == PAN
 
     # TODO: need extra name mappings to get the different names across versions
     # def test_grid_cell_size(self):
@@ -336,23 +345,23 @@ class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
 
 class Landsat7Mtl2AcquisitionTest(unittest.TestCase):
     def setUp(self):
-        self.acqs = gaip.acquisitions(L7_MTL2).get_acquisitions()
+        self.acqs = acquisitions(L7_MTL2).get_acquisitions()
 
     def test_type(self):
         for acq in self.acqs:
-            assert isinstance(acq, gaip.LandsatAcquisition)
+            assert isinstance(acq, LandsatAcquisition)
 
     def test_band_type(self):
-        assert self.acqs[0].band_type == gaip.REF
-        assert self.acqs[1].band_type == gaip.REF
-        assert self.acqs[2].band_type == gaip.REF
-        assert self.acqs[3].band_type == gaip.REF
-        assert self.acqs[4].band_type == gaip.REF
-        assert self.acqs[5].band_type == gaip.THM
-        assert self.acqs[6].band_type == gaip.THM
-        assert self.acqs[7].band_type == gaip.REF
-        assert self.acqs[8].band_type == gaip.PAN
-        assert self.acqs[9].band_type == gaip.BQA
+        assert self.acqs[0].band_type == REF
+        assert self.acqs[1].band_type == REF
+        assert self.acqs[2].band_type == REF
+        assert self.acqs[3].band_type == REF
+        assert self.acqs[4].band_type == REF
+        assert self.acqs[5].band_type == THM
+        assert self.acqs[6].band_type == THM
+        assert self.acqs[7].band_type == REF
+        assert self.acqs[8].band_type == PAN
+        assert self.acqs[9].band_type == BQA
 
     # TODO: need extra name mappings to get the different names across versions
     # def test_grid_cell_size(self):
@@ -414,27 +423,27 @@ class Landsat7Mtl2AcquisitionTest(unittest.TestCase):
 
 class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
     def setUp(self):
-        self.acqs = gaip.acquisitions(L8_MTL1).get_acquisitions()
+        self.acqs = acquisitions(L8_MTL1).get_acquisitions()
 
     def test_type(self):
         for acq in self.acqs:
-            assert isinstance(acq, gaip.Landsat8Acquisition)
+            assert isinstance(acq, Landsat8Acquisition)
 
     def test_scene_center_time(self):
         for acq in self.acqs:
             assert acq.scene_center_time == datetime.time(23, 52, 10, 108347)
 
     def test_band_type(self):
-        assert self.acqs[0].band_type == gaip.REF
-        assert self.acqs[1].band_type == gaip.REF
-        assert self.acqs[2].band_type == gaip.REF
-        assert self.acqs[3].band_type == gaip.REF
-        assert self.acqs[4].band_type == gaip.REF
-        assert self.acqs[5].band_type == gaip.REF
-        assert self.acqs[6].band_type == gaip.REF
-        assert self.acqs[7].band_type == gaip.PAN
-        assert self.acqs[8].band_type == gaip.ATM
-        assert self.acqs[9].band_type == gaip.BQA
+        assert self.acqs[0].band_type == REF
+        assert self.acqs[1].band_type == REF
+        assert self.acqs[2].band_type == REF
+        assert self.acqs[3].band_type == REF
+        assert self.acqs[4].band_type == REF
+        assert self.acqs[5].band_type == REF
+        assert self.acqs[6].band_type == REF
+        assert self.acqs[7].band_type == PAN
+        assert self.acqs[8].band_type == ATM
+        assert self.acqs[9].band_type == BQA
 
     # TODO: need extra name mappings to get the different names across versions
     # def test_grid_cell_size(self):
@@ -505,29 +514,29 @@ class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
 
 class Landsat8Mtl2AcquisitionTest(unittest.TestCase):
     def setUp(self):
-        self.acqs = gaip.acquisitions(L8_MTL2).get_acquisitions()
+        self.acqs = acquisitions(L8_MTL2).get_acquisitions()
 
     def test_type(self):
         for acq in self.acqs:
-            assert isinstance(acq, gaip.Landsat8Acquisition)
+            assert isinstance(acq, Landsat8Acquisition)
 
     def test_scene_center_time(self):
         for acq in self.acqs:
             assert acq.scene_center_time == datetime.time(0, 46, 10, 530409)
 
     def test_band_type(self):
-        assert self.acqs[0].band_type == gaip.REF
-        assert self.acqs[1].band_type == gaip.THM
-        assert self.acqs[2].band_type == gaip.THM
-        assert self.acqs[3].band_type == gaip.REF
-        assert self.acqs[4].band_type == gaip.REF
-        assert self.acqs[5].band_type == gaip.REF
-        assert self.acqs[6].band_type == gaip.REF
-        assert self.acqs[7].band_type == gaip.REF
-        assert self.acqs[8].band_type == gaip.REF
-        assert self.acqs[9].band_type == gaip.PAN
-        assert self.acqs[10].band_type == gaip.ATM
-        assert self.acqs[11].band_type == gaip.BQA
+        assert self.acqs[0].band_type == REF
+        assert self.acqs[1].band_type == THM
+        assert self.acqs[2].band_type == THM
+        assert self.acqs[3].band_type == REF
+        assert self.acqs[4].band_type == REF
+        assert self.acqs[5].band_type == REF
+        assert self.acqs[6].band_type == REF
+        assert self.acqs[7].band_type == REF
+        assert self.acqs[8].band_type == REF
+        assert self.acqs[9].band_type == PAN
+        assert self.acqs[10].band_type == ATM
+        assert self.acqs[11].band_type == BQA
 
     # TODO: need extra name mappings to get the different names across versions
     # def test_grid_cell_size(self):

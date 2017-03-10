@@ -8,8 +8,8 @@ from argparse import RawTextHelpFormatter
 import h5py
 import numpy.testing as npt
 
-from gaip import read_table
-from gaip.tests.unittesting_tools import ParameterisedTestCase
+from gaip.hdf5 import read_table
+from gaip.unittesting_tools import ParameterisedTestCase
 
 
 class TestCalculateAngles(ParameterisedTestCase):

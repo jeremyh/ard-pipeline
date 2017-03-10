@@ -8,7 +8,7 @@ from argparse import RawTextHelpFormatter
 import h5py
 import numpy.testing as npt
 
-from gaip.tests.unittesting_tools import ParameterisedTestCase
+from gaip.unittesting_tools import ParameterisedTestCase
 
 
 class TestExitingAngles(ParameterisedTestCase):

@@ -7,8 +7,8 @@ import unittest
 
 import numpy as np
 
-from gaip import read_subset, write_img
-from gaip.tests import unittesting_tools as ut
+from gaip import unittesting_tools as ut
+from gaip.data import read_subset, write_img
 
 
 class TestReadSubset(unittest.TestCase):
