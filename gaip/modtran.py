@@ -574,7 +574,7 @@ def bilinear_interpolate(
     s4 = coef_subs.s4.values
 
     result = np.zeros((rows, cols), dtype="float32")
-    gaip.bilinear(
+    gaip.bilinear_interpolation(
         cols, rows, coord, s1, s2, s3, s4, start, end, centre, result.transpose()
     )
 

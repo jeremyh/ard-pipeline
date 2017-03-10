@@ -16,10 +16,10 @@ from .mtl import *
 from .tle import *
 
 try:
+    from __bilinear_interpolation import bilinear_interpolation  # F2Py
     from __cast_shadow_mask import cast_shadow_main  # F2Py
     from __exiting_angle import exiting_angle  # F2Py
     from __incident_angle import incident_angle  # F2Py
-    from __interpolation import bilinear  # F2Py
     from __sat_sol_angles import angle  # F2Py
     from __satellite_model import set_satmod  # F2Py
     from __slope_aspect import slope_aspect  # F2Py
