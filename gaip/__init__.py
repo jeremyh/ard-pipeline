@@ -7,6 +7,7 @@ from .dsm import *
 from .endmembers import *
 from .fc_utils import *
 from .hdf5 import *
+from .interpolation import *
 from .land_sea_masking import *
 from .margins import *
 from .metadata import *
