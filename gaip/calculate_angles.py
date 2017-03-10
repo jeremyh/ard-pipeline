@@ -13,7 +13,6 @@ from osgeo import osr
 from gaip.__sat_sol_angles import angle
 from gaip.__satellite_model import set_satmod
 from gaip.__track_time_info import set_times
-from gaip.data import gridded_geo_box
 from gaip.hdf5 import (
     attach_image_attributes,
     attach_table_attributes,
@@ -762,7 +761,7 @@ def calculate_angles(
     dt = acquisition.scene_center_datetime
 
     # Compute the geobox
-    geobox = gridded_geo_box(acquisition)
+    geobox = acquisition.gridded_geo_box()
 
     # Image projection
     prj = geobox.crs.ExportToWkt()
