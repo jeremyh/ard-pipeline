@@ -16,9 +16,9 @@ from shapely import wkt
 from shapely.geometry import Point, Polygon
 
 from gaip.brdf import get_brdf_data
-from gaip.data import get_pixel, read_meatadata_tags
+from gaip.data import get_pixel
 from gaip.hdf5 import attach_attributes, read_table, write_dataframe, write_scalar
-from gaip.metadata import extract_ancillary_metadata
+from gaip.metadata import extract_ancillary_metadata, read_meatadata_tags
 
 log = logging.getLogger()
 

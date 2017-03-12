@@ -14,7 +14,10 @@ import numpy as np
 import pandas as pd
 from scipy.io import FortranFile
 
-from gaip import read_table, write_dataframe
+from gaip.hdf5 import (
+    read_table,
+    write_dataframe,
+)
 from gaip.modtran_profiles import (
     MIDLAT_SUMMER_ALBEDO,
     MIDLAT_SUMMER_TRANSMITTANCE,
