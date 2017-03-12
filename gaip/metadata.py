@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
+"""Various metadata extraction and creation, and writing tools."""
+
 import os
 import pwd
 import subprocess
 from datetime import datetime as dtime
 
 import numpy as np
+import pandas as pd
+import rasterio
 import yaml
 from yaml.representer import Representer
 
@@ -55,7 +59,7 @@ def read_meatadata_tags(fname, bands):
             for tag in tags:
                 tag_data[tag].append(tags[tag])
 
-    return pandas.DataFrame(tag_data)
+    return pd.DataFrame(tag_data)
 
 
 def write_nbar_yaml(
