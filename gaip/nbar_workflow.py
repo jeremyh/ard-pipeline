@@ -9,7 +9,7 @@ Workflow settings can be configured in `nbar.cfg` file.
 # pylint: disable=too-many-locals
 # pylint: disable=protected-access
 
-from os.path import basename, splitext
+from os.path import basename
 from os.path import join as pjoin
 
 import luigi
@@ -26,10 +26,13 @@ from gaip.calculate_incident_exiting_angles import (
 )
 from gaip.calculate_lat_lon_arrays import create_lat_grid, create_lon_grid
 from gaip.calculate_reflectance import _calculate_reflectance, link_reflectance_data
-from gaip.calculate_shadow_masks import _calculate_cast_shadow, _self_shadow
+from gaip.calculate_shadow_masks import (
+    _calculate_cast_shadow,
+    _combine_shadow,
+    _self_shadow,
+)
 from gaip.calculate_slope_aspect import _slope_aspect_arrays
 from gaip.dsm import get_dsm
-from gaip.hdf5 import create_external_link
 from gaip.interpolation import _bilinear_interpolate, link_bilinear_data
 from gaip.modtran import (
     _calculate_coefficients,
@@ -717,10 +720,15 @@ class CalculateShadowMasks(luigi.Task):
     def run(self):
         with self.output().temporary_path() as out_fname:
             inputs = self.input()
-            for key in inputs:
-                fname = inputs[key].path
-                dname = splitext(basename(fname))[0]
-                create_external_link(fname, dname, out_fname, dname)
+            _combine_shadow(
+                inputs["self"],
+                inputs["sun"],
+                inputs["sat"],
+                out_fname,
+                self.compression,
+                self.x_tile,
+                self.y_tile,
+            )
 
 
 @inherits(IncidentAngles)
