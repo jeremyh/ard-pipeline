@@ -223,8 +223,8 @@ class Acquisition:
 
     def gridded_geo_box(self):
         """Return the `GriddedGeoBox` for this acquisition."""
-        with rasterio.open(pjoin(acq.dir_name, acq.file_name), "r"):
-            return GriddedGeoBox.from_dataset(fo)
+        with rasterio.open(pjoin(self.dir_name, self.file_name), "r") as src:
+            return GriddedGeoBox.from_dataset(src)
 
     @property
     def no_data(self):
@@ -300,11 +300,6 @@ class LandsatAcquisition(Acquisition):
     def width(self):
         """The width of the acquisition (aka. `samples`)."""
         return self.samples
-
-    @property
-    def resolution(self):
-        """The resolution of the acquisition (aka. `grid_cell_size`)."""
-        return self.grid_cell_size
 
     @property
     def scene_center_date(self):
