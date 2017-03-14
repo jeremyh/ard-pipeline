@@ -35,6 +35,9 @@ from gaip.calculate_slope_aspect import _slope_aspect_arrays
 from gaip.dsm import get_dsm
 from gaip.interpolation import _bilinear_interpolate, link_bilinear_data
 from gaip.modtran import (
+    ALBEDO_FMT,
+    POINT_ALBEDO_FMT,
+    POINT_FMT,
     _calculate_coefficients,
     _calculate_solar_radiation,
     _format_tp5,
@@ -89,7 +92,7 @@ class CalculateLonGrid(luigi.Task):
 
     level1 = luigi.Parameter()
     work_root = luigi.Parameter(significant=False)
-    granule = luigi.Parameter()
+    granule = luigi.Parameter(default=None)
     group = luigi.Parameter()
     compression = luigi.Parameter(default="lzf", significant=False)
 
@@ -162,10 +165,11 @@ class WriteTp5(luigi.Task):
 
     level1 = luigi.Parameter()
     work_root = luigi.Parameter()
-    granule = luigi.Parameter()
+    granule = luigi.Parameter(default=None)
     npoints = luigi.IntParameter(default=9, significant=False)
-    albeods = luigi.ListParameter(default=[0, 1, "t"], significant=False)
+    albedos = luigi.ListParameter(default=[0, 1, "t"], significant=False)
     base_dir = luigi.Parameter(default="atmospherics", significant=False)
+    compression = luigi.Parameter(default="lzf", significant=False)
 
     def requires(self):
         # for consistancy, we'll wait for dependencies on all granules and
@@ -199,15 +203,15 @@ class WriteTp5(luigi.Task):
 
     def run(self):
         container = acquisitions(self.level1)
-        acq = container.get_acquisitions(self.group, granule=self.granule)[0]
-
         # as we have an all granules groups dependency, it doesn't matter which
         # group, so just get the first and use it to retrieve the angles
         group = container.groups[0]
+        acq = container.get_acquisitions(group, granule=self.granule)[0]
 
         # input data files, and the output format
         inputs = self.input()
-        output_fmt = "{point}/alb_{albedo}/{point}_alb_{albedo}.tp5"
+        out_dir = pjoin(self.work_root, self.base_dir)
+        output_fmt = pjoin(POINT_FMT, ALBEDO_FMT, "".join([POINT_ALBEDO_FMT, ".tp5"]))
 
         # all ancillary filenames from each granule
         fnames = [inputs[key].path for key in inputs if "ancillary" in key]
@@ -238,8 +242,9 @@ class WriteTp5(luigi.Task):
             # atomic and be moved upon closing
             for key in tp5_data:
                 point, albedo = key
-                tp5_out_fname = output_fmt.format(point=point, albedo=albedo)
-                with open(tp5_out_fname, "w") as src:
+                tp5_out_fname = output_fmt.format(p=point, a=albedo)
+                target = luigi.LocalTarget(pjoin(out_dir, tp5_out_fname))
+                with target.open("w") as src:
                     src.writelines(tp5_data[key])
 
 
@@ -257,7 +262,9 @@ class RunModtranCase(luigi.Task):
         out_path = acquisitions(self.level1).get_root(
             self.work_root, granule=self.granule
         )
-        out_fname = f"point-{self.point}-albedo-{self.albedo}.h5"
+        out_fname = "".join(
+            [POINT_ALBEDO_FMT.format(p=self.point, a=self.albedo), ".h5"]
+        )
         return luigi.LocalTarget(pjoin(out_path, self.base_dir, out_fname))
 
     def run(self):
@@ -265,8 +272,9 @@ class RunModtranCase(luigi.Task):
             self.work_root, granule=self.granule
         )
 
-        workpath_format = "{point}/alb_{albedo}"
-        workpath = workpath_format.format(point=self.point, albedo=self.albedo)
+        workpath = pjoin(
+            POINT_FMT.format(p=self.point), ALBEDO_FMT.format(a=self.albedo)
+        )
         modtran_work = pjoin(out_path, self.base_dir, workpath)
 
         prepare_modtran(self.point, self.albedo, modtran_work, self.exe)
@@ -340,8 +348,8 @@ class CalculateCoefficients(luigi.Task):
 class BilinearInterpolationBand(luigi.Task):
     """Runs the bilinear interpolation function for a given band."""
 
-    band_num = luigi.Parameter(significant=False)
-    factor = luigi.Parameter(significant=False)
+    band_num = luigi.Parameter()
+    factor = luigi.Parameter()
     base_dir = luigi.Parameter(default="atmospherics", significant=False)
 
     def requires(self):
