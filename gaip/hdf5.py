@@ -362,7 +362,7 @@ def write_dataframe(df, dset_name, group, compression="lzf", title="Table", attr
 
     # column data
     for col in df.columns:
-        dset[col] = df[col].values
+        dset[bytes(col)] = df[col].values
 
     # we need to attach some internal metadata as attributes
     if attrs is None:
