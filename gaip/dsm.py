@@ -6,13 +6,10 @@ import numpy as np
 from rasterio.warp import Resampling
 from scipy import ndimage
 
-from gaip import (
-    GriddedGeoBox,
-    ImageMargins,
-    attach_image_attributes,
-    dataset_compression_kwargs,
-    reproject_file_to_array,
-)
+from gaip.data import reproject_file_to_array
+from gaip.geobox import GriddedGeoBox
+from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
+from gaip.margins import ImageMargins
 
 
 def filter_dsm(array):
