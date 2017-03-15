@@ -7,7 +7,7 @@ from os.path import join as pjoin
 import h5py
 import numpy as np
 import rasterio
-from rasterio import crs
+from rasterio.crs import CRS
 from rasterio.warp import Resampling, reproject
 
 from gaip.geobox import GriddedGeoBox
@@ -419,7 +419,7 @@ def reproject_file_to_array(
         dst_arr = np.zeros(dst_geobox.shape, dtype=src.dtypes[0])
 
         # Get the rasterio proj4 styled dict
-        prj = crs.from_string(dst_geobox.crs.ExportToProj4())
+        prj = CRS.from_string(dst_geobox.crs.ExportToProj4())
 
         reproject(
             rio_band,
@@ -468,8 +468,8 @@ def reproject_img_to_img(
         raise TypeError(msg)
 
     # Get the source and destination projections in Proj4 styled dicts
-    src_prj = crs.from_string(src_geobox.crs.ExportToProj4())
-    dst_prj = crs.from_string(dst_geobox.crs.ExportToProj4())
+    src_prj = CRS.from_string(src_geobox.crs.ExportToProj4())
+    dst_prj = CRS.from_string(dst_geobox.crs.ExportToProj4())
 
     # Get the source and destination transforms
     src_trans = src_geobox.affine
