@@ -75,7 +75,7 @@ def slope_aspect_arrays(
 
     # Retrive the spheroid parameters
     # (used in calculating pixel size in metres per lat/lon)
-    spheroid = setup_spheroid(geobox.crs.ExportToWkt())
+    spheroid, _ = setup_spheroid(geobox.crs.ExportToWkt())
 
     # Are we in projected or geographic space
     is_utm = not geobox.crs.IsGeographic()
@@ -138,7 +138,7 @@ def slope_aspect_arrays(
         spheroid,
         alat,
         is_utm,
-        dsm_subset.transpose(),
+        dsm_subset,
         slope.transpose(),
         aspect.transpose(),
     )
