@@ -55,7 +55,7 @@ class GetAncillaryData(luigi.Task):
     """Get all ancillary data."""
 
     level1 = luigi.Parameter()
-    work_root = luigi.Parameter()
+    work_root = luigi.Parameter(significant=False)
     granule = luigi.Parameter(default=None)
     aerosol_fname = luigi.Parameter(significant=False)
     brdf_path = luigi.Parameter(significant=False)
@@ -130,7 +130,7 @@ class CalculateLatGrid(luigi.Task):
 class CalculateSatelliteAndSolarGrids(luigi.Task):
     """Calculate the satellite and solar grids."""
 
-    tle_path = luigi.Parameter()
+    tle_path = luigi.Parameter(significant=False)
 
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.group]
@@ -164,7 +164,7 @@ class WriteTp5(luigi.Task):
     """Output the `tp5` formatted files."""
 
     level1 = luigi.Parameter()
-    work_root = luigi.Parameter()
+    work_root = luigi.Parameter(significant=False)
     granule = luigi.Parameter(default=None)
     npoints = luigi.IntParameter(default=9, significant=False)
     albedos = luigi.ListParameter(default=[0, 1, "t"], significant=False)
