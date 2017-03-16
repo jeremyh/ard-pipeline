@@ -214,7 +214,7 @@ def create_boxline_coordinator(
         * coordinator_dtype = np.dtype([('row_index', 'int64'),
                                         ('col_index', 'int64')])
     """
-    rows, cols = view_angle_dataset.shape
+    rows, _ = view_angle_dataset.shape
 
     assert (line == np.arange(start=1, stop=rows + 1)).all()
     # TODO: refactor out "line" argument
