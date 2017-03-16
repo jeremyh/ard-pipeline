@@ -231,11 +231,11 @@ def bilinear_interpolate(
     cols, rows = geobox.get_shape_xy()
 
     coord = np.zeros((9, 2), dtype="int")
-    coord[:, 0] = coordinator_dataset.row_index.values
-    coord[:, 1] = coordinator_dataset.col_index.values
-    centre = boxline_dataset.bisection_index.values
-    start = boxline_dataset.start_index.values
-    end = boxline_dataset.end_index.values
+    coord[:, 0] = coordinator_dataset.row_index.values + 1
+    coord[:, 1] = coordinator_dataset.col_index.values + 1
+    centre = boxline_dataset.bisection_index.values + 1
+    start = boxline_dataset.start_index.values + 1
+    end = boxline_dataset.end_index.values + 1
 
     # get the individual atmospheric components
     band = acq.band_num
