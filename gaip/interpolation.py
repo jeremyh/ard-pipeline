@@ -198,7 +198,7 @@ def _bilinear_interpolate(
         coord_dset = read_table(sat_sol, "coordinator")
         centre_dset = read_table(sat_sol, "centreline")
         box_dset = read_table(sat_sol, "boxline")
-        coef_dset = read_table(coef, "coefficients-format-2")
+        coef_dset = read_table(coef, "coefficients")
 
         rfid = bilinear_interpolate(
             acq,
@@ -238,6 +238,8 @@ def bilinear_interpolate(
     end = boxline_dataset.end_index.values + 1
 
     # get the individual atmospheric components
+    # TODO: Ben to access the point values for a given band and factor
+    # eg df[df['band_id' == 'BAND x']]['some_factor']
     band = acq.band_num
     key = (f"BAND {band}", factor)
     coef_subs = coefficients.loc[key]
