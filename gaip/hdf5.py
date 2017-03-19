@@ -22,7 +22,7 @@ def _fixed_str_size(data):
     return f"|S{str_sz}"
 
 
-def _safeguard_dtype(datatype):
+def safeguard_dtype(datatype):
     try:
         dtype = np.dtype(datatype)
     except TypeError:

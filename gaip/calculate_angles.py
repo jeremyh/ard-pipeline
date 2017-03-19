@@ -16,6 +16,7 @@ from gaip.hdf5 import (
     attach_image_attributes,
     attach_table_attributes,
     dataset_compression_kwargs,
+    safeguard_dtype,
 )
 from gaip.tiling import generate_tiles
 from gaip.tle import load_tle
@@ -104,7 +105,7 @@ def create_centreline_dataset(geobox, y, x, n):
     sr = osr.SpatialReference()
     sr.SetFromUserInput(CRS)
 
-    dtype = np.dtype(
+    dtype = safeguard_dtype(
         [
             ("row_index", "int64"),
             ("col_index", "int64"),
@@ -252,13 +253,15 @@ def create_boxline_coordinator(
     locations = locations.reshape(vertices[0] * vertices[1], 2)
 
     # custom datatype for coordinator
-    coordinator_dtype = np.dtype([("row_index", "int64"), ("col_index", "int64")])
+    coordinator_dtype = safeguard_dtype(
+        [("row_index", "int64"), ("col_index", "int64")]
+    )
     coordinator = np.empty(locations.shape[0], dtype=coordinator_dtype)
     coordinator["row_index"] = locations[:, 0]
     coordinator["col_index"] = locations[:, 1]
 
     # record curves for parcellation (of the raster into interpolation cells)
-    boxline_dtype = [
+    boxline_dtype = safeguard_dtype[
         ("row_index", "int64"),
         ("bisection_index", "int64"),
         ("start_index", "int64"),
@@ -329,7 +332,7 @@ def setup_spheroid(proj_wkt):
                        ('eccentricity_squared', 'float64'),
                        ('earth_rotational_angular_velocity', 'float64')]
     """
-    dtype = np.dtype(
+    dtype = safeguard_dtype(
         [
             ("semi_major_axis", "float64"),
             ("inverse_flattening", "float64"),
@@ -390,7 +393,7 @@ def setup_orbital_elements(ephemeral, datetime, acquisition):
                        ('semi_major_radius', 'float64'),
                        ('angular_velocity', 'float64')]
     """
-    dtype = np.dtype(
+    dtype = safeguard_dtype(
         [
             ("orbital_inclination", "float64"),
             ("semi_major_radius", "float64"),
@@ -497,7 +500,7 @@ def setup_smodel(centre_lon, centre_lat, spheroid, orbital_elements):
         "H0",
         "th_ratio0",
     ]
-    dtype = np.dtype([(col, "float64") for col in columns])
+    dtype = safeguard_dtype([(col, "float64") for col in columns])
     smodel_dset = np.zeros(1, dtype=dtype)
     smodel_dset[0] = smodel
 
@@ -576,7 +579,7 @@ def setup_times(ymin, ymax, spheroid, orbital_elements, smodel, npoints=12):
     track, _ = set_times(ymin, ymax, npoints, spheroid, orbital_elements, smodel)
 
     columns = ["t", "rho", "phi_p", "lam", "beta", "hxy", "mj", "skew"]
-    dtype = np.dtype([(col, "float64") for col in columns])
+    dtype = safeguard_dtype([(col, "float64") for col in columns])
     track_dset = np.zeros(npoints, dtype=dtype)
     track_dset["t"] = track[:, 0]
     track_dset["rho"] = track[:, 1]

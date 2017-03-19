@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from scipy.io import FortranFile
 
-from gaip.hdf5 import read_table, write_dataframe
+from gaip.hdf5 import read_table, safeguard_dtype, write_dataframe
 from gaip.modtran_profiles import (
     MIDLAT_SUMMER_ALBEDO,
     MIDLAT_SUMMER_TRANSMITTANCE,
@@ -551,7 +551,7 @@ def read_modtran_flux(fname):
         levels in km.
     """
     # define a datatype for the hdr info
-    hdr_dtype = np.dtype(
+    hdr_dtype = safeguard_dtype(
         [
             ("record_length", "int32"),
             ("spectral_unit", "S1"),
@@ -566,7 +566,7 @@ def read_modtran_flux(fname):
     )
 
     # datatype for the dataframe containing the flux data
-    flux_dtype = np.dtype(
+    flux_dtype = safeguard_dtype(
         [
             ("upward_diffuse", "float64"),
             ("downward_diffuse", "float64"),
@@ -582,7 +582,7 @@ def read_modtran_flux(fname):
         levels = hdr_data["mlflx"][0] + 1
 
         # define a datatype to read a record containing flux data
-        dtype = np.dtype(
+        dtype = safeguard_dtype(
             [("wavelength", "float64"), ("flux_data", "float64", (levels, 3))]
         )
 
