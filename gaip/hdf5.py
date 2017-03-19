@@ -357,7 +357,7 @@ def write_dataframe(df, dset_name, group, compression="lzf", title="Table", attr
         else:
             dtype.append((col_name, val))
 
-    dtype = np.dtype(dtype)
+    dtype = safeguard_dtype(dtype)
 
     kwargs = dataset_compression_kwargs(compression=compression, chunks=True)
     kwargs["shape"] = (df.shape[0],)
@@ -432,7 +432,7 @@ def read_table(fid, dataset_name, dataframe=True):
         if dset.attrs.get("python_type") == "`Pandas.DataFrame`":
             col_names = dset.dtype.names
             dtypes = [dset.attrs[f"{name}_dtype"] for name in col_names]
-            dtype = np.dtype(list(zip(col_names, dtypes)))
+            dtype = safeguard_dtype(list(zip(col_names, dtypes)))
             data = pd.DataFrame.from_records(dset[:].astype(dtype), index=idx_names)
         else:
             data = pd.DataFrame.from_records(dset[:], index=idx_names)
