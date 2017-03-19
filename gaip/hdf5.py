@@ -14,10 +14,20 @@ DEFAULT_IMAGE_CLASS = {"CLASS": "IMAGE", "IMAGE_VERSION": "1.2", "DISPLAY_ORIGIN
 
 DEFAULT_TABLE_CLASS = {"CLASS": "TABLE", "VERSION": "0.2"}
 
+VLEN_STRING = h5py.special_dtype(vlen=str)
+
 
 def _fixed_str_size(data):
     str_sz = data.str.len().max()
     return f"|S{str_sz}"
+
+
+def _safeguard_dtype(datatype):
+    try:
+        dtype = np.dtype(datatype)
+    except TypeError:
+        dtype = np.dtype([(bytes(name), val) for name, val in datatypes])
+    return dtype
 
 
 def dataset_compression_kwargs(
@@ -327,11 +337,10 @@ def write_dataframe(df, dset_name, group, compression="lzf", title="Table", attr
             idx_name = "index"
         elif idx_name is None:
             idx_name = default_label.format(i)
-        idx_name = bytes(idx_name)
         idx_names.append(idx_name)
         dtype_metadata[f"{idx_name}_dtype"] = idx_data.dtype.name
         if idx_data.dtype.name == "object":
-            dtype.append((idx_name, _fixed_str_size(idx_data)))
+            dtype.append((idx_name, VLEN_STRING))
         elif "datetime64" in idx_data.dtype.name:
             dtype.append((idx_name, "int64"))
         else:
@@ -339,10 +348,10 @@ def write_dataframe(df, dset_name, group, compression="lzf", title="Table", attr
 
     # column datatypes
     for i, val in enumerate(df.dtypes):
-        col_name = bytes(df.columns[i])
+        col_name = df.columns[i]
         dtype_metadata[f"{col_name}_dtype"] = val.name
         if val.name == "object":
-            dtype.append((col_name, _fixed_str_size(df[df.columns[i]])))
+            dtype.append((col_name, VLEN_STRING))
         elif "datetime64" in val.name:
             dtype.append((col_name, "int64"))
         else:
@@ -358,11 +367,23 @@ def write_dataframe(df, dset_name, group, compression="lzf", title="Table", attr
     # write the data
     # index data
     for i, idx_name in enumerate(idx_names):
-        dset[idx_name] = df.index.get_level_values(i).values
+        data = df.index.get_level_values(i).values
+        # NumPy guards against viewing object arrays
+        try:
+            dset[idx_name] = data
+        except (ValueError, TypeError):
+            # forced to make a copies
+            dset[idx_name] = data.astype("S").astype([(idx_name, VLEN_STRING)])
 
     # column data
     for col in df.columns:
-        dset[bytes(col)] = df[col].values
+        data = df[col].values
+        # NumPy guards against viewing object arrays
+        try:
+            dset[col] = data
+        except (ValueError, TypeError):
+            # forced to make a copies
+            dset[col] = data.astype("S").astype([(col, VLEN_STRING)])
 
     # we need to attach some internal metadata as attributes
     if attrs is None:
@@ -371,7 +392,7 @@ def write_dataframe(df, dset_name, group, compression="lzf", title="Table", attr
         attributes = attrs.copy()
 
     # insert some basic metadata
-    attributes["index_names"] = idx_names
+    attributes["index_names"] = np.array(idx_names, VLEN_STRING)
     attributes["metadata"] = (
         "`Pandas.DataFrame` converted to HDF5 compound " "datatype."
     )
@@ -411,7 +432,7 @@ def read_table(fid, dataset_name, dataframe=True):
         if dset.attrs.get("python_type") == "`Pandas.DataFrame`":
             col_names = dset.dtype.names
             dtypes = [dset.attrs[f"{name}_dtype"] for name in col_names]
-            dtype = np.dtype(zip(col_names, dtypes))
+            dtype = np.dtype(list(zip(col_names, dtypes)))
             data = pd.DataFrame.from_records(dset[:].astype(dtype), index=idx_names)
         else:
             data = pd.DataFrame.from_records(dset[:], index=idx_names)
