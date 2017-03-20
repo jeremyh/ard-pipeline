@@ -84,9 +84,9 @@ class GriddedGeoBox:
         bbshape = dataset.shape
         origin = (dataset.affine[2], dataset.affine[5])
         pixelsize = dataset.res
-        crsString = bytes(dataset.crs.wkt)
+        crs_wkt = dataset.crs.wkt
 
-        return GriddedGeoBox(bbshape, origin, pixelsize, crsString)
+        return GriddedGeoBox(bbshape, origin, pixelsize, crs_wkt)
 
     @staticmethod
     def from_gdal_dataset(dataset):
@@ -104,9 +104,9 @@ class GriddedGeoBox:
         transform = dataset.GetGeoTransform()
         origin = (transform[0], transform[3])
         pixelsize = (abs(transform[1]), abs(transform[5]))
-        crsString = str(dataset.GetProjection())
+        crs_wkt = dataset.GetProjection()
 
-        return GriddedGeoBox(bbshape, origin, pixelsize, crsString)
+        return GriddedGeoBox(bbshape, origin, pixelsize, crs_wkt)
 
     @staticmethod
     def from_h5_dataset(dataset):
@@ -123,10 +123,10 @@ class GriddedGeoBox:
         bbshape = dataset.shape
         transform = dataset.attrs["geotransform"]
         origin = (transform[0], transform[3])
-        crs = dataset.attrs["crs_wkt"]
+        crs_wkt = dataset.attrs["crs_wkt"]
         pixelsize = (abs(transform[1]), abs(transform[5]))
 
-        return GriddedGeoBox(bbshape, origin, pixelsize, crs)
+        return GriddedGeoBox(bbshape, origin, pixelsize, crs_wkt)
 
     @staticmethod
     def from_corners(origin, corner, pixelsize=(0.00025, 0.00025), crs="EPSG:4326"):
