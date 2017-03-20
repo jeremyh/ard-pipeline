@@ -36,5 +36,6 @@ setup(
         "scripts/test_relative_slope.py",
         "scripts/test_shadow_masks.py",
         "scripts/test_slope_aspect.py",
+        "scripts/aot_converter.py",
     ],
 )
