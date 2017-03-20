@@ -493,7 +493,7 @@ def read_spectral_response(fname, as_list=False):
     if as_list:
         return lines
 
-    lines = [line.strip() for line in lines]
+    lines = [line.strip().decode("utf-8") for line in lines]
 
     # find the starting locations of each band description label
     ids = []
