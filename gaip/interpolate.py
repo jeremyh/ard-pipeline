@@ -10,7 +10,7 @@ def fortran_bilinear_interpolate(
     """Original NBAR interpolation scheme.
     Sheared 4-cell bilinear, implemented in fortran.
     """
-    from gaip.__bilinear_interpolate import bilinear_interpolation as fortran
+    from gaip.__bilinear_interpolation import bilinear_interpolation as fortran
 
     assert len(samples) == 3 * 3
     assert len(locations) == len(samples)
@@ -20,19 +20,19 @@ def fortran_bilinear_interpolate(
     s3 = samples[[3, 4, 6, 7]]
     s4 = samples[[4, 5, 7, 8]]
 
-    output = np.empty((rows, cols))
+    output = np.empty((rows, cols), dtype=np.float32)
 
     fortran(
-        rows,
         cols,
+        rows,
         locations,
         s1,
         s2,
         s3,
         s4,
-        row_start - 1,
-        row_end - 1,
-        row_centre - 1,
+        row_start + 1,
+        row_end + 1,
+        row_centre + 1,
         output.T,
     )
 
@@ -43,7 +43,7 @@ def rbf_interpolate(cols, rows, locations, samples, *_):
     """Scipy linear radial basis function interpolation."""
     rbf = Rbf(locations[:, 0], locations[:, 1], samples, function="linear")
 
-    return rbf(*np.mgrid[:rows, :cols])
+    return rbf(*np.mgrid[:rows, :cols]).astype(np.float32)
 
 
 def sheared_bilinear_interpolate(
