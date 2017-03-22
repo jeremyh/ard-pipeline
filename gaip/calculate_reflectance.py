@@ -69,8 +69,8 @@ def _calculate_reflectance(
         slope_dset = fid_slp_asp["slope"]
         aspect_dset = fid_slp_asp["aspect"]
         rel_slp_dset = fid_rel_slp["relative-slope"]
-        inc_dset = fid_inc["incident-angle"]
-        exi_dset = fid_exi["exiting-angle"]
+        inc_dset = fid_inc["incident"]
+        exi_dset = fid_exi["exiting"]
         shad_dset = fid_shadow["combined-shadow"]
 
         dname = "BRDF-Band-{band}-{factor}"
@@ -78,35 +78,35 @@ def _calculate_reflectance(
         brdf_vol = fid_anc[dname.format(band=band_num, factor="vol")][()]
         brdf_geo = fid_anc[dname.format(band=band_num, factor="geo")][()]
 
-    fid = calculate_reflectance(
-        acquisition,
-        fv_dset,
-        fs_dset,
-        b_dset,
-        s_dset,
-        a_dset,
-        dir_dset,
-        dif_dset,
-        ts_dset,
-        sol_zen_dset,
-        sol_azi_dset,
-        sat_view_dset,
-        rel_ang_dset,
-        slope_dset,
-        aspect_dset,
-        rel_slp_dset,
-        inc_dset,
-        exi_dset,
-        shad_dset,
-        rori,
-        brdf_iso,
-        brdf_vol,
-        brdf_geo,
-        out_fname,
-        compression,
-        x_tile,
-        y_tile,
-    )
+        fid = calculate_reflectance(
+            acquisition,
+            fv_dset,
+            fs_dset,
+            b_dset,
+            s_dset,
+            a_dset,
+            dir_dset,
+            dif_dset,
+            ts_dset,
+            sol_zen_dset,
+            sol_azi_dset,
+            sat_view_dset,
+            rel_ang_dset,
+            slope_dset,
+            aspect_dset,
+            rel_slp_dset,
+            inc_dset,
+            exi_dset,
+            shad_dset,
+            rori,
+            brdf_iso,
+            brdf_vol,
+            brdf_geo,
+            out_fname,
+            compression,
+            x_tile,
+            y_tile,
+        )
 
     fid.close()
     return
@@ -348,10 +348,6 @@ def calculate_reflectance(
     attach_image_attributes(tc_dset, attrs)
 
     # Initialise the tiling scheme for processing
-    if x_tile is None:
-        x_tile = cols
-    if y_tile is None:
-        y_tile = rows
     tiles = generate_tiles(cols, rows, x_tile, y_tile)
 
     # Loop over each tile
