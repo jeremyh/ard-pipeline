@@ -29,23 +29,33 @@ def fortran_bilinear_interpolate(
     return output
 
 
-def rbf_interpolate(cols, rows, locations, samples, *_):
-    """Scipy linear radial basis function interpolation."""
-    rbf = Rbf(locations[:, 0], locations[:, 1], samples, function="linear")
+def rbf_interpolate(
+    cols, rows, locations, samples, *_, chunking=True, kernel="gaussian"
+):
+    """Scipy radial basis function interpolation."""
+    rbf = Rbf(
+        locations[:, 1], locations[:, 0], samples - samples.mean(), function=kernel
+    )
 
-    return rbf(*np.mgrid[:rows, :cols]).astype(np.float32)
+    if not chunking:
+        return rbf(*np.mgrid[:cols, :rows]).astype(np.float32) + samples.mean()
+    else:
+        xchunks, ychunks = cols // 100 + 1, rows // 100 + 1
+        raster = np.empty((rows, cols), dtype=np.float32)
+        for y in np.array_split(np.arange(rows), ychunks):
+            for x in np.array_split(np.arange(cols), xchunks):
+                xy = np.meshgrid(x, y)  # note sparse not supported by scipy
+                r = rbf(*xy).astype(np.float32) + samples.mean()
+                raster[y[0] : y[-1] + 1, x[0] : x[-1] + 1] = r
+        return raster
 
 
 def sheared_bilinear_interpolate(
     cols, rows, locations, samples, row_start, row_end, row_centre
 ):
     """Generalisation of the original NBAR interpolation scheme."""
-    # raise NotImplementedError
-
     n = len(samples)
     grid_size = int(math.sqrt(n)) - 1
-
-    print(grid_size, n)
 
     assert (grid_size + 1) ** 2 == n
     assert not (grid_size & 1)
@@ -76,12 +86,12 @@ def sheared_bilinear_interpolate(
                 i / middle_vertex
             )
 
-        return L
+        return L.reshape(grid_size + 1, rows, 1)  # enable broadcast
 
-    x, y = np.ogrid[:rows, :cols]
+    y, x = np.ogrid[:rows, :cols]
 
     @once
-    def parcellation():
+    def parcellation(masking=True):
         """Generate parcellation map."""
         # Would use e.g. a matplotlib poly drawing routine,
         # except if curved sides are required.
@@ -89,35 +99,46 @@ def sheared_bilinear_interpolate(
         zones = np.full((rows, cols), 0, dtype=np.int8)
 
         # first axis
-        for line in lines[1:-1]:
+        vlines = lines
+        for line in vlines[1:-1]:
             zones += x >= line
             # note, needn't be concerned with how edges are zoned
             # because they will be masked out downstream
 
         # second axis
-        for line in locations[1:-1, 0, 1]:  # y component of left-edge samples
+        hlines = locations[:, 0, 0]  # y (row) component of left-edge samples
+        for line in hlines[1:-1]:
             zones += (y >= line) * grid_size
+
+        if masking:
+            zones[
+                (x < vlines[0]) | (x > vlines[-1]) | (y < hlines[0]) | (y > hlines[-1])
+            ] = -1
 
         return zones
 
     def shear(i, j, both_sides=False):
         """Warp to straighten edges of trapezoid."""
-        left = lines[j]
-        width = lines[j + 1] - left
+        if not both_sides:
+            return x - lines[0]  # original style NBAR algorithm
+        else:
+            left = lines[j]
+            width = lines[j + 1] - left
 
-        xx = x - left
+            xx = x - left
 
-        return xx if not both_sides else xx / width
+            return xx / width  # * width.mean() if matrix nearly singular
 
-    def patch(i, j, x=x, shear=False):
+    def patch(i, j, x=x, with_shear=True):
         """Bilinear cell."""
-        vertices = locations[i : i + 1, j : j + 1].reshape(4, 2)
-        values = samples[i : i + 1, j : j + 1].reshape(4)
+        vertices = locations[i : i + 2, j : j + 2].reshape(4, 2)
+        values = samples[i : i + 2, j : j + 2].reshape(4)
 
-        if shear:  # then re-map coordinates
+        if with_shear:  # then re-map coordinates
             x = shear(i, j)
-            vertices = vertices.copy()
-            vertices[:, 0] = x[vertices[:, 0]]
+            old = vertices
+            vertices = old.astype(np.float32, copy=True)
+            vertices[:, 1] = x[list(old.T)]
 
         matrix = np.ones((4, 4))
         matrix[:, 1:3] = vertices
@@ -125,9 +146,9 @@ def sheared_bilinear_interpolate(
 
         a = np.linalg.solve(matrix, values)  # determine coefficients
 
-        return a[0] + a[1] * x + a[2] * y + a[3] * x * y  # broadcast as raster
+        return a[0] + a[1] * y + a[2] * x + a[3] * x * y  # broadcast as raster
 
-    result = np.full((rows, cols), np.nan, dtype=float)
+    result = np.full((rows, cols), np.nan, dtype=np.float32)
     for i in range(grid_size):
         for j in range(grid_size):
             subset = parcellation == i * grid_size + j
