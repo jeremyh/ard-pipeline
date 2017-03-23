@@ -96,11 +96,15 @@ class GetAncillaryData(luigi.Task):
         return WorkRoot(self.level1, self.work_root)
 
     def output(self):
-        out_path = acquisitions(self.level1).get_root(self.work_root, self.granule)
+        out_path = acquisitions(self.level1).get_root(
+            self.work_root, granule=self.granule
+        )
         return luigi.LocalTarget(pjoin(out_path, "ancillary.h5"))
 
     def run(self):
-        acqs = acquisitions(self.level1).get_acquisitions(self.granule)
+        container = acquisitions(self.level1)
+        acqs = container.get_acquisitions(granule=self.granule)
+        work_root = container.get_root(self.work_root, granule=self.granule)
 
         with self.output().temporary_path() as out_fname:
             collect_ancillary_data(
@@ -113,7 +117,7 @@ class GetAncillaryData(luigi.Task):
                 self.brdf_premodis_path,
                 out_fname,
                 self.compression,
-                self.work_root,
+                work_root,
             )
 
 
