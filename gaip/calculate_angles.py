@@ -229,13 +229,24 @@ def create_boxline_coordinator(
     # be outside of the scene aquisition window.
     istart, iend = swathe_edges(max_angle, view_angle_dataset)
 
+    assert cols >= 3
+    assert rows >= 3
     # special handling if the satellite track does not intersect both ends
     # of the raster
-    special = set(first_and_last(npoints)) - {0, rows - 1, -1}
+    track_end_rows = set(first_and_last(npoints))
+    partial_track = track_end_rows - {0, rows - 1, -1}
     mid_row = rows // 2
-    if special:  # if track partially intersects scene
-        mid_row = special.pop()  # or take average?
-        special = ({ncentre[0], ncentre[-1]} - {0, 1, rows, rows - 1, -1}).pop()
+    if -1 in track_end_rows:  # track doesn't intersect raster
+        cols // 2
+    elif partial_track:  # track intersects only part of raster
+        (
+            {ncentre[0], ncentre[1]} - {0, cols - 1, 1, cols, -1}
+        ).pop()  # todo: omit 1,cols if not one-indexing ncentre
+        mid_row = partial_track.pop()
+    else:  # track fully available for deference
+        pass
+    # Note, assumes that if track intersects two rows then it also
+    # intersects all intervening rows.
 
     grid_rows = asymetric_linspace(0, rows - 1, vertices[0], midpoint=mid_row)
 
@@ -248,7 +259,7 @@ def create_boxline_coordinator(
     locations = np.empty((vertices[0], vertices[1], 2), dtype="int64")
     for ig, ir in enumerate(grid_rows):  # row indices for sample-grid & raster
         grid_line = asymetric_linspace(
-            istart[ir], iend[ir], vertices[1], special or ncentre[ir]
+            istart[ir], iend[ir], vertices[1], mid_row or ncentre[ir]
         )
         locations[ig, :, 0] = ir
         locations[ig, :, 1] = grid_line
