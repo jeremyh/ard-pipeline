@@ -9,7 +9,7 @@ Workflow settings can be configured in `nbar.cfg` file.
 # pylint: disable=too-many-locals
 # pylint: disable=protected-access
 
-from os.path import basename
+from os.path import basename, dirname
 from os.path import join as pjoin
 
 import luigi
@@ -250,7 +250,6 @@ class WriteTp5(luigi.Task):
 
         # input data files, and the output format
         inputs = self.input()
-        out_dir = pjoin(self.work_root, self.base_dir)
         output_fmt = pjoin(POINT_FMT, ALBEDO_FMT, "".join([POINT_ALBEDO_FMT, ".tp5"]))
 
         # all ancillary filenames from each granule
@@ -283,8 +282,8 @@ class WriteTp5(luigi.Task):
             for key in tp5_data:
                 point, albedo = key
                 tp5_out_fname = output_fmt.format(p=point, a=albedo)
-                target = luigi.LocalTarget(pjoin(out_dir, tp5_out_fname))
-                with target.open("w") as src:
+                target = pjoin(dirname(out_fname), tp5_out_fname)
+                with luigi.LocalTarget(target).open("w") as src:
                     src.writelines(tp5_data[key])
 
 
@@ -834,10 +833,7 @@ class RunTCBand(luigi.Task):
         # get the acquisition we wish to process
         acq = [acq for acq in acqs if acq.band_num == self.band_num][0]
 
-        if container.tiled:
-            ancillary_fname = pjoin(self.work_root, "averaged-ancillary.h5")
-        else:
-            ancillary_fname = inputs["ancillary"].path
+        ancillary_fname = inputs["ancillary"].path
 
         with self.output().temporary_path() as out_fname:
             _calculate_reflectance(
