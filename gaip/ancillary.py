@@ -99,7 +99,7 @@ def relative_humdity(surface_temp, dewpoint_temp, kelvin=True):
     return rh
 
 
-def _collect_thermal_ancillary(
+def _collect_sbt_ancillary(
     acquisition,
     satellite_solar_fname,
     dewpoint_path,
@@ -119,7 +119,7 @@ def _collect_thermal_ancillary(
         coord_dset = fid["coordinator"]
         lonlats = zip(coord_dset["longitude"], coord_dset["latitude"])
 
-    rfid = collect_thermal_ancillary(
+    rfid = collect_sbt_ancillary(
         acquisition,
         lonlats,
         dewpoint_path,
@@ -137,7 +137,7 @@ def _collect_thermal_ancillary(
     return
 
 
-def collect_thermal_ancillary(
+def collect_sbt_ancillary(
     acquisition,
     lonlats,
     dewpoint_path,

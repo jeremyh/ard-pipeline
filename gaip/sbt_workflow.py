@@ -16,6 +16,7 @@ import luigi
 from luigi.util import requires
 
 from gaip.acquisition import acquisitions
+from gaip.ancillary import _collect_sbt_ancillary
 from gaip.nbar_workflow import (
     CalculateLatGrid,
     CalculateLonGrid,
@@ -51,7 +52,7 @@ class ThermalAncillary(luigi.Task):
         sat_sol_fname = self.input().path
 
         with self.output().temporary_path() as out_fname:
-            _collect_thermal_ancillary(
+            _collect_sbt_ancillary(
                 acqs[0],
                 sat_sol_fname,
                 self.dewpoint_path,
