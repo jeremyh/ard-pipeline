@@ -170,6 +170,7 @@ class CalculateLatGrid(luigi.Task):
 class CalculateSatelliteAndSolarGrids(luigi.Task):
     """Calculate the satellite and solar grids."""
 
+    vertices = luigi.TupleParameter(default=(3, 3), significant=False)
     tle_path = luigi.Parameter(significant=False)
 
     def requires(self):
@@ -193,20 +194,17 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
                 lon_fname,
                 lat_fname,
                 out_fname,
-                npoints=12,
+                vertices=self.vertices,
                 compression=self.compression,
                 max_angle=acqs[0].maximum_view_angle,
                 tle_path=self.tle_path,
             )
 
 
+@inherits(CalculateSatelliteAndSolarGrids)
 class WriteTp5(luigi.Task):
     """Output the `tp5` formatted files."""
 
-    level1 = luigi.Parameter()
-    work_root = luigi.Parameter(significant=False)
-    granule = luigi.Parameter(default=None)
-    npoints = luigi.IntParameter(default=9, significant=False)
     albedos = luigi.ListParameter(default=[0, 1, "t"], significant=False)
     base_dir = luigi.Parameter(default="_atmospherics", significant=False)
     compression = luigi.Parameter(default="lzf", significant=False)
@@ -225,9 +223,16 @@ class WriteTp5(luigi.Task):
             tasks[key1] = GetAncillaryData(*args1)
             for group in container.groups:
                 key2 = (granule, group)
+                kwargs = {
+                    "level1": self.level1,
+                    "work_root": self.work_root,
+                    "granule": granule,
+                    "group": group,
+                    "vertices": self.vertices,
+                }
                 args2 = [self.level1, self.work_root, granule, group]
                 tsks = {
-                    "sat_sol": CalculateSatelliteAndSolarGrids(*args2),
+                    "sat_sol": CalculateSatelliteAndSolarGrids(**kwargs),
                     "lat": CalculateLatGrid(*args2),
                     "lon": CalculateLonGrid(*args2),
                 }
@@ -273,7 +278,6 @@ class WriteTp5(luigi.Task):
                 lat_fname,
                 ancillary_fname,
                 out_fname,
-                self.npoints,
                 self.albedos,
             )
 
@@ -341,7 +345,7 @@ class AccumulateSolarIrradiance(luigi.Task):
 
     def requires(self):
         reqs = {}
-        for point in range(self.npoints):
+        for point in range(self.vertices[0] * self.vertices[1]):
             for albedo in self.albedos:
                 args = [self.level1, self.work_root, self.granule]
                 reqs[(point, albedo)] = RunModtranCase(
@@ -382,12 +386,10 @@ class CalculateCoefficients(luigi.Task):
         accumulated_fname = self.input().path
 
         with self.output().temporary_path() as out_fname:
-            _calculate_coefficients(
-                accumulated_fname, self.npoints, out_fname, self.compression
-            )
+            _calculate_coefficients(accumulated_fname, out_fname, self.compression)
 
 
-@inherits(CalculateLonGrid)
+@inherits(CalculateSatelliteAndSolarGrids)
 class BilinearInterpolationBand(luigi.Task):
     """Runs the bilinear interpolation function for a given band."""
 
@@ -396,10 +398,10 @@ class BilinearInterpolationBand(luigi.Task):
     base_dir = luigi.Parameter(default="_bilinear", significant=False)
 
     def requires(self):
-        args = [self.level1, self.work_root, self.granule, self.group]
+        args = [self.level1, self.work_root, self.granule]
         return {
-            "coef": CalculateCoefficients(*args[:-1]),
-            "satsol": CalculateSatelliteAndSolarGrids(*args),
+            "coef": CalculateCoefficients(*args),
+            "satsol": self.clone(CalculateSatelliteAndSolarGrids),
         }
 
     def output(self):
@@ -531,7 +533,7 @@ class SlopeAndAspect(luigi.Task):
             )
 
 
-@inherits(CalculateLonGrid)
+@inherits(CalculateSatelliteAndSolarGrids)
 class IncidentAngles(luigi.Task):
     """Compute the incident angles."""
 
@@ -541,7 +543,7 @@ class IncidentAngles(luigi.Task):
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.group]
         return {
-            "sat_sol": CalculateSatelliteAndSolarGrids(*args),
+            "sat_sol": self.clone(CalculateSatelliteAndSolarGrids),
             "slp_asp": SlopeAndAspect(*args),
         }
 
@@ -574,7 +576,7 @@ class ExitingAngles(luigi.Task):
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.group]
         return {
-            "sat_sol": CalculateSatelliteAndSolarGrids(*args),
+            "sat_sol": self.clone(CalculateSatelliteAndSolarGrids),
             "slp_asp": SlopeAndAspect(*args),
         }
 
@@ -605,8 +607,10 @@ class RelativeAzimuthSlope(luigi.Task):
     """Compute the relative azimuth angle on the slope surface."""
 
     def requires(self):
-        args = [self.level1, self.work_root, self.granule, self.group]
-        return {"incident": IncidentAngles(*args), "exiting": ExitingAngles(*args)}
+        return {
+            "incident": self.clone(IncidentAngles),
+            "exiting": self.clone(ExitingAngles),
+        }
 
     def output(self):
         out_path = acquisitions(self.level1).get_root(
@@ -637,8 +641,10 @@ class SelfShadow(luigi.Task):
     base_dir = luigi.Parameter(default="_shadow", significant=False)
 
     def requires(self):
-        args = [self.level1, self.work_root, self.granule, self.group]
-        return {"incident": IncidentAngles(*args), "exiting": ExitingAngles(*args)}
+        return {
+            "incident": self.clone(IncidentAngles),
+            "exiting": self.clone(ExitingAngles),
+        }
 
     def output(self):
         out_path = acquisitions(self.level1).get_root(
@@ -672,7 +678,7 @@ class CalculateCastShadowSun(luigi.Task):
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.group]
         return {
-            "sat_sol": CalculateSatelliteAndSolarGrids(*args),
+            "sat_sol": self.clone(CalculateSatelliteAndSolarGrids),
             "dsm": DEMExctraction(*args),
         }
 
@@ -717,7 +723,7 @@ class CalculateCastShadowSatellite(luigi.Task):
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.group]
         return {
-            "sat_sol": CalculateSatelliteAndSolarGrids(*args),
+            "sat_sol": self.clone(CalculateSatelliteAndSolarGrids),
             "dsm": DEMExctraction(*args),
         }
 
@@ -762,11 +768,10 @@ class CalculateShadowMasks(luigi.Task):
     """
 
     def requires(self):
-        args = [self.level1, self.work_root, self.granule, self.group]
         return {
-            "sun": CalculateCastShadowSun(*args),
-            "sat": CalculateCastShadowSatellite(*args),
-            "self": SelfShadow(*args),
+            "sun": self.clone(CalculateCastShadowSun),
+            "sat": self.clone(CalculateCastShadowSatellite),
+            "self": self.clone(SelfShadow),
         }
 
     def output(self):
@@ -802,12 +807,12 @@ class RunTCBand(luigi.Task):
         reqs = {
             "bilinear": BilinearInterpolation(*args),
             "ancillary": GetAncillaryData(*args[:-1]),
-            "rel_slope": RelativeAzimuthSlope(*args),
-            "shadow": CalculateShadowMasks(*args),
-            "slp_asp": SlopeAndAspect(*args),
-            "incident": IncidentAngles(*args),
-            "exiting": ExitingAngles(*args),
-            "sat_sol": CalculateSatelliteAndSolarGrids(*args),
+            "rel_slope": self.clone(RelativeAzimuthSlope),
+            "shadow": self.clone(CalculateShadowMasks),
+            "slp_asp": self.clone(SlopeAndAspect),
+            "incident": self.clone(IncidentAngles),
+            "exiting": self.clone(ExitingAngles),
+            "sat_sol": self.clone(CalculateSatelliteAndSolarGrids),
         }
 
         return reqs
