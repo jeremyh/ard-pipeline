@@ -89,7 +89,6 @@ def _format_tp5(
     latitude_fname,
     ancillary_fname,
     out_fname,
-    npoints,
     albedos,
 ):
     """A private wrapper for dealing with the internal custom workings of the
@@ -126,7 +125,7 @@ def _format_tp5(
             water_vapour,
             aerosol,
             elevation,
-            npoints,
+            coord_dset.shape[0],
             albedos,
         )
 
@@ -301,7 +300,7 @@ def run_modtran(
     return fid
 
 
-def _calculate_coefficients(accumulated_fname, npoints, out_fname, compression="lzf"):
+def _calculate_coefficients(accumulated_fname, out_fname, compression="lzf"):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
@@ -312,6 +311,7 @@ def _calculate_coefficients(accumulated_fname, npoints, out_fname, compression="
         accumulation_albedo_t = {}
         channel_data = {}
 
+        npoints = len(fid.keys())
         for point in range(npoints):
             grp_path = ppjoin(POINT_FMT, ALBEDO_FMT)
             albedo_0_path = ppjoin(grp_path.format(p=point, a="0"), "solar-irradiance")
