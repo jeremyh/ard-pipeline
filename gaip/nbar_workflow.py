@@ -201,10 +201,12 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
             )
 
 
-@inherits(CalculateSatelliteAndSolarGrids)
 class WriteTp5(luigi.Task):
     """Output the `tp5` formatted files."""
 
+    level1 = luigi.Parameter()
+    work_root = luigi.Parameter(significant=False)
+    granule = luigi.Parameter(default=None)
     albedos = luigi.ListParameter(default=[0, 1, "t"], significant=False)
     base_dir = luigi.Parameter(default="_atmospherics", significant=False)
     compression = luigi.Parameter(default="lzf", significant=False)

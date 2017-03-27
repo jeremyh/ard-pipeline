@@ -336,7 +336,7 @@ class BRDFLoader:
         kwargs = dataset_compression_kwargs(compression="lzf", chunks=(1, dims[1]))
         attrs["Description"] = "Converted BRDF data from H4 to H5."
         attrs["crs_wkt"] = prj
-        attrs["geotransform"] = geobox.affine.to_gdal()
+        attrs["geotransform"] = geobox.transform.to_gdal()
         write_h5_image(self.data[0], dataset_name, group, attrs, **kwargs)
 
     def get_mean(self, array):
@@ -620,7 +620,7 @@ def get_brdf_data(
             attrs = {
                 "Description": "Subsetted region of the BRDF image.",
                 "crs_wkt": geobox_subset.crs.ExportToWkt(),
-                "geotransform": geobox_subset.affine.to_gdal(),
+                "geotransform": geobox_subset.transform.to_gdal(),
             }
             out_fname_subset = out_fname + "_subset"
             write_h5_image(subset, out_fname_subset, hdf5_group, attrs, **kwargs)

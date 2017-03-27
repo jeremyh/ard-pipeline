@@ -150,7 +150,7 @@ def slope_aspect_arrays(
     # attach some attributes to the image datasets
     attrs = {
         "crs_wkt": geobox.crs.ExportToWkt(),
-        "geotransform": geobox.affine.to_gdal(),
+        "geotransform": geobox.transform.to_gdal(),
         "no_data_value": no_data,
     }
     desc = "The slope derived from the input elevation model."

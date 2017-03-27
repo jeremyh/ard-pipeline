@@ -257,7 +257,7 @@ def bilinear_interpolate(
     kwargs["fillvalue"] = no_data
     attrs = {
         "crs_wkt": geobox.crs.ExportToWkt(),
-        "geotransform": geobox.affine.to_gdal(),
+        "geotransform": geobox.transform.to_gdal(),
         "no_data_value": no_data,
     }
     desc = (

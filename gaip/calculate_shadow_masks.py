@@ -124,7 +124,7 @@ def self_shadow(
     # attach some attributes to the image datasets
     attrs = {
         "crs_wkt": geobox.crs.ExportToWkt(),
-        "geotransform": geobox.affine.to_gdal(),
+        "geotransform": geobox.transform.to_gdal(),
     }
     desc = "Self shadow mask derived using the incident and exiting angles."
     attrs["Description"] = desc
@@ -491,7 +491,7 @@ def calculate_cast_shadow(
     # attach some attributes to the image datasets
     attrs = {
         "crs_wkt": geobox.crs.ExportToWkt(),
-        "geotransform": geobox.affine.to_gdal(),
+        "geotransform": geobox.transform.to_gdal(),
     }
     desc = (
         "The cast shadow mask determined using the {} " "as the source direction."
@@ -632,7 +632,7 @@ def combine_shadow_masks(
     # attach some attributes to the image datasets
     attrs = {
         "crs_wkt": geobox.crs.ExportToWkt(),
-        "geotransform": geobox.affine.to_gdal(),
+        "geotransform": geobox.transform.to_gdal(),
     }
     desc = (
         "Combined shadow masks: 1. self shadow, "
