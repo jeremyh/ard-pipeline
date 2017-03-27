@@ -18,7 +18,7 @@ def get_pixel(filename, lonlat, band=1):
     by the tuple `lonlat`. Optionally, the `band` can be specified.
     """
     with rasterio.open(filename) as src:
-        x, y = (int(v) for v in ~src.affine * lonlat)
+        x, y = (int(v) for v in ~src.transform * lonlat)
         if isinstance(band, list):
             data = src.read(band, window=((y, y + 1), (x, x + 1))).ravel()
         else:
@@ -98,7 +98,7 @@ def data_and_box(acq, out=None, window=None, masked=False):
             prj = fo.crs_wkt
             res = fo.res
             # Get the new UL co-ordinates of the array
-            ul_x, ul_y = fo.affine * (window[1][0], window[0][0])
+            ul_x, ul_y = fo.transform * (window[1][0], window[0][0])
             box = GriddedGeoBox(
                 shape=(rows, cols), origin=(ul_x, ul_y), pixelsize=res, crs=prj
             )
@@ -228,7 +228,7 @@ def write_img(
 
     # If we have a geobox, then retrieve the geotransform and projection
     if geobox is not None:
-        transform = geobox.affine
+        transform = geobox.transform
         projection = geobox.crs.ExportToWkt()
     else:
         transform = None
@@ -337,7 +337,7 @@ def read_subset(fname, ul_xy, ur_xy, lr_xy, ll_xy, bands=1):
             geobox = GriddedGeoBox.from_dataset(src)
             prj = src.crs.wkt  # rasterio returns a unicode
 
-    inv = ~geobox.affine
+    inv = ~geobox.transform
     rows, cols = geobox.shape
 
     # Convert each map co-ordinate to image/array co-ordinates
@@ -370,7 +370,7 @@ def read_subset(fname, ul_xy, ur_xy, lr_xy, ll_xy, bands=1):
             subs = src.read(bands, window=((ystart, yend), (xstart, xend)))
 
     # Get the new UL co-ordinates of the array
-    ul_x, ul_y = geobox.affine * (xstart, ystart)
+    ul_x, ul_y = geobox.transform * (xstart, ystart)
 
     geobox_subs = GriddedGeoBox(
         shape=subs.shape, origin=(ul_x, ul_y), pixelsize=geobox.pixelsize, crs=prj
@@ -424,7 +424,7 @@ def reproject_file_to_array(
         reproject(
             rio_band,
             dst_arr,
-            dst_transform=dst_geobox.affine,
+            dst_transform=dst_geobox.transform,
             dst_crs=prj,
             resampling=resampling,
         )
@@ -472,8 +472,8 @@ def reproject_img_to_img(
     dst_prj = CRS.from_string(dst_geobox.crs.ExportToProj4())
 
     # Get the source and destination transforms
-    src_trans = src_geobox.affine
-    dst_trans = dst_geobox.affine
+    src_trans = src_geobox.transform
+    dst_trans = dst_geobox.transform
 
     # Define the output NumPy array
     dst_arr = np.zeros(dst_geobox.shape, dtype=src_img.dtype)
