@@ -266,7 +266,7 @@ def collect_sbt_ancillary(
         )
 
         col = "GeoPotential_Height"
-        df[col].iloc[1:] = gph[0][col].values
+        df[col].iloc[1:] = gph[0][col].values / 10000
 
         df["Pressure"].iloc[1:] = ECWMF_LEVELS[::-1]
 
