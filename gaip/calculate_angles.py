@@ -72,18 +72,18 @@ def _calculate_angles(
     return
 
 
-def convert_to_latlon(geobox, row_index, col_index):
+def convert_to_lonlat(geobox, col_index, row_index):
     """Converts arrays of row and column indices into latitude and
     longitude (WGS84 datum).
 
     :param geobox:
         An instance of a GriddedGeoBox object.
 
-    :param row_index:
-        A 1D `NumPy` array of integers representing the row indices.
-
     :param col_index:
         A 1D `NumPy` array of integers representing the column indices.
+
+    :param row_index:
+        A 1D `NumPy` array of integers representing the row indices.
 
     :return:
         2x 1D `NumPy` arrays, of type float64, containing the
@@ -91,6 +91,7 @@ def convert_to_latlon(geobox, row_index, col_index):
     """
     # Define the TO_CRS for lon & lat outputs
     sr = osr.SpatialReference()
+    sr.SetFromUserInput(CRS)
 
     lon = lat = np.zeros(row_index.shape, dtype="float64")
 
@@ -145,7 +146,7 @@ def create_centreline_dataset(geobox, y, x, n):
         ]
     )
     data = np.zeros(rows, dtype=dtype)
-    lon, lat = convert_to_latlon(geobox, x, y)
+    lon, lat = convert_to_lonlat(geobox, x, y)
 
     data["row_index"] = y
     data["col_index"] = x
@@ -306,7 +307,7 @@ def create_boxline_coordinator(
     coordinator["row_index"] = locations[:, 0]
     coordinator["col_index"] = locations[:, 1]
 
-    lon, lat = convert_to_latlon(geobox, x, y)
+    lon, lat = convert_to_lonlat(geobox, locations[:, 1], locations[:, 0])
     coordinator["latitude"] = lat
     coordinator["longitude"] = lon
 
