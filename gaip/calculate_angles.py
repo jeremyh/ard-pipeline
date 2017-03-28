@@ -241,7 +241,9 @@ def create_boxline_coordinator(
                                     ('start_index', 'int64'),
                                     ('end_index', 'int64')])
         * coordinator_dtype = np.dtype([('row_index', 'int64'),
-                                        ('col_index', 'int64')])
+                                        ('col_index', 'int64'),
+                                        ('latitude', 'float64'),
+                                        ('longitude', 'float64')])
     """
     rows, cols = view_angle_dataset.shape
 
