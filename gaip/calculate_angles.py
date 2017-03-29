@@ -28,7 +28,7 @@ def _calculate_angles(
     lon_fname,
     lat_fname,
     out_fname,
-    npoints=12,
+    vertices=(3, 3),
     compression="lzf",
     max_angle=9.0,
     tle_path=None,
@@ -46,7 +46,7 @@ def _calculate_angles(
                 acquisition,
                 lon_ds,
                 lat_ds,
-                npoints,
+                vertices,
                 out_fname,
                 compression,
                 max_angle=max_angle,
@@ -60,7 +60,7 @@ def _calculate_angles(
                 acquisition,
                 lon_ds,
                 lat_ds,
-                npoints,
+                vertices,
                 out_fname,
                 compression,
                 max_angle=max_angle,
@@ -70,6 +70,39 @@ def _calculate_angles(
     fid.close()
 
     return
+
+
+def convert_to_lonlat(geobox, col_index, row_index):
+    """Converts arrays of row and column indices into latitude and
+    longitude (WGS84 datum).
+
+    :param geobox:
+        An instance of a GriddedGeoBox object.
+
+    :param col_index:
+        A 1D `NumPy` array of integers representing the column indices.
+
+    :param row_index:
+        A 1D `NumPy` array of integers representing the row indices.
+
+    :return:
+        2x 1D `NumPy` arrays, of type float64, containing the
+        (longitude, latitude) coordinates.
+    """
+    # Define the TO_CRS for lon & lat outputs
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput(CRS)
+
+    lon = np.zeros(row_index.shape, dtype="float64")
+    lat = np.zeros(row_index.shape, dtype="float64")
+
+    for i, coord in enumerate(zip(col_index, row_index)):
+        map_xy = geobox.convert_coordinates(coord)
+        lonlat = geobox.transform_coordinates(map_xy, to_crs=sr)
+        lon[i] = lonlat[0]
+        lat[i] = lonlat[1]
+
+    return lon, lat
 
 
 def create_centreline_dataset(geobox, y, x, n):
@@ -114,13 +147,7 @@ def create_centreline_dataset(geobox, y, x, n):
         ]
     )
     data = np.zeros(rows, dtype=dtype)
-    lon = lat = np.zeros(rows, dtype="float64")
-
-    for r in range(rows):
-        mapXY = geobox.convert_coordinates((x[r], y[r]))
-        lonlat = geobox.transform_coordinates(mapXY, to_crs=sr)
-        lon[r] = lonlat[0]
-        lat[r] = lonlat[1]
+    lon, lat = convert_to_lonlat(geobox, x, y)
 
     data["row_index"] = y
     data["col_index"] = x
@@ -175,7 +202,7 @@ def swathe_edges(threshold, array):
 
 
 def create_boxline_coordinator(
-    view_angle_dataset, line, ncentre, npoints, max_angle=9.0, vertices=(3, 3)
+    geobox, view_angle_dataset, line, xcentre, npoints, max_angle=9.0, vertices=(3, 3)
 ):
     """Creates the boxline and coordinator datasets.
 
@@ -188,7 +215,7 @@ def create_boxline_coordinator(
         A 1D NumPy array containing the values 1->n for n lines.
         0 based index.
 
-    :param ncentre:
+    :param xcentre:
         A 1D NumPy array containing the values for the column
         coordinate for the central index; 0 based index.
 
@@ -206,6 +233,7 @@ def create_boxline_coordinator(
         An integer 2-tuple indicating the number of rows and columns
         of sample-locations ("coordinator") to produce.
         The vertex columns should be an odd number.
+        Default is (3, 3).
 
     :return:
         2 `NumPy` datasets of the following datatypes:
@@ -215,7 +243,9 @@ def create_boxline_coordinator(
                                     ('start_index', 'int64'),
                                     ('end_index', 'int64')])
         * coordinator_dtype = np.dtype([('row_index', 'int64'),
-                                        ('col_index', 'int64')])
+                                        ('col_index', 'int64'),
+                                        ('latitude', 'float64'),
+                                        ('longitude', 'float64')])
     """
     rows, cols = view_angle_dataset.shape
 
@@ -240,8 +270,8 @@ def create_boxline_coordinator(
         cols // 2
     elif partial_track:  # track intersects only part of raster
         (
-            {ncentre[0], ncentre[1]} - {0, cols - 1, 1, cols, -1}
-        ).pop()  # todo: omit 1,cols if not one-indexing ncentre
+            {xcentre[0], xcentre[1]} - {0, cols - 1, 1, cols, -1}
+        ).pop()  # TODO: omit 1,cols if not one-indexing ncentre
         mid_row = partial_track.pop()
     else:  # track fully available for deference
         pass
@@ -259,17 +289,28 @@ def create_boxline_coordinator(
     locations = np.empty((vertices[0], vertices[1], 2), dtype="int64")
     for ig, ir in enumerate(grid_rows):  # row indices for sample-grid & raster
         grid_line = asymetric_linspace(
-            istart[ir], iend[ir], vertices[1], mid_row or ncentre[ir]
+            istart[ir], iend[ir], vertices[1], mid_row or xcentre[ir]
         )
         locations[ig, :, 0] = ir
         locations[ig, :, 1] = grid_line
     locations = locations.reshape(vertices[0] * vertices[1], 2)
 
     # custom datatype for coordinator
-    coordinator_dtype = np.dtype([("row_index", "int64"), ("col_index", "int64")])
+    coordinator_dtype = np.dtype(
+        [
+            ("row_index", "int64"),
+            ("col_index", "int64"),
+            ("latitude", "float64"),
+            ("longitude", "float64"),
+        ]
+    )
     coordinator = np.empty(locations.shape[0], dtype=coordinator_dtype)
     coordinator["row_index"] = locations[:, 0]
     coordinator["col_index"] = locations[:, 1]
+
+    lon, lat = convert_to_lonlat(geobox, locations[:, 1], locations[:, 0])
+    coordinator["latitude"] = lat
+    coordinator["longitude"] = lon
 
     # record curves for parcellation (of the raster into interpolation cells)
     boxline_dtype = np.dtype(
@@ -282,7 +323,7 @@ def create_boxline_coordinator(
     )
     boxline = np.empty(rows, dtype=boxline_dtype)
     boxline["row_index"] = np.arange(rows)
-    boxline["bisection_index"] = ncentre
+    boxline["bisection_index"] = xcentre
     boxline["start_index"] = istart
     boxline["end_index"] = iend
     # note, option to fill out the entire linspace into additional columns
@@ -520,7 +561,7 @@ def setup_smodel(centre_lon, centre_lat, spheroid, orbital_elements):
     return smodel, smodel_dset
 
 
-def setup_times(ymin, ymax, spheroid, orbital_elements, smodel, npoints=12):
+def setup_times(ymin, ymax, spheroid, orbital_elements, smodel, ntpoints=12):
     """Setup the satellite track times.
     A wrapper routine for the ``set_times`` Fortran module built via
     ``F2Py``.
@@ -566,12 +607,12 @@ def setup_times(ymin, ymax, spheroid, orbital_elements, smodel, npoints=12):
             * Index 10 contains H0.
             * Index 11 contains th_ratio0.
 
-    :param npoints:
+    :param ntpoints:
         The number of time sample points to be calculated along the
         satellite track. Default is 12.
 
     :return:
-        A floating point np array of [npoints,8] containing the
+        A floating point np array of [ntpoints,8] containing the
         satellite track times and other information.
 
             * Index 0 t.
@@ -589,11 +630,11 @@ def setup_times(ymin, ymax, spheroid, orbital_elements, smodel, npoints=12):
                        ('lam', 'f8'), ('beta', 'f8'), ('hxy', 'f8'),
                        ('mj', 'f8'), ('skew', 'f8')]
     """
-    track, _ = set_times(ymin, ymax, npoints, spheroid, orbital_elements, smodel)
+    track, _ = set_times(ymin, ymax, ntpoints, spheroid, orbital_elements, smodel)
 
     columns = ["t", "rho", "phi_p", "lam", "beta", "hxy", "mj", "skew"]
     dtype = np.dtype([(col, "float64") for col in columns])
-    track_dset = np.zeros(npoints, dtype=dtype)
+    track_dset = np.zeros(ntpoints, dtype=dtype)
     track_dset["t"] = track[:, 0]
     track_dset["rho"] = track[:, 1]
     track_dset["phi_p"] = track[:, 2]
@@ -655,7 +696,7 @@ def calculate_angles(
     acquisition,
     lon_dataset,
     lat_dataset,
-    npoints=12,
+    vertices=(3, 3),
     out_fname=None,
     compression="lzf",
     max_angle=9.0,
@@ -684,9 +725,11 @@ def calculate_angles(
         The dimensions must match that of the `acquisition` objects's
         samples (x) and lines (y) parameters.
 
-    :param npoints:
-        The number of time sample points to be calculated along the
-        satellite track. Default is 12
+    :param vertices:
+        An integer 2-tuple indicating the number of rows and columns
+        of sample-locations ("coordinator") to produce.
+        The vertex columns should be an odd number.
+        Default is (3, 3).
 
     :param out_fname:
         If set to None (default) then the results will be returned
@@ -780,7 +823,7 @@ def calculate_angles(
 
     # Get the times and satellite track information
     track, track_dset = setup_times(
-        min_lat, max_lat, spheroid, orbital_elements, smodel, npoints
+        min_lat, max_lat, spheroid, orbital_elements, smodel
     )
 
     # Array dimensions
@@ -838,7 +881,7 @@ def calculate_angles(
     # attach some attributes to the image datasets
     attrs = {
         "crs_wkt": geobox.crs.ExportToWkt(),
-        "geotransform": geobox.affine.to_gdal(),
+        "geotransform": geobox.transform.to_gdal(),
         "no_data_value": no_data,
     }
     desc = "Contains the satellite viewing angle in degrees."
@@ -902,7 +945,7 @@ def calculate_angles(
             orbital_elements,
             hours,
             century,
-            npoints,
+            12,
             smodel,
             track,
             view[0],
@@ -965,7 +1008,7 @@ def calculate_angles(
 
     # boxline and coordinator
     boxline, coordinator = create_boxline_coordinator(
-        sat_v_ds, y_cent, x_cent, n_cent, max_angle=max_angle
+        geobox, sat_v_ds, y_cent, x_cent, n_cent, max_angle, vertices
     )
     desc = "Contains the bi-section, column start and column end array " "coordinates."
     attrs["Description"] = desc
