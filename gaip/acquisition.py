@@ -64,7 +64,7 @@ class AcquisitionsContainer:
             "****Granules****:\n{granules}\n"
             "****Groups****:\n{groups}"
         )
-        granules = "\n".join(self.granules)
+        granules = "\n".join(self.granules) if self.tiled else ""
         groups = "\n".join(self.groups)
         return fmt.format(tiled=self.tiled, granules=granules, groups=groups)
 
@@ -81,15 +81,15 @@ class AcquisitionsContainer:
         If `AcquisitionsContainer.tiled` is False, then [None] is
         returned.
         """
-        return list(self._granules.keys()) if self.tiled else [None]
+        return sorted(list(self._granules.keys())) if self.tiled else [None]
 
     @property
     def groups(self):
         """Lists the available groups within a scene."""
         if self.tiled:
-            grps = list(self._granules.get(self.granules[0]).keys())
+            grps = sorted(list(self._granules.get(self.granules[0]).keys()))
         else:
-            grps = list(self._groups.keys())
+            grps = sorted(list(self._groups.keys()))
         return grps
 
     def get_acquisitions(self, group=None, granule=None):
