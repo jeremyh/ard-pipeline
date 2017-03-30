@@ -381,6 +381,7 @@ class CalculateCoefficients(luigi.Task):
             _calculate_coefficients(accumulated_fname, out_fname, self.compression)
 
 
+# TODO: need to also retreive the ancillary to get the coordinator dataset
 @inherits(CalculateSatelliteAndSolarGrids)
 class BilinearInterpolationBand(luigi.Task):
     """Runs the bilinear interpolation function for a given band."""
