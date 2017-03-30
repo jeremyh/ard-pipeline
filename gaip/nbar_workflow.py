@@ -18,7 +18,7 @@ from luigi.util import inherits, requires
 
 from gaip import constants
 from gaip.acquisition import acquisitions
-from gaip.ancillary import aggregate_ancillary, collect_ancillary_data
+from gaip.ancillary import aggregate_ancillary, collect_nbar_ancillary
 from gaip.calculate_angles import _calculate_angles
 from gaip.calculate_incident_exiting_angles import (
     _exiting_angles,
@@ -107,7 +107,7 @@ class GetAncillaryData(luigi.Task):
         work_root = container.get_root(self.work_root, granule=self.granule)
 
         with self.output().temporary_path() as out_fname:
-            collect_ancillary_data(
+            collect_nbar_ancillary(
                 acqs[0],
                 self.aerosol_fname,
                 self.water_vapour_path,
