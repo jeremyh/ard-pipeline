@@ -18,7 +18,7 @@ from luigi.util import inherits, requires
 
 from gaip import constants
 from gaip.acquisition import acquisitions
-from gaip.ancillary import aggregate_ancillary
+from gaip.ancillary import _collect_ancillary, aggregate_ancillary
 from gaip.calculate_angles import _calculate_angles
 from gaip.calculate_incident_exiting_angles import (
     _exiting_angles,
