@@ -18,7 +18,7 @@ from luigi.util import inherits, requires
 
 from gaip import constants
 from gaip.acquisition import acquisitions
-from gaip.ancillary import aggregate_ancillary, collect_nbar_ancillary
+from gaip.ancillary import aggregate_ancillary
 from gaip.calculate_angles import _calculate_angles
 from gaip.calculate_incident_exiting_angles import (
     _exiting_angles,
@@ -37,6 +37,7 @@ from gaip.dsm import get_dsm
 from gaip.interpolation import _bilinear_interpolate, link_bilinear_data
 from gaip.modtran import (
     ALBEDO_FMT,
+    NBAR_ALBEDOS,
     POINT_ALBEDO_FMT,
     POINT_FMT,
     _calculate_coefficients,
@@ -84,6 +85,7 @@ class GetAncillaryData(luigi.Task):
     level1 = luigi.Parameter()
     work_root = luigi.Parameter(significant=False)
     granule = luigi.Parameter(default=None)
+    vertices = luigi.TupleParameter(default=(3, 3), significant=False)
     aerosol_fname = luigi.Parameter(significant=False)
     brdf_path = luigi.Parameter(significant=False)
     brdf_premodis_path = luigi.Parameter(significant=False)
@@ -93,7 +95,9 @@ class GetAncillaryData(luigi.Task):
     compression = luigi.Parameter(significant=False)
 
     def requires(self):
-        return WorkRoot(self.level1, self.work_root)
+        group = acquisitions(self.level1).groups[0]
+        args = [self.level1, self.work_root, self.granule, group]
+        return CalculateSatelliteAndSolarGrids(*args)
 
     def output(self):
         out_path = acquisitions(self.level1).get_root(
@@ -103,21 +107,27 @@ class GetAncillaryData(luigi.Task):
 
     def run(self):
         container = acquisitions(self.level1)
-        acqs = container.get_acquisitions(granule=self.granule)
+        acq = container.get_acquisitions(granule=self.granule)[0]
         work_root = container.get_root(self.work_root, granule=self.granule)
 
+        nbar_paths = {
+            "aerosol_fname": self.aerosol_fname,
+            "water_vapour_path": self.water_vapour_path,
+            "ozone_path": self.ozone_path,
+            "dem_path": self.dem_path,
+            "brdf_path": self.brdf_path,
+            "brdf_premodis_path": self.brdf_premodis_path,
+        }
+
         with self.output().temporary_path() as out_fname:
-            collect_nbar_ancillary(
-                acqs[0],
-                self.aerosol_fname,
-                self.water_vapour_path,
-                self.ozone_path,
-                self.dem_path,
-                self.brdf_path,
-                self.brdf_premodis_path,
-                out_fname,
-                self.compression,
-                work_root,
+            _collect_ancillary(
+                acq,
+                self.input().path,
+                nbar_paths,
+                vertices=self.vertices,
+                out_fname=out_fname,
+                work_path=work_root,
+                compression=self.compression,
             )
 
 
@@ -170,7 +180,6 @@ class CalculateLatGrid(luigi.Task):
 class CalculateSatelliteAndSolarGrids(luigi.Task):
     """Calculate the satellite and solar grids."""
 
-    vertices = luigi.TupleParameter(default=(3, 3), significant=False)
     tle_path = luigi.Parameter(significant=False)
 
     def requires(self):
@@ -194,18 +203,16 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
                 lon_fname,
                 lat_fname,
                 out_fname,
-                vertices=self.vertices,
-                compression=self.compression,
-                max_angle=acqs[0].maximum_view_angle,
-                tle_path=self.tle_path,
+                self.compression,
+                acqs[0].maximum_view_angle,
+                self.tle_path,
             )
 
 
-@inherits(CalculateSatelliteAndSolarGrids)
+@inherits(GetAncillaryData)
 class WriteTp5(luigi.Task):
     """Output the `tp5` formatted files."""
 
-    albedos = luigi.ListParameter(default=[0, 1, "t"], significant=False)
     base_dir = luigi.Parameter(default="_atmospherics", significant=False)
     compression = luigi.Parameter(default="lzf", significant=False)
 
@@ -213,38 +220,28 @@ class WriteTp5(luigi.Task):
         # for consistancy, we'll wait for dependencies on all granules and
         # groups of acquisitions
         # current method requires to compute an average from all granules
-        # if the scene is tiled up that way
+        # if the scene is tiled
         container = acquisitions(self.level1)
         tasks = {}
 
         for granule in container.granules:
-            key1 = (granule, "ancillary")
             args1 = [self.level1, self.work_root, granule]
-            tasks[key1] = GetAncillaryData(*args1)
+            tasks[(granule, "ancillary")] = GetAncillaryData(*args1)
             for group in container.groups:
-                key2 = (granule, group)
-                kwargs = {
-                    "level1": self.level1,
-                    "work_root": self.work_root,
-                    "granule": granule,
-                    "group": group,
-                    "vertices": self.vertices,
-                }
                 args2 = [self.level1, self.work_root, granule, group]
                 tsks = {
-                    "sat_sol": CalculateSatelliteAndSolarGrids(**kwargs),
+                    "sat_sol": CalculateSatelliteAndSolarGrids(*args2),
                     "lat": CalculateLatGrid(*args2),
                     "lon": CalculateLonGrid(*args2),
                 }
-                tasks[key2] = tsks
+                tasks[(granule, group)] = tsks
 
         return tasks
 
     def output(self):
         container = acquisitions(self.level1)
         out_path = container.get_root(self.work_root, granule=self.granule)
-        out_fname = pjoin(out_path, self.base_dir, "atmospheric-inputs.h5")
-        return luigi.LocalTarget(out_fname)
+        return luigi.LocalTarget(pjoin(out_path, "atmospheric-inputs.h5"))
 
     def run(self):
         container = acquisitions(self.level1)
@@ -270,22 +267,9 @@ class WriteTp5(luigi.Task):
         lon_fname = inputs[(self.granule, group)]["lon"].path
         lat_fname = inputs[(self.granule, group)]["lat"].path
 
-        # required for the sbt workflow
-        if (self.granule, "sbt-ancillary") not in inputs:
-            sbt_ancillary_fname = None
-        else:
-            sbt_ancillary_fname = inputs[(self.granule, "sbt-ancillary")].path
-
         with self.output().temporary_path() as out_fname:
             tp5_data = _format_tp5(
-                acq,
-                sat_sol_fname,
-                lon_fname,
-                lat_fname,
-                ancillary_fname,
-                out_fname,
-                self.albedos,
-                sbt_ancillary_fname,
+                acq, sat_sol_fname, lon_fname, lat_fname, ancillary_fname, out_fname
             )
 
             # keep this as an indented block, that way the target will remain
@@ -353,7 +337,7 @@ class AccumulateSolarIrradiance(luigi.Task):
     def requires(self):
         reqs = {}
         for point in range(self.vertices[0] * self.vertices[1]):
-            for albedo in self.albedos:
+            for albedo in NBAR_ALBEDOS:
                 args = [self.level1, self.work_root, self.granule]
                 reqs[(point, albedo)] = RunModtranCase(
                     *args, point=point, albedo=albedo
@@ -369,10 +353,11 @@ class AccumulateSolarIrradiance(luigi.Task):
 
     def run(self):
         acqs = acquisitions(self.level1).get_acquisitions(granule=self.granule)
+        npoints = self.vertices[0] * self.vertices[1]
 
         with self.output().temporary_path() as out_fname:
             _calculate_solar_radiation(
-                acqs[0], self.input(), out_fname, self.compression
+                acqs[0], self.input(), out_fname, npoints, self.compression
             )
 
 
