@@ -20,6 +20,7 @@ from gaip.calculate_angles import create_vertices
 from gaip.data import get_pixel
 from gaip.hdf5 import (
     attach_attributes,
+    attach_table_attributes,
     dataset_compression_kwargs,
     read_table,
     write_dataframe,
@@ -220,7 +221,7 @@ def collect_ancillary(
     coordinator = create_vertices(acquisition, boxline_dataset, vertices)
     lonlats = zip(coordinator["longitude"], coordinator["latitude"])
 
-    if sbt:
+    if sbt_paths:
         sbt_fid = collect_sbt_ancillary(
             acquisition,
             lonlats,
@@ -230,7 +231,7 @@ def collect_ancillary(
         )
 
     # close if we have a file on disk
-    if sbt and out_fname is not None:
+    if sbt_paths and out_fname is not None:
         sbt_fid.close()
 
     rfid = collect_nbar_ancillary(
@@ -245,13 +246,13 @@ def collect_ancillary(
         "Contains the row and column array coordinates used for the "
         "atmospheric calculations."
     )
-    attrs["Description"] = desc
+    attrs = {"Description": desc, "array_coordinate_offset": 0}
     kwargs = dataset_compression_kwargs(compression=compression)
     coord_dset = rfid.create_dataset("coordinator", data=coordinator, **kwargs)
     attach_table_attributes(coord_dset, title="Coordinator", attrs=attrs)
 
     # copy if we don't have a file on disk
-    if sbt and out_fname is None:
+    if sbt_paths and out_fname is None:
         rfid.copy(sbt_fid, rfid)
 
     return rfid

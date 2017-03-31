@@ -209,10 +209,13 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
             )
 
 
-@inherits(GetAncillaryData)
 class WriteTp5(luigi.Task):
     """Output the `tp5` formatted files."""
 
+    level1 = luigi.Parameter()
+    work_root = luigi.Parameter(significant=False)
+    granule = luigi.Parameter(default=None)
+    vertices = luigi.TupleParameter(default=(3, 3), significant=False)
     base_dir = luigi.Parameter(default="_atmospherics", significant=False)
     compression = luigi.Parameter(default="lzf", significant=False)
 
@@ -305,6 +308,7 @@ class RunModtranCase(luigi.Task):
         container = acquisitions(self.level1)
         out_path = container.get_root(self.work_root, granule=self.granule)
         acq = container.get_acquisitions(granule=self.granule)[0]
+        atmospheric_inputs_fname = self.input().path
 
         workpath = pjoin(
             POINT_FMT.format(p=self.point), ALBEDO_FMT.format(a=self.albedo)
@@ -319,6 +323,7 @@ class RunModtranCase(luigi.Task):
                 modtran_work,
                 self.point,
                 self.albedo,
+                atmospheric_inputs_fname,
                 out_fname,
                 self.compression,
             )
@@ -395,6 +400,7 @@ class BilinearInterpolationBand(luigi.Task):
         return {
             "coef": CalculateCoefficients(*args),
             "satsol": self.clone(CalculateSatelliteAndSolarGrids),
+            "ancillary": GetAncillaryData(*args),
         }
 
     def output(self):
@@ -408,6 +414,7 @@ class BilinearInterpolationBand(luigi.Task):
         acqs = acquisitions(self.level1).get_acquisitions(self.group, self.granule)
         sat_sol_angles_fname = self.input()["satsol"].path
         coefficients_fname = self.input()["coef"].path
+        ancillary_fname = self.input()["ancillary"].path
 
         acq = [acq for acq in acqs if acq.band_num == self.band_num][0]
 
@@ -417,6 +424,7 @@ class BilinearInterpolationBand(luigi.Task):
                 self.factor,
                 sat_sol_angles_fname,
                 coefficients_fname,
+                ancillary_fname,
                 out_fname,
                 self.compression,
             )
