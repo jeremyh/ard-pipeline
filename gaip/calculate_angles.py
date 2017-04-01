@@ -23,29 +23,6 @@ from gaip.tle import load_tle
 CRS = "EPSG:4326"
 
 
-def _calculate_angles(
-    acquisition,
-    lon_lat_fname,
-    out_fname=None,
-    compression="lzf",
-    max_angle=9.0,
-    tle_path=None,
-):
-    """A private wrapper for dealing with the internal custom workings of the
-    NBAR workflow.
-    """
-    with h5py.File(lon_lat_fname, "r") as src:
-        lon_ds = src["longitude"]
-        lat_ds = src["latitude"]
-        fid = calculate_angles(
-            acquisition, lon_ds, lat_ds, out_fname, compression, max_angle, tle_path
-        )
-
-    fid.close()
-
-    return
-
-
 def convert_to_lonlat(geobox, col_index, row_index):
     """Converts arrays of row and column indices into latitude and
     longitude (WGS84 datum).
@@ -694,6 +671,29 @@ def _store_parameter_settings(
 
     # flush
     fid.flush()
+
+
+def _calculate_angles(
+    acquisition,
+    lon_lat_fname,
+    out_fname=None,
+    compression="lzf",
+    max_angle=9.0,
+    tle_path=None,
+):
+    """A private wrapper for dealing with the internal custom workings of the
+    NBAR workflow.
+    """
+    with h5py.File(lon_lat_fname, "r") as src:
+        lon_ds = src["longitude"]
+        lat_ds = src["latitude"]
+        fid = calculate_angles(
+            acquisition, lon_ds, lat_ds, out_fname, compression, max_angle, tle_path
+        )
+
+    fid.close()
+
+    return
 
 
 def calculate_angles(
