@@ -245,9 +245,16 @@ class GriddedGeoBox:
 
         return GriddedGeoBox(self.shape, newOrigin, newPixelSize, crs=crs)
 
-    def __str__(self):
-        return "GriddedGeoBox(origin={},shape={},pixelsize={},crs: {})".format(
-            self.origin, self.shape, str(self.pixelsize), self.crs.ExportToProj4()
+    def __repr__(self):
+        fmt = (
+            "GriddedGeoBox:\n*\torigin: {origin}\n*\tshape: {shape}\n*\t"
+            "pixelsize: {pxsz}\n*\tcrs: {crs}"
+        )
+        return fmt.format(
+            origin=self.origin,
+            shape=self.shape,
+            pxsz=self.pixelsize,
+            crs=self.crs.ExportToPrettyWkt(),
         )
 
     def window(self, enclosedGGB):
