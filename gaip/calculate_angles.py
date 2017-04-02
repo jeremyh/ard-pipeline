@@ -458,7 +458,7 @@ def setup_orbital_elements(ephemeral, datetime, acquisition):
 
         # semi_major radius (m)
         # http://smallsats.org/2012/12/06/two-line-element-set-tle/
-        dset["semi_major_radius"] = (mu / (2 * pi * n / s) ** 2) ** (1.0 / 3)
+        dset["semi_major_radius"] = (mu / (2 * pi * n / s) ** 2) ** (1 / 3)
 
         # angular velocity (rad sec-1)
         dset["angular_velocity"] = (2 * pi * n) / s
