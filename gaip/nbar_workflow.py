@@ -305,6 +305,7 @@ class RunModtranCase(luigi.Task):
 
         with self.output().temporary_path() as out_fname:
             _run_modtran(
+                acq,
                 self.exe,
                 modtran_work,
                 self.point,
