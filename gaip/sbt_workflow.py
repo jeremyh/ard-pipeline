@@ -22,6 +22,7 @@ from gaip.modtran import SBT_ALBEDO
 from gaip.nbar_workflow import (
     AccumulateSolarIrradiance,
     BilinearInterpolation,
+    BilinearInterpolationBand,
     CalculateCoefficients,
     CalculateLonLatGrids,
     CalculateSatelliteAndSolarGrids,
@@ -144,7 +145,7 @@ class SBTCoefficients(CalculateCoefficients):
 class SBTBilinearInterpolation(BilinearInterpolation):
     # TODO: which factors to use
 
-    factors = luigi.ListParameter(default=[], significant=False)
+    factors = luigi.ListParameter(default=["thermalradiance", "tr"], significant=False)
 
     def requires(self):
         container = acquisitions(self.level1)
@@ -171,13 +172,20 @@ class SBTBilinearInterpolation(BilinearInterpolation):
                     "factor": factor,
                 }
                 tasks[key] = BilinearInterpolationBand(**kwargs)
+                break  # TODO: remove (debugging)
+            break  # TODO: remove (debugging)
         return tasks
 
 
+@inherits(CalculateLonLatGrids)
 class SurfaceTemperature(luigi.Task):
     """Calculates surface brightness temperature."""
 
-    # TODO: Re-write the class contents (output, run)
+    def run(self):
+        raise NotImplementedError
+
+    def output(self):
+        pass
 
     def requires(self):
         # TODO: add other upstream tasks as needed
@@ -208,6 +216,7 @@ class SBT(luigi.WrapperTask):
             for granule in container.granules:
                 for group in container.groups:
                     yield SurfaceTemperature(scene, work_root, granule, group)
+                    raise StopIteration  # TODO: remove (debugging)
 
 
 if __name__ == "__main__":
