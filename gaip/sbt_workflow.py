@@ -22,6 +22,7 @@ from gaip.modtran import SBT_ALBEDO
 from gaip.nbar_workflow import (
     AccumulateSolarIrradiance,
     BilinearInterpolation,
+    BilinearInterpolationBand,
     CalculateCoefficients,
     CalculateLonLatGrids,
     CalculateSatelliteAndSolarGrids,
@@ -143,7 +144,7 @@ class SBTCoefficients(CalculateCoefficients):
 class SBTBilinearInterpolation(BilinearInterpolation):
     # TODO: which factors to use
 
-    factors = luigi.ListParameter(default=[], significant=False)
+    factors = luigi.ListParameter(default=["thermalradiance", "tr"], significant=False)
 
     def requires(self):
         container = acquisitions(self.level1)
