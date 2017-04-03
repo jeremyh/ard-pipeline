@@ -1,47 +1,44 @@
-"""MODTRAN drivers
----------------.
+"""
+MODTRAN drivers
+---------------
 
 """
-import glob
+from __future__ import absolute_import, print_function
 import os
-import subprocess
-from os.path import basename, dirname, exists, splitext
-from os.path import join as pjoin
+from os.path import join as pjoin, exists, dirname, basename, splitext
 from posixpath import join as ppjoin
+import subprocess
+import glob
 
-import h5py
-import numpy as np
-import pandas as pd
+import numpy
 from scipy.io import FortranFile
+import h5py
+import pandas as pd
 
-from gaip.hdf5 import read_table, write_dataframe
-from gaip.modtran_profiles import (
-    MIDLAT_SUMMER_ALBEDO,
-    MIDLAT_SUMMER_TRANSMITTANCE,
-    SBT_FORMAT,
-    THERMAL_TRANSMITTANCE,
-    TROPICAL_ALBEDO,
-    TROPICAL_TRANSMITTANCE,
-)
-
-POINT_FMT = "point-{p}"
-ALBEDO_FMT = "albedo-{a}"
-POINT_ALBEDO_FMT = "".join([POINT_FMT, "-", ALBEDO_FMT])
-
-NBAR_ALBEDOS = [0, 1, "t"]
-SBT_ALBEDO = "th"
+from gaip.hdf5 import write_dataframe, read_table
+from gaip.modtran_profiles import MIDLAT_SUMMER_ALBEDO, TROPICAL_ALBEDO
+from gaip.modtran_profiles import MIDLAT_SUMMER_TRANSMITTANCE, SBT_FORMAT
+from gaip.modtran_profiles import TROPICAL_TRANSMITTANCE, THERMAL_TRANSMITTANCE
 
 
-def create_modtran_dirs(
-    coords, albedos, modtran_root, modtran_exe_root, workpath_format, input_format
-):
+POINT_FMT = 'point-{p}'
+ALBEDO_FMT = 'albedo-{a}'
+POINT_ALBEDO_FMT = ''.join([POINT_FMT, '-', ALBEDO_FMT])
+
+NBAR_ALBEDOS = [0, 1, 't']
+SBT_ALBEDO = 'th'
+
+
+def create_modtran_dirs(coords, albedos, modtran_root, modtran_exe_root,
+                        workpath_format, input_format):
     """Create all modtran subdirectories. and input files."""
+
     if not exists(modtran_root):
         os.makedirs(modtran_root)
 
-    data_dir = pjoin(modtran_exe_root, "DATA")
+    data_dir = pjoin(modtran_exe_root, 'DATA')
     if not exists(data_dir):
-        raise OSError("Cannot find MODTRAN")
+        raise OSError('Cannot find MODTRAN')
 
     for coord in coords:
         for albedo in albedos:
@@ -53,28 +50,31 @@ def create_modtran_dirs(
             if not exists(modtran_work):
                 os.makedirs(modtran_work)
 
-            with open(mod5root_in, "w") as outfile:
-                outfile.write(coord + "_alb_" + albedo + "\n")
+            with open(mod5root_in, 'w') as outfile:
+                outfile.write(coord + '_alb_' + albedo + '\n')
 
-            symlink_dir = pjoin(modtran_work, "DATA")
+            symlink_dir = pjoin(modtran_work, 'DATA')
             if exists(symlink_dir):
                 os.unlink(symlink_dir)
 
             os.symlink(data_dir, symlink_dir)
 
 
-def prepare_modtran(acquisition, coordinate, albedo, modtran_work, modtran_exe):
-    """Prepares the working directory for a MODTRAN execution."""
-    data_dir = pjoin(dirname(modtran_exe), "DATA")
+def prepare_modtran(acquisition, coordinate, albedo, modtran_work,
+                    modtran_exe):
+    """
+    Prepares the working directory for a MODTRAN execution.
+    """
+    data_dir = pjoin(dirname(modtran_exe), 'DATA')
     if not exists(data_dir):
-        raise OSError("Cannot find MODTRAN")
+        raise OSError('Cannot find MODTRAN')
 
-    out_fname = pjoin(modtran_work, "mod5root.in")
+    out_fname = pjoin(modtran_work, 'mod5root.in')
 
-    with open(out_fname, "w") as src:
-        src.write(POINT_ALBEDO_FMT.format(p=coordinate, a=albedo) + "\n")
+    with open(out_fname, 'w') as src:
+        src.write(POINT_ALBEDO_FMT.format(p=coordinate, a=albedo) + '\n')
 
-    symlink_dir = pjoin(modtran_work, "DATA")
+    symlink_dir = pjoin(modtran_work, 'DATA')
     if exists(symlink_dir):
         os.unlink(symlink_dir)
 
@@ -83,118 +83,92 @@ def prepare_modtran(acquisition, coordinate, albedo, modtran_work, modtran_exe):
     # TODO: write the spectral response function
     out_fname = pjoin(modtran_work, acquisition.spectral_filter_file)
     response = acquisition.spectral_response(as_list=True)
-    with open(out_fname, "wb") as src:
+    with open(out_fname, 'wb') as src:
         src.writelines(response)
 
 
-def _format_tp5(
-    acquisition,
-    satellite_solar_angles_fname,
-    longitude_latitude_fname,
-    ancillary_fname,
-    out_fname,
-    nbar_tp5=True,
-):
-    """A private wrapper for dealing with the internal custom workings of the
+def _format_tp5(acquisition, satellite_solar_angles_fname,
+                longitude_latitude_fname, ancillary_fname, out_fname,
+                nbar_tp5=True):
+    """
+    A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
-    with h5py.File(satellite_solar_angles_fname, "r") as sat_sol, h5py.File(
-        longitude_latitude_fname, "r"
-    ) as lon_lat_ds, h5py.File(ancillary_fname, "r") as anc_ds, h5py.File(
-        out_fname, "w"
-    ) as fid:
+    with h5py.File(satellite_solar_angles_fname, 'r') as sat_sol,\
+        h5py.File(longitude_latitude_fname, 'r') as lon_lat_ds,\
+        h5py.File(ancillary_fname, 'r') as anc_ds,\
+        h5py.File(out_fname, 'w') as fid:
+
         # angles data
-        view_dset = sat_sol["satellite-view"]
-        azi_dset = sat_sol["satellite-azimuth"]
-        lon_dset = lon_lat_ds["longitude"]
-        lat_dset = lon_lat_ds["latitude"]
+        view_dset = sat_sol['satellite-view']
+        azi_dset = sat_sol['satellite-azimuth']
+        lon_dset = lon_lat_ds['longitude']
+        lat_dset = lon_lat_ds['latitude']
 
         # ancillary data
-        coord_dset = anc_ds["coordinator"]
-        aerosol = anc_ds["aerosol"][()]
-        water_vapour = anc_ds["water-vapour"][()]
-        ozone = anc_ds["ozone"][()]
-        elevation = anc_ds["elevation"][()]
+        coord_dset = anc_ds['coordinator']
+        aerosol = anc_ds['aerosol'][()]
+        water_vapour = anc_ds['water-vapour'][()]
+        ozone = anc_ds['ozone'][()]
+        elevation = anc_ds['elevation'][()]
 
-        if anc_ds.attrs.get("sbt-ancillary"):
+        if anc_ds.attrs.get('sbt-ancillary'):
             sbt_ancillary = {}
-            dname = ppjoin(POINT_FMT, "atmospheric-profile")
+            dname = ppjoin(POINT_FMT, 'atmospheric-profile')
             for i in range(coord_dset.shape[0]):
                 sbt_ancillary[i] = read_table(anc_ds, dname.format(p=i))
         else:
             sbt_ancillary = None
 
-        tp5_data, metadata = format_tp5(
-            acquisition,
-            coord_dset,
-            view_dset,
-            azi_dset,
-            lat_dset,
-            lon_dset,
-            ozone,
-            water_vapour,
-            aerosol,
-            elevation,
-            coord_dset.shape[0],
-            sbt_ancillary,
-            nbar_tp5,
-        )
+        tp5_data, metadata = format_tp5(acquisition, coord_dset, view_dset,
+                                        azi_dset, lat_dset, lon_dset, ozone,
+                                        water_vapour, aerosol, elevation,
+                                        coord_dset.shape[0], sbt_ancillary,
+                                        nbar_tp5)
 
-        group = fid.create_group("modtran-inputs")
+        group = fid.create_group('modtran-inputs')
         iso_time = acquisition.scene_centre_date.isoformat()
-        group.attrs["acquisition-datetime"] = iso_time
+        group.attrs['acquisition-datetime'] = iso_time
 
         for key in metadata:
-            dname = ppjoin(
-                POINT_FMT.format(p=key[0]), ALBEDO_FMT.format(a=key[1]), "tp5_data"
-            )
-            str_data = np.string_(tp5_data[key])
+            dname = ppjoin(POINT_FMT.format(p=key[0]),
+                           ALBEDO_FMT.format(a=key[1]), 'tp5_data')
+            str_data = numpy.string_(tp5_data[key])
             dset = group.create_dataset(dname, data=str_data)
             for k in metadata[key]:
                 dset.attrs[k] = metadata[key][k]
 
         # attach some meaningful location information to the point groups
-        lon = coord_dset["longitude"]
-        lat = coord_dset["latitude"]
+        lon = coord_dset['longitude']
+        lat = coord_dset['latitude']
         for i in range(coord_dset.shape[0]):
-            group[POINT_FMT.format(p=i)].attrs["lonlat"] = (lon[i], lat[i])
+            group[POINT_FMT.format(p=i)].attrs['lonlat'] = (lon[i], lat[i])
 
     return tp5_data
 
 
-def format_tp5(
-    acquisition,
-    coordinator,
-    view_dataset,
-    azi_dataset,
-    lat_dataset,
-    lon_dataset,
-    ozone,
-    vapour,
-    aerosol,
-    elevation,
-    npoints,
-    sbt_ancillary=None,
-    nbar_tp5=True,
-):
-    """Creates str formatted tp5 files for the albedo (0, 1) and
+def format_tp5(acquisition, coordinator, view_dataset, azi_dataset,
+               lat_dataset, lon_dataset, ozone, vapour, aerosol, elevation,
+               npoints, sbt_ancillary=None, nbar_tp5=True):
+    """
+    Creates str formatted tp5 files for the albedo (0, 1) and
     transmittance (t).
     """
     geobox = acquisition.gridded_geo_box()
     filter_file = acquisition.spectral_filter_file
     cdate = acquisition.scene_centre_date
-    doy = int(cdate.strftime("%j"))
+    doy = int(cdate.strftime('%j'))
     altitude = acquisition.altitude / 1000.0  # in km
     dechour = acquisition.decimal_hour
 
-    view = np.zeros(npoints, dtype="float32")
-    azi = np.zeros(npoints, dtype="float32")
-    lat = np.zeros(npoints, dtype="float64")
-    lon = np.zeros(npoints, dtype="float64")
+    view = numpy.zeros(npoints, dtype='float32')
+    azi = numpy.zeros(npoints, dtype='float32')
+    lat = numpy.zeros(npoints, dtype='float64')
+    lon = numpy.zeros(npoints, dtype='float64')
 
     for i in range(npoints):
-        yidx = coordinator["row_index"][i]
-        xidx = coordinator["col_index"][i]
+        yidx = coordinator['row_index'][i]
+        xidx = coordinator['col_index'][i]
         idx = (slice(yidx, yidx + 1), slice(xidx, xidx + 1))
         view[i] = view_dataset[idx][0, 0]
         azi[i] = azi_dataset[idx][0, 0]
@@ -226,7 +200,7 @@ def format_tp5(
         trans_profile = TROPICAL_TRANSMITTANCE
 
     # we'll only cater for MODTRAN to output binary form
-    binary = "T"
+    binary = 'T'
 
     tp5_data = {}
     metadata = {}
@@ -235,27 +209,25 @@ def format_tp5(
     if nbar_tp5:
         for i in range(npoints):
             for alb in NBAR_ALBEDOS:
-                input_data = {
-                    "water": vapour,
-                    "ozone": ozone,
-                    "filter_function": filter_file,
-                    "visibility": -aerosol,
-                    "elevation": elevation,
-                    "sat_height": altitude,
-                    "sat_view": view_cor[i],
-                    "doy": doy,
-                    "binary": binary,
-                }
+                input_data = {'water': vapour,
+                              'ozone': ozone,
+                              'filter_function': filter_file,
+                              'visibility': -aerosol,
+                              'elevation': elevation,
+                              'sat_height': altitude,
+                              'sat_view': view_cor[i],
+                              'doy': doy,
+                              'binary': binary}
                 if alb == NBAR_ALBEDOS[2]:
-                    input_data["albedo"] = 0.0
-                    input_data["sat_view_offset"] = 180.0 - view_cor[i]
+                    input_data['albedo'] = 0.0
+                    input_data['sat_view_offset'] = 180.0-view_cor[i]
                     data = trans_profile.format(**input_data)
                 else:
-                    input_data["albedo"] = float(alb)
-                    input_data["lat"] = lat[i]
-                    input_data["lon"] = rlon[i]
-                    input_data["time"] = dechour
-                    input_data["sat_azimuth"] = azi_cor[i]
+                    input_data['albedo'] = float(alb)
+                    input_data['lat'] = lat[i]
+                    input_data['lon'] = rlon[i]
+                    input_data['time'] = dechour
+                    input_data['sat_azimuth'] = azi_cor[i]
                     data = albedo_profile.format(**input_data)
 
                 tp5_data[(i, alb)] = data
@@ -273,28 +245,24 @@ def format_tp5(
             atmospheric_profile = []
             atmos_profile = sbt_ancillary[p]
             n_layers = atmos_profile.shape[0] + 6
-            elevation = atmos_profile.iloc[0]["GeoPotential_Height"]
+            elevation = atmos_profile.iloc[0]['GeoPotential_Height']
             for i, row in atmos_profile.iterrows():
-                input_data = {
-                    "gpheight": row["GeoPotential_Height"],
-                    "pressure": row["Pressure"],
-                    "airtemp": row["Temperature"],
-                    "humidity": row["Relative_Humidity"],
-                    "zero": 0.0,
-                }
+                input_data = {'gpheight': row['GeoPotential_Height'],
+                              'pressure': row['Pressure'],
+                              'airtemp': row['Temperature'],
+                              'humidity': row['Relative_Humidity'],
+                              'zero': 0.0}
                 atmospheric_profile.append(SBT_FORMAT.format(**input_data))
 
-            input_data = {
-                "ozone": ozone,
-                "filter_function": filter_file,
-                "visibility": -aerosol,
-                "gpheight": elevation,
-                "n": n_layers,
-                "sat_height": altitude,
-                "sat_view": view_cor[p],
-                "binary": binary,
-                "data_array": "".join(atmospheric_profile),
-            }
+            input_data = {'ozone': ozone,
+                          'filter_function': filter_file,
+                          'visibility': -aerosol,
+                          'gpheight': elevation,
+                          'n': n_layers,
+                          'sat_height': altitude,
+                          'sat_view': view_cor[p],
+                          'binary': binary,
+                          'data_array': ''.join(atmospheric_profile)}
 
             data = THERMAL_TRANSMITTANCE.format(**input_data)
             tp5_data[(p, SBT_ALBEDO)] = data
@@ -303,163 +271,131 @@ def format_tp5(
     return tp5_data, metadata
 
 
-def _run_modtran(
-    acquisition,
-    modtran_exe,
-    workpath,
-    point,
-    albedo,
-    atmospheric_inputs_fname,
-    out_fname,
-    compression="lzf",
-):
-    """A private wrapper for dealing with the internal custom workings of the
+def _run_modtran(acquisition, modtran_exe, workpath, point, albedo,
+                 atmospheric_inputs_fname, out_fname, compression='lzf'):
+    """
+    A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
-    with h5py.File(atmospheric_inputs_fname, "r") as fid:
-        grp_path = ppjoin("modtran-inputs", POINT_FMT.format(p=point))
-        lonlat = fid[grp_path].attrs["lonlat"]
+    with h5py.File(atmospheric_inputs_fname, 'r') as fid:
+        grp_path = ppjoin('modtran-inputs', POINT_FMT.format(p=point))
+        lonlat = fid[grp_path].attrs['lonlat']
 
-    rfid = run_modtran(
-        acquisition,
-        modtran_exe,
-        workpath,
-        point,
-        albedo,
-        lonlat,
-        out_fname,
-        compression,
-    )
+    rfid = run_modtran(acquisition, modtran_exe, workpath, point, albedo,
+                       lonlat, out_fname, compression)
 
     rfid.close()
     return
 
 
-def run_modtran(
-    acquisition,
-    modtran_exe,
-    workpath,
-    point,
-    albedo,
-    lonlat=None,
-    out_fname=None,
-    compression="lzf",
-):
-    """Run MODTRAN and return the flux and channel results."""
+def run_modtran(acquisition, modtran_exe, workpath, point, albedo, lonlat=None,
+                out_fname=None, compression='lzf'):
+    """
+    Run MODTRAN and return the flux and channel results.
+    """
     subprocess.check_call([modtran_exe], cwd=workpath)
 
     # Initialise the output files
     if out_fname is None:
-        fid = h5py.File("modtran-results.h5", driver="core", backing_store=False)
+        fid = h5py.File('modtran-results.h5', driver='core',
+                        backing_store=False)
     else:
-        fid = h5py.File(out_fname, "w")
+        fid = h5py.File(out_fname, 'w')
 
     # base group pathname
     group_path = ppjoin(POINT_FMT.format(p=point), ALBEDO_FMT.format(a=albedo))
 
     if lonlat is None:
-        lonlat = (np.nan, np.nan)
+        lonlat = (numpy.nan, numpy.nan)
 
     # initial attributes
-    attrs = {"Point": point, "Albedo": albedo, "lonlat": lonlat}
+    attrs = {'Point': point, 'Albedo': albedo, 'lonlat': lonlat}
 
     if albedo != SBT_ALBEDO:
-        flux_fname = glob.glob(pjoin(workpath, "*_b.flx"))[0]
+        flux_fname = glob.glob(pjoin(workpath, '*_b.flx'))[0]
         flux_data, altitudes = read_modtran_flux(flux_fname)
 
         # ouput the flux data
-        dset_name = ppjoin(group_path, "flux")
-        attrs["Description"] = "Flux output from MODTRAN"
+        dset_name = ppjoin(group_path, 'flux')
+        attrs['Description'] = 'Flux output from MODTRAN'
         write_dataframe(flux_data, dset_name, fid, attrs=attrs)
 
         # output the altitude data
-        attrs["Description"] = "Altitudes output from MODTRAN"
-        attrs["altitude levels"] = altitudes.shape[0]
-        attrs["units"] = "km"
-        dset_name = ppjoin(group_path, "altitudes")
+        attrs['Description'] = 'Altitudes output from MODTRAN'
+        attrs['altitude levels'] = altitudes.shape[0]
+        attrs['units'] = 'km'
+        dset_name = ppjoin(group_path, 'altitudes')
         write_dataframe(altitudes, dset_name, fid, attrs=attrs)
 
-    chn_fname = glob.glob(pjoin(workpath, "*.chn"))[0]
+    chn_fname = glob.glob(pjoin(workpath, '*.chn'))[0]
     channel_data = read_modtran_channel(chn_fname, acquisition, albedo)
 
     if albedo == SBT_ALBEDO:
         # upward radiation
-        attrs["Description"] = "Upward radiation channel output from MODTRAN"
-        dset_name = ppjoin(group_path, "upward-radiation-channel")
+        attrs['Description'] = 'Upward radiation channel output from MODTRAN'
+        dset_name = ppjoin(group_path, 'upward-radiation-channel')
         write_dataframe(channel_data[0], dset_name, fid, attrs=attrs)
 
         # downward radiation
-        attrs["Description"] = "Downward radiation channel output from MODTRAN"
-        dset_name = ppjoin(group_path, "downward-radiation-channel")
+        attrs['Description'] = 'Downward radiation channel output from MODTRAN'
+        dset_name = ppjoin(group_path, 'downward-radiation-channel')
         write_dataframe(channel_data[1], dset_name, fid, attrs=attrs)
     else:
         # output the channel data
-        attrs["Description"] = "Channel output from MODTRAN"
-        dset_name = ppjoin(group_path, "channel")
+        attrs['Description'] = 'Channel output from MODTRAN'
+        dset_name = ppjoin(group_path, 'channel')
         write_dataframe(channel_data, dset_name, fid, attrs=attrs)
 
     # meaningful location description
-    fid[POINT_FMT.format(p=point)].attrs["lonlat"] = lonlat
+    fid[POINT_FMT.format(p=point)].attrs['lonlat'] = lonlat
 
     return fid
 
 
-def _calculate_coefficients(accumulated_fname, out_fname, compression="lzf"):
-    """A private wrapper for dealing with the internal custom workings of the
+def _calculate_coefficients(accumulated_fname, out_fname, compression='lzf'):
+    """
+    A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
-    with h5py.File(accumulated_fname, "r") as fid:
+    with h5py.File(accumulated_fname, 'r') as fid:
+
         # initialise dicts to hold the data for each point
         accumulation_albedo_0 = {}
         accumulation_albedo_1 = {}
         accumulation_albedo_t = {}
         channel_data = {}
 
-        npoints = fid.attrs["npoints"]
+        npoints = fid.attrs['npoints']
         for point in range(npoints):
             grp_path = ppjoin(POINT_FMT, ALBEDO_FMT)
-            albedo_0_path = ppjoin(
-                grp_path.format(p=point, a=NBAR_ALBEDOS[0]), "solar-irradiance"
-            )
-            albedo_1_path = ppjoin(
-                grp_path.format(p=point, a=NBAR_ALBEDOS[1]), "solar-irradiance"
-            )
-            albedo_t_path = ppjoin(
-                grp_path.format(p=point, a=NBAR_ALBEDOS[2]), "solar-irradiance"
-            )
-            channel_path = ppjoin(
-                grp_path.format(p=point, a=NBAR_ALBEDOS[0]), "channel"
-            )
+            albedo_0_path = ppjoin(grp_path.format(p=point, a=NBAR_ALBEDOS[0]),
+                                   'solar-irradiance')
+            albedo_1_path = ppjoin(grp_path.format(p=point, a=NBAR_ALBEDOS[1]),
+                                   'solar-irradiance')
+            albedo_t_path = ppjoin(grp_path.format(p=point, a=NBAR_ALBEDOS[2]),
+                                   'solar-irradiance')
+            channel_path = ppjoin(grp_path.format(p=point, a=NBAR_ALBEDOS[0]),
+                                  'channel')
 
             accumulation_albedo_0[point] = read_table(fid, albedo_0_path)
             accumulation_albedo_1[point] = read_table(fid, albedo_1_path)
             accumulation_albedo_t[point] = read_table(fid, albedo_t_path)
             channel_data[point] = read_table(fid, channel_path)
 
-        rfid = calculate_coefficients(
-            accumulation_albedo_0,
-            accumulation_albedo_1,
-            accumulation_albedo_t,
-            channel_data,
-            npoints,
-            out_fname,
-            compression,
-        )
+        rfid = calculate_coefficients(accumulation_albedo_0,
+                                      accumulation_albedo_1,
+                                      accumulation_albedo_t, channel_data,
+                                      npoints, out_fname, compression)
 
     rfid.close()
     return
 
 
-def calculate_coefficients(
-    accumulation_albedo_0,
-    accumulation_albedo_1,
-    accumulation_albedo_t,
-    channel_data,
-    npoints,
-    out_fname=None,
-    compression="lzf",
-):
-    """Calculate the atmospheric coefficients from the MODTRAN output
+def calculate_coefficients(accumulation_albedo_0, accumulation_albedo_1,
+                           accumulation_albedo_t, channel_data, npoints,
+                           out_fname=None, compression='lzf'):
+    """
+    Calculate the atmospheric coefficients from the MODTRAN output
     and used in the BRDF and atmospheric correction.
     Coefficients are computed for each band for each each coordinate
     for each factor.  The factors are:
@@ -533,54 +469,64 @@ def calculate_coefficients(
         data5 = accumulation_albedo_t[point]
 
         # calculate
-        diff_0 = data3["diffuse"] * 10000000.0
-        diff_1 = data4["diffuse"] * 10000000.0
-        dir_0 = data3["direct"] * 10000000.0
-        dir_1 = data4["direct"] * 10000000.0
-        dir_t = data5["direct"]
-        dir0_top = data3["direct_top"] * 10000000.0
-        dirt_top = data5["direct_top"]
-        tv_total = data5["transmittance"]
+        diff_0 = data3['diffuse'] * 10000000.0
+        diff_1 = data4['diffuse'] * 10000000.0
+        dir_0 = data3['direct'] * 10000000.0
+        dir_1 = data4['direct'] * 10000000.0
+        dir_t = data5['direct']
+        dir0_top = data3['direct_top'] * 10000000.0
+        dirt_top = data5['direct_top']
+        tv_total = data5['transmittance']
         ts_total = (diff_0 + dir_0) / dir0_top
         ts_dir = dir_0 / dir0_top
         tv_dir = dir_t / dirt_top
 
-        columns = ["point", "fs", "fv", "a", "b", "s", "dir", "dif", "ts"]
+        columns = ['point',
+                   'fs',
+                   'fv',
+                   'a',
+                   'b',
+                   's',
+                   'dir',
+                   'dif',
+                   'ts']
         df = pd.DataFrame(columns=columns, index=data1.index)
 
-        df["point"] = point
-        df["fs"] = ts_dir / ts_total
-        df["fv"] = tv_dir / tv_total
-        df["a"] = (diff_0 + dir_0) / np.pi * tv_total
-        df["b"] = data1["3"] * 10000000
-        df["s"] = 1 - (diff_0 + dir_0) / (diff_1 + dir_1)
-        df["dir"] = dir_0
-        df["dif"] = diff_0
-        df["ts"] = ts_dir
+        df['point'] = point
+        df['fs'] = ts_dir / ts_total
+        df['fv'] = tv_dir / tv_total
+        df['a'] = (diff_0 + dir_0) / numpy.pi * tv_total
+        df['b'] = data1['3'] * 10000000
+        df['s'] = 1 - (diff_0 + dir_0) / (diff_1 + dir_1)
+        df['dir'] = dir_0
+        df['dif'] = diff_0
+        df['ts'] = ts_dir
 
         result = result.append(df)
 
     result.reset_index(inplace=True)
 
     attrs = {}
-    attrs["Description"] = (
-        "Coefficients derived from the " "accumulated solar irradiation."
-    )
-    attrs["Number of atmospheric points"] = npoints
+    attrs['Description'] = ("Coefficients derived from the "
+                            "accumulated solar irradiation.")
+    attrs['Number of atmospheric points'] = npoints
 
     # Initialise the output file
     if out_fname is None:
-        fid = h5py.File("coefficients.h5", driver="core", backing_store=False)
+        fid = h5py.File('coefficients.h5', driver='core',
+                        backing_store=False)
     else:
-        fid = h5py.File(out_fname, "w")
+        fid = h5py.File(out_fname, 'w')
 
-    write_dataframe(result, "coefficients", fid, compression, attrs=attrs)
+    write_dataframe(result, 'coefficients', fid, compression,
+                    attrs=attrs)
 
     return fid
 
 
 def read_spectral_response(fname, as_list=False, spectral_range=None):
-    """Read the spectral response function text file used during
+    """
+    Read the spectral response function text file used during
     MODTRAN processing.
 
     :param fname:
@@ -602,7 +548,7 @@ def read_spectral_response(fname, as_list=False, spectral_range=None):
         function.
     """
     if isinstance(fname, str):
-        with open(fname) as src:
+        with open(fname, 'r') as src:
             lines = src.readlines()
     else:
         lines = fname.readlines()
@@ -610,31 +556,30 @@ def read_spectral_response(fname, as_list=False, spectral_range=None):
     if as_list:
         return lines
 
-    lines = [line.strip().decode("utf-8") for line in lines]
+    lines = [line.strip().decode('utf-8') for line in lines]
 
     # find the starting locations of each band description label
     ids = []
     for i, val in enumerate(lines):
-        if "B" in val:
+        if 'B' in val:
             ids.append(i)
 
     # get the spectral response data up to band n-1
     response = {}
     for i, idx in enumerate(ids[0:-1]):
-        data = np.array(
-            [l.split("  ") for l in lines[idx + 1 : ids[i + 1]]], dtype="float"
-        )
-        df = pd.DataFrame(
-            {"band_id": lines[idx], "wavelength": data[:, 0], "response": data[:, 1]}
-        )
+        data = numpy.array([l.split('  ') for l in lines[idx+1:ids[i+1]]],
+                           dtype='float')
+        df = pd.DataFrame({'band_id': lines[idx],
+                           'wavelength': data[:, 0],
+                           'response': data[:, 1]})
         response[lines[idx]] = df
 
     # get spectral response data for band n
     idx = ids[-1]
-    data = np.array([l.split("  ") for l in lines[idx + 1 :]], dtype="float")
-    df = pd.DataFrame(
-        {"band_id": lines[idx], "wavelength": data[:, 0], "response": data[:, 1]}
-    )
+    data = numpy.array([l.split('  ') for l in lines[idx+1:]], dtype='float')
+    df = pd.DataFrame({'band_id': lines[idx],
+                       'wavelength': data[:, 0],
+                       'response': data[:, 1]})
     response[lines[idx]] = df
 
     if spectral_range is None:
@@ -643,23 +588,24 @@ def read_spectral_response(fname, as_list=False, spectral_range=None):
         wavelengths = list(spectral_range)
 
     for band in response:
-        base_df = pd.DataFrame(
-            {"wavelength": wavelengths, "response": 0.0, "band_id": band},
-            index=wavelengths,
-        )
+        base_df = pd.DataFrame({'wavelength': wavelengths,
+                                'response': 0.0,
+                                'band_id': band},
+                               index=wavelengths)
         df = response[band]
-        base_df.ix[df["wavelength"], "response"] = df["response"].values
+        base_df.ix[df['wavelength'], 'response'] = df['response'].values
 
         response[band] = base_df
 
-    spectral_response = pd.concat(response, names=["band_id", "wavelength"])
-    spectral_response.drop(["band_id", "wavelength"], inplace=True, axis=1)
+    spectral_response = pd.concat(response, names=['band_id', 'wavelength'])
+    spectral_response.drop(['band_id', 'wavelength'], inplace=True, axis=1)
 
     return spectral_response
 
 
 def read_modtran_flux(fname):
-    """Read a MODTRAN output `*_b.flx` binary file.
+    """
+    Read a MODTRAN output `*_b.flx` binary file.
 
     :param fname:
         A `str` containing the full file pathname of the flux
@@ -671,46 +617,37 @@ def read_modtran_flux(fname):
         levels in km.
     """
     # define a datatype for the hdr info
-    hdr_dtype = np.dtype(
-        [
-            ("record_length", "int32"),
-            ("spectral_unit", "S1"),
-            ("relabs", "S1"),
-            ("linefeed", "S1"),
-            ("mlflx", "int32"),
-            ("iv1", "float32"),
-            ("band_width", "float32"),
-            ("fwhm", "float32"),
-            ("ifwhm", "float32"),
-        ]
-    )
+    hdr_dtype = numpy.dtype([('record_length', 'int32'),
+                             ('spectral_unit', 'S1'),
+                             ('relabs', 'S1'),
+                             ('linefeed', 'S1'),
+                             ('mlflx', 'int32'),
+                             ('iv1', 'float32'),
+                             ('band_width', 'float32'),
+                             ('fwhm', 'float32'),
+                             ('ifwhm', 'float32')])
 
     # datatype for the dataframe containing the flux data
-    flux_dtype = np.dtype(
-        [
-            ("upward_diffuse", "float64"),
-            ("downward_diffuse", "float64"),
-            ("direct_solar", "float64"),
-        ]
-    )
+    flux_dtype = numpy.dtype([('upward_diffuse', 'float64'),
+                              ('downward_diffuse', 'float64'),
+                              ('direct_solar', 'float64')])
 
-    with open(fname, "rb") as src:
+    with open(fname, 'rb') as src:
         # read the hdr record
-        hdr_data = np.fromfile(src, hdr_dtype, count=1)
+        hdr_data = numpy.fromfile(src, hdr_dtype, count=1)
 
         # maximum flux levels at a spectral grid point
-        levels = hdr_data["mlflx"][0] + 1
+        levels = hdr_data['mlflx'][0] + 1
 
         # define a datatype to read a record containing flux data
-        dtype = np.dtype(
-            [("wavelength", "float64"), ("flux_data", "float64", (levels, 3))]
-        )
+        dtype = numpy.dtype([('wavelength', 'float64'),
+                             ('flux_data', 'float64', (levels, 3))])
 
         # read the rest of the hdr which contains the altitude data
-        altitude = np.fromfile(src, dtype="float32", count=levels)
+        altitude = numpy.fromfile(src, dtype='float32', count=levels)
 
         # read the record length end value
-        _ = np.fromfile(src, "int32", count=1)
+        _ = numpy.fromfile(src, 'int32', count=1)
 
         # initialise the FORTRAN read
         ffile = FortranFile(src)
@@ -720,25 +657,26 @@ def read_modtran_flux(fname):
         wavelength_steps = range(2600, 349, -1)
         for wv in wavelength_steps:
             data = ffile.read_record(dtype)
-            df = pd.DataFrame(np.zeros(levels, dtype=flux_dtype))
-            # df['wavelength'] = data['wavelength'][0]
-            df["upward_diffuse"] = data["flux_data"].squeeze()[:, 0]
-            df["downward_diffuse"] = data["flux_data"].squeeze()[:, 1]
-            df["direct_solar"] = data["flux_data"].squeeze()[:, 2]
+            df = pd.DataFrame(numpy.zeros(levels, dtype=flux_dtype))
+            #df['wavelength'] = data['wavelength'][0]
+            df['upward_diffuse'] = data['flux_data'].squeeze()[:, 0]
+            df['downward_diffuse'] = data['flux_data'].squeeze()[:, 1]
+            df['direct_solar'] = data['flux_data'].squeeze()[:, 2]
             flux[wv] = df
 
     # concatenate into a single table
-    flux_data = pd.concat(flux, names=["wavelength", "level"])
+    flux_data = pd.concat(flux, names=['wavelength', 'level'])
 
     # setup a dataframe for the altitude
-    altitude = pd.DataFrame({"altitude": altitude})
-    altitude.index.name = "layer"
+    altitude = pd.DataFrame({'altitude': altitude})
+    altitude.index.name = 'layer'
 
     return flux_data, altitude
 
 
 def read_modtran_channel(fname, acquisition, albedo):
-    """Read a MODTRAN output `*.chn` ascii file.
+    """
+    Read a MODTRAN output `*.chn` ascii file.
 
     :param fname:
         A `str` containing the full file pathname of the channel
@@ -756,98 +694,92 @@ def read_modtran_channel(fname, acquisition, albedo):
     """
     if albedo == SBT_ALBEDO:
         response = acquisition.spectral_response()
-        nbands = response.index.get_level_values("band_id").unique().shape[0]
-        upward_radiation = pd.read_csv(
-            fname, skiprows=5, header=None, delim_whitespace=True, nrows=nbands
-        )
-        downward_radiation = pd.read_csv(
-            fname,
-            skiprows=10 + nbands,
-            header=None,
-            delim_whitespace=True,
-            nrows=nbands,
-        )
-        upward_radiation["band_id"] = (
-            upward_radiation[16] + " " + upward_radiation[17].astype(str)
-        )
-        downward_radiation["band_id"] = (
-            downward_radiation[16] + " " + downward_radiation[17].astype(str)
-        )
+        nbands = response.index.get_level_values('band_id').unique().shape[0]
+        upward_radiation = pd.read_csv(fname, skiprows=5, header=None,
+                                       delim_whitespace=True, nrows=nbands)
+        downward_radiation = pd.read_csv(fname, skiprows=10+nbands,
+                                         header=None, delim_whitespace=True,
+                                         nrows=nbands)
+        upward_radiation['band_id'] = (upward_radiation[16] + ' ' +
+                                       upward_radiation[17].astype(str))
+        downward_radiation['band_id'] = (downward_radiation[16] + ' ' +
+                                         downward_radiation[17].astype(str))
         upward_radiation.drop([16, 17], inplace=True, axis=1)
         downward_radiation.drop([16, 17], inplace=True, axis=1)
-        upward_radiation.set_index("band_id", inplace=True)
-        downward_radiation.set_index("band_id", inplace=True)
+        upward_radiation.set_index('band_id', inplace=True)
+        downward_radiation.set_index('band_id', inplace=True)
         upward_radiation.columns = upward_radiation.columns.astype(str)
         downward_radiation.columns = downward_radiation.columns.astype(str)
 
         return upward_radiation, downward_radiation
     else:
-        chn_data = pd.read_csv(fname, skiprows=5, header=None, delim_whitespace=True)
-        chn_data["band_id"] = chn_data[20] + " " + chn_data[21].astype(str)
+        chn_data = pd.read_csv(fname, skiprows=5, header=None,
+                               delim_whitespace=True)
+        chn_data['band_id'] = chn_data[20] + ' ' + chn_data[21].astype(str)
         chn_data.drop([20, 21], inplace=True, axis=1)
-        chn_data.set_index("band_id", inplace=True)
+        chn_data.set_index('band_id', inplace=True)
         chn_data.columns = chn_data.columns.astype(str)
 
         return chn_data
 
 
-def _calculate_solar_radiation(
-    acquisition, flux_fnames, out_fname, npoints, compression="lzf"
-):
-    """A private wrapper for dealing with the internal custom workings of the
+def _calculate_solar_radiation(acquisition, flux_fnames, out_fname, npoints,
+                               compression='lzf'):
+    """
+    A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
-    description = "Accumulated solar irradiation for point {} " "and albedo {}."
+    description = ("Accumulated solar irradiation for point {} "
+                   "and albedo {}.")
 
     spectral_response = acquisition.spectral_response()
 
-    with h5py.File(out_fname, "w") as fid:
-        fid.attrs["npoints"] = npoints
+    with h5py.File(out_fname, 'w') as fid:
+        fid.attrs['npoints'] = npoints
         for key in flux_fnames:
             flux_fname = flux_fnames[key].path
             point, albedo = key
             point_path = POINT_FMT.format(p=point)
-            group_path = ppjoin(POINT_FMT.format(p=point), ALBEDO_FMT.format(a=albedo))
+            group_path = ppjoin(POINT_FMT.format(p=point),
+                                ALBEDO_FMT.format(a=albedo))
             transmittance = True if albedo == NBAR_ALBEDOS[2] else False
-            flux_dataset_name = ppjoin(group_path, "flux")
-            atmos_dataset_name = ppjoin(group_path, "altitudes")
-            channel_dname = ppjoin(group_path, "channel")
+            flux_dataset_name = ppjoin(group_path, 'flux')
+            atmos_dataset_name = ppjoin(group_path, 'altitudes')
+            channel_dname = ppjoin(group_path, 'channel')
 
             # link in the channel data for later easy access
             fid[channel_dname] = h5py.ExternalLink(flux_fname, channel_dname)
 
             # retrieve the flux data and the number of atmospheric levels
-            with h5py.File(flux_fname, "r") as fid2:
+            with h5py.File(flux_fname, 'r') as fid2:
                 flux_data = read_table(fid2, flux_dataset_name)
-                levels = fid2[atmos_dataset_name].attrs["altitude levels"]
-                lonlat = fid2[point_path].attrs["lonlat"]
+                levels = fid2[atmos_dataset_name].attrs['altitude levels']
+                lonlat = fid2[point_path].attrs['lonlat']
+
 
             # accumulate solar irradiance
-            df = calculate_solar_radiation(
-                flux_data, spectral_response, levels, transmittance
-            )
+            df = calculate_solar_radiation(flux_data, spectral_response,
+                                           levels, transmittance)
 
             # output
-            dataset_name = ppjoin(group_path, "solar-irradiance")
-            attrs = {
-                "Description": description.format(point, albedo),
-                "Point": point,
-                "Albedo": albedo,
-                "lonlat": lonlat,
-            }
+            dataset_name = ppjoin(group_path, 'solar-irradiance')
+            attrs = {'Description': description.format(point, albedo),
+                     'Point': point,
+                     'Albedo': albedo,
+                     'lonlat': lonlat}
             write_dataframe(df, dataset_name, fid, compression, attrs=attrs)
 
             # meaningful location description
-            if fid[point_path].attrs.get("lonlat") is None:
-                fid[point_path].attrs["lonlat"] = lonlat
+            if fid[point_path].attrs.get('lonlat') is None:
+                fid[point_path].attrs['lonlat'] = lonlat
 
     return
 
 
-def calculate_solar_radiation(
-    flux_data, spectral_response, levels=36, transmittance=False
-):
-    """Retreive the flux data from the MODTRAN output `*.flx`, and
+def calculate_solar_radiation(flux_data, spectral_response, levels=36,
+                              transmittance=False):
+    """
+    Retreive the flux data from the MODTRAN output `*.flx`, and
     calculate the solar radiation.
 
     The solar radiation will be calculated for each of the bands
@@ -877,17 +809,22 @@ def calculate_solar_radiation(
     idx = levels - 1
 
     # group via the available bands
-    band_index = spectral_response.index.get_level_values("band_id")
+    band_index = spectral_response.index.get_level_values('band_id')
     groups = spectral_response.groupby(band_index)
 
     # output dataframe
     # later on the process can be refined to only evaluate the bands
     # we wish to process
     if transmittance:
-        columns = ["diffuse", "direct", "diffuse_top", "direct_top", "transmittance"]
+        columns = ['diffuse',
+                   'direct',
+                   'diffuse_top',
+                   'direct_top',
+                   'transmittance']
     else:
-        columns = ["diffuse", "direct", "direct_top"]
-    df = pd.DataFrame(columns=columns, index=groups.groups.keys(), dtype="float64")
+        columns = ['diffuse', 'direct', 'direct_top']
+    df = pd.DataFrame(columns=columns, index=groups.groups.keys(),
+                      dtype='float64')
 
     # start wavelength and end wavelength, eg 2600 & 350 respectively
     st_wl = spectral_response.index[0][1]
@@ -903,85 +840,136 @@ def calculate_solar_radiation(
         # df.ix[band, 'band_id'] = band
 
         # downward diffuse at bottom of atmospheric levels
-        diffuse_bottom = (
-            grp.ix[band, st_wl]["response"] * flux_data.ix[st_wl, "downward_diffuse"][0]
-            + grp.ix[band, ed_wl]["response"]
-            * flux_data.ix[ed_wl, "downward_diffuse"][0]
-        ) / 2
+        diffuse_bottom = (grp.ix[band, st_wl]['response'] *
+                          flux_data.ix[st_wl, 'downward_diffuse'][0] +
+                          grp.ix[band, ed_wl]['response'] *
+                          flux_data.ix[ed_wl, 'downward_diffuse'][0]) / 2
 
         # direct solar at bottom of atmospheric levels
-        direct_bottom = (
-            grp.ix[band, st_wl]["response"] * flux_data.ix[st_wl, "direct_solar"][0]
-            + grp.ix[band, ed_wl]["response"] * flux_data.ix[ed_wl, "direct_solar"][0]
-        ) / 2
+        direct_bottom = (grp.ix[band, st_wl]['response'] *
+                         flux_data.ix[st_wl, 'direct_solar'][0] +
+                         grp.ix[band, ed_wl]['response'] *
+                         flux_data.ix[ed_wl, 'direct_solar'][0]) / 2
 
         # direct solar at top of atmospheric levels
-        direct_top = (
-            grp.ix[band, st_wl]["response"] * flux_data.ix[st_wl, "direct_solar"][idx]
-            + grp.ix[band, ed_wl]["response"] * flux_data.ix[ed_wl, "direct_solar"][idx]
-        ) / 2
+        direct_top = (grp.ix[band, st_wl]['response'] *
+                      flux_data.ix[st_wl, 'direct_solar'][idx] +
+                      grp.ix[band, ed_wl]['response'] *
+                      flux_data.ix[ed_wl, 'direct_solar'][idx]) / 2
 
-        response_sum = (
-            grp.ix[band, st_wl]["response"] + grp.ix[band, ed_wl]["response"]
-        ) / 2
+        response_sum = (grp.ix[band, st_wl]['response'] +
+                        grp.ix[band, ed_wl]['response']) / 2
 
         # Fuqin's code now loops over each wavelength, in -1 decrements
         # we'll use indices rather than a loop
-        response_subs = grp.ix[band].ix[wv_idx]["response"].values
+        response_subs = grp.ix[band].ix[wv_idx]['response'].values
         flux_data_subs = flux_data.ix[wv_idx2]
 
         response_sum = response_sum + response_subs.sum()
 
-        df.ix[band, "diffuse"] = (
-            (flux_data_subs["downward_diffuse"].values * response_subs).sum()
-            + diffuse_bottom
-        ) / response_sum
-        df.ix[band, "direct"] = (
-            (flux_data_subs["direct_solar"].values * response_subs).sum()
-            + direct_bottom
-        ) / response_sum
+        df.ix[band, 'diffuse'] = (((flux_data_subs['downward_diffuse'].values *
+                                    response_subs).sum() + diffuse_bottom) /
+                                  response_sum)
+        df.ix[band, 'direct'] = (((flux_data_subs['direct_solar'].values *
+                                   response_subs).sum() + direct_bottom) /
+                                 response_sum)
 
         # direct solar at top of atmospheric levels
         flux_data_subs = flux_data.ix[wv_idx3]
-        df.ix[band, "direct_top"] = (
-            (flux_data_subs["direct_solar"].values * response_subs).sum() + direct_top
-        ) / response_sum
+        df.ix[band, 'direct_top'] = (((flux_data_subs['direct_solar'].values *
+                                       response_subs).sum() + direct_top) /
+                                     response_sum)
 
         if transmittance:
             # downward diffuse at top of atmospheric levels
-            diffuse_top = (
-                grp.ix[band, st_wl]["response"]
-                * flux_data.ix[st_wl, "downward_diffuse"][idx]
-                + grp.ix[band, ed_wl]["response"]
-                * flux_data.ix[ed_wl, "downward_diffuse"][idx]
-            ) / 2
+            diffuse_top = (grp.ix[band, st_wl]['response'] *
+                           flux_data.ix[st_wl, 'downward_diffuse'][idx] +
+                           grp.ix[band, ed_wl]['response'] *
+                           flux_data.ix[ed_wl, 'downward_diffuse'][idx]) / 2
 
-            edo_top = flux_data_subs["downward_diffuse"].values
-            df.ix[band, "diffuse_top"] = (
-                (edo_top * response_subs).sum() + diffuse_top
-            ) / response_sum
-            t_result = (df.ix[band, "diffuse"] + df.ix[band, "direct"]) / (
-                df.ix[band, "diffuse_top"] + df.ix[band, "direct_top"]
-            )
-            df.ix[band, "transmittance"] = t_result
+            edo_top = flux_data_subs['downward_diffuse'].values
+            df.ix[band, 'diffuse_top'] = ((edo_top * response_subs).sum() +
+                                          diffuse_top) / response_sum
+            t_result = ((df.ix[band, 'diffuse'] + df.ix[band, 'direct']) /
+                        (df.ix[band, 'diffuse_top'] +
+                         df.ix[band, 'direct_top']))
+            df.ix[band, 'transmittance'] = t_result
 
     df.sort_index(inplace=True)
 
     return df
 
 
-def create_solar_irradiance_tables(fname, out_fname, compression="lzf"):
-    """Writes the accumulated solar irradiance table into a HDF5 file.
+def create_solar_irradiance_tables(fname, out_fname, compression='lzf'):
+    """
+    Writes the accumulated solar irradiance table into a HDF5 file.
     The file is opened in 'a' mode, allowing multiple tables to be
     added. If a table already exists within the file it is removed.
     """
     dset_name = splitext(basename(fname))[0]
-    with h5py.File(out_fname, "a") as fid1:
+    with h5py.File(out_fname, 'a') as fid1:
         # check for a previous run
         if dset_name in fid1:
             del fid1[dset_name]
 
-        with h5py.File(fname, "r") as fid2:
+        with h5py.File(fname, 'r') as fid2:
             fid2.copy(dset_name, fid1)
+
+    return
+
+
+def link_sbt_atmospheric_results(input_targets, out_fname, npoints):
+    """
+    Uses h5py's ExternalLink to combine the atmospheric results into
+    a single file.
+    """
+    albedo_fmt = ALBEDO_FMT.format(a=SBT_ALBEDO)
+    datasets = ['upward-radiation-channel', 'downward-radiation-channel']
+    for point, fname in input_targets.items():
+        for dset in datasets:
+            dname = ppjoin(POINT_FMT.format(p=point), albedo_fmt, dset)
+            create_external_link(fname.path, dname, out_fname, dname)
+
+    with h5py.File(out_fname) as fid:
+        fid.attrs['npoints'] = npoints
+
+    return
+
+
+def sbt_coefficients(fname, out_fname, compression='lzf'):
+    """
+    Calcualtes the coefficients for SBT.
+    """
+    albedo_fmt = ALBEDO_FMT.format(a=SBT_ALBEDO)
+    datasets = {'upward': 'upward-radiation-channel',
+                'downward': 'downward-radiation-channel'}
+    columns = ['band_id', 'point']
+    upward = {}
+    downward = {}
+    with h5py.File(fname, 'r') as fid,\
+        h5py.File(out_fname, 'w') as out_fid:
+        for i in range(fid.attrs['npoints']):
+            grp_path = ppjoin(POINT_FMT.format(p=point) albedo_fmt)
+            dname = ppjoin(grp_path, 'upward-radiation-channel')
+            upward[i] = read_table(fid, dname)
+
+            dname = ppjoin(grp_path, 'downward-radiation-channel')
+            downward[i] = read_table(fid, dname)
+
+        upward_radiation = pd.concat(upward, names=['band_id', 'point'])
+        downward_radiation = pd.concat(downward, names=['band_id', 'point'])
+
+        df = upward_radiation[columns]
+        df['path_up'] = upward_radiation['3'] * 10000000
+        df['transmittance_upward'] = upward_radiation['14']
+        df['path_down'] = downward_radiation['3'] * 10000000
+        df['transmittance_downward'] = downward_radiation['14']
+
+        attrs = {}
+        attrs['Description'] = ("Coefficients derived from the "
+                                "solar irradiation.")
+        attrs['Number of atmospheric points'] = fid.attrs['npoints']
+
+        write_dataframe(df, 'coefficients', out_fid, compression, attrs=attrs)
 
     return
