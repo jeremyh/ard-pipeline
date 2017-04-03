@@ -170,13 +170,20 @@ class SBTBilinearInterpolation(BilinearInterpolation):
                     "factor": factor,
                 }
                 tasks[key] = BilinearInterpolationBand(**kwargs)
+                break  # TODO: remove (debugging)
+            break  # TODO: remove (debugging)
         return tasks
 
 
+@inherits(CalculateLonLatGrids)
 class SurfaceTemperature(luigi.Task):
     """Calculates surface brightness temperature."""
 
-    # TODO: Re-write the class contents (output, run)
+    def run(self):
+        raise NotImplementedError
+
+    def output(self):
+        pass
 
     def requires(self):
         # TODO: add other upstream tasks as needed
@@ -207,6 +214,7 @@ class SBT(luigi.WrapperTask):
             for granule in container.granules:
                 for group in container.groups:
                     yield SurfaceTemperature(scene, work_root, granule, group)
+                    raise StopIteration  # TODO: remove (debugging)
 
 
 if __name__ == "__main__":
