@@ -19,8 +19,10 @@ from gaip import constants
 from gaip.acquisition import acquisitions
 from gaip.ancillary import _collect_ancillary
 from gaip.nbar_workflow import (
-    CalculateLatGrid,
-    CalculateLonGrid,
+    AccumulateSolarIrradiance,
+    BilinearInterpolation,
+    CalculateCoefficients,
+    CalculateLonLatGrids,
     CalculateSatelliteAndSolarGrids,
     GetAncillaryData,
     WriteTp5,
@@ -41,7 +43,7 @@ class SBTAncillary(GetAncillaryData):
 
     def run(self):
         container = acquisitions(self.level1)
-        container.get_acquisitions(granule=self.granule)
+        acq = container.get_acquisitions(granule=self.granule)[0]
         work_root = container.get_root(self.work_root, granule=self.granule)
 
         nbar_paths = {
@@ -79,6 +81,8 @@ class SBTAncillary(GetAncillaryData):
 class ThermalTp5(WriteTp5):
     """Output the `tp5` formatted files."""
 
+    vertices = luigi.TupleParameter(default=(5, 5), significant=False)
+
     def requires(self):
         container = acquisitions(self.level1)
         tasks = {}
@@ -90,8 +94,7 @@ class ThermalTp5(WriteTp5):
                 args2 = [self.level1, self.work_root, granule, group]
                 tsks = {
                     "sat_sol": CalculateSatelliteAndSolarGrids(*args2),
-                    "lat": CalculateLatGrid(*args2),
-                    "lon": CalculateLonGrid(*args2),
+                    "lon_lat": CalculateLonLatGrids(*args2),
                 }
                 tasks[(granule, group)] = tsks
 
