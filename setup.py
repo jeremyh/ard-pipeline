@@ -38,4 +38,5 @@ setup(
         "scripts/test_slope_aspect.py",
         "scripts/aot_converter.py",
     ],
+    install_requires=["bitshuffle>=0.2.3"],
 )
