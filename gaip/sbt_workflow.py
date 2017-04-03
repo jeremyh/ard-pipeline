@@ -13,11 +13,12 @@ from os.path import basename
 from os.path import join as pjoin
 
 import luigi
-from luigi.util import requires
+from luigi.util import inherits, requires
 
 from gaip import constants
-from gaip.acquisition import acquisitions
+from gaip.acquisition import THM, acquisitions
 from gaip.ancillary import _collect_ancillary
+from gaip.modtran import SBT_ALBEDO
 from gaip.nbar_workflow import (
     AccumulateSolarIrradiance,
     BilinearInterpolation,
@@ -25,6 +26,7 @@ from gaip.nbar_workflow import (
     CalculateLonLatGrids,
     CalculateSatelliteAndSolarGrids,
     GetAncillaryData,
+    RunModtranCase,
     WriteTp5,
 )
 
@@ -82,6 +84,7 @@ class ThermalTp5(WriteTp5):
     """Output the `tp5` formatted files."""
 
     vertices = luigi.TupleParameter(default=(5, 5), significant=False)
+    nbar_tp5 = luigi.BoolParameter(default=False, significant=False)
 
     def requires(self):
         container = acquisitions(self.level1)
@@ -99,6 +102,33 @@ class ThermalTp5(WriteTp5):
                 tasks[(granule, group)] = tsks
 
         return tasks
+
+
+@requires(ThermalTp5)
+class RunAtmosphericsCase(RunModtranCase):
+    """Kicks of modtran/(or an alternative) for a given point."""
+
+    band_type = luigi.IntParameter(default=THM)
+
+
+@inherits(ThermalTp5)
+class RunAtmospherics(luigi.WrapperTask):
+    """Kicks of modtran/(or an alternative) for a all points."""
+
+    def requires(self):
+        for point in range(self.vertices[0] * self.vertices[1]):
+            args = [self.level1, self.work_root, self.granule]
+            yield RunAtmosphericsCase(*args, point=point, albedo=SBT_ALBEDO)
+
+    # def output(self):
+    #     out_path = acquisitions(self.level1).get_root(self.work_root,
+    #                                                   granule=self.granule)
+    #     return luigi.LocalTarget(pjion(out_path, 'atmospherics-results.h5'))
+
+    # def run(self):
+    #     inputs = self.input()
+    #     with self.output().temporary_path() as out_fname:
+    #         with h5py.File(out_fname, 'w') as fid:
 
 
 class SBTAccumulateSolarIrradiance(AccumulateSolarIrradiance):

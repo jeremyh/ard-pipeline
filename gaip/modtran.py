@@ -93,6 +93,7 @@ def _format_tp5(
     longitude_latitude_fname,
     ancillary_fname,
     out_fname,
+    nbar_tp5=True,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -119,7 +120,7 @@ def _format_tp5(
             sbt_ancillary = {}
             dname = ppjoin(POINT_FMT, "atmospheric-profile")
             for i in range(coord_dset.shape[0]):
-                sbt_ancillary[i] = read_table(sbt_fid, dname.format(p=i))
+                sbt_ancillary[i] = read_table(anc_ds, dname.format(p=i))
         else:
             sbt_ancillary = None
 
@@ -136,6 +137,7 @@ def _format_tp5(
             elevation,
             coord_dset.shape[0],
             sbt_ancillary,
+            nbar_tp5,
         )
 
         group = fid.create_group("modtran-inputs")
@@ -173,6 +175,7 @@ def format_tp5(
     elevation,
     npoints,
     sbt_ancillary=None,
+    nbar_tp5=True,
 ):
     """Creates str formatted tp5 files for the albedo (0, 1) and
     transmittance (t).
