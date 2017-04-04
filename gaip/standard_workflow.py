@@ -37,11 +37,11 @@ from gaip.dsm import get_dsm
 from gaip.interpolation import _bilinear_interpolate, link_bilinear_data
 from gaip.modtran import (
     ALBEDO_FMT,
-    NBAR_ALBEDOS,
+    ALL_ALBEDOS,
     POINT_ALBEDO_FMT,
     POINT_FMT,
+    SBT_ALBEDO,
     _calculate_coefficients,
-    _calculate_solar_radiation,
     _format_tp5,
     _run_modtran,
     prepare_modtran,
@@ -154,7 +154,7 @@ class AncillaryData(luigi.Task):
     temperature_path = luigi.Parameter(significant=False)
     relative_humidity_path = luigi.Parameter(significant=False)
     invariant_height_fname = luigi.Parameter(significant=False)
-    compression = luigi.Parameter(significant=False)
+    compression = luigi.Parameter(default="lzf", significant=False)
 
     def requires(self):
         group = acquisitions(self.level1).groups[0]
@@ -225,8 +225,8 @@ class WriteTp5(luigi.Task):
         tasks = {}
 
         for granule in container.granules:
-            args1 = [self.level1, self.work_root, granule]
-            tasks[(granule, "ancillary")] = GetAncillaryData(*args1)
+            args1 = [self.level1, self.work_root, granule, self.vertices]
+            tasks[(granule, "ancillary")] = AncillaryData(*args1)
             for group in container.groups:
                 args2 = [self.level1, self.work_root, granule, group]
                 tsks = {
@@ -287,9 +287,10 @@ class WriteTp5(luigi.Task):
 
 
 @requires(WriteTp5)
-class RunModtranCase(luigi.Task):
-    """Run MODTRAN for a specific `coord` and `albedo`. This task is
-    parameterised this way to allow parallel instances of MODTRAN to run.
+class AtmosphericsCase(luigi.Task):
+    """Run MODTRAN for a specific point (vertex) and albedo.
+    This task is parameterised this wat to allow parallel instances
+    of MODTRAN to run.
     """
 
     point = luigi.Parameter()
@@ -335,43 +336,30 @@ class RunModtranCase(luigi.Task):
 
 
 @inherits(WriteTp5)
-class AccumulateSolarIrradiance(luigi.Task):
-    """Extract the flux data from the MODTRAN outputs, and calculate
-    the accumulative solar irradiance for a given spectral
-    response function.
-
-    We'll sacrifce the small gain in parallelism for less files, and
-    less target checking by accumulating all outputs within a single task.
-    """
+class Atmospherics(luigi.Task):
+    """Kicks of MODTRAN calculations for all points and albedos."""
 
     def requires(self):
-        reqs = {}
-        for point in range(self.vertices[0] * self.vertices[1]):
-            for albedo in NBAR_ALBEDOS:
-                args = [self.level1, self.work_root, self.granule]
-                reqs[(point, albedo)] = RunModtranCase(
-                    *args, point=point, albedo=albedo
-                )
-        return reqs
+        args = [self.level1, self.work_root, self.granule]
+        for point in range(selv.vertices[0] * self.vertices[1]):
+            for albedo in ALL_ALBEDOS:
+                kwargs = {"point": point, "albedo": albdeo}
+                kwargs["nbar_tp5"] = False if albedo == SBT_ALBEDO else True
+                yield AtmosphericsCase(*args, **kwargs)
 
     def output(self):
         out_path = acquisitions(self.level1).get_root(
             self.work_root, granule=self.granule
         )
-        out_fname = pjoin(out_path, "accumulated-solar-irradiance.h5")
-        return luigi.LocalTarget(out_fname)
+        return luigi.LocalTarget(pjoin(out_path, "atmospheric-results.h5"))
 
     def run(self):
-        acqs = acquisitions(self.level1).get_acquisitions(granule=self.granule)
-        npoints = self.vertices[0] * self.vertices[1]
-
+        nvertices = self.vertices[0] * self.vertices[1]
         with self.output().temporary_path() as out_fname:
-            _calculate_solar_radiation(
-                acqs[0], self.input(), out_fname, npoints, self.compression
-            )
+            link_atmospheric_results(self.inputs(), out_fname, nvertices)
 
 
-@requires(AccumulateSolarIrradiance)
+@requires(Atmospherics)
 class CalculateCoefficients(luigi.Task):
     """Calculate the atmospheric parameters needed by BRDF and atmospheric
     correction model.
