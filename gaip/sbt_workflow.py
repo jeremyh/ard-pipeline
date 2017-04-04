@@ -16,10 +16,13 @@ import luigi
 from luigi.util import inherits, requires
 
 from gaip import constants
-from gaip.acquisition import THM, acquisitions
+from gaip.acquisition import acquisitions
 from gaip.ancillary import _collect_ancillary
-from gaip.constans import Model
-from gaip.modtran import link_sbt_atmospheric_results, sbt_coefficients
+from gaip.constants import BandType, Model
+from gaip.modtran import (
+    link_sbt_atmospheric_results,
+    sbt_coefficients,
+)
 from gaip.nbar_workflow import (
     AccumulateSolarIrradiance,
     BilinearInterpolation,
@@ -108,7 +111,7 @@ class ThermalTp5(WriteTp5):
 class RunAtmosphericsCase(RunModtranCase):
     """Kicks of modtran/(or an alternative) for a given point."""
 
-    band_type = luigi.IntParameter(default=THM)
+    band_type = luigi.EnumParameter(enum=BandType, default=BandType.Thermal)
 
 
 @inherits(ThermalTp5)

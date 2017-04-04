@@ -17,7 +17,7 @@ from luigi.local_target import LocalFileSystem
 from luigi.util import inherits, requires
 
 from gaip import constants
-from gaip.acquisition import REF, acquisitions
+from gaip.acquisition import acquisitions
 from gaip.ancillary import _collect_ancillary, aggregate_ancillary
 from gaip.calculate_angles import _calculate_angles
 from gaip.calculate_incident_exiting_angles import (
@@ -33,7 +33,7 @@ from gaip.calculate_shadow_masks import (
     _self_shadow,
 )
 from gaip.calculate_slope_aspect import _slope_aspect_arrays
-from gaip.constants import ALBEDO_FMT, POINT_ALBEDO_FMT, POINT_FMT, Model
+from gaip.constants import ALBEDO_FMT, POINT_ALBEDO_FMT, POINT_FMT, BandType, Model
 from gaip.dsm import get_dsm
 from gaip.interpolation import _bilinear_interpolate, link_bilinear_data
 from gaip.modtran import (
@@ -193,7 +193,7 @@ class WriteTp5(luigi.Task):
     base_dir = luigi.Parameter(default="_atmospherics", significant=False)
     compression = luigi.Parameter(default="lzf", significant=False)
     nbar_tp5 = luigi.BoolParameter(default=True, significant=False)
-    band_type = luigi.IntParameter(default=REF)
+    band_type = luigi.EnumParameter(enum=BandType, default=BandType.Reflective)
 
     def requires(self):
         # for consistancy, we'll wait for dependencies on all granules and
@@ -274,7 +274,7 @@ class RunModtranCase(luigi.Task):
     point = luigi.Parameter()
     albedo = luigi.Parameter()
     exe = luigi.Parameter(significant=False)
-    band_type = luigi.IntParameter(default=REF)
+    band_type = luigi.EnumParameter(enum=BandType, default=BandType.Reflective)
 
     def output(self):
         out_path = acquisitions(self.level1).get_root(

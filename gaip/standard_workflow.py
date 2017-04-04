@@ -17,7 +17,7 @@ from luigi.local_target import LocalFileSystem
 from luigi.util import inherits, requires
 
 from gaip import constants
-from gaip.acquisition import REF, acquisitions
+from gaip.acquisition import acquisitions
 from gaip.ancillary import _collect_ancillary, aggregate_ancillary
 from gaip.calculate_angles import _calculate_angles
 from gaip.calculate_incident_exiting_angles import (
@@ -33,13 +33,14 @@ from gaip.calculate_shadow_masks import (
     _self_shadow,
 )
 from gaip.calculate_slope_aspect import _slope_aspect_arrays
-from gaip.constants import ALBEDO_FMT, POINT_ALBEDO_FMT, POINT_FMT, Model
+from gaip.constants import ALBEDO_FMT, POINT_ALBEDO_FMT, POINT_FMT, BandType, Model
 from gaip.dsm import get_dsm
 from gaip.interpolation import _bilinear_interpolate, link_bilinear_data
 from gaip.modtran import (
     _calculate_coefficients,
     _format_tp5,
     _run_modtran,
+    link_atmospheric_results,
     prepare_modtran,
 )
 
@@ -137,6 +138,7 @@ class AncillaryData(luigi.Task):
     work_root = luigi.Parameter(significant=False)
     granule = luigi.Parameter(default=None)
     vertices = luigi.TupleParameter(default=(5, 5), significant=False)
+    model = luigi.EnumParameter(enum=Model, default=Model.standard)
     aerosol_fname = luigi.Parameter(significant=False)
     brdf_path = luigi.Parameter(significant=False)
     brdf_premodis_path = luigi.Parameter(significant=False)
@@ -167,6 +169,7 @@ class AncillaryData(luigi.Task):
         container = acquisitions(self.level1)
         acq = container.get_acquisitions(granule=self.granule)[0]
         work_root = container.get_root(self.work_root, granule=self.granule)
+        sbt_paths = None
 
         nbar_paths = {
             "aerosol_fname": self.aerosol_fname,
@@ -177,15 +180,16 @@ class AncillaryData(luigi.Task):
             "brdf_premodis_path": self.brdf_premodis_path,
         }
 
-        sbt_paths = {
-            "dewpoint_path": self.dewpoint_path,
-            "temperature_2m_path": self.temp_2m_path,
-            "surface_pressure_path": self.surface_pressure_path,
-            "geopotential_path": self.geopotential_path,
-            "temperature_path": self.temperature_path,
-            "relative_humidity_path": self.relative_humidity_path,
-            "invariant_fname": self.invariant_height_fname,
-        }
+        if self.model == Model.standard | self.model == Model.sbt:
+            sbt_paths = {
+                "dewpoint_path": self.dewpoint_path,
+                "temperature_2m_path": self.temp_2m_path,
+                "surface_pressure_path": self.surface_pressure_path,
+                "geopotential_path": self.geopotential_path,
+                "temperature_path": self.temperature_path,
+                "relative_humidity_path": self.relative_humidity_path,
+                "invariant_fname": self.invariant_height_fname,
+            }
 
         with self.output().temporary_path() as out_fname:
             _collect_ancillary(
@@ -207,10 +211,10 @@ class WriteTp5(luigi.Task):
     work_root = luigi.Parameter(significant=False)
     granule = luigi.Parameter(default=None)
     vertices = luigi.TupleParameter(default=(5, 5), significant=False)
+    model = luigi.EnumParameter(enum=Model, default=Model.standard)
     base_dir = luigi.Parameter(default="_atmospherics", significant=False)
     compression = luigi.Parameter(default="lzf", significant=False)
     nbar_tp5 = luigi.BoolParameter(default=True, significant=False)
-    band_type = luigi.IntParameter(default=REF)
 
     def requires(self):
         # for consistancy, we'll wait for dependencies on all granules and
@@ -221,7 +225,7 @@ class WriteTp5(luigi.Task):
         tasks = {}
 
         for granule in container.granules:
-            args1 = [self.level1, self.work_root, granule, self.vertices]
+            args1 = [self.level1, self.work_root, granule, self.vertices, self.model]
             tasks[(granule, "ancillary")] = AncillaryData(*args1)
             for group in container.groups:
                 args2 = [self.level1, self.work_root, granule, group]
@@ -243,8 +247,7 @@ class WriteTp5(luigi.Task):
         # as we have an all granules groups dependency, it doesn't matter which
         # group, so just get the first and use it to retrieve the angles
         group = container.groups[0]
-        acqs = container.get_acquisitions(group, granule=self.granule)
-        acq = [acq for acq in acqs if acq.band_type == self.band_type][0]
+        acq = container.get_acquisitions(group, granule=self.granule)[0]
 
         # input data files, and the output format
         inputs = self.input()
@@ -292,7 +295,7 @@ class AtmosphericsCase(luigi.Task):
     point = luigi.Parameter()
     albedo = luigi.Parameter()
     exe = luigi.Parameter(significant=False)
-    band_type = luigi.IntParameter(default=REF)
+    band_type = luigi.EnumParameter(enum=BandType)
 
     def output(self):
         out_path = acquisitions(self.level1).get_root(
@@ -339,11 +342,13 @@ class Atmospherics(luigi.Task):
 
     def requires(self):
         args = [self.level1, self.work_root, self.granule]
-        for point in range(selv.vertices[0] * self.vertices[1]):
+        for point in range(self.vertices[0] * self.vertices[1]):
             for albedo in self.model.albedos:
                 nbar_tp5 = False if albedo == Model.sbt.albedos else True
-                kwargs = {"point": point, "albedo": albdeo}
+                btype = BandType.Reflective if nbar_tp5 else BandType.Thermal
+                kwargs = {"point": point, "albedo": albedo}
                 kwargs["nbar_tp5"] = nbar_tp5
+                kwargs["band_type"] = btype
                 yield AtmosphericsCase(*args, **kwargs)
 
     def output(self):
@@ -424,7 +429,7 @@ class BilinearInterpolation(luigi.Task):
     """Issues BilinearInterpolationBand tasks.
     This is a helper task.
     Links the outputs from each submitted task into
-    as single file for easy access.
+    a single file for easy access.
     """
 
     model = luigi.EnumParameter(enum=Model)
@@ -450,7 +455,7 @@ class BilinearInterpolation(luigi.Task):
             bands.extend([a.band_num for a in acqs if a.band_num in band_ids])
 
         tasks = {}
-        for factor in FACTORS[self.model]:
+        for factor in self.model.factors:
             for band in bands:
                 key = (band, factor)
                 kwargs = {
@@ -800,7 +805,7 @@ class RunTCBand(luigi.Task):
         args = [self.level1, self.work_root, self.granule, self.group]
         reqs = {
             "bilinear": BilinearInterpolation(*args),
-            "ancillary": GetAncillaryData(*args[:-1]),
+            "ancillary": AncillaryData(*args[:-1]),
             "rel_slope": self.clone(RelativeAzimuthSlope),
             "shadow": self.clone(CalculateShadowMasks),
             "slp_asp": self.clone(SlopeAndAspect),
