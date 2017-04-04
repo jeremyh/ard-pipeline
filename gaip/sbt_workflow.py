@@ -18,11 +18,8 @@ from luigi.util import inherits, requires
 from gaip import constants
 from gaip.acquisition import THM, acquisitions
 from gaip.ancillary import _collect_ancillary
-from gaip.modtran import (
-    SBT_ALBEDO,
-    link_sbt_atmospheric_results,
-    sbt_coefficients,
-)
+from gaip.constans import Model
+from gaip.modtran import link_sbt_atmospheric_results, sbt_coefficients
 from gaip.nbar_workflow import (
     AccumulateSolarIrradiance,
     BilinearInterpolation,
@@ -123,7 +120,7 @@ class RunAtmospherics(luigi.Task):
         for point in range(self.vertices[0] * self.vertices[1]):
             args = [self.level1, self.work_root, self.granule]
             reqs[point] = RunAtmosphericsCase(
-                *args, point=point, albedo=SBT_ALBEDO, nbar_tp5=False
+                *args, point=point, albedo=Model.sbt.albedos, nbar_tp5=False
             )
         return reqs
 

@@ -33,14 +33,10 @@ from gaip.calculate_shadow_masks import (
     _self_shadow,
 )
 from gaip.calculate_slope_aspect import _slope_aspect_arrays
+from gaip.constants import ALBEDO_FMT, POINT_ALBEDO_FMT, POINT_FMT, Model
 from gaip.dsm import get_dsm
-from gaip.interpolation import FACTORS, MODEL, _bilinear_interpolate, link_bilinear_data
+from gaip.interpolation import _bilinear_interpolate, link_bilinear_data
 from gaip.modtran import (
-    ALBEDO_FMT,
-    ALL_ALBEDOS,
-    POINT_ALBEDO_FMT,
-    POINT_FMT,
-    SBT_ALBEDO,
     _calculate_coefficients,
     _format_tp5,
     _run_modtran,
@@ -339,12 +335,15 @@ class AtmosphericsCase(luigi.Task):
 class Atmospherics(luigi.Task):
     """Kicks of MODTRAN calculations for all points and albedos."""
 
+    model = luigi.EnumParameter(enum=Model)
+
     def requires(self):
         args = [self.level1, self.work_root, self.granule]
         for point in range(selv.vertices[0] * self.vertices[1]):
-            for albedo in ALL_ALBEDOS:
+            for albedo in self.model.albedos:
+                nbar_tp5 = False if albedo == Model.sbt.albedos else True
                 kwargs = {"point": point, "albedo": albdeo}
-                kwargs["nbar_tp5"] = False if albedo == SBT_ALBEDO else True
+                kwargs["nbar_tp5"] = nbar_tp5
                 yield AtmosphericsCase(*args, **kwargs)
 
     def output(self):
@@ -428,7 +427,7 @@ class BilinearInterpolation(luigi.Task):
     as single file for easy access.
     """
 
-    model = luigi.EnumParameter(enum=MODEL)
+    model = luigi.EnumParameter(enum=Model)
 
     def requires(self):
         bands = []
@@ -440,13 +439,13 @@ class BilinearInterpolation(luigi.Task):
         sensor = acqs[0].sensor_id
 
         # NBAR band id's
-        if self.model == MODEL.standard | self.model == MODEL.nbar:
+        if self.model == Model.standard | self.model == Model.nbar:
             nbar_constants = constants.NBARConstants(satellite, sensor)
             band_ids = nbar_constants.get_nbar_lut()
             bands.extend([a.band_num for a in acqs if a.band_num in band_ids])
 
         # SBT band id's
-        if self.model == MODEL.standard | self.model == MODEL.sbt:
+        if self.model == Model.standard | self.model == Model.sbt:
             band_ids = constants.sbt_bands(satellite, sensor)
             bands.extend([a.band_num for a in acqs if a.band_num in band_ids])
 

@@ -17,6 +17,7 @@ from shapely.geometry import Point, Polygon
 
 from gaip.brdf import get_brdf_data
 from gaip.calculate_angles import create_vertices
+from gaip.constants import POINT_FMT
 from gaip.data import get_pixel
 from gaip.hdf5 import (
     attach_attributes,
@@ -27,7 +28,6 @@ from gaip.hdf5 import (
     write_scalar,
 )
 from gaip.metadata import extract_ancillary_metadata, read_meatadata_tags
-from gaip.modtran import POINT_FMT
 
 log = logging.getLogger()
 

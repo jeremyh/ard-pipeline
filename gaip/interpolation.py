@@ -9,7 +9,6 @@ makes some of the code harder to follow.
 """
 
 import logging
-from enum import Enum
 from os.path import basename, splitext
 
 import h5py
@@ -22,37 +21,6 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_ORIGIN = (0, 0)
 DEFAULT_SHAPE = (8, 8)
-
-ALL_FACTORS = [
-    "fv",
-    "fs",
-    "b",
-    "s",
-    "a",
-    "dir",
-    "dif",
-    "ts",
-    "path_up",
-    "path_down",
-    "transmittance_up",
-]
-
-
-class Model(Enum):
-    standard = 1
-    nbar = 2
-    sbt = 3
-
-    @property
-    def factors(self):
-        return FACTORS.get(self)
-
-
-FACTORS = {
-    Model.standard: ALL_FACTORS,
-    Model.nbar: ALL_FACTORS[0:8],
-    Model.sbt: ALL_FACTORS[8:],
-}
 
 
 def bilinear(shape, fUL, fUR, fLR, fLL, dtype=np.float64):
