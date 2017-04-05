@@ -607,6 +607,7 @@ def calculate_coefficients(
             ts_dir = dir_0 / dir0_top
             tv_dir = dir_t / dirt_top
 
+            # TODO: better descriptive names
             columns = ["point", "fs", "fv", "a", "b", "s", "dir", "dif", "ts"]
             df = pd.DataFrame(columns=columns, index=data1.index)
 
