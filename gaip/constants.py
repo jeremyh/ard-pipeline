@@ -495,7 +495,7 @@ class Model(Enum):
         amap = {
             Model.standard: ALL_ALBEDOS,
             Model.nbar: ALL_ALBEDOS[0:-1],
-            Model.sbt: ALL_ALBEDOS[-1],
+            Model.sbt: [ALL_ALBEDOS[-1]],
         }
         return amap.get(self)
 
