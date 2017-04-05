@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from scipy.io import FortranFile
 
-from gaip.constants import ALBEDO_FMT, POINT_ALBEDO_FMT, POINT_FMT, Model
+from gaip.constants import ALBEDO_FMT, POINT_ALBEDO_FMT, POINT_FMT, BandType, Model
 from gaip.hdf5 import create_external_link, read_table, write_dataframe
 from gaip.modtran_profiles import (
     MIDLAT_SUMMER_ALBEDO,
@@ -82,7 +82,7 @@ def prepare_modtran(acquisition, coordinate, albedo, modtran_work, modtran_exe):
 
 
 def _format_tp5(
-    acquisition,
+    acquisitions,
     satellite_solar_angles_fname,
     longitude_latitude_fname,
     ancillary_fname,
@@ -119,7 +119,7 @@ def _format_tp5(
             sbt_ancillary = None
 
         tp5_data, metadata = format_tp5(
-            acquisition,
+            acquisitions,
             coord_dset,
             view_dset,
             azi_dset,
@@ -157,7 +157,7 @@ def _format_tp5(
 
 
 def format_tp5(
-    acquisition,
+    acquisitions,
     coordinator,
     view_dataset,
     azi_dataset,
@@ -174,12 +174,11 @@ def format_tp5(
     """Creates str formatted tp5 files for the albedo (0, 1) and
     transmittance (t).
     """
-    geobox = acquisition.gridded_geo_box()
-    filter_file = acquisition.spectral_filter_file
-    cdate = acquisition.scene_centre_date
+    geobox = acquisitions[0].gridded_geo_box()
+    cdate = acquisitions[0].scene_centre_date
     doy = int(cdate.strftime("%j"))
-    altitude = acquisition.altitude / 1000.0  # in km
-    dechour = acquisition.decimal_hour
+    altitude = acquisitions[0].altitude / 1000.0  # in km
+    dechour = acquisitions[0].decimal_hour
 
     view = np.zeros(npoints, dtype="float32")
     azi = np.zeros(npoints, dtype="float32")
@@ -227,12 +226,13 @@ def format_tp5(
 
     # write the tp5 files required for input into MODTRAN
     if nbar_tp5:
+        acqs = [a for a in acquisitions if a.band_type == BandType.Reflective]
         for i in range(npoints):
             for alb in Model.nbar.albedos:
                 input_data = {
                     "water": vapour,
                     "ozone": ozone,
-                    "filter_function": filter_file,
+                    "filter_function": acqs[0].spectral_filter_file,
                     "visibility": -aerosol,
                     "elevation": elevation,
                     "sat_height": altitude,
@@ -263,6 +263,7 @@ def format_tp5(
     # so as to ensure a consistant logic between the two products
 
     if sbt_ancillary is not None:
+        acqs = [a for a in acquisitions if a.band_type == BandType.Thermal]
         for p in range(npoints):
             atmospheric_profile = []
             atmos_profile = sbt_ancillary[p]
@@ -280,7 +281,7 @@ def format_tp5(
 
             input_data = {
                 "ozone": ozone,
-                "filter_function": filter_file,
+                "filter_function": acqs[0].spectral_filter_file,
                 "visibility": -aerosol,
                 "gpheight": elevation,
                 "n": n_layers,
