@@ -291,8 +291,8 @@ def format_tp5(
             }
 
             data = THERMAL_TRANSMITTANCE.format(**input_data)
-            tp5_data[(p, Model.sbt.albedos)] = data
-            metadata[(p, Model.sbt.albedos)] = input_data
+            tp5_data[(p, Model.sbt.albedos[0])] = data
+            metadata[(p, Model.sbt.albedos[0])] = input_data
 
     return tp5_data, metadata
 
@@ -360,7 +360,7 @@ def run_modtran(
     # initial attributes
     attrs = {"Point": point, "Albedo": albedo, "lonlat": lonlat}
 
-    if albedo != Model.sbt.albedos:
+    if albedo != Model.sbt.albedos[0]:
         flux_fname = glob.glob(pjoin(workpath, "*_b.flx"))[0]
         flux_data, altitudes = read_modtran_flux(flux_fname)
 
@@ -391,7 +391,7 @@ def run_modtran(
     chn_fname = glob.glob(pjoin(workpath, "*.chn"))[0]
     channel_data = read_modtran_channel(chn_fname, acquisition, albedo)
 
-    if albedo == Model.sbt.albedos:
+    if albedo == Model.sbt.albedos[0]:
         # upward radiation
         attrs["Description"] = "Upward radiation channel output from MODTRAN"
         dset_name = ppjoin(group_path, "upward-radiation-channel")
@@ -450,11 +450,12 @@ def _calculate_coefficients(atmospheric_fname, out_fname, compression="lzf"):
                 channel_data[point] = read_table(fid, channel_path)
             if sbt_atmos:
                 dname = ppjoin(
-                    grp_path.format(a=Model.sbt.albedos), "upward-radiation-channel"
+                    grp_path.format(a=Model.sbt.albedos[0]), "upward-radiation-channel"
                 )
                 upward[point] = read_table(fid, dname)
                 dname = ppjoin(
-                    grp_path.format(a=Model.sbt.albedos), "downward-radiation-channel"
+                    grp_path.format(a=Model.sbt.albedos[0]),
+                    "downward-radiation-channel",
                 )
                 downward[point] = read_table(fid, dname)
 
@@ -646,7 +647,7 @@ def calculate_coefficients(
         attrs["Description"] = (
             "Coefficients derived from the THERMAL " "solar irradiation."
         )
-        attrs["Number of atmospheric points"] = fid.attrs["npoints"]
+        attrs["Number of atmospheric points"] = npoints
 
         write_dataframe(result, "sbt-coefficients", fid, compression, attrs=attrs)
 
@@ -829,7 +830,7 @@ def read_modtran_channel(fname, acquisition, albedo):
         A `pandas.DataFrame` containing the channel data, and index
         by the `band_id`.
     """
-    if albedo == Model.sbt.albedos:
+    if albedo == Model.sbt.albedos[0]:
         response = acquisition.spectral_response()
         nbands = response.index.get_level_values("band_id").unique().shape[0]
         upward_radiation = pd.read_csv(
@@ -1034,7 +1035,7 @@ def link_atmospheric_results(input_targets, out_fname, npoints):
             point = fid.attrs["point"]
             albedo = fid.attrs["albedo"]
 
-        if albedo == Model.sbt.albedos:
+        if albedo == Model.sbt.albedos[0]:
             datasets = ["upward-radiation-channel", "downward-radiation-channel"]
             sbt_atmospherics = True
         else:
