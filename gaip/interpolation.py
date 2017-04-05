@@ -206,7 +206,7 @@ def _bilinear_interpolate(
         centre_dset = read_table(sat_sol, "centreline")
         box_dset = read_table(sat_sol, "boxline")
         # TODO: sbt and nbar coefficients
-        coef_dset = read_table(coef, "coefficients")
+        coef_dset = read_table(coef, "sbt-coefficients")
 
         rfid = bilinear_interpolate(
             acq,
