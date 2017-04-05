@@ -180,7 +180,7 @@ class AncillaryData(luigi.Task):
             "brdf_premodis_path": self.brdf_premodis_path,
         }
 
-        if self.model == Model.standard | self.model == Model.sbt:
+        if self.model == Model.standard or Model.sbt:
             sbt_paths = {
                 "dewpoint_path": self.dewpoint_path,
                 "temperature_2m_path": self.temp_2m_path,
@@ -381,7 +381,7 @@ class CalculateCoefficients(luigi.Task):
             _calculate_coefficients(self.input().path, out_fname, self.compression)
 
 
-@inherits(CalculateSatelliteAndSolarGrids)
+@inherits(CalculateLonLatGrids)
 class BilinearInterpolationBand(luigi.Task):
     """Runs the bilinear interpolation function for a given band."""
 
@@ -393,7 +393,7 @@ class BilinearInterpolationBand(luigi.Task):
     def requires(self):
         args = [self.level1, self.work_root, self.granule]
         return {
-            "coef": CalculateCoefficients(*args),
+            "coef": CalculateCoefficients(*args, model=self.model),
             "satsol": self.clone(CalculateSatelliteAndSolarGrids),
             "ancillary": AncillaryData(*args, model=self.model),
         }
@@ -445,13 +445,13 @@ class BilinearInterpolation(luigi.Task):
         sensor = acqs[0].sensor_id
 
         # NBAR band id's
-        if self.model == Model.standard | self.model == Model.nbar:
+        if self.model == Model.standard or Model.nbar:
             nbar_constants = constants.NBARConstants(satellite, sensor)
             band_ids = nbar_constants.get_nbar_lut()
             bands.extend([a.band_num for a in acqs if a.band_num in band_ids])
 
         # SBT band id's
-        if self.model == Model.standard | self.model == Model.sbt:
+        if self.model == Model.standard or Model.sbt:
             band_ids = constants.sbt_bands(satellite, sensor)
             bands.extend([a.band_num for a in acqs if a.band_num in band_ids])
 
@@ -534,7 +534,7 @@ class SlopeAndAspect(luigi.Task):
             )
 
 
-@inherits(CalculateSatelliteAndSolarGrids)
+@inherits(CalculateLonLatGrids)
 class IncidentAngles(luigi.Task):
     """Compute the incident angles."""
 
@@ -863,7 +863,7 @@ class SurfaceReflectance(luigi.Task):
             )
 
 
-@inherits(BilinearInterpolation)
+@inherits(SurfaceReflectance)
 class SurfaceTemperature(luigi.Task):
     """Calculates surface brightness temperature for a given band."""
 
@@ -910,13 +910,13 @@ class Standard(luigi.Task):
         sensor = acqs[0].sensor_id
 
         # NBAR band id's
-        if self.model == Model.standard | self.model == Model.nbar:
+        if self.model == Model.standard or Model.nbar:
             nbar_constants = constants.NBARConstants(satellite, sensor)
             band_ids = nbar_constants.get_nbar_lut()
             bands.extend([a for a in acqs if a.band_num in band_ids])
 
         # SBT band id's
-        if self.model == Model.standard | self.model == Model.sbt:
+        if self.model == Model.standard or Model.sbt:
             band_ids = constants.sbt_bands(satellite, sensor)
             bands.extend([a for a in acqs if a.band_num in band_ids])
 
