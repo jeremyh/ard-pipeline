@@ -155,6 +155,3 @@ def sheared_bilinear_interpolate(
             result[subset] = patch(i, j)[subset]
 
     return result
-
-
-interpolate = fortran_bilinear_interpolate

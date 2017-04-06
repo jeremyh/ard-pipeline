@@ -14,8 +14,8 @@ from os.path import basename, splitext
 import h5py
 import numpy as np
 
+import gaip.interpolate
 from gaip.hdf5 import dataset_compression_kwargs, read_table, write_h5_image
-from gaip.interpolate import interpolate
 
 logger = logging.getLogger(__name__)
 
@@ -232,6 +232,7 @@ def bilinear_interpolate(
     coefficients,
     out_fname=None,
     compression="lzf",
+    method=None,
 ):
     # TODO: more docstrings
     """Perform bilinear interpolation."""
@@ -250,7 +251,14 @@ def bilinear_interpolate(
     band_records = coefficients.band_id == f"BAND {band}"
     samples = coefficients[factor][band_records].values
 
-    result = interpolate(cols, rows, coord, samples, start, end, centre)
+    if method is None:
+        method = (
+            gaip.interpolate.fortran_bilinear_interpolate
+            if len(samples) == 9
+            else gaip.interpolate.rbf_interpolate
+        )
+
+    result = method(cols, rows, coord, samples, start, end, centre)
 
     # Initialise the output files
     if out_fname is None:
