@@ -68,6 +68,88 @@ class BandType(Enum):
     Quality = 4
 
 
+class DatasetNames(Enum):
+    """Defines the dataset names or format descriptors, that are used
+    for creating and accessing throughout the code base.
+    """
+
+    # gaip.ancillary
+    coordinator = "coordinator"
+    dewpoint_temperature = "dewpoint-temperature-2metre"
+    temperature_2m = "temperature-2metre"
+    surface_pressure = "surface-pressure"
+    surface_geopotential = "surface-geopotential-height"
+    surface_relative_humidity = "surface-relative-humidity"
+    geopotential = "geopotential"
+    temperature = "temperature"
+    relative_humidity = "relative-humidity"
+    atmospheric_profile = "atmospheric-profile"
+    aerosol = "aerosol"
+    water_vapour = "water-vapour"
+    ozone = "ozone"
+    elevation = "elevation"
+    brdf_fmt = "BRDF-Band-{band}-{factor}"
+
+    # gaip.calculate_lon_lat_arrays
+    lon = "longitude"
+    lat = "latitude"
+
+    # gaip.calculate_angles
+    satellite_view = "satellite-view"
+    satellite_azimuth = "satellite-azimuth"
+    solar_zenith = "solar-zenith"
+    solar_azimuth = "solar-azimuth"
+    relative_azimuth = "relative-azimuth"
+    acquisition_time = "acquisition-time"
+    centreline = "centreline"
+    boxline = "boxline"
+
+    # gaip.calculate_incident_exiting_angles
+    incident = "incident"
+    azimuthal_incident = "azimuthal-incident"
+    exiting = "exiting"
+    azimuthal_exiting = "azimuthal-exiting"
+    relative_slope = "relative-slope"
+
+    # gaip.calculate_reflectance
+    reflectance_fmt = "{product}-reflectance-band-{band}"
+
+    # gaip.thermal_conversion
+    temperature_fmt = "surface-brightness-temperature-band-{band}"
+
+    # gaip.calculate_shadow_masks
+    self_shadow = "self-shadow"
+    cast_shdadow_fmt = "cast-shadow-{source}"
+    combined_shadow = "combined-shadow"
+
+    # gaip.calculate_slope_aspect
+    slope = "slope"
+    aspect = "aspect"
+
+    # gaip.dsm
+    dsm = "dsm"
+    dsm_smoothed = "dsm-smoothed"
+
+    # gaip.interpolation
+    interpolation_fmt = "{factor}-band-{band}"
+
+    # gaip.modtran
+    tp5 = "tp5_data"
+    flux = "flux"
+    altitudes = "altitudes"
+    solar_irradiance = "solar-irradiance"
+    upward_radiation_channel = "upward-radiation-channel"
+    downward_radiation_channel = "downward-radiation-channel"
+    channel = "channel"
+    nbar_coefficients = "nbar-coefficients"
+    sbt_coefficients = "sbt-coefficients"
+
+
+class ColumnNames(Enum):
+    lon = "longitude"
+    lat = "latitude"
+
+
 # TODO: Re-work this entire file, and the class structures
 #       A pain but required as this file contains neccessary
 #       band exclusions, and hardwired BRDF wavelength matchups.
