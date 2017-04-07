@@ -18,6 +18,7 @@ from shapely.geometry import Point, Polygon
 from gaip.brdf import get_brdf_data
 from gaip.calculate_angles import create_vertices
 from gaip.constants import POINT_FMT
+from gaip.constants import DatasetName as DName
 from gaip.data import get_pixel
 from gaip.hdf5 import (
     attach_attributes,
@@ -121,7 +122,7 @@ def _collect_ancillary(
     NBAR workflow.
     """
     with h5py.File(satellite_solar_fname, "r") as fid:
-        boxline_dset = fid["boxline"][:]
+        boxline_dset = fid[DName.boxline.value][:]
 
     rfid = collect_ancillary(
         acquisition,
@@ -248,7 +249,8 @@ def collect_ancillary(
     )
     attrs = {"Description": desc, "array_coordinate_offset": 0}
     kwargs = dataset_compression_kwargs(compression=compression)
-    coord_dset = rfid.create_dataset("coordinator", data=coordinator, **kwargs)
+    dset_name = DName.coordinator.value
+    coord_dset = rfid.create_dataset(dset_name, data=coordinator, **kwargs)
     attach_table_attributes(coord_dset, title="Coordinator", attrs=attrs)
 
     # copy if we don't have a file on disk
@@ -344,6 +346,7 @@ def collect_sbt_ancillary(
     attrs = {"Description": description, "Date used for querying ECWMF": dt}
 
     for i, lonlat in enumerate(lonlats):
+        pnt = POINT_FMT.format(p=i)
         # get data located at the surface
         dew = ecwmf_dewpoint_temperature(dewpoint_path, lonlat, dt)
         t2m = ecwmf_temperature_2metre(temperature_2m_path, lonlat, dt)
@@ -352,19 +355,19 @@ def collect_sbt_ancillary(
         sfc_rh = relative_humdity(t2m[0], dew[0])
 
         # output the scalar data along with the attrs
-        dname = ppjoin(POINT_FMT.format(p=i), "dewpoint-temperature-2metre")
+        dname = ppjoin(pnt, DName.dewpoint_temperature.value)
         write_scalar(dew[0], dname, fid, dew[1])
 
-        dname = ppjoin(POINT_FMT.format(p=i), "temperature-2metre")
+        dname = ppjoin(pnt, DName.temperature_2m.value)
         write_scalar(t2m[0], dname, fid, t2m[1])
 
-        dname = ppjoin(POINT_FMT.format(p=i), "surface-pressure")
+        dname = ppjoin(pnt, DName.surface_pressure.value)
         write_scalar(sfc_prs[0], dname, fid, sfc_prs[1])
 
-        dname = ppjoin(POINT_FMT.format(p=i), "surface-geopotential-height")
+        dname = ppjoin(pnt, DName.surface_geopotential.value)
         write_scalar(sfc_hgt[0], dname, fid, sfc_hgt[1])
 
-        dname = ppjoin(POINT_FMT.format(p=i), "surface-relative-humidity")
+        dname = ppjoin(pnt, DName.surface_relative_humidity.value)
         attrs = {"Description": "Relative Humidity calculated at the surface"}
         write_scalar(sfc_rh, dname, fid, attrs)
 
@@ -373,13 +376,13 @@ def collect_sbt_ancillary(
         tmp = ecwmf_temperature(temperature_path, lonlat, dt)
         rh = ecwmf_relative_humidity(relative_humidity_path, lonlat, dt)
 
-        dname = ppjoin(POINT_FMT.format(p=i), "geopotential")
+        dname = ppjoin(pnt, DName.geopotential.value)
         write_dataframe(gph[0], dname, fid, compression, attrs=gph[1])
 
-        dname = ppjoin(POINT_FMT.format(p=i), "temperature")
+        dname = ppjoin(pnt, DName.temperature.value)
         write_dataframe(tmp[0], dname, fid, compression, attrs=tmp[1])
 
-        dname = ppjoin(POINT_FMT.format(p=i), "relative-humidity")
+        dname = ppjoin(pnt, DName.relative_humidity.value)
         write_dataframe(rh[0], dname, fid, compression, attrs=rh[1])
 
         # combine the surface and higher pressure layers into a single array
@@ -409,7 +412,7 @@ def collect_sbt_ancillary(
         # remove any records that are less than the surface level
         subset = df[df["GeoPotential_Height"] >= sfc_hgt[0]]
 
-        dname = ppjoin(POINT_FMT.format(p=i), "atmospheric-profile")
+        dname = ppjoin(pnt, DName.atmospheric_profile.value)
         write_dataframe(subset, dname, fid, compression, attrs=attrs)
 
     return fid
@@ -505,16 +508,16 @@ def collect_nbar_ancillary(
     geobox = acquisition.gridded_geo_box()
 
     aerosol = get_aerosol_data(acquisition, aerosol_fname)
-    write_scalar(aerosol[0], "aerosol", fid, aerosol[1])
+    write_scalar(aerosol[0], DName.aerosol.value, fid, aerosol[1])
 
     wv = get_water_vapour(acquisition, water_vapour_path)
-    write_scalar(wv[0], "water-vapour", fid, wv[1])
+    write_scalar(wv[0], DName.water_vapour.value, fid, wv[1])
 
     ozone = get_ozone_data(ozone_path, geobox.centre_lonlat, dt)
-    write_scalar(ozone[0], "ozone", fid, ozone[1])
+    write_scalar(ozone[0], DName.ozone.value, fid, ozone[1])
 
     elev = get_elevation_data(geobox.centre_lonlat, dem_path)
-    write_scalar(elev[0], "elevation", fid, elev[1])
+    write_scalar(elev[0], DName.elevation.value, fid, elev[1])
 
     # brdf
     group = fid.create_group("brdf-image-datasets")
@@ -526,7 +529,7 @@ def collect_nbar_ancillary(
         compression=compression,
         work_path=work_path,
     )
-    dname_format = "BRDF-Band-{band}-{factor}"
+    dname_format = DName.brdf_fmt.value
     for key in data:
         band, factor = key
         attrs = _format_brdf_attrs(factor)
@@ -557,10 +560,10 @@ def aggregate_ancillary(ancillary_fnames, out_fname):
 
     for fname in ancillary_fnames:
         with h5py.File(fname, "r") as fid2:
-            ozone += fid2["ozone"][()]
-            vapour += fid2["water-vapour"][()]
-            aerosol += fid2["aerosol"][()]
-            elevation += fid2["elevation"][()]
+            ozone += fid2[DName.ozone.value][()]
+            vapour += fid2[DName.water_vapour.value][()]
+            aerosol += fid2[DName.aerosol.value][()]
+            elevation += fid2[DName.elevation.value][()]
 
     ozone /= n_tiles
     vapour /= n_tiles
@@ -573,19 +576,19 @@ def aggregate_ancillary(ancillary_fnames, out_fname):
     )
     attrs = {"data_source": "granule_average"}
 
-    dset = fid1.create_dataset("ozone", data=ozone)
+    dset = fid1.create_dataset(DName.ozone.value, data=ozone)
     attrs["Description"] = description.format(*(2 * ["Ozone"]))
     attach_attributes(dset, attrs)
 
-    dset = fid1.create_dataset("water-vapour", data=vapour)
+    dset = fid1.create_dataset(DName.water_vapour.value, data=vapour)
     attrs["Description"] = description.format(*(2 * ["Water Vapour"]))
     attach_attributes(dset, attrs)
 
-    dset = fid1.create_dataset("aerosol", data=aerosol)
+    dset = fid1.create_dataset(DName.aerosol.value, data=aerosol)
     attrs["Description"] = description.format(*(2 * ["Aerosol"]))
     attach_attributes(dset, attrs)
 
-    dset = fid1.create_dataset("elevation", data=elevation)
+    dset = fid1.create_dataset(DName.elevation.value, data=elevation)
     attrs["Description"] = description.format(*(2 * ["Elevation"]))
     attach_attributes(dset, attrs)
 
