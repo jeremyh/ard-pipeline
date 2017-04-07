@@ -74,7 +74,6 @@ def prepare_modtran(acquisition, coordinate, albedo, modtran_work, modtran_exe):
 
     os.symlink(data_dir, symlink_dir)
 
-    # TODO: write the spectral response function
     out_fname = pjoin(modtran_work, acquisition.spectral_filter_file)
     response = acquisition.spectral_response(as_list=True)
     with open(out_fname, "wb") as src:
