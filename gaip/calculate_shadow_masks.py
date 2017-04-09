@@ -12,6 +12,7 @@ import numpy as np
 
 from gaip.__cast_shadow_mask import cast_shadow_main
 from gaip.calculate_angles import setup_spheroid
+from gaip.constants import DatasetName as DN
 from gaip.geobox import GriddedGeoBox
 from gaip.hdf5 import (
     attach_image_attributes,
@@ -36,8 +37,8 @@ def _self_shadow(
     with h5py.File(incident_angles_fname, "r") as inci_angles, h5py.File(
         exiting_angles_fname, "r"
     ) as exit_angles:
-        inci_dset = inci_angles["incident"]
-        exit_dset = exit_angles["exiting"]
+        inci_dset = inci_angles[DN.incident.value]
+        exit_dset = exit_angles[DN.exiting.value]
 
         geobox = GriddedGeoBox.from_dataset(inci_dset)
 

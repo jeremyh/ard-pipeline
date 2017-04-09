@@ -7,6 +7,7 @@ import numpy as np
 
 from gaip.__exiting_angle import exiting_angle
 from gaip.__incident_angle import incident_angle
+from gaip.constants import DatasetName
 from gaip.data import as_array
 from gaip.geobox import GriddedGeoBox
 from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
@@ -27,10 +28,10 @@ def _incident_angles(
     with h5py.File(satellite_solar_fname, "r") as sat_sol, h5py.File(
         slope_aspect_fname, "r"
     ) as slp_asp:
-        solar_zen_dset = sat_sol["solar-zenith"]
-        solar_azi_dset = sat_sol["solar-azimuth"]
-        slope_dset = slp_asp["slope"]
-        aspect_dset = slp_asp["aspect"]
+        solar_zen_dset = sat_sol[DatasetName.solar_zenith.value]
+        solar_azi_dset = sat_sol[DatasetName.solar_azimuth.value]
+        slope_dset = slp_asp[DatasetName.slope.value]
+        aspect_dset = slp_asp[DatasetName.aspect.value]
 
         geobox = GriddedGeoBox.from_dataset(solar_zen_dset)
 
@@ -138,8 +139,10 @@ def incident_angles(
     kwargs["dtype"] = "float32"
 
     # output datasets
-    incident_dset = fid.create_dataset("incident", **kwargs)
-    azi_inc_dset = fid.create_dataset("azimuthal-incident", **kwargs)
+    dataset_name = DatasetName.incident.value
+    incident_dset = fid.create_dataset(dataset_name, **kwargs)
+    dataset_name = DatasetName.azimuthal_incident.value
+    azi_inc_dset = fid.create_dataset(dataset_name, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
@@ -216,10 +219,10 @@ def _exiting_angles(
     with h5py.File(satellite_solar_fname, "r") as sat_sol, h5py.File(
         slope_aspect_fname, "r"
     ) as slp_asp:
-        sat_view_dset = sat_sol["satellite-view"]
-        sat_azi_dset = sat_sol["satellite-azimuth"]
-        slope_dset = slp_asp["slope"]
-        aspect_dset = slp_asp["aspect"]
+        sat_view_dset = sat_sol[DatasetName.satellite_view.value]
+        sat_azi_dset = sat_sol[DatasetName.satellite_azimuth.value]
+        slope_dset = slp_asp[DatasetName.slope.value]
+        aspect_dset = slp_asp[DatasetName.aspect.value]
 
         geobox = GriddedGeoBox.from_dataset(sat_view_dset)
 
@@ -327,8 +330,10 @@ def exiting_angles(
     kwargs["dtype"] = "float32"
 
     # output datasets
-    exiting_dset = fid.create_dataset("exiting", **kwargs)
-    azi_exit_dset = fid.create_dataset("azimuthal-exiting", **kwargs)
+    dataset_name = DatasetName.exiting.value
+    exiting_dset = fid.create_dataset(dataset_name, **kwargs)
+    dataset_name = DatasetName.azimuthal_exiting.value
+    azi_exit_dset = fid.create_dataset(dataset_name, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
@@ -409,8 +414,8 @@ def _relative_azimuth_slope(
     with h5py.File(incident_angles_fname, "r") as inci_angles, h5py.File(
         exiting_angles_fname, "r"
     ) as exit_angles:
-        azi_inci_dset = inci_angles["azimuthal-incident"]
-        azi_exit_dset = exit_angles["azimuthal-exiting"]
+        azi_inci_dset = inci_angles[DatasetName.azimuthal_incident.value]
+        azi_exit_dset = exit_angles[DatasetName.azimuthal_exiting.value]
 
         geobox = GriddedGeoBox.from_dataset(azi_inci_dset)
 
@@ -499,7 +504,7 @@ def relative_azimuth_slope(
     kwargs["dtype"] = "float32"
 
     # output datasets
-    out_dset = fid.create_dataset("relative-slope", **kwargs)
+    out_dset = fid.create_dataset(DatasetName.relative_slope.value, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {

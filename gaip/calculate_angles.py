@@ -12,7 +12,7 @@ from osgeo import osr
 from gaip.__sat_sol_angles import angle
 from gaip.__satellite_model import set_satmod
 from gaip.__track_time_info import set_times
-from gaip.constants import DatasetName as DName
+from gaip.constants import DatasetName
 from gaip.hdf5 import (
     attach_image_attributes,
     attach_table_attributes,
@@ -643,7 +643,7 @@ def _store_parameter_settings(
     # sheroid
     desc = "The spheroid used in the satelite and solar angles calculation."
     attrs = {"Description": desc}
-    dname = DName.spheroid.value
+    dname = DatasetName.spheroid.value
     sph_dset = group.create_dataset(dname, data=spheriod)
     attach_table_attributes(sph_dset, title="Spheroid", attrs=attrs)
 
@@ -653,14 +653,14 @@ def _store_parameter_settings(
         "solar angles calculation."
     )
     attrs = {"Description": desc}
-    dname = DName.orbital_elements.value
+    dname = DatasetName.orbital_elements.value
     orb_dset = group.create_dataset(dname, data=orbital_elements)
     attach_table_attributes(orb_dset, title="Orbital Elements", attrs=attrs)
 
     # satellite model
     desc = "The satellite model used in the satelite and solar angles " "calculation."
     attrs = {"Description": desc}
-    dname = DName.satellite_model.value
+    dname = DatasetName.satellite_model.value
     sat_dset = group.create_dataset(dname, data=satellite_model)
     attach_table_attributes(sat_dset, title="Satellite Model", attrs=attrs)
 
@@ -670,7 +670,7 @@ def _store_parameter_settings(
         "angles calculation."
     )
     attrs = {"Description": desc}
-    dname = DName.satellite_track.value
+    dname = DatasetName.satellite_track.value
     track_dset = group.create_dataset(dname, data=satellite_track)
     attach_table_attributes(track_dset, title="Satellite Track", attrs=attrs)
 
@@ -690,8 +690,8 @@ def _calculate_angles(
     NBAR workflow.
     """
     with h5py.File(lon_lat_fname, "r") as src:
-        lon_ds = src[DName.lon.value]
-        lat_ds = src[DName.lat.value]
+        lon_ds = src[DatasetName.lon.value]
+        lat_ds = src[DatasetName.lat.value]
         fid = calculate_angles(
             acquisition, lon_ds, lat_ds, out_fname, compression, max_angle, tle_path
         )
@@ -872,12 +872,12 @@ def calculate_angles(
     kwargs["fillvalue"] = no_data
     kwargs["dtype"] = out_dtype
 
-    sat_v_ds = fid.create_dataset(DName.satellite_view.value, **kwargs)
-    sat_az_ds = fid.create_dataset(DName.satellite_azimuth.value, **kwargs)
-    sol_z_ds = fid.create_dataset(DName.solar_zenith.value, **kwargs)
-    sol_az_ds = fid.create_dataset(DName.solar_azimuth, **kwargs)
-    rel_az_ds = fid.create_dataset(DName.relative_azimuth.value, **kwargs)
-    time_ds = fid.create_dataset(DName.acquisition_time.value, **kwargs)
+    sat_v_ds = fid.create_dataset(DatasetName.satellite_view.value, **kwargs)
+    sat_az_ds = fid.create_dataset(DatasetName.satellite_azimuth.value, **kwargs)
+    sol_z_ds = fid.create_dataset(DatasetName.solar_zenith.value, **kwargs)
+    sol_az_ds = fid.create_dataset(DatasetName.solar_azimuth, **kwargs)
+    rel_az_ds = fid.create_dataset(DatasetName.relative_azimuth.value, **kwargs)
+    time_ds = fid.create_dataset(DatasetName.acquisition_time.value, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
@@ -997,7 +997,7 @@ def calculate_angles(
     # create the dataset and save to the HDF5 file
     centreline_dataset = create_centreline_dataset(geobox, x_cent, n_cent)
     kwargs = dataset_compression_kwargs(compression=compression)
-    dname = DName.centreline.value
+    dname = DatasetName.centreline.value
     cent_dset = fid.create_dataset(dname, data=centreline_dataset, **kwargs)
     desc = (
         "Contains the array, latitude and longitude coordinates of the "
@@ -1011,7 +1011,8 @@ def calculate_angles(
     desc = "Contains the bi-section, column start and column end array " "coordinates."
     attrs["Description"] = desc
     attrs["array_coordinate_offset"] = 0
-    box_dset = fid.create_dataset(DName.boxline.value, data=boxline, **kwargs)
+    dname = DatasetName.boxline.value
+    box_dset = fid.create_dataset(dname, data=boxline, **kwargs)
     attach_table_attributes(box_dset, title="Boxline", attrs=attrs)
 
     fid.flush()
