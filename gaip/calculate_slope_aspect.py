@@ -7,6 +7,7 @@ import numpy as np
 
 from gaip.__slope_aspect import slope_aspect
 from gaip.calculate_angles import setup_spheroid
+from gaip.constants import DatasetName
 from gaip.data import as_array
 from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
 from gaip.margins import ImageMargins
@@ -17,7 +18,7 @@ def _slope_aspect_arrays(acquisition, dsm_fname, margins, out_fname, compression
     NBAR workflow.
     """
     with h5py.File(dsm_fname, "r") as src:
-        dsm_dset = src["dsm-smoothed"]
+        dsm_dset = src[DatasetName.dsm_smoothed.value]
 
         fid = slope_aspect_arrays(
             acquisition, dsm_dset, margins, out_fname, compression
@@ -116,7 +117,7 @@ def slope_aspect_arrays(
     # metadata for calculation
     group = fid.create_group("parameters")
     group.attrs["dsm_index"] = ((ystart, ystop), (xstart, xstop))
-    group.attrs["calculation_pixel_buffer"] = "1 pixel"
+    group.attrs["pixel_buffer"] = "1 pixel"
 
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
@@ -144,8 +145,10 @@ def slope_aspect_arrays(
     )
 
     # output datasets
-    slope_dset = fid.create_dataset("slope", data=slope, **kwargs)
-    aspect_dset = fid.create_dataset("aspect", data=aspect, **kwargs)
+    dname = DatasetName.slope.value
+    slope_dset = fid.create_dataset(dname, data=slope, **kwargs)
+    dname = DatasetName.aspect.value
+    aspect_dset = fid.create_dataset(dname, data=aspect, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {

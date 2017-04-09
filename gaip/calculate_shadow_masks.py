@@ -12,7 +12,7 @@ import numpy as np
 
 from gaip.__cast_shadow_mask import cast_shadow_main
 from gaip.calculate_angles import setup_spheroid
-from gaip.constants import DatasetName as DN
+from gaip.constants import DatasetName
 from gaip.geobox import GriddedGeoBox
 from gaip.hdf5 import (
     attach_image_attributes,
@@ -37,8 +37,8 @@ def _self_shadow(
     with h5py.File(incident_angles_fname, "r") as inci_angles, h5py.File(
         exiting_angles_fname, "r"
     ) as exit_angles:
-        inci_dset = inci_angles[DN.incident.value]
-        exit_dset = exit_angles[DN.exiting.value]
+        inci_dset = inci_angles[DatasetName.incident.value]
+        exit_dset = exit_angles[DatasetName.exiting.value]
 
         geobox = GriddedGeoBox.from_dataset(inci_dset)
 
@@ -120,7 +120,7 @@ def self_shadow(
     kwargs["dtype"] = "bool"
 
     # output dataset
-    out_dset = fid.create_dataset("self-shadow", **kwargs)
+    out_dset = fid.create_dataset(dname, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
@@ -297,14 +297,14 @@ def _calculate_cast_shadow(
     with h5py.File(dsm_fname, "r") as dsm_src, h5py.File(
         satellite_solar_angles_fname, "r"
     ) as sat_sol:
-        dsm_dset = dsm_src["dsm-smoothed"][:]
+        dsm_dset = dsm_src[DatasetName.dsm_smoothed.value][:]
 
         if solar_source:
-            zenith_name = "solar-zenith"
-            azimuth_name = "solar-azimuth"
+            zenith_name = DatasetName.solar_zenith.value
+            azimuth_name = DatasetName.solar_azimuth.value
         else:
-            zenith_name = "satellite-view"
-            azimuth_name = "satellite-azimuth"
+            zenith_name = DatasetName.satellite_view.value
+            azimuth_name = DatasetName.satellite_azimuth.value
 
         zenith_dset = sat_sol[zenith_name][:]
         azi_dset = sat_sol[azimuth_name][:]
@@ -487,7 +487,10 @@ def calculate_cast_shadow(
     )
     kwargs["dtype"] = "bool"
 
-    out_dset = fid.create_dataset(f"cast-shadow-{source_dir}", data=mask, **kwargs)
+    dname_fmt = DatasetName.cast_shdadow_fmt.value
+    out_dset = fid.create_dataset(
+        dname_fmt.format(source=source_dir), data=mask, **kwargs
+    )
 
     # attach some attributes to the image datasets
     attrs = {
@@ -519,9 +522,10 @@ def _combine_shadow(
     with h5py.File(self_shadow_fname, "r") as fid_self, h5py.File(
         cast_shadow_sun_fname, "r"
     ) as fid_sun, h5py.File(cast_shadow_satellite_fname, "r") as fid_sat:
-        self_shadow = fid_self["self-shadow"]
-        cast_sun = fid_sun["cast-shadow-sun"]
-        cast_sat = fid_sat["cast-shadow-satellite"]
+        dname_fmt = DatasetName.cast_shdadow_fmt.value
+        self_shadow = fid_self[DatasetName.self_shadow.value]
+        cast_sun = fid_sun[dname_fmt.format(source="sun")]
+        cast_sat = fid_sat[dname_fmt.format(source="satellite")]
 
         geobox = GriddedGeoBox.from_dataset(self_shadow)
 
@@ -539,13 +543,13 @@ def _combine_shadow(
     fid.close()
 
     # link in the other shadow masks for easy access
-    dname = "self-shadow"
+    dname = DatasetName.self_shadow.value
     create_external_link(self_shadow_fname, dname, out_fname, dname)
 
-    dname = "cast-shadow-sun"
+    dname = dname_fmt.format(source="sun")
     create_external_link(cast_shadow_sun_fname, dname, out_fname, dname)
 
-    dname = "cast-shadow-satellite"
+    dname = dname_fmt.format(source="satellite")
     create_external_link(cast_shadow_satellite_fname, dname, out_fname, dname)
 
     return
@@ -628,7 +632,7 @@ def combine_shadow_masks(
     kwargs["dtype"] = "bool"
 
     # output dataset
-    out_dset = fid.create_dataset("combined-shadow", **kwargs)
+    out_dset = fid.create_dataset(DatasetName.combined_shadow.value, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
@@ -641,7 +645,7 @@ def combine_shadow_masks(
         "3. cast shadow (satellite direction)."
     )
     attrs["Description"] = desc
-    attrs["mask values"] = "False = Shadow; True = Non Shadow"
+    attrs["mask_values"] = "False = Shadow; True = Non Shadow"
     attach_image_attributes(out_dset, attrs)
 
     # Initialise the tiling scheme for processing

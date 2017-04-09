@@ -15,6 +15,7 @@ import h5py
 import numpy as np
 
 import gaip.interpolate
+from gaip.constants import DatasetName
 from gaip.hdf5 import dataset_compression_kwargs, read_table, write_h5_image
 
 logger = logging.getLogger(__name__)
@@ -202,11 +203,11 @@ def _bilinear_interpolate(
         coefficients_fname, "r"
     ) as coef, h5py.File(ancillary_fname, "r") as anc:
         # read the relevant tables into DataFrames
-        coord_dset = read_table(anc, "coordinator")
-        centre_dset = read_table(sat_sol, "centreline")
-        box_dset = read_table(sat_sol, "boxline")
-        # TODO: sbt and nbar coefficients
-        coef_dset = read_table(coef, "sbt-coefficients")
+        coord_dset = read_table(anc, DatasetName.coordinator.value)
+        centre_dset = read_table(sat_sol, DatasetName.centreline.value)
+        box_dset = read_table(sat_sol, DatasetName.boxline.value)
+        # TODO: consolodate sbt and nbar coefficients dataset names
+        coef_dset = read_table(coef, DatasetName.sbt_coefficients.value)
 
         rfid = bilinear_interpolate(
             acq,
@@ -266,6 +267,7 @@ def bilinear_interpolate(
     else:
         fid = h5py.File(out_fname, "w")
 
+    # TODO: determine without splitext or basename
     dset_name = splitext(basename(out_fname))[0]
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
