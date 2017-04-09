@@ -120,7 +120,8 @@ def self_shadow(
     kwargs["dtype"] = "bool"
 
     # output dataset
-    out_dset = fid.create_dataset(dname, **kwargs)
+    dataset_name = DatasetName.self_shadow.value
+    out_dset = fid.create_dataset(dataset_name, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
