@@ -39,6 +39,8 @@ def convert_image(dataset, output_directory):
     else:
         no_data = None
 
+    tags["history"] = "Converted from HDF5 IMAGE to GeoTiff."
+
     kwargs = {
         "fmt": "GTiff",
         "geobox": geobox,
@@ -49,6 +51,8 @@ def convert_image(dataset, output_directory):
     }
 
     out_fname = pjoin(output_directory, normpath(dataset.name.strip("/")))
+    out_fname = "".join([out_fname, ".tif"])
+
     if not exists(dirname(out_fname)):
         os.makedirs(dirname(out_fname))
 
@@ -72,7 +76,13 @@ def convert_table(group, dataset_name, output_directory):
         None, outputs are written directly to disk.
     """
     df = read_table(group, dataset_name)
+
     out_fname = pjoin(output_directory, normpath(dataset_name.strip("/")))
+    out_fname = "".join([out_fname, ".csv"])
+
+    if not exists(dirname(out_fname)):
+        os.makedirs(dirname(out_fname))
+
     df.to_csv(out_fname)
 
 
