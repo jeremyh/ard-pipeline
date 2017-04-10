@@ -1,11 +1,14 @@
+#!/usr/bin/env python
+
 """MODTRAN drivers
 ---------------.
 
 """
+
 import glob
 import os
 import subprocess
-from os.path import basename, dirname, exists, splitext
+from os.path import dirname, exists
 from os.path import join as pjoin
 from posixpath import join as ppjoin
 
@@ -31,37 +34,6 @@ from gaip.modtran_profiles import (
     TROPICAL_ALBEDO,
     TROPICAL_TRANSMITTANCE,
 )
-
-
-def create_modtran_dirs(
-    coords, albedos, modtran_root, modtran_exe_root, workpath_format, input_format
-):
-    """Create all modtran subdirectories. and input files."""
-    if not exists(modtran_root):
-        os.makedirs(modtran_root)
-
-    data_dir = pjoin(modtran_exe_root, "DATA")
-    if not exists(data_dir):
-        raise OSError("Cannot find MODTRAN")
-
-    for coord in coords:
-        for albedo in albedos:
-            modtran_work = workpath_format.format(coord=coord, albedo=albedo)
-            modtran_work = pjoin(modtran_root, modtran_work)
-            mod5root_in = input_format.format(coord=coord, albedo=albedo)
-            mod5root_in = pjoin(modtran_root, mod5root_in)
-
-            if not exists(modtran_work):
-                os.makedirs(modtran_work)
-
-            with open(mod5root_in, "w") as outfile:
-                outfile.write(coord + "_alb_" + albedo + "\n")
-
-            symlink_dir = pjoin(modtran_work, "DATA")
-            if exists(symlink_dir):
-                os.unlink(symlink_dir)
-
-            os.symlink(data_dir, symlink_dir)
 
 
 def prepare_modtran(acquisition, coordinate, albedo, modtran_work, modtran_exe):
@@ -93,7 +65,7 @@ def _format_tp5(
     longitude_latitude_fname,
     ancillary_fname,
     out_fname,
-    nbar_tp5=True,
+    model,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -136,8 +108,8 @@ def _format_tp5(
             aerosol,
             elevation,
             coord_dset.shape[0],
+            model,
             sbt_ancillary,
-            nbar_tp5,
         )
 
         group = fid.create_group("modtran-inputs")
@@ -176,8 +148,8 @@ def format_tp5(
     aerosol,
     elevation,
     npoints,
+    model,
     sbt_ancillary=None,
-    nbar_tp5=True,
 ):
     """Creates str formatted tp5 files for the albedo (0, 1) and
     transmittance (t).
@@ -233,7 +205,7 @@ def format_tp5(
     metadata = {}
 
     # write the tp5 files required for input into MODTRAN
-    if nbar_tp5:
+    if model == Model.standard or model == Model.nbar:
         acqs = [a for a in acquisitions if a.band_type == BandType.Reflective]
         for i in range(npoints):
             for alb in Model.nbar.albedos:
@@ -270,7 +242,7 @@ def format_tp5(
     # hopefully the science side of the algorithm will be re-engineered
     # so as to ensure a consistant logic between the two products
 
-    if sbt_ancillary is not None:
+    if model == Model.standard or model == Model.sbt:
         acqs = [a for a in acquisitions if a.band_type == BandType.Thermal]
         for p in range(npoints):
             atmospheric_profile = []
@@ -501,8 +473,8 @@ def calculate_coefficients(
     """Calculate the atmospheric coefficients from the MODTRAN output
     and used in the BRDF and atmospheric correction.
     Coefficients are computed for each band for each each coordinate
-    for each factor.  The factors are:
-    ['fs', 'fv', 'a', 'b', 's', 'dir', 'dif', 'ts'].
+    for each factor. The factors can be found in
+    `Model.standard.factors`.
 
     :param accumulation_albedo_0:
         A `dict` containing range(npoints) as the keys, and the values
@@ -1003,24 +975,6 @@ def calculate_solar_radiation(
     df.sort_index(inplace=True)
 
     return df
-
-
-# TODO: is this still used?
-def create_solar_irradiance_tables(fname, out_fname, compression="lzf"):
-    """Writes the accumulated solar irradiance table into a HDF5 file.
-    The file is opened in 'a' mode, allowing multiple tables to be
-    added. If a table already exists within the file it is removed.
-    """
-    dset_name = splitext(basename(fname))[0]
-    with h5py.File(out_fname, "a") as fid1:
-        # check for a previous run
-        if dset_name in fid1:
-            del fid1[dset_name]
-
-        with h5py.File(fname, "r") as fid2:
-            fid2.copy(dset_name, fid1)
-
-    return
 
 
 def link_atmospheric_results(input_targets, out_fname, npoints):
