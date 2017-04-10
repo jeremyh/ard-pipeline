@@ -165,7 +165,7 @@ def surface_brightness_temperature(
         mask = radiance == kwargs["fillvalue"]
         upwelling_radiation[idx]
         transmittance[idx]
-        expr = "k2 / log(k1 / ((radiance-path_up) / trans + 1)) * 100 + 0.5"
+        expr = "k2 / log(1 + k1 * trans / (radiance-path_up)) * 100 + 0.5"
         brightness_temp = numexpr.evaluate(expr)
         brightness_temp[mask] = kwargs["fillvalue"]
 
