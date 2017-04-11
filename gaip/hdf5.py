@@ -14,6 +14,8 @@ DEFAULT_IMAGE_CLASS = {"CLASS": "IMAGE", "IMAGE_VERSION": "1.2", "DISPLAY_ORIGIN
 
 DEFAULT_TABLE_CLASS = {"CLASS": "TABLE", "VERSION": "0.2"}
 
+DEFAULT_SCALAR_CLASS = {"CLASS": "SCALAR", "VERSION": "0.1"}
+
 VLEN_STRING = h5py.special_dtype(vlen=str)
 
 
@@ -515,5 +517,6 @@ def write_scalar(data, dataset_name, group, attrs=None):
         None.
     """
     dset = group.create_dataset(dataset_name, data=data)
+    attach_attributes(dset, attrs=DEFAULT_SCALAR_CLASS)
     attach_attributes(dset, attrs=attrs)
     return
