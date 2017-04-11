@@ -3,11 +3,12 @@
 import argparse
 import os
 from functools import partial
-from os.path import dirname, exists, normpath
+from os.path import basename, dirname, exists, normpath
 from os.path import join as pjoin
 from posixpath import join as ppjoin
 
 import h5py
+import yaml
 
 from gaip.data import write_img
 from gaip.geobox import GriddedGeoBox
@@ -86,19 +87,48 @@ def convert_table(group, dataset_name, output_directory):
     df.to_csv(out_fname)
 
 
+def convert_scalar(dataset, output_directory):
+    """Converts a HDF5 scalar dataset to a yaml file.
+    All attributes will be output.
+
+    :param dataset:
+        A HDF5 scalar dataset.
+
+    :param output_directory:
+        A filesystem path to the directory that will be the root
+        directory for any images extracted.
+
+    :return:
+        None, outputs are written directly to disk.
+    """
+    tags = {k: v for k, v in dataset.attrs.items()}
+    tags[basename(dataset.name)] = dataset[()]
+
+    out_fname = pjoin(output_directory, normpath(dataset.name.strip("/")))
+    out_fname = "".join([out_fname, ".yaml"])
+
+    if not exists(dirname(out_fname)):
+        os.makedirs(dirname(out_fname))
+
+    with open(out_fname, "w") as src:
+        yaml.dump(tags, src, default_flow_style=False)
+
+
 def extract(output_directory, group, name):
     """A simple utility that sends an object to the appropriate
     extraction utility.
     """
     dataset_name = ppjoin(group.name, name.decode("utf-8"))
     obj = group[dataset_name]
+    obj_class = obj.attrs.get("CLASS")
 
-    if obj.attrs.get("CLASS") == "IMAGE":
+    if obj_class == "IMAGE":
         convert_image(obj, output_directory)
-    elif obj.attrs.get("CLASS") == "TABLE":
+    elif obj_class == "TABLE":
         convert_table(group, dataset_name, output_directory)
+    elif obj_class == "SCALAR":
+        convert_scalar(obj, output_directory)
     else:
-        # TODO: scalars
         return None
 
 
