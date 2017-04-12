@@ -369,7 +369,7 @@ def run_modtran(
         attrs = base_attrs.copy()
         dset_name = ppjoin(group_path, DatasetName.solar_irradiance.value)
         description = "Accumulated solar irradiation for point {} " "and albedo {}."
-        attrs["Description"] = (description.format(point, albedo),)
+        attrs["Description"] = description.format(point, albedo)
         write_dataframe(accumulated, dset_name, fid, compression, attrs=attrs)
 
     chn_fname = glob.glob(pjoin(workpath, "*.chn"))[0]
