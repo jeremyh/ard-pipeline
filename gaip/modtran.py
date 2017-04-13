@@ -351,6 +351,7 @@ def run_modtran(
 
     acqs = acquisitions
     for albedo in albedos:
+        base_attrs["Albedo"] = albedo
         workpath = pjoin(basedir, point_pth, ALBEDO_FMT.format(a=albedo))
         group_path = ppjoin(point_pth, ALBEDO_FMT.format(a=albedo))
 
