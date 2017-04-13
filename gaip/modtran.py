@@ -344,7 +344,6 @@ def run_modtran(
     base_attrs = {"Point": point, "lonlat": lonlat}
 
     point_pth = POINT_FMT.format(p=point)
-    fid[point_pth].attrs["lonlat"] = lonlat
 
     fid.attrs["point"] = point
     fid.attrs["lonlat"] = lonlat
@@ -413,6 +412,8 @@ def run_modtran(
             attrs["Description"] = "Channel output from MODTRAN"
             dset_name = ppjoin(group_path, dataset_name)
             write_dataframe(channel_data, dset_name, fid, attrs=attrs)
+
+    fid[point_pth].attrs["lonlat"] = lonlat
 
     return fid
 
