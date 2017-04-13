@@ -20,7 +20,7 @@ ALL_FACTORS = [
     "transmittance_up",
 ]
 
-ALL_ALBEDOS = [0, 1, "t", "th"]
+ALL_ALBEDOS = ["0", "1", "t", "th"]
 
 POINT_FMT = "point-{p}"
 ALBEDO_FMT = "albedo-{a}"
