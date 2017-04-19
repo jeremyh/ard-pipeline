@@ -160,5 +160,6 @@ def _parser():
 
 def main():
     """Main execution."""
-    args = _parser()
+    parser = _parser()
+    args = parser.parse_args()
     run(args.filename, args.outdir)
