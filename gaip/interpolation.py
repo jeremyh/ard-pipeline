@@ -280,7 +280,7 @@ def bilinear_interpolate(
     # TODO: determine without splitext or basename
     dset_name = splitext(basename(out_fname))[0]
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(y_tile, geobox.x_size())
+        compression=compression, chunks=(1, geobox.x_size())
     )
     no_data = -999
     kwargs["fillvalue"] = no_data
