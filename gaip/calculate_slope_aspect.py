@@ -13,7 +13,9 @@ from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
 from gaip.margins import ImageMargins
 
 
-def _slope_aspect_arrays(acquisition, dsm_fname, margins, out_fname, compression="lzf"):
+def _slope_aspect_arrays(
+    acquisition, dsm_fname, margins, out_fname, compression="lzf", y_tile=100
+):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
@@ -21,7 +23,7 @@ def _slope_aspect_arrays(acquisition, dsm_fname, margins, out_fname, compression
         dsm_dset = src[DatasetName.dsm_smoothed.value]
 
         fid = slope_aspect_arrays(
-            acquisition, dsm_dset, margins, out_fname, compression
+            acquisition, dsm_dset, margins, out_fname, compression, y_tile
         )
 
     fid.close()
@@ -29,7 +31,7 @@ def _slope_aspect_arrays(acquisition, dsm_fname, margins, out_fname, compression
 
 
 def slope_aspect_arrays(
-    acquisition, dsm_dataset, margins, out_fname=None, compression="lzf"
+    acquisition, dsm_dataset, margins, out_fname=None, compression="lzf", y_tile=100
 ):
     """Calculates slope and aspect.
 
@@ -66,6 +68,9 @@ def slope_aspect_arrays(
         * 'lz4'
         * 'mafisc'
         * An integer [1-9] (Deflate/gzip)
+
+    :param y_tile:
+        Defines the tile size along the y-axis. Default is 100.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -120,7 +125,7 @@ def slope_aspect_arrays(
     group.attrs["pixel_buffer"] = "1 pixel"
 
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(1, geobox.x_size())
+        compression=compression, chunks=(y_tile, geobox.x_size())
     )
     no_data = -999
     kwargs["fillvalue"] = no_data

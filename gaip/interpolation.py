@@ -195,6 +195,7 @@ def _bilinear_interpolate(
     ancillary_fname,
     out_fname,
     compression,
+    y_tile,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -226,6 +227,7 @@ def _bilinear_interpolate(
             coef_dset,
             out_fname,
             compression,
+            y_tile,
         )
 
     rfid.close()
@@ -241,6 +243,7 @@ def bilinear_interpolate(
     coefficients,
     out_fname=None,
     compression="lzf",
+    y_tile=100,
     method=None,
 ):
     # TODO: more docstrings
@@ -277,7 +280,7 @@ def bilinear_interpolate(
     # TODO: determine without splitext or basename
     dset_name = splitext(basename(out_fname))[0]
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(1, geobox.x_size())
+        compression=compression, chunks=(y_tile, geobox.x_size())
     )
     no_data = -999
     kwargs["fillvalue"] = no_data

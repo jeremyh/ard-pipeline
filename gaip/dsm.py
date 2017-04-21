@@ -39,7 +39,9 @@ def filter_dsm(array):
     return filtered
 
 
-def get_dsm(acquisition, national_dsm, margins, out_fname=None, compression="lzf"):
+def get_dsm(
+    acquisition, national_dsm, margins, out_fname=None, compression="lzf", y_tile=100
+):
     """Given an acquisition and a national Digitial Surface Model,
     extract a subset from the DSM based on the acquisition extents
     plus an x & y margins. The subset is then smoothed with a 3x3
@@ -81,6 +83,9 @@ def get_dsm(acquisition, national_dsm, margins, out_fname=None, compression="lzf
         * 'mafisc'
         * An integer [1-9] (Deflate/gzip)
 
+    :param y_tile:
+        Defines the tile size along the y-axis. Default is 100.
+
     :return:
         An opened `h5py.File` object, that is either in-memory using the
         `core` driver, or on disk.
@@ -117,7 +122,7 @@ def get_dsm(acquisition, national_dsm, margins, out_fname=None, compression="lzf
         fid = h5py.File(out_fname, "w")
 
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(1, geobox.x_size())
+        compression=compression, chunks=(y_tile, geobox.x_size())
     )
 
     grp = fid.create_group("parameters")

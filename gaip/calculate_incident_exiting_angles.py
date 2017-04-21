@@ -15,12 +15,7 @@ from gaip.tiling import generate_tiles
 
 
 def _incident_angles(
-    satellite_solar_fname,
-    slope_aspect_fname,
-    out_fname,
-    compression="lzf",
-    x_tile=None,
-    y_tile=None,
+    satellite_solar_fname, slope_aspect_fname, out_fname, compression="lzf", y_tile=None
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -43,7 +38,6 @@ def _incident_angles(
             geobox,
             out_fname,
             compression,
-            x_tile,
             y_tile,
         )
 
@@ -59,7 +53,6 @@ def incident_angles(
     geobox,
     out_fname=None,
     compression="lzf",
-    x_tile=None,
     y_tile=None,
 ):
     """Calculates the incident angle and the azimuthal incident angle.
@@ -108,10 +101,6 @@ def incident_angles(
         * 'mafisc'
         * An integer [1-9] (Deflate/gzip)
 
-    :param x_tile:
-        Defines the tile size along the x-axis. Default is None which
-        equates to all elements along the x-axis.
-
     :param y_tile:
         Defines the tile size along the y-axis. Default is None which
         equates to all elements along the y-axis.
@@ -131,7 +120,7 @@ def incident_angles(
         fid = h5py.File(out_fname, "w")
 
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(1, geobox.x_size())
+        compression=compression, chunks=(y_tile, geobox.x_size())
     )
     no_data = -999
     kwargs["shape"] = shape
@@ -206,12 +195,7 @@ def incident_angles(
 
 
 def _exiting_angles(
-    satellite_solar_fname,
-    slope_aspect_fname,
-    out_fname,
-    compression="lzf",
-    x_tile=None,
-    y_tile=None,
+    satellite_solar_fname, slope_aspect_fname, out_fname, compression="lzf", y_tile=None
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -234,7 +218,6 @@ def _exiting_angles(
             geobox,
             out_fname,
             compression,
-            x_tile,
             y_tile,
         )
 
@@ -250,7 +233,6 @@ def exiting_angles(
     geobox,
     out_fname=None,
     compression="lzf",
-    x_tile=None,
     y_tile=None,
 ):
     """Calculates the exiting angle and the azimuthal exiting angle.
@@ -299,10 +281,6 @@ def exiting_angles(
         * 'mafisc'
         * An integer [1-9] (Deflate/gzip)
 
-    :param x_tile:
-        Defines the tile size along the x-axis. Default is None which
-        equates to all elements along the x-axis.
-
     :param y_tile:
         Defines the tile size along the y-axis. Default is None which
         equates to all elements along the y-axis.
@@ -322,7 +300,7 @@ def exiting_angles(
         fid = h5py.File(out_fname, "w")
 
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(1, geobox.x_size())
+        compression=compression, chunks=(y_tile, geobox.x_size())
     )
     no_data = -999
     kwargs["shape"] = shape
@@ -405,7 +383,6 @@ def _relative_azimuth_slope(
     exiting_angles_fname,
     out_fname,
     compression="lzf",
-    x_tile=None,
     y_tile=None,
 ):
     """A private wrapper for dealing with the internal custom workings of the
@@ -420,7 +397,7 @@ def _relative_azimuth_slope(
         geobox = GriddedGeoBox.from_dataset(azi_inci_dset)
 
         fid = relative_azimuth_slope(
-            azi_inci_dset, azi_exit_dset, geobox, out_fname, compression, x_tile, y_tile
+            azi_inci_dset, azi_exit_dset, geobox, out_fname, compression, y_tile
         )
 
     fid.close()
@@ -433,7 +410,6 @@ def relative_azimuth_slope(
     geobox,
     out_fname=None,
     compression="lzf",
-    x_tile=None,
     y_tile=None,
 ):
     """Calculates the relative azimuth angle on the slope surface.
@@ -471,10 +447,6 @@ def relative_azimuth_slope(
         * 'mafisc'
         * An integer [1-9] (Deflate/gzip)
 
-    :param x_tile:
-        Defines the tile size along the x-axis. Default is None which
-        equates to all elements along the x-axis.
-
     :param y_tile:
         Defines the tile size along the y-axis. Default is None which
         equates to all elements along the y-axis.
@@ -496,7 +468,7 @@ def relative_azimuth_slope(
         fid = h5py.File(out_fname, "w")
 
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(1, geobox.x_size())
+        compression=compression, chunks=(y_tile, geobox.x_size())
     )
     no_data = -999
     kwargs["shape"] = shape

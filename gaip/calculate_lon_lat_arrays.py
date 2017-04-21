@@ -94,7 +94,7 @@ def get_lat_coordinate(y, x, geobox, geo_crs=None, centre=False):
 
 
 def create_lon_lat_grids(
-    geobox, out_fname=None, compression="lzf", depth=7, dtype="float64"
+    geobox, out_fname=None, compression="lzf", depth=7, dtype="float64", y_tile=100
 ):
     """Creates 2 by 2D NumPy arrays containing longitude and latitude
     co-ordinates for each array element.
@@ -122,6 +122,9 @@ def create_lon_lat_grids(
         * 'lz4'
         * 'mafisc'
         * An integer [1-9] (Deflate/gzip)
+
+    :param y_tile:
+        Defines the tile size along the y-axis. Default is 100.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -154,7 +157,7 @@ def create_lon_lat_grids(
 
     attrs["Description"] = LON_DESC
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(1, geobox.x_size())
+        compression=compression, chunks=(y_tile, geobox.x_size())
     )
     lon_dset = fid.create_dataset(DatasetName.lon.value, data=result, **kwargs)
     attach_image_attributes(lon_dset, attrs)
@@ -199,7 +202,7 @@ def create_grid(geobox, coord_fn, depth=7, dtype="float64"):
 
 
 def create_lon_grid(
-    geobox, out_fname=None, compression="lzf", depth=7, dtype="float64"
+    geobox, out_fname=None, compression="lzf", depth=7, dtype="float64", y_tile=100
 ):
     """Create longitude grid.
 
@@ -226,6 +229,9 @@ def create_lon_grid(
         * 'mafisc'
         * An integer [1-9] (Deflate/gzip)
 
+    :param y_tile:
+        Defines the tile size along the y-axis. Default is 100.
+
     :return:
         An opened `h5py.File` object, that is either in-memory using the
         `core` driver, or on disk.
@@ -243,7 +249,7 @@ def create_lon_grid(
     }
     attrs["Description"] = LON_DESC
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(1, geobox.x_size())
+        compression=compression, chunks=(y_tile, geobox.x_size())
     )
 
     lon_grid = create_grid(geobox, get_lon_coordinate, depth, dtype)
@@ -256,7 +262,7 @@ def create_lon_grid(
 
 
 def create_lat_grid(
-    geobox, out_fname=None, compression="lzf", depth=7, dtype="float64"
+    geobox, out_fname=None, compression="lzf", depth=7, dtype="float64", y_tile=100
 ):
     """Create latitude grid.
 
@@ -283,6 +289,9 @@ def create_lat_grid(
         * 'mafisc'
         * An integer [1-9] (Deflate/gzip)
 
+    :param y_tile:
+        Defines the tile size along the y-axis. Default is 100.
+
     :return:
         An opened `h5py.File` object, that is either in-memory using the
         `core` driver, or on disk.
@@ -300,7 +309,7 @@ def create_lat_grid(
     }
     attrs["Description"] = LAT_DESC
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(1, geobox.x_size())
+        compression=compression, chunks=(y_tile, geobox.x_size())
     )
 
     lat_grid = create_grid(geobox, get_lat_coordinate, depth, dtype)
