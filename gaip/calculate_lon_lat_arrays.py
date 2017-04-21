@@ -157,7 +157,7 @@ def create_lon_lat_grids(
 
     attrs["Description"] = LON_DESC
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(y_tile, geobox.x_size())
+        compression=compression, chunks=(1, geobox.x_size())
     )
     lon_dset = fid.create_dataset(DatasetName.lon.value, data=result, **kwargs)
     attach_image_attributes(lon_dset, attrs)
@@ -249,7 +249,7 @@ def create_lon_grid(
     }
     attrs["Description"] = LON_DESC
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(y_tile, geobox.x_size())
+        compression=compression, chunks=(1, geobox.x_size())
     )
 
     lon_grid = create_grid(geobox, get_lon_coordinate, depth, dtype)
@@ -309,7 +309,7 @@ def create_lat_grid(
     }
     attrs["Description"] = LAT_DESC
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(y_tile, geobox.x_size())
+        compression=compression, chunks=(1, geobox.x_size())
     )
 
     lat_grid = create_grid(geobox, get_lat_coordinate, depth, dtype)

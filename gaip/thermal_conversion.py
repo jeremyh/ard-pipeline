@@ -119,7 +119,7 @@ def surface_brightness_temperature(
         fid = h5py.File(out_fname, "w")
 
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(y_tile, acq.samples)
+        compression=compression, chunks=(1, acq.samples)
     )
     kwargs["shape"] = (acq.lines, acq.samples)
     kwargs["fillvalue"] = -999

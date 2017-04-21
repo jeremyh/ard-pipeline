@@ -119,7 +119,7 @@ def incident_angles(
         fid = h5py.File(out_fname, "w")
 
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(y_tile, geobox.x_size())
+        compression=compression, chunks=(1, geobox.x_size())
     )
     no_data = -999
     kwargs["shape"] = shape
@@ -297,7 +297,7 @@ def exiting_angles(
     else:
         fid = h5py.File(out_fname, "w")
 
-    kwargs = dataset_compression_kwargs(compression=compression, chunks=(y_tile, cols))
+    kwargs = dataset_compression_kwargs(compression=compression, chunks=(1, cols))
     no_data = -999
     kwargs["shape"] = shape
     kwargs["fillvalue"] = no_data
@@ -463,7 +463,7 @@ def relative_azimuth_slope(
         fid = h5py.File(out_fname, "w")
 
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(y_tile, geobox.x_size())
+        compression=compression, chunks=(1, geobox.x_size())
     )
     no_data = -999
     kwargs["shape"] = shape

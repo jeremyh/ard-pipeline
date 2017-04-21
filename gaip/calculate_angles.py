@@ -685,7 +685,7 @@ def _calculate_angles(
     compression="lzf",
     max_angle=9.0,
     tle_path=None,
-    y_tile=None,
+    y_tile=100,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -717,7 +717,7 @@ def calculate_angles(
     compression="lzf",
     max_angle=9.0,
     tle_path=None,
-    y_tile=None,
+    y_tile=100,
 ):
     """Calculate the satellite view, satellite azimuth, solar zenith,
     solar azimuth, and relative aziumth angle grids, as well as the
@@ -774,8 +774,7 @@ def calculate_angles(
         Default is 9.0 degrees.
 
     :param y_tile:
-        Defines the tile size along the y-axis. Default is None which
-        equates to all elements along the y-axis.
+        Defines the tile size along the y-axis. Default is 100.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -858,7 +857,7 @@ def calculate_angles(
     out_dtype = "float32"
     no_data = -999
     kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(y_tile, acquisition.samples)
+        compression=compression, chunks=(1, acquisition.samples)
     )
     kwargs["shape"] = (acquisition.lines, acquisition.samples)
     kwargs["fillvalue"] = no_data
