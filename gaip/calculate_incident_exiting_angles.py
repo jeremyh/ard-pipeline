@@ -15,7 +15,7 @@ from gaip.tiling import generate_tiles
 
 
 def _incident_angles(
-    satellite_solar_fname, slope_aspect_fname, out_fname, compression="lzf", y_tile=None
+    satellite_solar_fname, slope_aspect_fname, out_fname, compression="lzf", y_tile=100
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -53,7 +53,7 @@ def incident_angles(
     geobox,
     out_fname=None,
     compression="lzf",
-    y_tile=None,
+    y_tile=100,
 ):
     """Calculates the incident angle and the azimuthal incident angle.
 
@@ -102,8 +102,7 @@ def incident_angles(
         * An integer [1-9] (Deflate/gzip)
 
     :param y_tile:
-        Defines the tile size along the y-axis. Default is None which
-        equates to all elements along the y-axis.
+        Defines the tile size along the y-axis. Default is 100.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -148,7 +147,7 @@ def incident_angles(
     attach_image_attributes(azi_inc_dset, attrs)
 
     # Initialise the tiling scheme for processing
-    tiles = generate_tiles(cols, rows, x_tile, y_tile)
+    tiles = generate_tiles(cols, rows, cols, y_tile)
 
     # Loop over each tile
     for tile in tiles:
@@ -195,7 +194,7 @@ def incident_angles(
 
 
 def _exiting_angles(
-    satellite_solar_fname, slope_aspect_fname, out_fname, compression="lzf", y_tile=None
+    satellite_solar_fname, slope_aspect_fname, out_fname, compression="lzf", y_tile=100
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -233,7 +232,7 @@ def exiting_angles(
     geobox,
     out_fname=None,
     compression="lzf",
-    y_tile=None,
+    y_tile=100,
 ):
     """Calculates the exiting angle and the azimuthal exiting angle.
 
@@ -282,8 +281,7 @@ def exiting_angles(
         * An integer [1-9] (Deflate/gzip)
 
     :param y_tile:
-        Defines the tile size along the y-axis. Default is None which
-        equates to all elements along the y-axis.
+        Defines the tile size along the y-axis. Default is 100.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -299,9 +297,7 @@ def exiting_angles(
     else:
         fid = h5py.File(out_fname, "w")
 
-    kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(y_tile, geobox.x_size())
-    )
+    kwargs = dataset_compression_kwargs(compression=compression, chunks=(y_tile, cols))
     no_data = -999
     kwargs["shape"] = shape
     kwargs["fillvalue"] = no_data
@@ -328,7 +324,7 @@ def exiting_angles(
     attach_image_attributes(azi_exit_dset, attrs)
 
     # Initialise the tiling scheme for processing
-    tiles = generate_tiles(cols, rows, x_tile, y_tile)
+    tiles = generate_tiles(cols, rows, cols, y_tile)
 
     # Loop over each tile
     for tile in tiles:
@@ -383,7 +379,7 @@ def _relative_azimuth_slope(
     exiting_angles_fname,
     out_fname,
     compression="lzf",
-    y_tile=None,
+    y_tile=100,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -410,7 +406,7 @@ def relative_azimuth_slope(
     geobox,
     out_fname=None,
     compression="lzf",
-    y_tile=None,
+    y_tile=100,
 ):
     """Calculates the relative azimuth angle on the slope surface.
 
@@ -448,8 +444,7 @@ def relative_azimuth_slope(
         * An integer [1-9] (Deflate/gzip)
 
     :param y_tile:
-        Defines the tile size along the y-axis. Default is None which
-        equates to all elements along the y-axis.
+        Defines the tile size along the y-axis. Default is 100.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -489,7 +484,7 @@ def relative_azimuth_slope(
     attach_image_attributes(out_dset, attrs)
 
     # Initialise the tiling scheme for processing
-    tiles = generate_tiles(cols, rows, x_tile, y_tile)
+    tiles = generate_tiles(cols, rows, cols, y_tile)
 
     # Loop over each tile
     for tile in tiles:
