@@ -38,6 +38,7 @@ from gaip.interpolation import _bilinear_interpolate, link_bilinear_data
 from gaip.modtran import (
     _format_tp5,
     _run_modtran,
+    calculate_coefficients,
     link_atmospheric_results,
     prepare_modtran,
 )
@@ -370,7 +371,7 @@ class CalculateCoefficients(luigi.Task):
 
     def run(self):
         with self.output().temporary_path() as out_fname:
-            calcualate_coefficients(self.input().path, out_fname, self.compression)
+            calculate_coefficients(self.input().path, out_fname, self.compression)
 
 
 @inherits(CalculateLonLatGrids)
