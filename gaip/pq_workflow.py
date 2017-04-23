@@ -19,9 +19,13 @@ import luigi
 import numpy as np
 import yaml
 
-import gaip
+from gaip.acca_cloud_masking import calc_acca_cloud_mask
+from gaip.acquisition import acquisitions
 from gaip.calculate_reflectance import DATASET_NAME_FMT
-from gaip.nbar_workflow import TerrainCorrection
+from gaip.constants import PQAConstants
+from gaip.nbar_workflow import Standard
+from gaip.pqa_result import PQAResult
+from gaip.saturation_masking import set_saturation_bits
 
 
 class PQbits(Enum):
@@ -52,12 +56,11 @@ class PixelQualityTask(luigi.Task):
         return luigi.LocalTarget(pjoin(self.work_root, "pq.h5"))
 
     def requires(self):
-        return TerrainCorrection(self.level1, self.work_root, self.granule, self.group)
+        return Standard(self.level1, self.work_root, self.granule, self.group)
 
     def run(self):
-        # read L1T data
-        logging.debug("Getting L1T acquisition data")
-        l1t_acqs = gaip.acquisitions(self.l1t_path).get_acquisitions(group=self.group)
+        container = acquisitions(self.l1t_path)
+        l1t_acqs = container.get_acquisitions(group=self.group)
 
         # get the selected acquisitions and assciated band data and
         # GriddedGeoBox. The latter provides the spatial context for the
@@ -69,8 +72,8 @@ class PixelQualityTask(luigi.Task):
         sensor = l1t_acqs[0].sensor_id
 
         # constants to be use for this PQA computation
-        pq_const = gaip.PQAConstants(sensor)
-        nbar_const = gaip.constants.NBARConstants(spacecraft_id, sensor)
+        pq_const = PQAConstants(sensor)
+        nbar_const = constants.NBARConstants(spacecraft_id, sensor)
         avail_bands = nbar_const.get_nbar_lut()
 
         # track the bits that have been set (tests that have been run)
@@ -91,10 +94,10 @@ class PixelQualityTask(luigi.Task):
         }
 
         # the PQAResult object for this run
-        pqaResult = gaip.PQAResult(l1t_data[0].shape, geo_box)
+        pqaResult = PQAResult(l1t_data[0].shape, geo_box)
 
         # Saturation
-        bits_set = gaip.set_saturation_bits(l1t_data, pq_const, pqaResult)
+        bits_set = set_saturation_bits(l1t_data, pq_const, pqaResult)
         for bit in bits_set:
             tests_run[PQbits(bit).name] = True
 
@@ -151,7 +154,7 @@ class PixelQualityTask(luigi.Task):
             mask = None
             aux_data = {}  # for collecting result metadata
             if pq_const.oli_tirs:
-                mask = gaip.calc_acca_cloud_mask(
+                mask = calc_acca_cloud_mask(
                     nbar_data[1:, :, :],
                     kelvin_band,
                     pq_const,
@@ -159,7 +162,7 @@ class PixelQualityTask(luigi.Task):
                     aux_data,
                 )
             else:  # TM or ETM
-                mask = gaip.calc_acca_cloud_mask(
+                mask = calc_acca_cloud_mask(
                     nbar_data, kelvin_band, pq_const, contiguity_mask, aux_data
                 )
 
