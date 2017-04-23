@@ -7,17 +7,17 @@ import re
 from enum import Enum
 
 ALL_FACTORS = [
-    "fv",
     "fs",
+    "fv",
+    "a",
     "b",
     "s",
-    "a",
     "dir",
     "dif",
     "ts",
-    "path_up",
-    "path_down",
-    "transmittance_up",
+    "path-up",
+    "path-down",
+    "transmittance-up",
 ]
 
 ALL_ALBEDOS = ["0", "1", "t", "th"]
@@ -144,7 +144,7 @@ class DatasetName(Enum):
     interpolation_fmt = "{factor}-band-{band}"
 
     # gaip.modtran
-    tp5 = "tp5_data"
+    tp5 = "tp5-data"
     flux = "flux"
     altitudes = "altitudes"
     solar_irradiance = "solar-irradiance"
