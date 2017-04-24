@@ -42,6 +42,8 @@ from gaip.modtran import (
     link_atmospheric_results,
     prepare_modtran,
 )
+from gaip.pq_workflow import PixelQualityTask
+from gaip.pqa_utils import can_pq
 from gaip.thermal_conversion import _surface_brightness_temperature
 
 
@@ -950,6 +952,7 @@ class ARD(luigi.WrapperTask):
         with open(self.level1_csv) as src:
             level1_scenes = [scene.strip() for scene in src.readlines()]
 
+        reqs = []
         for scene in level1_scenes:
             work_name = basename(scene) + self.work_extension
             work_root = pjoin(self.output_directory, work_name)
@@ -964,7 +967,11 @@ class ARD(luigi.WrapperTask):
                         "model": self.model,
                         "vertices": self.vertices,
                     }
-                    yield Standard(**kwargs)
+
+                    if can_pq(container):
+                        reqs.append(PixelQualityTask(**kwargs))
+                    reqs.append(Standard(**kwargs))
+        return reqs
 
 
 if __name__ == "__main__":
