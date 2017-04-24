@@ -14,7 +14,12 @@ from gaip.acca_cloud_masking import majority_filter
 
 
 def cloud_shadow(
-    image_stack,
+    blue_dataset,
+    green_dataset,
+    red_dataset,
+    nir_dataset,
+    swir1_dataset,
+    swir2_dataset,
     kelvin_array,
     cloud_mask,
     geo_box,
@@ -32,9 +37,38 @@ def cloud_shadow(
     Uses the sun position to find the shadow direction, and estimated
     cloud height to project a cloud shadows location.
 
-    :param image_stack:
-        An ordered array of all bands. The image co-ordinate system needs to
-        be in metres.
+    :param blue_dataset:
+        A `NumPy` or `NumPy-like` dataset that allows indexing
+        and returns a `NumPy` dataset containing the blue spectral
+        data in reflectance units scaled from 0 to 10,000.
+
+    :param green_dataset:
+        A `NumPy` or `NumPy-like` dataset that allows indexing
+        and returns a `NumPy` dataset containing the green spectral
+        data in reflectance units scaled from 0 to 10,000.
+
+    :param red_dataset:
+        A `NumPy` or `NumPy-like` dataset that allows indexing
+        and returns a `NumPy` dataset containing the red spectral
+        data in reflectance units scaled from 0 to 10,000.
+
+    :param nir_dataset:
+        A `NumPy` or `NumPy-like` dataset that allows indexing
+        and returns a `NumPy` dataset containing the nir spectral
+        data in reflectance units scaled from 0 to 10,000.
+
+    :param swri1_dataset:
+        A `NumPy` or `NumPy-like` dataset that allows indexing
+        and returns a `NumPy` dataset containing the swir1 spectral
+        data in reflectance units scaled from 0 to 10,000.
+
+    :param swri2_dataset:
+        A `NumPy` or `NumPy-like` dataset that allows indexing
+        and returns a `NumPy` dataset containing the swir2 spectral
+        data in reflectance units scaled from 0 to 10,000.
+
+    :param kelvin_array:
+        A 2D Nump array containing temperature in degrees Kelvin.
 
     :param cloud_mask:
         A 2D np array where 0 = Cloud and 1 = Not Cloud. A boolean of
@@ -76,16 +110,6 @@ def cloud_shadow(
         An 2D np array mask with 0 for Shadow and the relevant bit
         specified in bitpos for Not Shadow.
     """
-    # Distinguish between potentially concurrent executions for different
-    # cloud masks
-
-    if len(image_stack) == 0:
-        return None
-    if type(image_stack[0]) != np.ndarray:
-        raise Exception("Array input is not valid")
-    if cloud_mask is None:
-        raise Exception("Cloud Layer input is not valid")
-
     geoTransform = geo_box.transform.to_gdal()
 
     # Filter Thresholds:
@@ -408,9 +432,16 @@ def cloud_shadow(
         gc.collect()
 
     # Expecting surface reflectance with a scale factor of 10000
+    dims = (6, cloud_mask.shape[0], cloud_mask.shape[1])
+    reflectance_stack = np.zeros(dims, dtype="float32")
     scaling_factor = np.float32(0.0001)
-    reflectance_stack = image_stack.astype(np.float32)
-    reflectance_stack = numexpr.evaluate("reflectance_stack * scaling_factor")
+    expr = "array * scaling_factor"
+    reflectance_stack[0] = numexpr.evaluate(expr, {"array": blue_dataset})
+    reflectance_stack[1] = numexpr.evaluate(expr, {"array": green_dataset})
+    reflectance_stack[2] = numexpr.evaluate(expr, {"array": red_dataset})
+    reflectance_stack[3] = numexpr.evaluate(expr, {"array": nir_dataset})
+    reflectance_stack[4] = numexpr.evaluate(expr, {"array": swir1_dataset})
+    reflectance_stack[5] = numexpr.evaluate(expr, {"array": swir2_dataset})
 
     # Get the indices of cloud
     # need the actual indices rather than a boolean array
@@ -485,7 +516,7 @@ def cloud_shadow(
 
         del cheight, d, rlon, rlat, rlon2, rlat2, ctherm
         gc.collect()
-        s_index = numexpr.evaluate("cshadow == True")
+        s_index = numexpr.evaluate("cshadow >= 1")
 
     else:
         omapx, omapy = origin_map(geoTransform, cindex)
@@ -617,9 +648,6 @@ def cloud_shadow(
         weight_sum = numexpr.evaluate(
             "weights *(b1 + b2 + b3 + b4)" "+ 2*(weights * (b5 + b7))"
         )
-
-        del b1, b2, b3, b4, b5, b7
-        gc.collect()
 
         del weights
         gc.collect()

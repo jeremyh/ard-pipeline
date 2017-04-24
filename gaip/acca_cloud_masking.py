@@ -620,7 +620,16 @@ def majority_filter(array, iterations=1):
 
 
 def calc_acca_cloud_mask(
-    nbar_array, kelvin_array, pq_const, contiguity_mask, aux_data={}
+    blue_dataset,
+    green_dataset,
+    red_dataset,
+    nir_dataset,
+    swir1_dataset,
+    swir2_dataset,
+    kelvin_array,
+    pq_const,
+    contiguity_mask,
+    aux_data={},
 ):
     """Identifes the location of clouds.
 
@@ -628,9 +637,35 @@ def calc_acca_cloud_mask(
     Irish, R et al, October 2006, Photogrammetric Engineering & Remote
     Sensing, Vol. 72, No. 10, October 2006, pp. 1179-1188.
 
-    :param image_stack:
-        An ordered array of all bands in reflectance units scaled from 0
-        to 10,000.
+    :param blue_dataset:
+        A `NumPy` or `NumPy-like` dataset that allows indexing
+        and returns a `NumPy` dataset containing the blue spectral
+        data in reflectance units scaled from 0 to 10,000.
+
+    :param green_dataset:
+        A `NumPy` or `NumPy-like` dataset that allows indexing
+        and returns a `NumPy` dataset containing the green spectral
+        data in reflectance units scaled from 0 to 10,000.
+
+    :param red_dataset:
+        A `NumPy` or `NumPy-like` dataset that allows indexing
+        and returns a `NumPy` dataset containing the red spectral
+        data in reflectance units scaled from 0 to 10,000.
+
+    :param nir_dataset:
+        A `NumPy` or `NumPy-like` dataset that allows indexing
+        and returns a `NumPy` dataset containing the nir spectral
+        data in reflectance units scaled from 0 to 10,000.
+
+    :param swri1_dataset:
+        A `NumPy` or `NumPy-like` dataset that allows indexing
+        and returns a `NumPy` dataset containing the swir1 spectral
+        data in reflectance units scaled from 0 to 10,000.
+
+    :param swri2_dataset:
+        A `NumPy` or `NumPy-like` dataset that allows indexing
+        and returns a `NumPy` dataset containing the swir2 spectral
+        data in reflectance units scaled from 0 to 10,000.
 
     :param kelvin_array:
         A 2D Nump array containing temperature in degrees Kelvin.
@@ -647,34 +682,31 @@ def calc_acca_cloud_mask(
         A Boolean ndarray with 1 as non-cloud and 0 as cloud.
         Note: Any caller-supplied aux_data dict will be updated
     """
-    if len(nbar_array) == 0:
-        return None
-    assert type(nbar_array[0]) == np.ndarray, "Image input is not valid"
-
     start_time = datetime.datetime.now()
+    dims = (6, kelvin_array.shape[0], kelvin_array.shape[1])
 
     # Contiguity masking
     null_nan_array = np.ones(contiguity_mask.shape, dtype=np.float32)
     if contiguity_mask is not None:
         null_nan_array[~contiguity_mask] = NAN
-    potential_cloud_array = null_nan_array.copy()
 
     # reflectance_stack contains surface reflectance in un-scaled units
+    reflectance_stack = np.zeros(dims, dtype="float32")
     np.float32(0.0001)
-    reflectance_stack = nbar_array.astype(np.float32)
-    reflectance_stack = numexpr.evaluate(
-        "reflectance_stack *" "scaling_factor * null_nan_array"
-    )
+    expr = "array * scaling_factor * null_nan_array"
+    reflectance_stack[0] = numexpr.evaluate(expr, {"array": blue_dataset})
+    reflectance_stack[1] = numexpr.evaluate(expr, {"array": green_dataset})
+    reflectance_stack[2] = numexpr.evaluate(expr, {"array": red_dataset})
+    reflectance_stack[3] = numexpr.evaluate(expr, {"array": nir_dataset})
+    reflectance_stack[4] = numexpr.evaluate(expr, {"array": swir1_dataset})
+    reflectance_stack[5] = numexpr.evaluate(expr, {"array": swir2_dataset})
 
-    thermal_array = numexpr.evaluate("kelvin_array * null_nan_array")
+    kelvin_array[~contiguity_mask] = NAN
 
     cloud = acca(
-        reflectance_stack,
-        thermal_array,
-        potential_cloud_array,
-        pq_const,
-        aux_data=aux_data,
+        reflectance_stack, kelvin_array, null_nan_array, pq_const, aux_data=aux_data
     )
+
     # Apply filtering; gets rid of isolated pixels, and holes.
     if cloud.sum() > 0:
         # Majority filtering
