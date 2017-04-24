@@ -14,6 +14,21 @@ import rasterio as rio
 from gaip.hdf5 import dataset_compression_kwargs, write_h5_image
 
 
+def can_pq(scene):
+    """A simple test to check if we can process a scene through the
+    pq pipeline.
+
+    :param scene:
+        An `AcquisitionsContainer`.
+
+    :return:
+        True if the scene can be processed through PQ, else False.
+    """
+    supported = ["LANDSAT_7", "LANDSAT_7", "LANDSAT_8"]
+    acq = scene.get_acquisitions()[0]
+    return acq.spacecraft_id in supported
+
+
 class PQAResult:
     """Represents the PQA result."""
 
