@@ -84,7 +84,7 @@ def calc_land_sea_mask(
     metadata = {}
     metadata["land_sea_mask"] = md
 
-    geoTransform = geo_box.affine.to_gdal()
+    geoTransform = geo_box.transform.to_gdal()
     if geoTransform is None:
         raise Exception("Image geotransformation Info is needed")
 
