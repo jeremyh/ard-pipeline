@@ -434,7 +434,7 @@ def cloud_shadow(
     # Expecting surface reflectance with a scale factor of 10000
     dims = (6, cloud_mask.shape[0], cloud_mask.shape[1])
     reflectance_stack = np.zeros(dims, dtype="float32")
-    variables = {"caling_factor": np.float32(0.0001)}
+    variables = {"scaling_factor": np.float32(0.0001)}
     expr = "array * scaling_factor"
     variables["array"] = blue_dataset
     reflectance_stack[0] = numexpr.evaluate(expr, variables)
