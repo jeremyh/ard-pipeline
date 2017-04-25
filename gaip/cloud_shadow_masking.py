@@ -402,7 +402,7 @@ def cloud_shadow(
         logging.info("Cloud Shadow Percent: 0.0")
         cshadow = np.ones(cloud_mask.shape, dtype="bool")
         end_time = datetime.datetime.now()
-        time = (end_time - start_time).isoformat()
+        time = (end_time - start_time).total_seconds()
         aux_data[f"{cloud_algorithm}_cloud_shadow_runtime"] = time
         return cshadow
 
@@ -746,7 +746,7 @@ def cloud_shadow(
     logging.info("%s_cloud_shadow_percent: %f", cloud_algorithm, shadow_percent)
 
     end_time = datetime.datetime.now()
-    time = (end_time - start_time).isoformat()
+    time = (end_time - start_time).total_seconds()
 
     aux_data[f"{cloud_algorithm}_cloud_shadow_runtime"] = time
 
