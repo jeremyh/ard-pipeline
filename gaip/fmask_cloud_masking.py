@@ -1172,32 +1172,32 @@ def nd2toarbt(filename, images=None):
 
             im_B1 = numexpr.evaluate(
                 "a * im_B1 * b / (sun * c)",
-                dict(stack.items() + {"sun": np.float32(ESUN[0])}.items()),
+                dict(list(stack.items()) + list({"sun": np.float32(ESUN[0])}.items())),
                 locals(),
             )
             im_B2 = numexpr.evaluate(
                 "a * im_B2 * b / (sun * c)",
-                dict(stack.items() + {"sun": np.float32(ESUN[1])}.items()),
+                dict(list(stack.items()) + list({"sun": np.float32(ESUN[1])}.items())),
                 locals(),
             )
             im_B3 = numexpr.evaluate(
                 "a * im_B3 * b / (sun * c)",
-                dict(stack.items() + {"sun": np.float32(ESUN[2])}.items()),
+                dict(list(stack.items()) + list({"sun": np.float32(ESUN[2])}.items())),
                 locals(),
             )
             im_B4 = numexpr.evaluate(
                 "a * im_B4 * b / (sun * c)",
-                dict(stack.items() + {"sun": np.float32(ESUN[3])}.items()),
+                dict(list(stack.items()) + list({"sun": np.float32(ESUN[3])}.items())),
                 locals(),
             )
             im_B5 = numexpr.evaluate(
                 "a * im_B5 * b / (sun * c)",
-                dict(stack.items() + {"sun": np.float32(ESUN[4])}.items()),
+                dict(list(stack.items()) + list({"sun": np.float32(ESUN[4])}.items())),
                 locals(),
             )
             im_B7 = numexpr.evaluate(
                 "a * im_B7 * b / (sun * c)",
-                dict(stack.items() + {"sun": np.float32(ESUN[6])}.items()),
+                dict(list(stack.items()) + list({"sun": np.float32(ESUN[6])}.items())),
                 locals(),
             )
 
