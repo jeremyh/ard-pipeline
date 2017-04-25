@@ -402,7 +402,7 @@ def cloud_shadow(
         logging.info("Cloud Shadow Percent: 0.0")
         cshadow = np.ones(cloud_mask.shape, dtype="bool")
         end_time = datetime.datetime.now()
-        time = end_time - start_time
+        time = (end_time - start_time).isoformat()
         aux_data[f"{cloud_algorithm}_cloud_shadow_runtime"] = time
         return cshadow
 
@@ -697,7 +697,7 @@ def cloud_shadow(
         lmin = lower.min()
         umax = upper.max()
         mask = numexpr.evaluate("(weight_sum >= lmin) & (weight_sum <= umax)")
-        label_array, num_labels = ndimage.label(mask, structure=s)
+        label_array, _ = ndimage.label(mask, structure=s)
         labels = label_array[sindex]
         ulabels = np.unique(labels[labels > 0])
 
@@ -746,7 +746,7 @@ def cloud_shadow(
     logging.info("%s_cloud_shadow_percent: %f", cloud_algorithm, shadow_percent)
 
     end_time = datetime.datetime.now()
-    time = end_time - start_time
+    time = (end_time - start_time).isoformat()
 
     aux_data[f"{cloud_algorithm}_cloud_shadow_runtime"] = time
 
