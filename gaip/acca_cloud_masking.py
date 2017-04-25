@@ -740,5 +740,6 @@ def calc_acca_cloud_mask(
     # elif ((cld_pct < 0.03) | (desert_index < 0.5)):
     #     cld_pct = 22.5
 
-    aux_data["acca_process_time_secs"] = start_time - datetime.datetime.now()
+    process_time = start_time - datetime.datetime.now()
+    aux_data["acca_process_time_secs"] = process_time.isoformat()
     return cloud_mask
