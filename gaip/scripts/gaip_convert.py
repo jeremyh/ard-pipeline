@@ -13,13 +13,29 @@ from os.path import join as pjoin
 from posixpath import join as ppjoin
 
 import h5py
+import numpy as np
 import yaml
+from yaml.representer import Representer
 
 from gaip.data import write_img
 from gaip.geobox import GriddedGeoBox
 from gaip.hdf5 import read_table
 
 IGNORE = ["crs_wkt", "geotransform"]
+
+yaml.add_representer(np.int8, Representer.represent_int)
+yaml.add_representer(np.uint8, Representer.represent_int)
+yaml.add_representer(np.int16, Representer.represent_int)
+yaml.add_representer(np.uint16, Representer.represent_int)
+yaml.add_representer(np.int32, Representer.represent_int)
+yaml.add_representer(np.uint32, Representer.represent_int)
+yaml.add_representer(int, Representer.represent_int)
+yaml.add_representer(np.int64, Representer.represent_int)
+yaml.add_representer(np.uint64, Representer.represent_int)
+yaml.add_representer(float, Representer.represent_float)
+yaml.add_representer(np.float32, Representer.represent_float)
+yaml.add_representer(np.float64, Representer.represent_float)
+yaml.add_representer(np.ndarray, Representer.represent_list)
 
 
 def convert_image(dataset, output_directory):
@@ -68,7 +84,7 @@ def convert_image(dataset, output_directory):
     out_fname = "".join([base_fname, ".yaml"])
     tags = {k: v for k, v in dataset.attrs.items()}
     with open(out_fname, "w") as src:
-        yaml.dump(tags, src, default_flow_style=False)
+        yaml.dump(tags, src, default_flow_style=False, indent=4)
 
 
 def convert_table(group, dataset_name, output_directory):
@@ -100,7 +116,7 @@ def convert_table(group, dataset_name, output_directory):
 
     out_fname = "".join([base_fname, ".yaml"])
     with open(out_fname, "w") as src:
-        yaml.dump(tags, src, default_flow_style=False)
+        yaml.dump(tags, src, default_flow_style=False, indent=4)
 
 
 def convert_scalar(dataset, output_directory):
@@ -127,7 +143,7 @@ def convert_scalar(dataset, output_directory):
         os.makedirs(dirname(out_fname))
 
     with open(out_fname, "w") as src:
-        yaml.dump(tags, src, default_flow_style=False)
+        yaml.dump(tags, src, default_flow_style=False, indent=4)
 
 
 def extract(output_directory, group, name):
