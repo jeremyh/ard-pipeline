@@ -635,7 +635,7 @@ def coefficients(
     if upward_radiation is not None:
         columns = ["point"]
         columns.extend(Model.sbt.factors)
-        columns.extend("transmittance-down")
+        columns.extend(["transmittance-down"])
         sbt = pd.DataFrame(columns=columns, index=upward_radiation.index)
 
         sbt["point"] = point
