@@ -25,7 +25,13 @@ from gaip.constants import (
     DatasetName,
     Model,
 )
-from gaip.hdf5 import VLEN_STRING, create_external_link, read_table, write_dataframe
+from gaip.hdf5 import (
+    VLEN_STRING,
+    create_external_link,
+    read_table,
+    write_dataframe,
+    write_scalar,
+)
 from gaip.modtran_profiles import (
     MIDLAT_SUMMER_ALBEDO,
     MIDLAT_SUMMER_TRANSMITTANCE,
@@ -133,9 +139,7 @@ def _format_tp5(
                 DatasetName.tp5.value,
             )
             str_data = np.string_(tp5_data[key])
-            dset = group.create_dataset(dname, data=str_data)
-            for k in metadata[key]:
-                dset.attrs[k] = metadata[key][k]
+            write_scalar(str_data, dname, group, attrs=metadata[key])
 
         # attach some meaningful location information to the point groups
         lon = coord_dset["longitude"]
@@ -277,7 +281,7 @@ def format_tp5(
                 "sat_height": altitude,
                 "sat_view": view_cor[p],
                 "binary": binary,
-                "data_array": "".join(atmospheric_profile),
+                "atmospheric_profile": "".join(atmospheric_profile),
             }
 
             data = THERMAL_TRANSMITTANCE.format(**input_data)
