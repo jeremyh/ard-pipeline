@@ -10,6 +10,7 @@ import os
 from functools import partial
 from os.path import basename, dirname, exists, normpath
 from os.path import join as pjoin
+from posixpath import basename as pbasename
 from posixpath import join as ppjoin
 
 import h5py
@@ -167,12 +168,24 @@ def extract(output_directory, group, name):
         return None
 
 
-def run(fname, outdir):
+def run(fname, outdir, pathname):
     """Run dataset conversion tree."""
     # note: lower level h5py access is required in order to visit links
     with h5py.File(fname, "r") as fid:
-        root = h5py.h5g.open(fid.fid, b"/")
-        root.links.visit(partial(extract, outdir, fid))
+        if pathname in fid:
+            obj = fid[pathname]
+            if isinstance(obj, h5py.Group):
+                root = h5py.h5g.open(obj.id, b".")
+                root.links.visit(partial(extract, outdir, obj))
+            elif isinstance(obj, h5py.Dataset):
+                name = pbasename(obj.name).encode("utf-8")
+                extract(outdir, obj.parent, name)
+            else:
+                return
+        else:
+            msg = "{pathname} not found in {fname}"
+            print(msg.format(pathname=pathname, fname=fname))
+            return
 
 
 def _parser():
@@ -189,6 +202,14 @@ def _parser():
         required=True,
         help=("The output directory that will contain the " "extracted datasets."),
     )
+    parser.add_argument(
+        "--pathname",
+        default="/",
+        help=(
+            "The pathname to either a Dataset or a Group. "
+            "Default is '/', which is root level."
+        ),
+    )
 
     return parser
 
@@ -197,4 +218,4 @@ def main():
     """Main execution."""
     parser = _parser()
     args = parser.parse_args()
-    run(args.filename, args.outdir)
+    run(args.filename, args.outdir, args.pathname)
