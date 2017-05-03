@@ -39,6 +39,7 @@ setup(
         "utils/aot_converter",
         "utils/gaip_convert",
         "utils/gaip_ls",
+        "utils/gaip_compare",
     ],
     install_requires=["bitshuffle>=0.2.3"],
 )
