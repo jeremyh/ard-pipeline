@@ -265,14 +265,14 @@ def create_vertices(acquisition, boxline_dataset, vertices=(3, 3)):
     partial_track = track_end_rows - {0, rows - 1, -1}
     mid_row = rows // 2
     if -1 in track_end_rows:  # track doesn't intersect raster
-        cols // 2
+        mid_col = cols // 2
     elif partial_track:  # track intersects only part of raster
-        (
+        mid_col = (
             {xcentre[0], xcentre[1]} - {0, cols - 1, 1, cols, -1}
         ).pop()  # TODO: omit 1,cols if not one-indexing ncentre
         mid_row = partial_track.pop()
     else:  # track fully available for deference
-        pass
+        mid_col = None
 
     # Note, assumes that if track intersects two rows then it also
     # intersects all intervening rows.
@@ -282,7 +282,7 @@ def create_vertices(acquisition, boxline_dataset, vertices=(3, 3)):
     locations = np.empty((vertices[0], vertices[1], 2), dtype="int64")
     for ig, ir in enumerate(grid_rows):  # row indices for sample-grid & raster
         grid_line = asymetric_linspace(
-            istart[ir], iend[ir], vertices[1], mid_row or xcentre[ir]
+            istart[ir], iend[ir], vertices[1], mid_col or xcentre[ir]
         )
         locations[ig, :, 0] = ir
         locations[ig, :, 1] = grid_line
