@@ -862,7 +862,11 @@ class SurfaceTemperature(luigi.Task):
     """Calculates surface brightness temperature for a given band."""
 
     def requires(self):
-        return self.clone(BilinearInterpolation)
+        reqs = {
+            "bilinear": self.clone(BilinearInterpolation),
+            "ancillary": self.clone(AncillaryData),
+        }
+        return reqs
 
     def output(self):
         out_path = acquisitions(self.level1).get_root(
@@ -877,8 +881,15 @@ class SurfaceTemperature(luigi.Task):
         acq = [acq for acq in acqs if acq.band_num == self.band_num][0]
 
         with self.output().temporary_path() as out_fname:
+            bilinear_fname = self.input()["bilinear"].path
+            ancillary_fname = self.input()["ancillary"].path
             _surface_brightness_temperature(
-                acq, self.input().path, out_fname, self.compression, self.y_tile
+                acq,
+                bilinear_fname,
+                ancillary_fname,
+                out_fname,
+                self.compression,
+                self.y_tile,
             )
 
 
