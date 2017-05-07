@@ -19,7 +19,7 @@ from gaip.hdf5 import (
     create_external_link,
     dataset_compression_kwargs,
 )
-from gaip.metadata import create_nbar_yaml
+from gaip.metadata import create_ard_yaml
 from gaip.tiling import generate_tiles
 
 
@@ -109,7 +109,7 @@ def _calculate_reflectance(
             y_tile,
         )
 
-    create_nbar_yaml(acquisition, ancillary_fname, fid)
+    create_ard_yaml(acquisition, ancillary_fname, fid)
 
     fid.close()
     return
