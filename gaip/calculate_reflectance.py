@@ -19,6 +19,7 @@ from gaip.hdf5 import (
     create_external_link,
     dataset_compression_kwargs,
 )
+from gaip.metadata import create_nbar_yaml
 from gaip.tiling import generate_tiles
 
 
@@ -107,6 +108,8 @@ def _calculate_reflectance(
             compression,
             y_tile,
         )
+
+    create_nbar_yaml(acquisition, ancillary_fname, fid)
 
     fid.close()
     return
@@ -443,5 +446,19 @@ def link_standard_data(input_fnames, out_fname):
     for fname in input_fnames:
         with h5py.File(fname, "r") as fid:
             dataset_names = list(fid.keys())
+
         for dname in dataset_names:
+            if isinstance(dname, h5py.Group):
+                continue
             create_external_link(fname, dname, out_fname, dname)
+
+        # metadata
+        with h5py.File(fname, "r") as fid:
+            with h5py.File(out_fname) as out_fid:
+                yaml_dname = DatasetName.nbar_yaml.value
+                if yaml_dname in fid and yaml_dname not in out_fid:
+                    fid.copy(yaml_dname, out_fid, name=yaml_dname)
+
+                yaml_dname = DatasetName.sbt_yaml.value
+                if yaml_dname in fid and yaml_dname not in out_fid:
+                    fid.copy(yaml_dname, out_fid, name=yaml_dname)
