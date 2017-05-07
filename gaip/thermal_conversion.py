@@ -12,11 +12,12 @@ import numpy as np
 
 from gaip.constants import DatasetName
 from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
+from gaip.metadata import create_ard_yaml
 from gaip.tiling import generate_tiles
 
 
 def _surface_brightness_temperature(
-    acquisition, bilinear_fname, out_fname, compression, y_tile
+    acquisition, bilinear_fname, ancillary_fname, out_fname, compression, y_tile
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -39,6 +40,8 @@ def _surface_brightness_temperature(
         }
 
         rfid = surface_brightness_temperature(**kwargs)
+
+    create_ard_yaml(acquisition, ancillary_fname, rfid, True)
 
     rfid.close()
     return
