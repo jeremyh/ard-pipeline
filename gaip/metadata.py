@@ -19,6 +19,20 @@ import gaip
 from gaip.constants import POINT_FMT, DatasetName, NBARConstants
 from gaip.hdf5 import read_scalar, read_table, write_scalar
 
+yaml.add_representer(np.int8, Representer.represent_int)
+yaml.add_representer(np.uint8, Representer.represent_int)
+yaml.add_representer(np.int16, Representer.represent_int)
+yaml.add_representer(np.uint16, Representer.represent_int)
+yaml.add_representer(np.int32, Representer.represent_int)
+yaml.add_representer(np.uint32, Representer.represent_int)
+yaml.add_representer(int, Representer.represent_int)
+yaml.add_representer(np.int64, Representer.represent_int)
+yaml.add_representer(np.uint64, Representer.represent_int)
+yaml.add_representer(float, Representer.represent_float)
+yaml.add_representer(np.float32, Representer.represent_float)
+yaml.add_representer(np.float64, Representer.represent_float)
+yaml.add_representer(np.ndarray, Representer.represent_list)
+
 
 def extract_ancillary_metadata(fname):
     """Extracts the change (last metadata change), modified,
@@ -233,11 +247,6 @@ def create_ard_yaml(acquisition, ancillary_fname, out_group, sbt=False):
         "ancillary_data": ancillary,
         "algorithm_information": algorithm,
     }
-
-    # Account for NumPy dtypes
-    yaml.add_representer(float, Representer.represent_float)
-    yaml.add_representer(np.float32, Representer.represent_float)
-    yaml.add_representer(np.float64, Representer.represent_float)
 
     # output
     yml_data = yaml.dump(metadata, default_flow_style=False)
