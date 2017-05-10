@@ -127,7 +127,7 @@ def surface_brightness_temperature(
     )
     kwargs["shape"] = (acq.lines, acq.samples)
     kwargs["fillvalue"] = -999
-    kwargs["dtype"] = "int16"
+    kwargs["dtype"] = "float32"
 
     # attach some attributes to the image datasets
     attrs = {
@@ -143,7 +143,7 @@ def surface_brightness_temperature(
     dataset_name = name_fmt.format(band=acq.band_num)
     out_dset = fid.create_dataset(dataset_name, **kwargs)
 
-    desc = "Surface Brightness Temperature in Kelvin scaled by 100."
+    desc = "Surface Brightness Temperature in Kelvin."
     attrs["Description"] = desc
     attach_image_attributes(out_dset, attrs)
 
@@ -166,7 +166,7 @@ def surface_brightness_temperature(
         transmittance[idx]
         expr = "(radiance-path_up) / trans"
         numexpr.evaluate(expr)
-        expr = "k2 / log(k1 / corrected_radiance + 1) * 100 + 0.5"
+        expr = "k2 / log(k1 / corrected_radiance + 1)"
         brightness_temp = numexpr.evaluate(expr)
         brightness_temp[mask] = kwargs["fillvalue"]
 
