@@ -782,12 +782,12 @@ def ecwmf_temperature_2metre(input_path, lonlat, time):
     product = "temperature-2metre"
     files = glob.glob(pjoin(input_path, f"{product}_*.tif"))
     data = None
+    datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        start, end = splitext(basename(f))[0].split("_")[1:]
-        start = datetime.datetime.strptime(start, "%Y-%m-%d")
-        end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= end:
-            data = get_pixel(f, lonlat, time.day)
+        ymd = splitext(basename(f))[0].split("_")[1]
+        datetime.datetime.strptime(ymd, "%Y-%m-%d")
+        if ancillary_day == required_ymd:
+            data = get_pixel(f, lonlat)
 
             metadata = {
                 "data_source": "ECWMF 2 metre Temperature",
@@ -813,12 +813,12 @@ def ecwmf_dewpoint_temperature(input_path, lonlat, time):
     product = "dewpoint-temperature"
     files = glob.glob(pjoin(input_path, f"{product}_*.tif"))
     data = None
+    datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        start, end = splitext(basename(f))[0].split("_")[1:]
-        start = datetime.datetime.strptime(start, "%Y-%m-%d")
-        end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= end:
-            data = get_pixel(f, lonlat, time.day)
+        ymd = splitext(basename(f))[0].split("_")[1]
+        ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
+        if ancillary_ymd == required_ymd:
+            data = get_pixel(f, lonlat)
 
             metadata = {
                 "data_source": "ECWMF 2 metre Dewpoint Temperature ",
@@ -846,12 +846,12 @@ def ecwmf_surface_pressure(input_path, lonlat, time):
     product = "surface-pressure"
     files = glob.glob(pjoin(input_path, f"{product}_*.tif"))
     data = None
+    datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        start, end = splitext(basename(f))[0].split("_")[1:]
-        start = datetime.datetime.strptime(start, "%Y-%m-%d")
-        end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= end:
-            data = get_pixel(f, lonlat, time.day) / 100.0
+        ymd = splitext(basename(f))[0].split("_")[1]
+        ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
+        if ancillary_ymd == required_ymd:
+            data = get_pixel(f, lonlat) / 100.0
 
             metadata = {
                 "data_source": "ECWMF Surface Pressure",
@@ -877,12 +877,12 @@ def ecwmf_water_vapour(input_path, lonlat, time):
     product = "water-vapour"
     files = glob.glob(pjoin(input_path, f"{product}_*.tif"))
     data = None
+    datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        start, end = splitext(basename(f)).split("_")[1:]
-        start = datetime.datetime.strptime(start, "%Y-%m-%d")
-        end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= time:
-            data = get_pixel(f, lonlat, time.day)
+        ymd = splitext(basename(f))[0].split("_")[1]
+        ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
+        if ancillary_ymd == required_ymd:
+            data = get_pixel(f, lonlat)
 
             metadata = {
                 "data_source": "ECWMF Total Column Water Vapour",
@@ -913,13 +913,12 @@ def ecwmf_temperature(input_path, lonlat, time):
     product = "temperature"
     files = glob.glob(pjoin(input_path, f"{product}_*.tif"))
     data = None
+    datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        start, end = splitext(basename(f))[0].split("_")[1:]
-        start = datetime.datetime.strptime(start, "%Y-%m-%d")
-        end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= end:
-            bands = get_4d_idx(time.day)
-            data = get_pixel(f, lonlat, bands)[::-1]
+        ymd = splitext(basename(f))[0].split("_")[1]
+        ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
+        if ancillary_ymd == required_ymd:
+            data = get_pixel(f, lonlat, list(range(1, 38)))[::-1]
 
             metadata = {
                 "data_source": "ECWMF Temperature",
@@ -954,13 +953,12 @@ def ecwmf_geo_potential(input_path, lonlat, time):
     product = "geo-potential"
     files = glob.glob(pjoin(input_path, f"{product}_*.tif"))
     data = None
+    datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        start, end = splitext(basename(f))[0].split("_")[1:]
-        start = datetime.datetime.strptime(start, "%Y-%m-%d")
-        end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= end:
-            bands = get_4d_idx(time.day)
-            data = get_pixel(f, lonlat, bands)[::-1]
+        ymd = splitext(basename(f))[0].split("_")[1]
+        ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
+        if ancillary_ymd == required_ymd:
+            data = get_pixel(f, lonlat, list(range(1, 38)))[::-1]
             scaled_data = data / 9.80665 / 1000.0
 
             metadata = {
@@ -996,13 +994,12 @@ def ecwmf_relative_humidity(input_path, lonlat, time):
     product = "relative-humidity"
     files = glob.glob(pjoin(input_path, f"{product}_*.tif"))
     data = None
+    datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        start, end = splitext(basename(f))[0].split("_")[1:]
-        start = datetime.datetime.strptime(start, "%Y-%m-%d")
-        end = datetime.datetime.strptime(end, "%Y-%m-%d")
-        if start <= time <= end:
-            bands = get_4d_idx(time.day)
-            data = get_pixel(f, lonlat, bands)[::-1]
+        ymd = splitext(basename(f))[0].split("_")[1]
+        ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
+        if ancillary_ymd == required_ymd:
+            data = get_pixel(f, lonlat, list(range(1, 38)))[::-1]
 
             metadata = {
                 "data_source": "ECWMF Relative Humidity",
