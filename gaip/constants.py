@@ -5,6 +5,7 @@
 
 import re
 from enum import Enum
+from os.path import join as pjoin
 
 ALL_FACTORS = [
     "fs",
@@ -81,12 +82,12 @@ class DatasetName(Enum):
 
     # gaip.ancillary
     coordinator = "coordinator"
-    dewpoint_temperature = "dewpoint-temperature-2metre"
+    dewpoint_temperature = "dewpoint-temperature"
     temperature_2m = "temperature-2metre"
     surface_pressure = "surface-pressure"
     surface_geopotential = "surface-geopotential-height"
     surface_relative_humidity = "surface-relative-humidity"
-    geopotential = "geopotential"
+    geopotential = "geo-potential"
     temperature = "temperature"
     relative_humidity = "relative-humidity"
     atmospheric_profile = "atmospheric-profile"
@@ -95,6 +96,7 @@ class DatasetName(Enum):
     ozone = "ozone"
     elevation = "elevation"
     brdf_fmt = "BRDF-Band-{band}-{factor}"
+    ecmwf_path_fmt = pjoin("{product}", "{year}", "tif", "{product}_*.tif")
 
     # gaip.calculate_lon_lat_arrays
     lon = "longitude"
