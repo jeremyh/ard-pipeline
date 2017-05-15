@@ -43,7 +43,6 @@ from gaip.modtran import (
     prepare_modtran,
 )
 from gaip.pq import can_pq, run_pq
-from gaip.scripts import gaip_convert
 from gaip.thermal_conversion import _surface_brightness_temperature
 
 
@@ -942,11 +941,6 @@ class Standard(luigi.Task):
             sbt_only = self.model == Model.sbt
             if self.pixel_quality and can_pq(self.level1) and not sbt_only:
                 run_pq(self.level1, out_fname, self.land_sea_path, self.compression)
-
-            # convert to GTiff
-            # (temporary until eodatasets has an improved ARD driver)
-            out_dir = pjoin(dirname(out_fname), "ard")
-            gaip_convert.run(out_fname, out_dir, "/")
 
 
 class ARD(luigi.WrapperTask):
