@@ -27,6 +27,8 @@ POINT_FMT = "point-{p}"
 ALBEDO_FMT = "albedo-{a}"
 POINT_ALBEDO_FMT = "".join([POINT_FMT, "-", ALBEDO_FMT])
 
+ARD_PRODUCTS = ["brdf", "terrain", "lambertian", "thermal"]
+
 
 class Model(Enum):
     """Represents the model workflow that gaip can run.
@@ -61,6 +63,18 @@ class Model(Enum):
             Model.standard: ALL_ALBEDOS,
             Model.nbar: ALL_ALBEDOS[0:-1],
             Model.sbt: [ALL_ALBEDOS[-1]],
+        }
+        return amap.get(self)
+
+    @property
+    def ard_products(self):
+        """Returns the ARD products available for a given
+        Model.<option>.
+        """
+        amap = {
+            Model.standard: ARD_PRODUCTS,
+            Model.nbar: ARD_PRODUCTS[0:-1],
+            Model.sbt: [ARD_PRODUCTS[-1]],
         }
         return amap.get(self)
 
@@ -124,10 +138,10 @@ class DatasetName(Enum):
     relative_slope = "relative-slope"
 
     # gaip.calculate_reflectance
-    reflectance_fmt = "{product}/{product}-reflectance-band-{band}"
+    reflectance_fmt = "{product}/reflectance-band-{band}"
 
     # gaip.thermal_conversion
-    temperature_fmt = "temperature/surface-brightness-temperature-band-{band}"
+    temperature_fmt = "themal/surface-brightness-temperature-band-{band}"
 
     # gaip.calculate_shadow_masks
     self_shadow = "self-shadow"
