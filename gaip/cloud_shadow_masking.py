@@ -594,7 +594,7 @@ def cloud_shadow(
 
         # band 4 -> 5 slope
         slope = numexpr.evaluate(
-            "(b5 - b4) >= slope_b45",
+            "abs(b5 - b4) >= slope_b45",
             {"b5": reflectance_stack[4], "b4": reflectance_stack[3]},
             locals(),
         )
