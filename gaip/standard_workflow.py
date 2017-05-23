@@ -425,6 +425,7 @@ class BilinearInterpolation(luigi.Task):
 
     vertices = luigi.TupleParameter(significant=False)
     model = luigi.EnumParameter(enum=Model)
+    method = luigi.Parameter(default="shear", significant=False)
 
     def requires(self):
         container = acquisitions(self.level1)
@@ -461,6 +462,7 @@ class BilinearInterpolation(luigi.Task):
                     "factor": factor,
                     "model": self.model,
                     "vertices": self.vertices,
+                    "method": self.method,
                 }
                 tasks[key] = BilinearInterpolationBand(**kwargs)
         return tasks
@@ -922,6 +924,7 @@ class Standard(luigi.Task):
                 "band_num": band.band_num,
                 "model": self.model,
                 "vertices": self.vertices,
+                "method": self.method,
             }
             if band.band_type == BandType.Thermal:
                 tasks.append(SurfaceTemperature(**kwargs))
@@ -954,6 +957,7 @@ class ARD(luigi.WrapperTask):
     model = luigi.EnumParameter(enum=Model)
     vertices = luigi.TupleParameter(default=(5, 5), significant=False)
     pixel_quality = luigi.BoolParameter()
+    method = luigi.Parameter(default="shear", significant=False)
 
     def requires(self):
         with open(self.level1_csv) as src:
@@ -973,6 +977,7 @@ class ARD(luigi.WrapperTask):
                         "model": self.model,
                         "vertices": self.vertices,
                         "pixel_quality": self.pixel_quality,
+                        "method": self.method,
                     }
                     yield Standard(**kwargs)
 
