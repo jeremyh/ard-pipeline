@@ -196,6 +196,7 @@ def _bilinear_interpolate(
     out_fname,
     compression,
     y_tile,
+    method,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -228,6 +229,7 @@ def _bilinear_interpolate(
             out_fname,
             compression,
             y_tile,
+            method,
         )
 
     rfid.close()
@@ -265,11 +267,18 @@ def bilinear_interpolate(
 
     if method is None:
         if len(samples) == 9:
-            method = gaip.interpolate.fortran_bilinear_interpolate
+            method = "linear"
         else:
-            method = gaip.interpolate.rbf_interpolate
+            method = "shear"
 
-    result = method(cols, rows, coord, samples, start, end, centre)
+    func_map = {
+        "linear": gaip.interpolate.fortran_bilinear_interpolate,
+        "shear": gaip.interpolate.sheared_bilinear_interpolate,
+        "rbf": gaip.interpolate.rbf_interpolate,
+    }
+    assert method in func_map
+
+    result = func_map[method](cols, rows, coord, samples, start, end, centre)
 
     # Initialise the output files
     if out_fname is None:

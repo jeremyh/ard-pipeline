@@ -376,6 +376,7 @@ class BilinearInterpolationBand(luigi.Task):
     factor = luigi.Parameter()
     base_dir = luigi.Parameter(default="_bilinear", significant=False)
     model = luigi.EnumParameter(enum=Model)
+    method = luigi.Parameter(default="shear", significant=False)
 
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.vertices]
@@ -410,6 +411,7 @@ class BilinearInterpolationBand(luigi.Task):
                 out_fname,
                 self.compression,
                 self.y_tile,
+                self.method,
             )
 
 
