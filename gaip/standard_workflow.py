@@ -34,7 +34,7 @@ from gaip.calculate_shadow_masks import (
 from gaip.calculate_slope_aspect import _slope_aspect_arrays
 from gaip.constants import ALBEDO_FMT, POINT_ALBEDO_FMT, POINT_FMT, BandType, Model
 from gaip.dsm import get_dsm
-from gaip.interpolation import _bilinear_interpolate, link_bilinear_data
+from gaip.interpolation import _interpolate, link_interpolated_data
 from gaip.modtran import (
     _format_tp5,
     _run_modtran,
@@ -402,7 +402,7 @@ class BilinearInterpolationBand(luigi.Task):
         acq = [acq for acq in acqs if acq.band_num == self.band_num][0]
 
         with self.output().temporary_path() as out_fname:
-            _bilinear_interpolate(
+            _interpolate(
                 acq,
                 self.factor,
                 sat_sol_angles_fname,
@@ -480,7 +480,7 @@ class BilinearInterpolation(luigi.Task):
             bilinear_fnames[key] = value.path
 
         with self.output().temporary_path() as out_fname:
-            link_bilinear_data(bilinear_fnames, out_fname)
+            link_interpolated_data(bilinear_fnames, out_fname)
 
 
 @inherits(CalculateLonLatGrids)
