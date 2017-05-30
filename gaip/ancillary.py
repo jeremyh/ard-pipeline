@@ -618,8 +618,9 @@ def get_aerosol_data(acquisition, aerosol_fname):
                 if np.isfinite(data):
                     metadata = {
                         "data_source": description,
-                        "dataset_name": pathname,
+                        "dataset_pathname": pathname,
                         "query_date": dt,
+                        "data_file": aerosol_fname,
                         "extents": wkt.dumps(intersection),
                     }
 
