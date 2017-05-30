@@ -227,7 +227,10 @@ def create_ard_yaml(acquisition, ancillary_fname, out_group, sbt=False):
             "version": gaip.__version__,
             "repo_url": "https://github.com/GeoscienceAustralia/gaip.git",
         },  # pylint: disable=line-too-long
-        "modtran": {"version": "5.2.1"},
+        "modtran": {
+            "version": "5.2.1",
+            "repo_url": "http://www.ontar.com/software/productdetails.aspx?item=modtran",
+        },  # pylint: disable=line-too-long
     }
 
     algorithm = {}
