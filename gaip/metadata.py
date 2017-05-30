@@ -4,7 +4,8 @@
 
 import os
 import pwd
-import subprocess
+import socket
+import uuid
 from datetime import datetime as dtime
 from os.path import dirname
 
@@ -221,11 +222,15 @@ def create_ard_yaml(acquisition, ancillary_fname, out_group, sbt=False):
 
     ancillary = load_ancillary(acquisition, ancillary_fname, sbt)
 
-    algorithm = {
-        "software_version": gaip.__version__,
-        "software_repository": "https://github.com/GeoscienceAustralia/ga-neo-landsat-processor.git",
-    }  # pylint: disable=line-too-long
+    software_versions = {
+        "gaip": {
+            "version": gaip.__version__,
+            "repo_url": "https://github.com/GeoscienceAustralia/gaip.git",
+        },  # pylint: disable=line-too-long
+        "modtran": {"version": "5.2.1"},
+    }
 
+    algorithm = {}
     if sbt:
         dname = DatasetName.sbt_yaml.value
         algorithm["sbt_doi"] = "TODO"
@@ -238,9 +243,10 @@ def create_ard_yaml(acquisition, ancillary_fname, out_group, sbt=False):
             "nbar_terrain_corrected_doi"
         ] = "http://dx.doi.org/10.1016/j.rse.2012.06.018"  # pylint: disable=line-too-long
 
-    proc = subprocess.Popen(["uname", "-a"], stdout=subprocess.PIPE)
     system_info = {
-        "node": proc.stdout.read().decode("utf-8"),
+        "uname": " ".join(os.uname()),
+        "hostname": socket.getfqdn(),
+        "runtime_id": uuid.uuid1(),
         "time_processed": dtime.utcnow().isoformat(),
     }
 
@@ -249,6 +255,7 @@ def create_ard_yaml(acquisition, ancillary_fname, out_group, sbt=False):
         "source_data": source_info,
         "ancillary_data": ancillary,
         "algorithm_information": algorithm,
+        "software_versions": software_versions,
     }
 
     # output
@@ -276,9 +283,10 @@ def create_pq_yaml(acquisition, ancillary, tests_run, out_group):
     :return:
         None; The yaml document is written to the HDF5 file.
     """
-    proc = subprocess.Popen(["uname", "-a"], stdout=subprocess.PIPE)
     system_info = {
-        "node": proc.stdout.read().decode("utf-8"),
+        "uname": " ".join(os.uname()),
+        "hostname": socket.getfqdn(),
+        "runtime_id": uuid.uuid1(),
         "time_processed": dtime.utcnow().isoformat(),
     }
 
