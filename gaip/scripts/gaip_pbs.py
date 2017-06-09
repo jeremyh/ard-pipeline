@@ -22,7 +22,7 @@ source {env}
 
 {daemon}
 
-luigi --module gaip.standard_workflow ARD --model {model} --level1-csv {scene_list} --outdir {outdir} --workers 16{scheduler} --vertices '{vertices}' --method {method}
+luigi --module gaip.standard_workflow ARD --model {model} --level1-list {scene_list} --outdir {outdir} --workers 16{scheduler} --vertices '{vertices}' --method {method}
 """
 
 DSH_TEMPLATE = """#!/bin/bash
@@ -44,7 +44,7 @@ for i in "${{!FILES[@]}}"; do
   pbsdsh -n $((16 *$X)) -- bash -l -c "source {env}; ${{DAEMONS[$i]}}; luigi \\
     --module gaip.standard_workflow ARD \\
     --model {model} \\
-    --level1-csv ${{FILES[$i]}} \\
+    --level1-list ${{FILES[$i]}} \\
     --outdir ${{OUTDIRS[$i]}} \\
     --workers 16 \\
     --vertices '{vertices}' \\
@@ -116,7 +116,8 @@ def run(
             daemons.append(daemon_fmt.format(jobdir))
             outdirs.append(job_outdir)
 
-        # overwrite the contents of the first file and server item
+        # overwrite the contents of the first and last items
+        # for an ugly styled list
         files[0] = f'FILES="{files[0]}'
         daemons[0] = f'DAEMONS="{daemons[0]}'
         outdirs[0] = f'OUTDIRS="{outdirs[0]}'
@@ -216,7 +217,9 @@ def _parser():
     """Argument parser."""
     description = "qsub nbar jobs into n nodes."
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("--level1", help="The input level1 scene list.", required=True)
+    parser.add_argument(
+        "--level1-list", help="The input level1 scene list.", required=True
+    )
     parser.add_argument(
         "--vertices",
         default="(5, 5)",
@@ -263,7 +266,7 @@ def main():
     parser = _parser()
     args = parser.parse_args()
     run(
-        args.level1,
+        args.level1_list,
         args.vertices,
         args.model,
         args.method,
