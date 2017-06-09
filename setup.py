@@ -40,5 +40,6 @@ setup(
         "utils/gaip_convert",
         "utils/gaip_ls",
         "utils/gaip_residuals",
+        "utils/gaip_pbs",
     ],
 )
