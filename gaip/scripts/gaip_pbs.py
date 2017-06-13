@@ -118,16 +118,16 @@ def run(
 
         # overwrite the contents of the first and last items
         # for an ugly styled list
-        files[0] = f'FILES="{files[0]}'
-        daemons[0] = f'DAEMONS="{daemons[0]}'
-        outdirs[0] = f'OUTDIRS="{outdirs[0]}'
-        files[-1] = f'{files[-1]}"'
-        daemons[-1] = f'{daemons[-1]}"'
-        outdirs[-1] = f'{outdirs[-1]}"'
+        files[0] = f'FILES=("{files[0]}'
+        daemons[0] = f'DAEMONS=("{daemons[0]}'
+        outdirs[0] = f'OUTDIRS=("{outdirs[0]}'
+        files[-1] = f'{files[-1]}")'
+        daemons[-1] = f'{daemons[-1]}")'
+        outdirs[-1] = f'{outdirs[-1]}")'
 
-        files = [f"{f}\n" for f in files]
-        daemons = [f"{f}\n" for f in daemons]
-        outdirs = [f"{f}\n" for f in outdirs]
+        files = [f'"{f}"\n' for f in files]
+        daemons = [f'"{f}"\n' for f in daemons]
+        outdirs = [f'"{f}"\n' for f in outdirs]
 
         files = "".join(files)
         daemons = "".join(daemons)
@@ -149,7 +149,7 @@ def run(
             method=method,
         )
 
-        out_fname = pjoin(batchdir, fmt2.format(model=model, jobid=batchid))
+        out_fname = pjoin(batch_logdir, fmt2.format(model=model, jobid=batchid))
         with open(out_fname, "w") as src:
             src.write(pbs)
 
