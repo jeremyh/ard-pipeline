@@ -8,6 +8,8 @@ Workflow settings can be configured in `luigi.cfg` file.
 # pylint: disable=too-many-locals
 # pylint: disable=protected-access
 
+import logging
+import traceback
 from os.path import basename, dirname
 from os.path import join as pjoin
 
@@ -45,10 +47,24 @@ from gaip.modtran import (
 from gaip.pq import can_pq, run_pq
 from gaip.thermal_conversion import _surface_brightness_temperature
 
+ERROR_LOGGER = logging.getLogger("luigi-error")
+
 
 def get_buffer(group):
     buf = {"product": 250, "R10m": 700, "R20m": 350, "R60m": 120}
     return buf[group]
+
+
+@luigi.Task.event_handler(luigi.Event.FAILURE)
+def on_failure(task, exception):
+    """Capture any Task Failure here."""
+    msg = exception.__str__()
+    traceback_msg = traceback.format_exc()
+    ERROR_LOGGER.error("*" * 50)
+    ERROR_LOGGER.error(msg)
+    ERROR_LOGGER.error("*" * 50)
+    ERROR_LOGGER.error(traceback_msg)
+    ERROR_LOGGER.error("*" * 50)
 
 
 class WorkRoot(luigi.Task):
