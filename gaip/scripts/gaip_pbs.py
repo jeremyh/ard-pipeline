@@ -145,9 +145,10 @@ def run(
             src.write(pbs)
 
         if test:
-            print("Testing execution")
+            print(f"Testing... Execution Batch: {batchid}...Testing")
             print(f"qsub {out_fname}")
         else:
+            print(f"Executing Batch: {batchid}")
             os.chdir(dirname(out_fname))
             subprocess.call(["qsub", out_fname])
     else:
