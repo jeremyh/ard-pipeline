@@ -93,11 +93,13 @@ def run(
         files = []
         daemons = []
         outdirs = []
+        jobids = []
         daemon_fmt = "luigid --background --logdir {}"
 
         # setup each block of scenes for processing
         for block in scattered:
             jobid = uuid.uuid4().hex[0:6]
+            jobids.append(jobid)
             jobdir = pjoin(batch_logdir, f"jobid-{jobid}")
             job_outdir = pjoin(batch_outdir, f"jobid-{jobid}")
 
@@ -145,13 +147,16 @@ def run(
             src.write(pbs)
 
         if test:
-            print(f"Testing... Execution Batch: {batchid}...Testing")
+            print(f"Testing... Executing Batch: {batchid}...Testing")
+            print(f"Job ids:\n{jobids}")
             print(f"qsub {out_fname}")
         else:
             print(f"Executing Batch: {batchid}")
+            print(f"Job ids:\n{jobids}")
             os.chdir(dirname(out_fname))
             subprocess.call(["qsub", out_fname])
     else:
+        print(f"Executing Batch: {batchid}")
         # setup and submit each block of scenes for processing
         for block in scattered:
             jobid = uuid.uuid4().hex[0:6]
@@ -198,10 +203,11 @@ def run(
                 src.write(pbs)
 
         if test:
-            print("Testing execution")
+            print(f"Testing... Executing Job: {jobid}...Testing")
             print(f"qsub {out_fname}")
         else:
             os.chdir(dirname(out_fname))
+            print(f"Executing Job: {jobid}")
             subprocess.call(["qsub", out_fname])
 
 
