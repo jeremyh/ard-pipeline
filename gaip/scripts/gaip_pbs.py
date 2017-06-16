@@ -308,12 +308,16 @@ def _parser():
         ),
     )
     parser.add_argument(
-        "--model", default="standard", help="The type of ARD workflow to invoke."
+        "--model",
+        default="standard",
+        help=("The type of ARD workflow to invoke, " "eg standard, nbar, sbt."),
     )
     parser.add_argument(
-        "--method", default="linear", help="The interpolation method to invoke."
+        "--method",
+        default="shear",
+        help=("The interpolation method to invoke, " "eg linear, shear, rbf."),
     )
-    parser.add_argument("--outdir", help="The output directory.", required=True)
+    parser.add_argument("--outdir", help="The base output directory.", required=True)
     parser.add_argument(
         "--logdir", required=True, help="The base logging and scripts output directory."
     )
@@ -323,19 +327,27 @@ def _parser():
     )
     parser.add_argument("--project", help="Project code to run under.", required=True)
     parser.add_argument(
-        "--queue", help="Queue to submit the job into.", default="normal"
+        "--queue",
+        default="mormal",
+        help=("Queue to submit the job into, " "eg normal, express."),
     )
     parser.add_argument("--hours", help="Job walltime in hours.", default=48)
     parser.add_argument(
         "--email", help="Notification email address.", default="your.name@something.com"
     )
     parser.add_argument(
-        "--local-scheduler", help="Use a local scheduler.", action="store_true"
+        "--local-scheduler",
+        action="store_true",
+        help=("Use a local scheduler instead of a central " "scheduler."),
     )
     parser.add_argument(
         "--dsh", help="Run using PBS Distributed Shell.", action="store_true"
     )
-    parser.add_argument("--test", help="Test job execution.", action="store_true")
+    parser.add_argument(
+        "--test",
+        action="store_true",
+        help=("Test job execution (Don't submit the job to " "the PBS queue)."),
+    )
     return parser
 
 
