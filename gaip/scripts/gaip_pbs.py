@@ -329,7 +329,7 @@ def _parser():
     parser.add_argument(
         "--pixel-quality",
         action="store_true",
-        help=("Include the pixel quality as part of the " "ARD workflow."),
+        help=("Whether to run the pixel quality workflow, " "if applicable, or not."),
     )
     parser.add_argument("--outdir", help="The base output directory.", required=True)
     parser.add_argument(
