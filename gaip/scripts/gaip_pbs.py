@@ -9,7 +9,6 @@ import uuid
 from os.path import dirname, exists
 from os.path import join as pjoin
 
-# from gaip.acquisition import acquisitions
 from gaip.tiling import scatter
 
 PBS_TEMPLATE = """#!/bin/bash
@@ -24,7 +23,7 @@ source {env}
 
 {daemon}
 
-luigi --module gaip.standard_workflow ARD --model {model} --level1-list {scene_list} --outdir {outdir} --workers 16{scheduler} --vertices '{vertices}' --method {method}
+luigi --module gaip.standard_workflow ARD --model {model} --level1-list {scene_list} --outdir {outdir} --workers 16{scheduler} --vertices '{vertices}' --method {method}{pq}
 """
 
 DSH_TEMPLATE = """#!/bin/bash
@@ -50,7 +49,7 @@ for i in "${{!FILES[@]}}"; do
     --outdir ${{OUTDIRS[$i]}} \\
     --workers 16 \\
     --vertices '{vertices}' \\
-    --method {method}" &
+    --method {method}{pq}" &
 done;
 wait
 """
@@ -65,6 +64,7 @@ def _submit_dsh(
     vertices,
     model,
     method,
+    pq,
     batchid,
     batch_logdir,
     batch_outdir,
@@ -120,6 +120,7 @@ def _submit_dsh(
         env=env,
         daemons="".join(daemons),
         model=model,
+        pq=pq,
         outdirs="".join(outdirs),
         vertices=vertices,
         method=method,
@@ -142,6 +143,7 @@ def _submit_multiple(
     vertices,
     model,
     method,
+    pq,
     batchid,
     batch_logdir,
     batch_outdir,
@@ -191,6 +193,7 @@ def _submit_multiple(
             env=env,
             daemon=daemon,
             model=model,
+            pq=pq,
             scene_list=out_fname,
             outdir=job_outdir,
             scheduler=scheduler,
@@ -216,6 +219,7 @@ def run(
     vertices="(5, 5)",
     model="standard",
     method="linear",
+    pixel_quality=False,
     outdir=None,
     logdir=None,
     env=None,
@@ -243,6 +247,8 @@ def run(
     memory = 32 * nodes
     ncpus = 16 * nodes
 
+    pq = " --pixel-quality" if pixel_quality else ""
+
     if test:
         print(f"Mocking... Submitting Batch: {batchid} ...Mocking")
     else:
@@ -254,6 +260,7 @@ def run(
             vertices,
             model,
             method,
+            pq,
             batchid,
             batch_logdir,
             batch_outdir,
@@ -272,6 +279,7 @@ def run(
             vertices,
             model,
             method,
+            pq,
             batchid,
             batch_logdir,
             batch_outdir,
@@ -318,6 +326,11 @@ def _parser():
         default="shear",
         help=("The interpolation method to invoke, " "eg linear, shear, rbf."),
     )
+    parser.add_argument(
+        "--pixel-quality",
+        action="store_true",
+        help=("Include the pixel quality as part of the " "ARD workflow."),
+    )
     parser.add_argument("--outdir", help="The base output directory.", required=True)
     parser.add_argument(
         "--logdir", required=True, help="The base logging and scripts output directory."
@@ -361,6 +374,7 @@ def main():
         args.vertices,
         args.model,
         args.method,
+        args.pixel_quality,
         args.outdir,
         args.logdir,
         args.env,
