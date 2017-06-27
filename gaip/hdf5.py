@@ -65,7 +65,8 @@ def dataset_compression_kwargs(
     :param chunks:
         A `tuple` containing the desired chunks sizes for each
         dimension axis of the dataset to be written to disk.
-        Default is (512, 512).
+        Default is True whereby h5py automatically determines an
+        appropriate chunksize.
 
     :param compression_opts:
         Finer grained control over compressio filters.
