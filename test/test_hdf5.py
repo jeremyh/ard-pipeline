@@ -7,6 +7,7 @@ import unittest
 
 import h5py
 import numpy as np
+import pandas as pd
 
 from gaip import hdf5
 
@@ -59,8 +60,15 @@ class HDF5Test(unittest.TestCase):
         kwargs = hdf5.dataset_compression_kwargs(compression="bitshuffle")
         self.assertDictEqual(kwargs, self.bitshuffle_kwargs)
 
-    def test_scalar_dataset(self):
-        """Test the read and write functionality for scalar datasets."""
+    def test_write_scalar(self):
+        """Test the write_scalar function."""
+        data = self.scalar_data
+        fname = "test_write_scalar.h5"
+        with h5py.File(fname, **self.memory_kwargs) as fid:
+            assert hdf5.write_scalar(data, "scalar", fid) is None
+
+    def test_scalar_attributes(self):
+        """Test the scalar attributes."""
         attrs = {"test_attribute": "this is a scalar"}
         data = {"value": self.scalar_data, "CLASS": "SCALAR", "VERSION": "0.1"}
 
@@ -97,6 +105,20 @@ class HDF5Test(unittest.TestCase):
             hdf5.attach_attributes(dset, attrs)
             test = {k: v for k, v in dset.attrs.items()}
             self.assertDictEqual(test, attrs)
+
+    def test_write_h5_image(self):
+        """Test the write_h5_image function."""
+        data = self.image_data
+        fname = "test_write_h5_image.h5"
+        with h5py.File(fname, **self.memory_kwargs) as fid:
+            assert hdf5.write_h5_image(data, "image", fid) is None
+
+    def test_write_h5_table(self):
+        """Test the write_h5_table function."""
+        data = self.table_data
+        fname = "test_write_h5_table.h5"
+        with h5py.File(fname, **self.memory_kwargs) as fid:
+            assert hdf5.write_h5_table(data, "table", fid) is None
 
     def test_attach_image_attributes(self):
         """Test the attach_image_attributes function."""
@@ -140,6 +162,39 @@ class HDF5Test(unittest.TestCase):
             dset = fid.create_dataset("data", data=self.table_data)
             hdf5.attach_table_attributes(dset, attrs=attrs)
             test = {k: v for k, v in dset.attrs.items()}
+            self.assertDictEqual(test, attrs)
+
+    def test_write_dataframe(self):
+        """Test the write_dataframe function."""
+        df = pd.DataFrame(self.table_data)
+        fname = "test_write_dataframe.h5"
+        with h5py.File(fname, **self.memory_kwargs) as fid:
+            assert hdf5.write_dataframe(df, "dataframe", fid) is None
+
+    def test_dataframe_attributes(self):
+        """Test the attributes that get created for a dataframe."""
+        attrs = {
+            "CLASS": "TABLE",
+            "FIELD_0_NAME": "index",
+            "FIELD_1_NAME": "float_data",
+            "FIELD_2_NAME": "integer_data",
+            "TITLE": "Table",
+            "VERSION": "0.2",
+            "float_data_dtype": "float64",
+            "index_dtype": "int64",
+            "index_names": np.array(["index"], dtype=object),
+            "integer_data_dtype": "int64",
+            "metadata": "`Pandas.DataFrame` converted to HDF5 compound datatype.",  # pylint: disable=line-too-long
+            "nrows": 10,
+            "python_type": "`Pandas.DataFrame`",
+        }
+
+        df = pd.DataFrame(self.table_data)
+        fname = "test_dataframe_attributes.h5"
+        with h5py.File(fname, **self.memory_kwargs) as fid:
+            hdf5.write_dataframe(df, "dataframe", fid)
+
+            test = {k: v for k, v in fid["dataframe"].attrs.items()}
             self.assertDictEqual(test, attrs)
 
 
