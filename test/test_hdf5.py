@@ -73,7 +73,7 @@ class HDF5Test(unittest.TestCase):
         data = {"value": self.scalar_data, "CLASS": "SCALAR", "VERSION": "0.1"}
 
         # insert the attribute into the data dict
-        for k, v in data.items():
+        for k, v in attrs.items():
             data[k] = v
 
         fname = "test_scalar_dataset.h5"
@@ -93,7 +93,7 @@ class HDF5Test(unittest.TestCase):
             hdf5.write_scalar(self.scalar_data, "scalar", fid, attrs=attrs)
 
             data = hdf5.read_scalar(fid, "scalar")
-            assert data["timestamp"] == attrs["timestamp"].isoformat()
+            assert data["timestamp"] == attrs["timestamp"]
 
     def test_attach_attributes(self):
         """Test the attach_attributes function."""
@@ -133,25 +133,35 @@ class HDF5Test(unittest.TestCase):
 
     def test_write_h5_image_attributes(self):
         """Test the image attributes of the write_h5_image function."""
-        minmax = np.array([self.image_data.min(), self.image_data.max()])
-        attrs = {
-            "CLASS": "IMAGE",
-            "IMAGE_VERSION": "1.2",
-            "DISPLAY_ORIGIN": "UL",
-            "IMAGE_MINMAXRANGE": minmax,
-        }
+        attrs = {"CLASS": "IMAGE", "IMAGE_VERSION": "1.2", "DISPLAY_ORIGIN": "UL"}
 
         fname = "test_write_h5_image_attributes.h5"
         with h5py.File(fname, **self.memory_kwargs) as fid:
             hdf5.write_h5_image(self.image_data, "image", fid)
             test = {k: v for k, v in fid["image"].attrs.items()}
+
+            # assertDictEqual can't compare a numpy array, so test elsewhere
+            del test["IMAGE_MINMAXRANGE"]
+
             self.assertDictEqual(test, attrs)
+
+    def test_write_h5_image_minmax(self):
+        """Test the IMAGE_MINMAXRANGE attribute is correct."""
+        minmax = np.array([self.image_data.min(), self.image_data.max()])
+
+        fname = "test_write_h5_image_minmax.h5"
+        with h5py.File(fname, **self.memory_kwargs) as fid:
+            hdf5.write_h5_image(self.image_data, "image", fid)
+
+            test = fid["image"].attrs["IMAGE_MINMAXRANGE"]
+
+            assert (minmax == test).all()
 
     def test_attach_table_attributes(self):
         """Test the attach_table_attributes function."""
         attrs = {
             "CLASS": "TABLE",
-            "IMAGE_VERSION": "0.2",
+            "VERSION": "0.2",
             "TITLE": "Table",
             "FIELD_0_NAME": "float_data",
             "FIELD_1_NAME": "integer_data",
