@@ -11,7 +11,6 @@ import h5py
 import numpy as np
 
 from gaip.__cast_shadow_mask import cast_shadow_main
-from gaip.calculate_angles import setup_spheroid
 from gaip.constants import DatasetName
 from gaip.geobox import GriddedGeoBox
 from gaip.hdf5 import (
@@ -20,6 +19,7 @@ from gaip.hdf5 import (
     dataset_compression_kwargs,
 )
 from gaip.margins import ImageMargins
+from gaip.satellite_solar_angles import setup_spheroid
 from gaip.tiling import generate_tiles
 
 

@@ -18,7 +18,6 @@ from shapely import wkt
 from shapely.geometry import Point, Polygon
 
 from gaip.brdf import get_brdf_data
-from gaip.calculate_angles import create_vertices
 from gaip.constants import POINT_FMT, DatasetName
 from gaip.data import get_pixel
 from gaip.hdf5 import (
@@ -30,6 +29,7 @@ from gaip.hdf5 import (
     write_scalar,
 )
 from gaip.metadata import extract_ancillary_metadata, read_meatadata_tags
+from gaip.satellite_solar_angles import create_vertices
 
 log = logging.getLogger()
 
@@ -164,7 +164,7 @@ def collect_ancillary(
     :param boxline:
         The dataset containing the bi-section (satellite track)
         coordinates. The datatype should be the same as that returned
-        by the `calculate_angles.create_boxline` function.
+        by the `satellite_solar_angles.create_boxline` function.
     :type boxline:
         [('row_index', 'int64'), ('bisection_index', 'int64'),
          ('npoints', 'int64'), ('start_index', 'int64'),

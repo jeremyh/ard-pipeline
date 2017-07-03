@@ -9,7 +9,7 @@ import osr
 import rasterio as rio
 from affine import Affine
 
-from gaip.calculate_angles import setup_spheroid
+from gaip.satellite_solar_angles import setup_spheroid
 from gaip.vincenty import vinc_dist
 
 # Landsat tranforms have very small determinants

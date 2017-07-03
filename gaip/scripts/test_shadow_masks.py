@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Unittesting framework for the `gaip.calculate_shadow_masks` module."""
+"""Unittesting framework for the `gaip.terrain_shadow_masks` module."""
 
 import argparse
 import unittest
@@ -14,7 +14,7 @@ from gaip.unittesting_tools import ParameterisedTestCase
 class TestShadowMasks(ParameterisedTestCase):
     """Unittesting for the self shadow, cast shadow (from both
     the sun and satellite directions), and the combined shadow
-    masks, found in `gaip.calculate_shadow_masks`.
+    masks, found in `gaip.terrain_shadow_masks`.
 
     Unittests will occur for the following datasets:
 
@@ -48,7 +48,7 @@ class TestShadowMasks(ParameterisedTestCase):
 
             assert np.array_equal(ref_dset, test_dset)
 
-    def test_cast_shadow_satelite(self):
+    def test_cast_shadow_satellite(self):
         """Test the cast shadow mask (satellite direction)."""
         with h5py.File(self.reference_fname, "r") as reference_fid, h5py.File(
             self.test_fname, "r"
@@ -72,7 +72,7 @@ class TestShadowMasks(ParameterisedTestCase):
 def _parser():
     """Argument parser."""
     description = (
-        "Unittests for `gaip.calculate_shadow_masks` module.\n"
+        "Unittests for `gaip.terrain_shadow_masks` module.\n"
         "Comparisons tests will occur for the following "
         "datasets: \n"
         "\t* self-shadow\n"
