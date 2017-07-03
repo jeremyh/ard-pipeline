@@ -24,7 +24,7 @@ from gaip.hdf5 import (
     attach_attributes,
     attach_table_attributes,
     dataset_compression_kwargs,
-    read_table,
+    read_h5_table,
     write_dataframe,
     write_scalar,
 )
@@ -598,7 +598,7 @@ def get_aerosol_data(acquisition, aerosol_fname):
     data = None
     for pathname, description in zip(pathnames, descr):
         if pathname in fid:
-            df = read_table(fid, pathname)
+            df = read_h5_table(fid, pathname)
             aerosol_poly = wkt.loads(fid[pathname].attrs["extents"])
 
             if aerosol_poly.intersects(roi_poly):

@@ -11,7 +11,7 @@ import numpy as np
 from scipy.interpolate import Rbf
 
 from gaip.constants import DatasetName, Model
-from gaip.hdf5 import dataset_compression_kwargs, read_table, write_h5_image
+from gaip.hdf5 import dataset_compression_kwargs, read_h5_table, write_h5_image
 
 logger = logging.getLogger(__name__)
 
@@ -353,9 +353,9 @@ def _interpolate(
         coefficients_fname, "r"
     ) as coef, h5py.File(ancillary_fname, "r") as anc:
         # read the relevant tables into DataFrames
-        coord_dset = read_table(anc, DatasetName.coordinator.value)
-        centre_dset = read_table(sat_sol, DatasetName.centreline.value)
-        box_dset = read_table(sat_sol, DatasetName.boxline.value)
+        coord_dset = read_h5_table(anc, DatasetName.coordinator.value)
+        centre_dset = read_h5_table(sat_sol, DatasetName.centreline.value)
+        box_dset = read_h5_table(sat_sol, DatasetName.boxline.value)
 
         if factor in Model.nbar.factors:
             dataset_name = DatasetName.nbar_coefficients.value
@@ -365,7 +365,7 @@ def _interpolate(
             msg = "Factor name not found in available factors: {}"
             raise ValueError(msg.format(Model.standard.factors))
 
-        coef_dset = read_table(coef, dataset_name)
+        coef_dset = read_h5_table(coef, dataset_name)
 
         rfid = interpolate(
             acq,

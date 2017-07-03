@@ -8,7 +8,7 @@ from argparse import RawTextHelpFormatter
 import h5py
 import numpy.testing as npt
 
-from gaip.hdf5 import read_table
+from gaip.hdf5 import read_h5_table
 from gaip.unittesting_tools import ParameterisedTestCase
 
 
@@ -100,8 +100,8 @@ class TestCalculateAngles(ParameterisedTestCase):
         with h5py.File(self.reference_fname, "r") as reference_fid, h5py.File(
             self.test_fname, "r"
         ) as test_fid:
-            ref_data = read_table(reference_fid, "centreline")
-            test_data = read_table(test_fid, "centreline")
+            ref_data = read_h5_table(reference_fid, "centreline")
+            test_data = read_h5_table(test_fid, "centreline")
 
             assert test_data.equals(ref_data)
 
@@ -162,8 +162,8 @@ class TestCalculateAngles(ParameterisedTestCase):
         with h5py.File(self.reference_fname, "r") as reference_fid, h5py.File(
             self.test_fname, "r"
         ) as test_fid:
-            ref_data = read_table(reference_fid, "boxline")
-            test_data = read_table(test_fid, "boxline")
+            ref_data = read_h5_table(reference_fid, "boxline")
+            test_data = read_h5_table(test_fid, "boxline")
 
             assert test_data.equals(ref_data)
 
@@ -214,8 +214,8 @@ class TestCalculateAngles(ParameterisedTestCase):
         with h5py.File(self.reference_fname, "r") as reference_fid, h5py.File(
             self.test_fname, "r"
         ) as test_fid:
-            ref_data = read_table(reference_fid, "coordinator")
-            test_data = read_table(test_fid, "coordinator")
+            ref_data = read_h5_table(reference_fid, "coordinator")
+            test_data = read_h5_table(test_fid, "coordinator")
 
             assert test_data.equals(ref_data)
 

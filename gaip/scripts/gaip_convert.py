@@ -20,7 +20,7 @@ from yaml.representer import Representer
 
 from gaip.data import write_img
 from gaip.geobox import GriddedGeoBox
-from gaip.hdf5 import read_table
+from gaip.hdf5 import read_h5_table
 
 IGNORE = ["crs_wkt", "geotransform"]
 
@@ -103,7 +103,7 @@ def convert_table(group, dataset_name, output_directory):
     :return:
         None, outputs are written directly to disk.
     """
-    df = read_table(group, dataset_name)
+    df = read_h5_table(group, dataset_name)
     dataset = group[dataset_name]
     tags = {k: v for k, v in dataset.attrs.items()}
 

@@ -28,7 +28,7 @@ from gaip.constants import (
 from gaip.hdf5 import (
     VLEN_STRING,
     create_external_link,
-    read_table,
+    read_h5_table,
     write_dataframe,
     write_scalar,
 )
@@ -108,7 +108,7 @@ def _format_tp5(
             sbt_ancillary = {}
             dname = ppjoin(POINT_FMT, DatasetName.atmospheric_profile.value)
             for i in range(coord_dset.shape[0]):
-                sbt_ancillary[i] = read_table(anc_ds, dname.format(p=i))
+                sbt_ancillary[i] = read_h5_table(anc_ds, dname.format(p=i))
         else:
             sbt_ancillary = None
 
@@ -479,21 +479,21 @@ def calculate_coefficients(atmospheric_fname, out_fname, compression="lzf"):
                     grp_path.format(a=nbar_albedos[0]), DatasetName.channel.value
                 )
 
-                accumulation_albedo_0 = read_table(fid, albedo_0_path)
-                accumulation_albedo_1 = read_table(fid, albedo_1_path)
-                accumulation_albedo_t = read_table(fid, albedo_t_path)
-                channel_data = read_table(fid, channel_path)
+                accumulation_albedo_0 = read_h5_table(fid, albedo_0_path)
+                accumulation_albedo_1 = read_h5_table(fid, albedo_1_path)
+                accumulation_albedo_t = read_h5_table(fid, albedo_t_path)
+                channel_data = read_h5_table(fid, channel_path)
             if sbt_atmos:
                 dname = ppjoin(
                     grp_path.format(a=Model.sbt.albedos[0]),
                     DatasetName.upward_radiation_channel.value,
                 )
-                upward = read_table(fid, dname)
+                upward = read_h5_table(fid, dname)
                 dname = ppjoin(
                     grp_path.format(a=Model.sbt.albedos[0]),
                     DatasetName.downward_radiation_channel.value,
                 )
-                downward = read_table(fid, dname)
+                downward = read_h5_table(fid, dname)
 
             kwargs = {
                 "accumulation_albedo_0": accumulation_albedo_0,
