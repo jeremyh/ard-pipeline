@@ -21,10 +21,9 @@ from gaip import constants
 from gaip.acquisition import acquisitions
 from gaip.ancillary import _collect_ancillary, aggregate_ancillary
 from gaip.constants import ALBEDO_FMT, POINT_ALBEDO_FMT, POINT_FMT, BandType, Model
-from gaip.dsm import get_dsm
+from gaip.dsm import _get_dsm
 from gaip.incident_exiting_angles import (
-    _exiting_angles,
-    _incident_angles,
+    _incident_exiting_angles,
     _relative_azimuth_slope,
 )
 from gaip.interpolation import _interpolate, link_interpolated_data
@@ -521,7 +520,7 @@ class DEMExctraction(luigi.Task):
         margins = get_buffer(self.group)
 
         with self.output().temporary_path() as out_fname:
-            _ = get_dsm(
+            _get_dsm(
                 acqs[0],
                 self.dsm_fname,
                 margins,
@@ -575,7 +574,7 @@ class IncidentAngles(luigi.Task):
         slope_aspect_fname = self.input()["slp_asp"].path
 
         with self.output().temporary_path() as out_fname:
-            _incident_angles(
+            _incident_exiting_angles(
                 sat_sol_fname,
                 slope_aspect_fname,
                 out_fname,
@@ -607,12 +606,13 @@ class ExitingAngles(luigi.Task):
         slope_aspect_fname = self.input()["slp_asp"].path
 
         with self.output().temporary_path() as out_fname:
-            _exiting_angles(
+            _incident_exiting_angles(
                 sat_sol_fname,
                 slope_aspect_fname,
                 out_fname,
                 self.compression,
                 self.y_tile,
+                False,
             )
 
 
