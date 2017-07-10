@@ -514,7 +514,7 @@ class DEMExctraction(luigi.Task):
         out_path = acquisitions(self.level1).get_root(
             self.work_root, self.group, self.granule
         )
-        return luigi.LocalTarget(pjoin(out_path, "dsm-extract.h5"))
+        return luigi.LocalTarget(pjoin(out_path, "dsm-subset.h5"))
 
     def run(self):
         acqs = acquisitions(self.level1).get_acquisitions(self.group, self.granule)
