@@ -138,7 +138,7 @@ def calculate_reflectance(
         The root HDF5 `Group` that contains the exiting
         angle dataset specified by the pathname given by:
 
-        * DatasetName.DatasetName.exiting
+        * DatasetName.exiting
 
     :param shadow_masks_group:
         The root HDF5 `Group` that contains the combined shadow
