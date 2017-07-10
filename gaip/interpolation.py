@@ -2,7 +2,6 @@
 
 """Various interpolation methods."""
 
-import logging
 import math
 from os.path import basename, splitext
 
@@ -12,8 +11,6 @@ from scipy.interpolate import Rbf
 
 from gaip.constants import DatasetName, Model
 from gaip.hdf5 import dataset_compression_kwargs, read_h5_table, write_h5_image
-
-logger = logging.getLogger(__name__)
 
 DEFAULT_ORIGIN = (0, 0)
 DEFAULT_SHAPE = (8, 8)
