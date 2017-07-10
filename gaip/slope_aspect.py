@@ -19,46 +19,43 @@ def _slope_aspect_arrays(
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
-    with h5py.File(dsm_fname, "r") as src:
-        dsm_dset = src[DatasetName.dsm_smoothed.value]
-
-        fid = slope_aspect_arrays(
-            acquisition, dsm_dset, margins, out_fname, compression, y_tile
-        )
-
-    fid.close()
-    return
+    with h5py.File(dsm_fname, "r") as dsm_fid, h5py.File(out_fname, "w") as fid:
+        slope_aspect_arrays(acquisition, dsm_fid, margins, fid, compression, y_tile)
 
 
 def slope_aspect_arrays(
-    acquisition, dsm_dataset, margins, out_fname=None, compression="lzf", y_tile=100
+    acquisition, dsm_group, margins, out_group=None, compression="lzf", y_tile=100
 ):
     """Calculates slope and aspect.
 
     :param acquisition:
         An instance of an acquisition object.
 
-    :param dsm_dataset:
-        A `NumPy` or `NumPy` like dataset that allows indexing
-        and returns a `NumPy` dataset containing the Digital Surface
-        Model data when index/sliced.
+    :param dsm_group:
+        The root HDF5 `Group` that contains the Digital Surface Model
+        data.
+        The dataset pathnames are given by:
+
+        * DatasetName.dsm_smoothed
+
+        The dataset must have the same dimensions as `acquisition`
+        plus a margin of widths specified by margin.
 
     :param margins:
         An object with members top, bottom, left and right giving the
         size of the margins (in pixels) which have been added to the
         corresponding sides of dsm.
 
-    :param out_fname:
+    :param out_group:
         If set to None (default) then the results will be returned
-        as an in-memory hdf5 file, i.e. the `core` driver.
-        Otherwise it should be a string containing the full file path
-        name to a writeable location on disk in which to save the HDF5
-        file.
+        as an in-memory hdf5 file, i.e. the `core` driver. Otherwise,
+        a writeable HDF5 `Group` object.
 
-        The dataset names will be as follows:
+        The dataset names will be given by the format string detailed
+        by:
 
-        * slope
-        * aspect
+        * DatasetName.slope
+        * DatasetName.aspect
 
     :param compression:
         The compression filter to use. Default is 'lzf'.
@@ -104,7 +101,9 @@ def slope_aspect_arrays(
     xstart, xstop = (pixel_margin.left - 1, -(pixel_margin.right - 1))
     idx = (slice(ystart, ystop), slice(xstart, xstop))
 
-    dsm_subset = as_array(dsm_dataset[idx], dtype=np.float32, transpose=True)
+    # elevation dataset
+    elevation = dsm_group[DatasetName.dsm_smoothed.value]
+    subset = as_array(elevation[idx], dtype=np.float32, transpose=True)
 
     # Define an array of latitudes
     # This will be ignored if is_utm == True
@@ -114,10 +113,10 @@ def slope_aspect_arrays(
 
     # Output the reprojected result
     # Initialise the output files
-    if out_fname is None:
+    if out_group is None:
         fid = h5py.File("slope-aspect.h5", driver="core", backing_store=False)
     else:
-        fid = h5py.File(out_fname, "w")
+        fid = out_group
 
     # metadata for calculation
     group = fid.create_group("parameters")
@@ -144,7 +143,7 @@ def slope_aspect_arrays(
         spheroid,
         alat,
         is_utm,
-        dsm_subset,
+        subset,
         slope.transpose(),
         aspect.transpose(),
     )
@@ -169,5 +168,5 @@ def slope_aspect_arrays(
     attrs["Description"] = desc
     attach_image_attributes(aspect_dset, attrs)
 
-    fid.flush()
-    return fid
+    if out_group is None:
+        return fid
