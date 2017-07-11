@@ -252,6 +252,11 @@ class Acquisition:
             df = read_spectral_response(src, as_list, spectral_range)
         return df
 
+    @property
+    def julian_day(self):
+        """Return the Juilan Day of the scene_centre_datetime."""
+        return int(self.scene_centre_datetime.strftime("%j"))
+
 
 class LandsatAcquisition(Acquisition):
     """A Landsat acquisition."""
