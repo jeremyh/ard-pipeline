@@ -163,7 +163,7 @@ def format_tp5(
     if out_group is None:
         out_group = h5py.File("atmospheric-inputs.h5", "w")
 
-    group = out_group.create_group("atmospheric-inputs")
+    group = out_group.create_group(DatasetName.atmospheric_inputs.value)
     iso_time = acquisitions[0].scene_centre_datetime.isoformat()
     group.attrs["acquisition-datetime"] = iso_time
 
@@ -262,6 +262,7 @@ def _run_modtran(
     basedir,
     point,
     albedos,
+    model,
     atmospheric_inputs_fname,
     out_fname,
     compression="lzf",
@@ -269,59 +270,55 @@ def _run_modtran(
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
-    with h5py.File(atmospheric_inputs_fname, "r") as fid:
-        grp_path = ppjoin("modtran-inputs", POINT_FMT.format(p=point))
-        lonlat = fid[grp_path].attrs["lonlat"]
-
-    rfid = run_modtran(
-        acquisitions,
-        modtran_exe,
-        basedir,
-        point,
-        albedos,
-        lonlat,
-        out_fname,
-        compression,
-    )
-
-    rfid.close()
-    return
+    with h5py.File(atmospheric_inputs_fname, "r") as atmos_fid, h5py.File(
+        out_fname, "w"
+    ) as fid:
+        run_modtran(
+            acquisitions,
+            atmos_fid,
+            model,
+            point,
+            albedos,
+            modtran_exe,
+            basedir,
+            fid,
+            compression,
+        )
 
 
 def run_modtran(
     acquisitions,
-    modtran_exe,
-    basedir,
+    atmospherics_group,
+    model,
     point,
     albedos,
-    lonlat=None,
-    out_fname=None,
-    compression="lzf",
+    modtran_exe,
+    basedir,
+    out_group,
+    compression,
 ):
     """Run MODTRAN and return the flux and channel results."""
-    # Initialise the output files
-    if out_fname is None:
-        fid = h5py.File("modtran-results.h5", driver="core", backing_store=False)
-    else:
-        fid = h5py.File(out_fname, "w")
+    group_path = ppjoin(DatasetName.atmospheric_inputs.value, POINT_FMT.format(p=point))
+    lonlat = atmospherics_group[group_path].attrs["lonlat"]
 
-    if lonlat is None:
-        lonlat = (np.nan, np.nan)
+    # determine the output group/file
+    if out_group is None:
+        fid = h5py.File("atmospheric-results.h5", driver="core", backing_store=False)
+    else:
+        fid = out_group
 
     # initial attributes
     base_attrs = {"Point": point, "lonlat": lonlat}
 
-    point_pth = POINT_FMT.format(p=point)
-
-    fid.attrs["point"] = point
-    fid.attrs["lonlat"] = lonlat
-    fid.attrs.create("albedos", data=albedos, dtype=VLEN_STRING)
+    point_path = POINT_FMT.format(p=point)
+    fid[point_path].attrs["lonlat"] = lonlat
+    fid[point_path].attrs.create("albedos", data=model.albedos, dtype=VLEN_STRING)
 
     acqs = acquisitions
     for albedo in albedos:
         base_attrs["Albedo"] = albedo
-        workpath = pjoin(basedir, point_pth, ALBEDO_FMT.format(a=albedo))
-        group_path = ppjoin(point_pth, ALBEDO_FMT.format(a=albedo))
+        workpath = pjoin(basedir, point_path, ALBEDO_FMT.format(a=albedo))
+        group_path = ppjoin(point_path, ALBEDO_FMT.format(a=albedo))
 
         subprocess.check_call([modtran_exe], cwd=workpath)
         chn_fname = glob.glob(pjoin(workpath, "*.chn"))[0]
@@ -382,9 +379,8 @@ def run_modtran(
             dset_name = ppjoin(group_path, dataset_name)
             write_dataframe(channel_data, dset_name, fid, attrs=attrs)
 
-    fid[point_pth].attrs["lonlat"] = lonlat
-
-    return fid
+    if out_group is None:
+        return fid
 
 
 def calculate_coefficients(atmospheric_fname, out_fname, compression="lzf"):
@@ -980,7 +976,7 @@ def link_atmospheric_results(input_targets, out_fname, npoints):
     for fname in input_targets:
         with h5py.File(fname.path, "r") as fid:
             point = fid.attrs["point"]
-            albedos = fid.attrs["albedos"]
+            albedos = fid[POINT_FMT.format(p=0)].attrs["albedos"]
 
         for albedo in albedos:
             if albedo == Model.sbt.albedos[0]:
