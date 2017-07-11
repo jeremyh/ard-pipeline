@@ -327,6 +327,7 @@ class AtmosphericsCase(luigi.Task):
                 base_dir,
                 self.point,
                 self.albedos,
+                self.model,
                 atmospheric_inputs_fname,
                 out_fname,
                 self.compression,
