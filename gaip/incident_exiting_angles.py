@@ -28,10 +28,12 @@ def _incident_exiting_angles(
     with h5py.File(satellite_solar_fname, "r") as sat_sol, h5py.File(
         slope_aspect_fname, "r"
     ) as slp_asp, h5py.File(out_fname, "w") as out_fid:
+        grp1 = sat_sol[DatasetName.sat_sol_group.value]
+        grp2 = slp_asp[DatasetName.slp_asp_group.value]
         if incident:
-            incident_angles(sat_sol, slp_asp, out_fid, compression, y_tile)
+            incident_angles(grp1, grp2, out_fid, compression, y_tile)
         else:
-            exiting_angles(sat_sol, slp_asp, out_fid, compression, y_tile)
+            exiting_angles(grp1, grp2, out_fid, compression, y_tile)
 
 
 def incident_angles(
@@ -102,6 +104,8 @@ def incident_angles(
     else:
         fid = out_group
 
+    grp = fid.create_group(DatasetName.incident_group.value)
+
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
     )
@@ -112,9 +116,9 @@ def incident_angles(
 
     # output datasets
     dataset_name = DatasetName.incident.value
-    incident_dset = fid.create_dataset(dataset_name, **kwargs)
+    incident_dset = grp.create_dataset(dataset_name, **kwargs)
     dataset_name = DatasetName.azimuthal_incident.value
-    azi_inc_dset = fid.create_dataset(dataset_name, **kwargs)
+    azi_inc_dset = grp.create_dataset(dataset_name, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
@@ -245,6 +249,8 @@ def exiting_angles(
     else:
         fid = out_group
 
+    grp = fid.create_group(DatasetName.exiting_group.value)
+
     kwargs = dataset_compression_kwargs(compression=compression, chunks=(1, cols))
     no_data = -999
     kwargs["shape"] = shape
@@ -253,9 +259,9 @@ def exiting_angles(
 
     # output datasets
     dataset_name = DatasetName.exiting.value
-    exiting_dset = fid.create_dataset(dataset_name, **kwargs)
+    exiting_dset = grp.create_dataset(dataset_name, **kwargs)
     dataset_name = DatasetName.azimuthal_exiting.value
-    azi_exit_dset = fid.create_dataset(dataset_name, **kwargs)
+    azi_exit_dset = grp.create_dataset(dataset_name, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
@@ -332,10 +338,12 @@ def _relative_azimuth_slope(
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
-    with h5py.File(incident_angles_fname, "r") as inci_angles, h5py.File(
+    with h5py.File(incident_angles_fname, "r") as inci_fid, h5py.File(
         exiting_angles_fname, "r"
-    ) as exit_angles, h5py.File(out_fname, "w") as out_fid:
-        relative_azimuth_slope(inci_angles, exit_angles, out_fid, compression, y_tile)
+    ) as exit_fid, h5py.File(out_fname, "w") as out_fid:
+        grp1 = inci_fid[DatasetName.incident_group.value]
+        grp2 = exit_fid[DatasetName.exiting_group.value]
+        relative_azimuth_slope(grp1, grp2, out_fid, compression, y_tile)
 
 
 def relative_azimuth_slope(
@@ -403,6 +411,8 @@ def relative_azimuth_slope(
     else:
         fid = out_group
 
+    grp = fid.create_group(DatasetName.rel_slp_group.value)
+
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
     )
@@ -412,7 +422,7 @@ def relative_azimuth_slope(
     kwargs["dtype"] = "float32"
 
     # output datasets
-    out_dset = fid.create_dataset(DatasetName.relative_slope.value, **kwargs)
+    out_dset = grp.create_dataset(DatasetName.relative_slope.value, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
