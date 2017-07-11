@@ -20,7 +20,8 @@ def _slope_aspect_arrays(
     NBAR workflow.
     """
     with h5py.File(dsm_fname, "r") as dsm_fid, h5py.File(out_fname, "w") as fid:
-        slope_aspect_arrays(acquisition, dsm_fid, margins, fid, compression, y_tile)
+        dsm_grp = dsm_fid[DatasetName.elevation_group.value]
+        slope_aspect_arrays(acquisition, dsm_grp, margins, fid, compression, y_tile)
 
 
 def slope_aspect_arrays(
@@ -34,7 +35,7 @@ def slope_aspect_arrays(
     :param dsm_group:
         The root HDF5 `Group` that contains the Digital Surface Model
         data.
-        The dataset pathnames are given by:
+        The dataset pathname is given by:
 
         * DatasetName.dsm_smoothed
 
@@ -118,10 +119,12 @@ def slope_aspect_arrays(
     else:
         fid = out_group
 
+    group = fid.create_group(DatasetName.slp_asp_group.value)
+
     # metadata for calculation
-    group = fid.create_group("parameters")
-    group.attrs["dsm_index"] = ((ystart, ystop), (xstart, xstop))
-    group.attrs["pixel_buffer"] = "1 pixel"
+    param_group = group.create_group("parameters")
+    param_group.attrs["dsm_index"] = ((ystart, ystop), (xstart, xstop))
+    param_group.attrs["pixel_buffer"] = "1 pixel"
 
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
@@ -150,9 +153,9 @@ def slope_aspect_arrays(
 
     # output datasets
     dname = DatasetName.slope.value
-    slope_dset = fid.create_dataset(dname, data=slope, **kwargs)
+    slope_dset = group.create_dataset(dname, data=slope, **kwargs)
     dname = DatasetName.aspect.value
-    aspect_dset = fid.create_dataset(dname, data=aspect, **kwargs)
+    aspect_dset = group.create_dataset(dname, data=aspect, **kwargs)
 
     # attach some attributes to the image datasets
     attrs = {
