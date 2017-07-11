@@ -91,9 +91,10 @@ def _format_tp5(
     ) as lon_lat_fid, h5py.File(ancillary_fname, "r") as anc_fid, h5py.File(
         out_fname, "w"
     ) as fid:
-        tp5_data, _ = format_tp5(
-            acquisitions, anc_fid, sat_sol_fid, lon_lat_fid, model, fid
-        )
+        grp1 = anc_fid[DatasetName.ancillary_group.value]
+        grp2 = sat_sol_fid[DatasetName.sat_sol_group.value]
+        grp3 = lon_lat_fid[DatasetName.lon_lat_group.value]
+        tp5_data, _ = format_tp5(acquisitions, grp1, grp2, grp3, model, fid)
 
     return tp5_data
 
@@ -163,7 +164,7 @@ def format_tp5(
     if out_group is None:
         out_group = h5py.File("atmospheric-inputs.h5", "w")
 
-    group = out_group.create_group(DatasetName.atmospheric_inputs.value)
+    group = out_group.create_group(DatasetName.atmospheric_inputs_grp.value)
     iso_time = acquisitions[0].scene_centre_datetime.isoformat()
     group.attrs["acquisition-datetime"] = iso_time
 
@@ -274,7 +275,7 @@ def _run_modtran(
     with h5py.File(atmospheric_inputs_fname, "r") as atmos_fid, h5py.File(
         out_fname, "w"
     ) as fid:
-        atmos_grp = atmos_fid[DatasetName.atmospheric_inputs.value]
+        atmos_grp = atmos_fid[DatasetName.atmospheric_inputs_grp.value]
         run_modtran(
             acquisitions,
             atmos_grp,
@@ -313,12 +314,14 @@ def run_modtran(
     # initial attributes
     base_attrs = {"Point": point, "lonlat": lonlat}
 
-    base_path = ppjoin(DatasetName.atmospheric_results.value, POINT_FMT.format(p=point))
+    base_path = ppjoin(
+        DatasetName.atmospheric_results_grp.value, POINT_FMT.format(p=point)
+    )
     fid[base_path].attrs["lonlat"] = lonlat
     fid[base_path].attrs.create("albedos", data=model.albedos, dtype=VLEN_STRING)
 
     # what atmospheric calculations have been run and how many points
-    group_name = DatasetName.atmospheric_results.value
+    group_name = DatasetName.atmospheric_results_grp.value
     fid[group_name].attrs["npoints"] = npoints
     applied = model == Model.standard or model == Model.nbar
     fid[group_name].attrs["nbar_atmospherics"] = applied
@@ -403,7 +406,7 @@ def _calculate_coefficients(atmosheric_results_fname, out_fname, compression):
     with h5py.File(atmosheric_results_fname, "r") as atmos_fid, h5py.File(
         out_fname, "w"
     ) as fid:
-        results_group = atmos_fid[DatasetName.atmospheric_results.value]
+        results_group = atmos_fid[DatasetName.atmospheric_results_grp.value]
         calculate_coefficients(results_group, fid, compression)
 
 
@@ -455,9 +458,10 @@ def calculate_coefficients(atmospheric_results_group, out_group, compression="lz
     else:
         fid = out_group
 
-    npoints = atmospheric_results_group.attrs["npoints"]
-    nbar_atmos = atmospheric_results_group.attrs["nbar_atmospherics"]
-    sbt_atmos = atmospheric_results_group.attrs["sbt_atmospherics"]
+    res = atmospheric_results_group
+    npoints = res.attrs["npoints"]
+    nbar_atmos = res.attrs["nbar_atmospherics"]
+    sbt_atmos = res.attrs["sbt_atmospherics"]
 
     for point in range(npoints):
         grp_path = ppjoin(POINT_FMT.format(p=point), ALBEDO_FMT)
@@ -470,21 +474,21 @@ def calculate_coefficients(atmospheric_results_group, out_group, compression="lz
                 grp_path.format(a=nbar_albedos[0]), DatasetName.channel.value
             )
 
-            accumulation_albedo_0 = read_h5_table(fid, albedo_0_path)
-            accumulation_albedo_1 = read_h5_table(fid, albedo_1_path)
-            accumulation_albedo_t = read_h5_table(fid, albedo_t_path)
-            channel_data = read_h5_table(fid, channel_path)
+            accumulation_albedo_0 = read_h5_table(res, albedo_0_path)
+            accumulation_albedo_1 = read_h5_table(res, albedo_1_path)
+            accumulation_albedo_t = read_h5_table(res, albedo_t_path)
+            channel_data = read_h5_table(res, channel_path)
         if sbt_atmos:
             dname = ppjoin(
                 grp_path.format(a=Model.sbt.albedos[0]),
                 DatasetName.upward_radiation_channel.value,
             )
-            upward = read_h5_table(fid, dname)
+            upward = read_h5_table(res, dname)
             dname = ppjoin(
                 grp_path.format(a=Model.sbt.albedos[0]),
                 DatasetName.downward_radiation_channel.value,
             )
-            downward = read_h5_table(fid, dname)
+            downward = read_h5_table(res, dname)
 
         kwargs = {
             "accumulation_albedo_0": accumulation_albedo_0,
@@ -514,15 +518,16 @@ def calculate_coefficients(atmospheric_results_group, out_group, compression="lz
     attrs["Description"] = description
     dname = DatasetName.nbar_coefficients.value
 
+    group = fid.create_group(DatasetName.coefficients_group.value)
     if nbar_atmos:
-        write_dataframe(nbar_coefficients, dname, fid, compression, attrs=attrs)
+        write_dataframe(nbar_coefficients, dname, group, compression, attrs=attrs)
 
     description = "Coefficients derived from the THERMAL solar irradiation."
     attrs["Description"] = description
     dname = DatasetName.sbt_coefficients.value
 
     if sbt_atmos:
-        write_dataframe(sbt_coefficients, dname, fid, compression, attrs=attrs)
+        write_dataframe(sbt_coefficients, dname, group, compression, attrs=attrs)
 
     if out_group is None:
         return fid
@@ -1019,7 +1024,7 @@ def link_atmospheric_results(input_targets, out_fname, npoints):
                 nbar_atmospherics = True
 
             grp_path = ppjoin(
-                DatasetName.atmospheric_results.value,
+                DatasetName.atmospheric_results_grp.value,
                 POINT_FMT.format(p=point),
                 ALBEDO_FMT.format(a=albedo),
             )
@@ -1029,7 +1034,7 @@ def link_atmospheric_results(input_targets, out_fname, npoints):
                 create_external_link(fname.path, dname, out_fname, dname)
 
     with h5py.File(out_fname) as fid:
-        group = fid[DatasetName.atmospheric_results.value]
+        group = fid[DatasetName.atmospheric_results_grp.value]
         group.attrs["npoints"] = npoints
         group.attrs["nbar_atmospherics"] = nbar_atmospherics
         group.attrs["sbt_atmospherics"] = sbt_atmospherics
