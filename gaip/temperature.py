@@ -25,11 +25,11 @@ def _surface_brightness_temperature(
     with h5py.File(bilinear_fname, "r") as interp_fid, h5py.File(
         ancillary_fname, "r"
     ) as fid_anc, h5py.File(out_fname, "w") as fid:
-        surface_brightness_temperature(
-            acquisition, interp_fid, fid, compression, y_tile
-        )
+        grp1 = interp_fid[DatasetName.interp_group.value]
+        surface_brightness_temperature(acquisition, grp1, fid, compression, y_tile)
 
-        create_ard_yaml(acquisition, fid_anc, fid, True)
+        grp2 = fid_anc[DatasetName.ancillary_group.value]
+        create_ard_yaml(acquisition, grp2, fid, True)
 
 
 def surface_brightness_temperature(
@@ -114,6 +114,7 @@ def surface_brightness_temperature(
     else:
         fid = out_group
 
+    group = fid.create_group(DatasetName.standard_group.value)
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, acq.samples)
     )
@@ -133,7 +134,7 @@ def surface_brightness_temperature(
 
     name_fmt = DatasetName.temperature_fmt.value
     dataset_name = name_fmt.format(band=acq.band_num)
-    out_dset = fid.create_dataset(dataset_name, **kwargs)
+    out_dset = group.create_dataset(dataset_name, **kwargs)
 
     desc = "Surface Brightness Temperature in Kelvin."
     attrs["Description"] = desc
