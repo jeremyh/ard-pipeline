@@ -27,7 +27,7 @@ from gaip.incident_exiting_angles import (
     _relative_azimuth_slope,
 )
 from gaip.interpolation import _interpolate, link_interpolated_data
-from gaip.longitude_latitude_arrays import create_lon_lat_grids
+from gaip.longitude_latitude_arrays import _create_lon_lat_grids
 from gaip.modtran import (
     _calculate_coefficients,
     _format_tp5,
@@ -115,7 +115,7 @@ class CalculateLonLatGrids(luigi.Task):
         acq = acquisitions(self.level1).get_acquisitions(self.group, self.granule)[0]
 
         with self.output().temporary_path() as out_fname:
-            create_lon_lat_grids(
+            _create_lon_lat_grids(
                 acq.gridded_geo_box(), out_fname, self.compression, y_tile=self.y_tile
             )
 
