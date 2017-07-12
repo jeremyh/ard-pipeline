@@ -126,11 +126,10 @@ def _collect_ancillary(
     with h5py.File(satellite_solar_fname, "r") as fid, h5py.File(
         out_fname, "w"
     ) as out_fid:
-        boxline_dset = fid[DatasetName.boxline.value][:]
-
+        sat_sol_grp = fid[DatasetName.sat_sol_group.value]
         collect_ancillary(
             acquisition,
-            boxline_dset,
+            sat_sol_grp,
             nbar_paths,
             sbt_path,
             invariant_fname,
@@ -145,7 +144,7 @@ def _collect_ancillary(
 
 def collect_ancillary(
     acquisition,
-    boxline_dataset,
+    satellite_solar_group,
     nbar_paths,
     sbt_path=None,
     invariant_fname=None,
@@ -162,14 +161,11 @@ def collect_ancillary(
     :param acquisition:
         An instance of an `Acquisition` object.
 
-    :param boxline:
-        The dataset containing the bi-section (satellite track)
-        coordinates. The datatype should be the same as that returned
-        by the `satellite_solar_angles.create_boxline` function.
-    :type boxline:
-        [('row_index', 'int64'), ('bisection_index', 'int64'),
-         ('npoints', 'int64'), ('start_index', 'int64'),
-         ('end_index', 'int64')]
+    :param satellite_solar_group:
+        The root HDF5 `Group` that contains the solar zenith and
+        solar azimuth datasets specified by the pathnames given by:
+
+        * DatasetName.boxline
 
     :param nbar_paths:
         A `dict` containing the ancillary pathnames required for
@@ -224,6 +220,7 @@ def collect_ancillary(
     else:
         fid = out_group
 
+    boxline_dataset = satellite_solar_group[DatasetName.boxline.value][:]
     coordinator = create_vertices(acquisition, boxline_dataset, vertices)
     lonlats = zip(coordinator["longitude"], coordinator["latitude"])
 
