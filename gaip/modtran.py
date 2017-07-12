@@ -317,8 +317,6 @@ def run_modtran(
     base_path = ppjoin(
         DatasetName.atmospheric_results_grp.value, POINT_FMT.format(p=point)
     )
-    fid[base_path].attrs["lonlat"] = lonlat
-    fid[base_path].attrs.create("albedos", data=model.albedos, dtype=VLEN_STRING)
 
     # what atmospheric calculations have been run and how many points
     group_name = DatasetName.atmospheric_results_grp.value
@@ -394,6 +392,10 @@ def run_modtran(
             attrs["Description"] = "Channel output from MODTRAN"
             dset_name = ppjoin(group_path, dataset_name)
             write_dataframe(channel_data, dset_name, fid, attrs=attrs)
+
+    # metadata for a given point
+    fid[base_path].attrs["lonlat"] = lonlat
+    fid[base_path].attrs.create("albedos", data=model.albedos, dtype=VLEN_STRING)
 
     if out_group is None:
         return fid
