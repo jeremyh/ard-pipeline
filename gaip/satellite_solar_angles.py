@@ -993,7 +993,7 @@ def calculate_angles(
 
     # outputs
     create_centreline_dataset(geobox, x_cent, n_cent, grp)
-    create_boxline(geobox, sat_v_ds, fid[DatasetName.centreline.value], grp, max_angle)
+    create_boxline(geobox, sat_v_ds, grp[DatasetName.centreline.value], grp, max_angle)
 
     if out_group is None:
         return fid
