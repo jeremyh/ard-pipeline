@@ -175,10 +175,6 @@ def format_tp5(
         acqs = [a for a in acquisitions if a.band_type == BandType.Reflective]
 
         for p in range(npoints):
-            # attach location info to each point Group
-            lonlat = (coordinator["longitude"][p], coordinator["latitude"][p])
-            group[POINT_FMT.format(p=p)].attrs["lonlat"] = lonlat
-
             for alb in Model.nbar.albedos:
                 input_data = {
                     "water": water_vapour,
@@ -211,6 +207,10 @@ def format_tp5(
                     DatasetName.tp5.value,
                 )
                 write_scalar(np.string_(data), dname, group, input_data)
+
+            # attach location info to each point Group
+            lonlat = (coordinator["longitude"][p], coordinator["latitude"][p])
+            group[POINT_FMT.format(p=p)].attrs["lonlat"] = lonlat
 
     # create tp5 for sbt if it has been collected
     if ancillary_group.attrs.get("sbt-ancillary"):
