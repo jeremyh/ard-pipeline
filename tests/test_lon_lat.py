@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
 import unittest
+from posixpath import join as ppjoin
 
 import numpy as np
 import numpy.testing as npt
 import osr
 
 from gaip import unittesting_tools as ut
+from gaip.constants import DatasetName
 from gaip.longitude_latitude_arrays import create_lon_lat_grids
 
 # WGS84
@@ -28,7 +30,8 @@ class TestLonLatArrays(unittest.TestCase):
         # Initialise the test data
         img, geobox = ut.create_test_image()
         fid = create_lon_lat_grids(geobox, depth=3)
-        lon = fid["longitude"][:]
+        dataset_name = ppjoin(DatasetName.lon_lat_group.value, DatasetName.lon)
+        lon = fid[dataset_name][:]
         ids = ut.random_pixel_locations(img.shape)
 
         # We'll transform (reproject) to WGS84
@@ -67,7 +70,8 @@ class TestLonLatArrays(unittest.TestCase):
         # Initialise the test data
         img, geobox = ut.create_test_image()
         fid = create_lon_lat_grids(geobox, depth=3)
-        lat = fid["latitude"][:]
+        dataset_name = ppjoin(DatasetName.lon_lat_group.value, DatasetName.lat)
+        lat = fid[dataset_name][:]
         ids = ut.random_pixel_locations(img.shape)
 
         # We'll transform (reproject) to WGS84
