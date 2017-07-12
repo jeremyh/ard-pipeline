@@ -320,6 +320,7 @@ def run_modtran(
 
     # what atmospheric calculations have been run and how many points
     group_name = DatasetName.atmospheric_results_grp.value
+    fid.create_group(group_name)
     fid[group_name].attrs["npoints"] = npoints
     applied = model == Model.standard or model == Model.nbar
     fid[group_name].attrs["nbar_atmospherics"] = applied
