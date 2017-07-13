@@ -59,7 +59,7 @@ def _calculate_reflectance(
         out_fname, "w"
     ) as fid:
         grp1 = fid_interp[DatasetName.interp_group.value]
-        grp2 = fid_sat_sol[DatasetName.sat_sol_group.value]
+        grp2 = fid_sat_sol[GroupName.sat_sol_group.value]
         grp3 = fid_slp_asp[DatasetName.slp_asp_group.value]
         grp4 = fid_rel_slp[DatasetName.rel_slp_group.value]
         grp5 = fid_inc[DatasetName.incident_group.value]

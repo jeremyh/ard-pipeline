@@ -289,7 +289,7 @@ def _calculate_cast_shadow(
         satellite_solar_angles_fname, "r"
     ) as fid_sat_sol, h5py.File(out_fname, "w") as fid:
         grp1 = dsm_fid[DatasetName.elevation_group.value]
-        grp2 = fid_sat_sol[DatasetName.sat_sol_group.value]
+        grp2 = fid_sat_sol[GroupName.sat_sol_group.value]
         calculate_cast_shadow(
             acquisition,
             grp1,
