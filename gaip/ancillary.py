@@ -18,7 +18,7 @@ from shapely import wkt
 from shapely.geometry import Point, Polygon
 
 from gaip.brdf import get_brdf_data
-from gaip.constants import POINT_FMT, DatasetName
+from gaip.constants import POINT_FMT, DatasetName, GroupName
 from gaip.data import get_pixel
 from gaip.hdf5 import (
     attach_attributes,
@@ -220,7 +220,7 @@ def collect_ancillary(
     else:
         fid = out_group
 
-    group = fid.create_group(DatasetName.ancillary_group.value)
+    group = fid.create_group(GroupName.ancillary_group.value)
 
     boxline_dataset = satellite_solar_group[DatasetName.boxline.value][:]
     coordinator = create_vertices(acquisition, boxline_dataset, vertices)

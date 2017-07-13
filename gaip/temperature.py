@@ -10,7 +10,7 @@ import h5py
 import numexpr
 import numpy as np
 
-from gaip.constants import DatasetName
+from gaip.constants import DatasetName, GroupName
 from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
 from gaip.metadata import create_ard_yaml
 from gaip.tiling import generate_tiles
@@ -25,10 +25,10 @@ def _surface_brightness_temperature(
     with h5py.File(bilinear_fname, "r") as interp_fid, h5py.File(
         ancillary_fname, "r"
     ) as fid_anc, h5py.File(out_fname, "w") as fid:
-        grp1 = interp_fid[DatasetName.interp_group.value]
+        grp1 = interp_fid[GroupName.interp_group.value]
         surface_brightness_temperature(acquisition, grp1, fid, compression, y_tile)
 
-        grp2 = fid_anc[DatasetName.ancillary_group.value]
+        grp2 = fid_anc[GroupName.ancillary_group.value]
         create_ard_yaml(acquisition, grp2, fid, True)
 
 
@@ -114,7 +114,7 @@ def surface_brightness_temperature(
     else:
         fid = out_group
 
-    group = fid.create_group(DatasetName.standard_group.value)
+    group = fid.create_group(GroupName.standard_group.value)
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, acq.samples)
     )

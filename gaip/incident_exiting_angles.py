@@ -7,7 +7,7 @@ import numpy as np
 
 from gaip.__exiting_angle import exiting_angle
 from gaip.__incident_angle import incident_angle
-from gaip.constants import DatasetName
+from gaip.constants import DatasetName, GroupName
 from gaip.data import as_array
 from gaip.geobox import GriddedGeoBox
 from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
@@ -29,7 +29,7 @@ def _incident_exiting_angles(
         slope_aspect_fname, "r"
     ) as slp_asp, h5py.File(out_fname, "w") as out_fid:
         grp1 = sat_sol[GroupName.sat_sol_group.value]
-        grp2 = slp_asp[DatasetName.slp_asp_group.value]
+        grp2 = slp_asp[GroupName.slp_asp_group.value]
         if incident:
             incident_angles(grp1, grp2, out_fid, compression, y_tile)
         else:
@@ -104,7 +104,7 @@ def incident_angles(
     else:
         fid = out_group
 
-    grp = fid.create_group(DatasetName.incident_group.value)
+    grp = fid.create_group(GroupName.incident_group.value)
 
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
@@ -249,7 +249,7 @@ def exiting_angles(
     else:
         fid = out_group
 
-    grp = fid.create_group(DatasetName.exiting_group.value)
+    grp = fid.create_group(GroupName.exiting_group.value)
 
     kwargs = dataset_compression_kwargs(compression=compression, chunks=(1, cols))
     no_data = -999
@@ -341,8 +341,8 @@ def _relative_azimuth_slope(
     with h5py.File(incident_angles_fname, "r") as inci_fid, h5py.File(
         exiting_angles_fname, "r"
     ) as exit_fid, h5py.File(out_fname, "w") as out_fid:
-        grp1 = inci_fid[DatasetName.incident_group.value]
-        grp2 = exit_fid[DatasetName.exiting_group.value]
+        grp1 = inci_fid[GroupName.incident_group.value]
+        grp2 = exit_fid[GroupName.exiting_group.value]
         relative_azimuth_slope(grp1, grp2, out_fid, compression, y_tile)
 
 
@@ -411,7 +411,7 @@ def relative_azimuth_slope(
     else:
         fid = out_group
 
-    grp = fid.create_group(DatasetName.rel_slp_group.value)
+    grp = fid.create_group(GroupName.rel_slp_group.value)
 
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())

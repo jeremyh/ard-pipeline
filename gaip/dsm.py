@@ -6,7 +6,7 @@ import numpy as np
 from rasterio.warp import Resampling
 from scipy import ndimage
 
-from gaip.constants import DatasetName
+from gaip.constants import DatasetName, GroupName
 from gaip.data import reproject_file_to_array
 from gaip.geobox import GriddedGeoBox
 from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
@@ -134,7 +134,7 @@ def get_dsm(
         compression=compression, chunks=(y_tile, geobox.x_size())
     )
 
-    group = fid.create_group(DatasetName.elevation_group.value)
+    group = fid.create_group(GroupName.elevation_group.value)
 
     param_grp = group.create_group("parameters")
     param_grp.attrs["left_buffer"] = pixel_buf.left

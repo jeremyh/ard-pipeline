@@ -23,6 +23,7 @@ from gaip.constants import (
     POINT_FMT,
     BandType,
     DatasetName,
+    GroupName,
     Model,
 )
 from gaip.hdf5 import (
@@ -91,7 +92,7 @@ def _format_tp5(
     ) as lon_lat_fid, h5py.File(ancillary_fname, "r") as anc_fid, h5py.File(
         out_fname, "w"
     ) as fid:
-        grp1 = anc_fid[DatasetName.ancillary_group.value]
+        grp1 = anc_fid[GroupName.ancillary_group.value]
         grp2 = sat_sol_fid[GroupName.sat_sol_group.value]
         grp3 = lon_lat_fid[GroupName.lon_lat_group.value]
         tp5_data, _ = format_tp5(acquisitions, grp1, grp2, grp3, model, fid)
@@ -164,7 +165,7 @@ def format_tp5(
     if out_group is None:
         out_group = h5py.File("atmospheric-inputs.h5", "w")
 
-    group = out_group.create_group(DatasetName.atmospheric_inputs_grp.value)
+    group = out_group.create_group(GroupName.atmospheric_inputs_grp.value)
     iso_time = acquisitions[0].scene_centre_datetime.isoformat()
     group.attrs["acquisition-datetime"] = iso_time
 
@@ -275,7 +276,7 @@ def _run_modtran(
     with h5py.File(atmospheric_inputs_fname, "r") as atmos_fid, h5py.File(
         out_fname, "w"
     ) as fid:
-        atmos_grp = atmos_fid[DatasetName.atmospheric_inputs_grp.value]
+        atmos_grp = atmos_fid[GroupName.atmospheric_inputs_grp.value]
         run_modtran(
             acquisitions,
             atmos_grp,
@@ -315,11 +316,11 @@ def run_modtran(
     base_attrs = {"Point": point, "lonlat": lonlat}
 
     base_path = ppjoin(
-        DatasetName.atmospheric_results_grp.value, POINT_FMT.format(p=point)
+        GroupName.atmospheric_results_grp.value, POINT_FMT.format(p=point)
     )
 
     # what atmospheric calculations have been run and how many points
-    group_name = DatasetName.atmospheric_results_grp.value
+    group_name = GroupName.atmospheric_results_grp.value
     fid.create_group(group_name)
     fid[group_name].attrs["npoints"] = npoints
     applied = model == Model.standard or model == Model.nbar
@@ -409,7 +410,7 @@ def _calculate_coefficients(atmosheric_results_fname, out_fname, compression):
     with h5py.File(atmosheric_results_fname, "r") as atmos_fid, h5py.File(
         out_fname, "w"
     ) as fid:
-        results_group = atmos_fid[DatasetName.atmospheric_results_grp.value]
+        results_group = atmos_fid[GroupName.atmospheric_results_grp.value]
         calculate_coefficients(results_group, fid, compression)
 
 
@@ -521,7 +522,7 @@ def calculate_coefficients(atmospheric_results_group, out_group, compression="lz
     attrs["Description"] = description
     dname = DatasetName.nbar_coefficients.value
 
-    group = fid.create_group(DatasetName.coefficients_group.value)
+    group = fid.create_group(GroupName.coefficients_group.value)
     if nbar_atmos:
         write_dataframe(nbar_coefficients, dname, group, compression, attrs=attrs)
 
@@ -1006,7 +1007,7 @@ def link_atmospheric_results(input_targets, out_fname, npoints, model):
         None. Results from each file in `input_targets` are linked
         into the output file.
     """
-    base_group_name = DatasetName.atmospheric_results_grp.value
+    base_group_name = GroupName.atmospheric_results_grp.value
     nbar_atmospherics = False
     sbt_atmospherics = False
     albedos = model.albedos
@@ -1038,7 +1039,7 @@ def link_atmospheric_results(input_targets, out_fname, npoints, model):
                     create_external_link(fname.path, dname, out_fname, dname)
 
     with h5py.File(out_fname) as fid:
-        group = fid[DatasetName.atmospheric_results_grp.value]
+        group = fid[GroupName.atmospheric_results_grp.value]
         group.attrs["npoints"] = npoints
         group.attrs["nbar_atmospherics"] = nbar_atmospherics
         group.attrs["sbt_atmospherics"] = sbt_atmospherics

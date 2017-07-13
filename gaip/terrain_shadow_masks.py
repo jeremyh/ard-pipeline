@@ -13,7 +13,7 @@ import h5py
 import numpy as np
 
 from gaip.__cast_shadow_mask import cast_shadow_main
-from gaip.constants import DatasetName
+from gaip.constants import DatasetName, GroupName
 from gaip.geobox import GriddedGeoBox
 from gaip.hdf5 import (
     attach_image_attributes,
@@ -38,8 +38,8 @@ def _self_shadow(
     with h5py.File(incident_angles_fname, "r") as fid_incident, h5py.File(
         exiting_angles_fname, "r"
     ) as fid_exiting, h5py.File(out_fname, "w") as fid:
-        grp1 = fid_incident[DatasetName.incident_group.value]
-        grp2 = fid_exiting[DatasetName.exiting_group.value]
+        grp1 = fid_incident[GroupName.incident_group.value]
+        grp2 = fid_exiting[GroupName.exiting_group.value]
         self_shadow(grp1, grp2, fid, compression, y_tile)
 
 
@@ -99,7 +99,7 @@ def self_shadow(
     else:
         fid = out_group
 
-    grp = fid.create_group(DatasetName.shadow_group.value)
+    grp = fid.create_group(GroupName.shadow_group.value)
 
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
@@ -288,7 +288,7 @@ def _calculate_cast_shadow(
     with h5py.File(dsm_fname, "r") as dsm_fid, h5py.File(
         satellite_solar_angles_fname, "r"
     ) as fid_sat_sol, h5py.File(out_fname, "w") as fid:
-        grp1 = dsm_fid[DatasetName.elevation_group.value]
+        grp1 = dsm_fid[GroupName.elevation_group.value]
         grp2 = fid_sat_sol[GroupName.sat_sol_group.value]
         calculate_cast_shadow(
             acquisition,
@@ -473,7 +473,7 @@ def calculate_cast_shadow(
     else:
         fid = out_group
 
-    grp = fid.create_group(DatasetName.shadow_group.value)
+    grp = fid.create_group(GroupName.shadow_group.value)
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
     )
@@ -515,9 +515,9 @@ def _combine_shadow(
     ) as fid_sun, h5py.File(cast_shadow_satellite_fname, "r") as fid_sat, h5py.File(
         out_fname, "w"
     ) as fid:
-        grp1 = fid_self[DatasetName.shadow_group.value]
-        grp2 = fid_sun[DatasetName.shadow_group.value]
-        grp3 = fid_sat[DatasetName.shadow_group.value]
+        grp1 = fid_self[GroupName.shadow_group.value]
+        grp2 = fid_sun[GroupName.shadow_group.value]
+        grp3 = fid_sat[GroupName.shadow_group.value]
         combine_shadow_masks(grp1, grp2, grp3, fid, compression, y_tile)
 
     link_shadow_datasets(
@@ -596,7 +596,7 @@ def combine_shadow_masks(
     else:
         fid = out_group
 
-    grp = fid.create_group(DatasetName.shadow_group.value)
+    grp = fid.create_group(GroupName.shadow_group.value)
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
     )
@@ -643,7 +643,7 @@ def link_shadow_datasets(
     """Link the self shadow mask, and the two cast shadow masks into a
     single file for easier access.
     """
-    group_path = DatasetName.shadow_group.value
+    group_path = GroupName.shadow_group.value
     dname_fmt = DatasetName.cast_shadow_fmt.value
     dname = ppjoin(group_path, DatasetName.self_shadow.value)
     create_external_link(self_shadow_fname, dname, out_fname, dname)

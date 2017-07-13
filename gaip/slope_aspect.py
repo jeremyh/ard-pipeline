@@ -6,7 +6,7 @@ import h5py
 import numpy as np
 
 from gaip.__slope_aspect import slope_aspect
-from gaip.constants import DatasetName
+from gaip.constants import DatasetName, GroupName
 from gaip.data import as_array
 from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
 from gaip.margins import ImageMargins
@@ -20,7 +20,7 @@ def _slope_aspect_arrays(
     NBAR workflow.
     """
     with h5py.File(dsm_fname, "r") as dsm_fid, h5py.File(out_fname, "w") as fid:
-        dsm_grp = dsm_fid[DatasetName.elevation_group.value]
+        dsm_grp = dsm_fid[GroupName.elevation_group.value]
         slope_aspect_arrays(acquisition, dsm_grp, margins, fid, compression, y_tile)
 
 
@@ -119,7 +119,7 @@ def slope_aspect_arrays(
     else:
         fid = out_group
 
-    group = fid.create_group(DatasetName.slp_asp_group.value)
+    group = fid.create_group(GroupName.slp_asp_group.value)
 
     # metadata for calculation
     param_group = group.create_group("parameters")
