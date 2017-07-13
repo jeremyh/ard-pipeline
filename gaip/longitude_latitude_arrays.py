@@ -157,7 +157,7 @@ def create_lon_lat_grids(
     else:
         fid = out_group
 
-    grp = fid.create_group(DatasetName.lon_lat_group.value)
+    grp = fid.create_group(GroupName.lon_lat_group.value)
 
     # define some base attributes for the image datasets
     attrs = {
@@ -261,7 +261,7 @@ def create_lon_grid(geobox, out_fname=None, compression="lzf", depth=7, y_tile=1
 
     lon_grid = create_grid(geobox, get_lon_coordinate, depth)
 
-    grp = fid.create_group(DatasetName.lon_lat_group.value)
+    grp = fid.create_group(GroupName.lon_lat_group.value)
     dset = grp.create_dataset(DatasetName.lon.value, data=lon_grid, **kwargs)
     attach_image_attributes(dset, attrs)
 
@@ -319,7 +319,7 @@ def create_lat_grid(geobox, out_fname=None, compression="lzf", depth=7, y_tile=1
 
     lat_grid = create_grid(geobox, get_lat_coordinate, depth)
 
-    grp = fid.create_group(DatasetName.lon_lat_group.value)
+    grp = fid.create_group(GroupName.lon_lat_group.value)
     dset = grp.create_dataset(DatasetName.lat.value, data=lat_grid, **kwargs)
     attach_image_attributes(dset, attrs)
 
