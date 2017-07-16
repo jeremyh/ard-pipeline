@@ -145,7 +145,6 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
                 self.input().path,
                 out_fname,
                 self.compression,
-                acqs[0].maximum_view_angle,
                 self.tle_path,
                 self.y_tile,
             )

@@ -722,7 +722,6 @@ def _calculate_angles(
     lon_lat_fname,
     out_fname=None,
     compression="lzf",
-    max_angle=9.0,
     tle_path=None,
     y_tile=100,
 ):
@@ -731,9 +730,7 @@ def _calculate_angles(
     """
     with h5py.File(lon_lat_fname, "r") as lon_lat_fid, h5py.File(out_fname, "w") as fid:
         lon_lat_grp = lon_lat_fid[GroupName.lon_lat_group.value]
-        calculate_angles(
-            acquisition, lon_lat_grp, fid, compression, max_angle, tle_path, y_tile
-        )
+        calculate_angles(acquisition, lon_lat_grp, fid, compression, tle_path, y_tile)
 
 
 def calculate_angles(
@@ -741,7 +738,6 @@ def calculate_angles(
     lon_lat_group,
     out_group=None,
     compression="lzf",
-    max_angle=9.0,
     tle_path=None,
     y_tile=100,
 ):
@@ -790,10 +786,6 @@ def calculate_angles(
         * 'lz4'
         * 'mafisc'
         * An integer [1-9] (Deflate/gzip)
-
-    :param max_angle:
-        The maximum satellite view angle to use within the workflow.
-        Default is 9.0 degrees.
 
     :param tle_path:
         A `str` to the directory containing the Two Line Element data.
@@ -875,7 +867,7 @@ def calculate_angles(
         "minimum_latiude": min_lat,
         "maximum_latiude": max_lat,
         "latitude_buffer": "1.0 degrees",
-        "max_view_angle": max_angle,
+        "max_view_angle": acq.maximum_view_angle,
     }
     _store_parameter_settings(
         grp, spheroid[1], orbital_elements[1], smodel[1], track[1], params
@@ -993,7 +985,9 @@ def calculate_angles(
 
     # outputs
     create_centreline_dataset(geobox, x_cent, n_cent, grp)
-    create_boxline(geobox, sat_v_ds, grp[DatasetName.centreline.value], grp, max_angle)
+    create_boxline(
+        geobox, sat_v_ds, grp[DatasetName.centreline.value], grp, acq.maximum_view_angle
+    )
 
     if out_group is None:
         return fid
