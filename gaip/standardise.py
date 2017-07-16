@@ -1,38 +1,27 @@
 #!/usr/bin/env python
 
-import tempfile
 from os.path import join as pjoin
 from posixpath import join as ppjoin
-
+import tempfile
 import h5py
 
-from gaip import constants
 from gaip.acquisition import acquisitions
-from gaip.ancillary import aggregate_ancillary, collect_ancillary
-from gaip.constants import POINT_ALBEDO_FMT, BandType, GroupName, Model
+from gaip.ancillary import collect_ancillary, aggregate_ancillary
+from gaip import constants
+from gaip.constants import GroupName, Model, POINT_ALBEDO_FMT, BandType
 from gaip.dsm import get_dsm
-from gaip.incident_exiting_angles import (
-    exiting_angles,
-    incident_angles,
-    relative_azimuth_slope,
-)
+from gaip.incident_exiting_angles import incident_angles, exiting_angles
+from gaip.incident_exiting_angles import relative_azimuth_slope
 from gaip.interpolation import interpolate
 from gaip.longitude_latitude_arrays import create_lon_lat_grids
-from gaip.modtran import (
-    calculate_coefficients,
-    format_tp5,
-    prepare_modtran,
-    run_modtran,
-)
+from gaip.modtran import format_tp5, prepare_modtran, run_modtran
+from gaip.modtran import calculate_coefficients
 from gaip.reflectance import calculate_reflectance
 from gaip.satellite_solar_angles import calculate_angles
+from gaip.terrain_shadow_masks import self_shadow, calculate_cast_shadow
+from gaip.terrain_shadow_masks import combine_shadow_masks
 from gaip.slope_aspect import slope_aspect_arrays
 from gaip.temperature import surface_brightness_temperature
-from gaip.terrain_shadow_masks import (
-    calculate_cast_shadow,
-    combine_shadow_masks,
-    self_shadow,
-)
 
 
 def get_buffer(group):
@@ -54,12 +43,12 @@ def card4l(
     nbar_paths,
     modtran_exe,
     out_fname,
-    max_angle=9.0,
     rori=0.52,
     compression="lzf",
     y_tile=100,
 ):
-    """CEOS Analysis Ready Data for Land.
+    """
+    CEOS Analysis Ready Data for Land.
     A workflow for producing standardised products that meet the
     CARD4L specification.
 
@@ -109,9 +98,8 @@ def card4l(
                     group[GroupName.lon_lat_group.value],
                     group,
                     compression=compression,
-                    y_tile=y_tile,
-                    max_angle=max_angle,
-                    tle_path=tle_path,
+                    tle_path,
+                    y_tile,
                 )
 
                 if model == Model.standard or model == model.nbar:
