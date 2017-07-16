@@ -135,7 +135,7 @@ class AcquisitionsContainer:
         else:
             return self._granules[granule]
 
-    def get_root(self, path="", group=None, granule=None):
+    def get_root(self, path="/", group=None, granule=None):
         """Get the root level file system path for a granule and/or group
         within the `AcquisitionContainer` object.
 
