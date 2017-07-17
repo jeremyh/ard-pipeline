@@ -46,7 +46,6 @@ def card4l(
     dem_path,
     dsm_fname,
     invariant_fname,
-    nbar_paths,
     modtran_exe,
     out_fname,
     rori=0.52,
@@ -84,7 +83,10 @@ def card4l(
 
     with h5py.File(out_fname, "w") as fid:
         for grn_name in scene.granules:
-            granule_group = fid.create_group(scene.get_root(granule=grn_name))
+            if grn_name is None:
+                granule_group = fid["/"]
+            else:
+                granule_group = fid.create_group(grn_name)
 
             for grp_name in scene.groups:
                 group = granule_group.create_group(grp_name)
