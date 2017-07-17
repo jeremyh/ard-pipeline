@@ -8,7 +8,7 @@ import h5py
 import numpy as np
 import osr
 
-from gaip.constants import DatasetName
+from gaip.constants import DatasetName, GroupName
 from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
 from gaip.interpolation import interpolate_grid
 

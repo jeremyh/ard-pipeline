@@ -12,7 +12,7 @@ from osgeo import osr
 from gaip.__sat_sol_angles import angle
 from gaip.__satellite_model import set_satmod
 from gaip.__track_time_info import set_times
-from gaip.constants import DatasetName
+from gaip.constants import DatasetName, GroupName
 from gaip.hdf5 import (
     attach_attributes,
     attach_image_attributes,
