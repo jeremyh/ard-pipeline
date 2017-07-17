@@ -14,7 +14,6 @@ from os.path import basename
 from os.path import join as pjoin
 
 import luigi
-from luigi.util import inherits
 
 from gaip.constants import Model
 from gaip.standardise import card4l
@@ -57,6 +56,12 @@ class Standard(luigi.Task):
     dem_path = luigi.Parameter(significant=False)
     ecmwf_path = luigi.Parameter(significant=False)
     invariant_height_fname = luigi.Parameter(significant=False)
+    dsm_fname = luigi.Parameter(significant=False)
+    modtran_exe = luigi.Parameter(significant=False)
+    tle_path = luigi.Parameter(significant=False)
+    rori = luigi.FloatParameter(default=0.52, significant=False)
+    compression = luigi.Parameter(default="lzf", significant=False)
+    y_tile = luigi.IntParameter(default=100, significant=False)
 
     def output(self):
         fmt = "{scene}_{model}.h5"
@@ -80,7 +85,8 @@ class Standard(luigi.Task):
                 self.brdf_premodis_path,
                 self.ozone_path,
                 self.water_vapour_path,
-                self.dsm_path,
+                self.dem_path,
+                self.dsm_fname,
                 self.invariant_height_fname,
                 self.modtran_exe,
                 out_fname,
@@ -90,11 +96,30 @@ class Standard(luigi.Task):
             )
 
 
-@inherits(Standard)
 class ARD(luigi.WrapperTask):
     """Kicks off ARD tasks for each level1 entry."""
 
     level1_list = luigi.Parameter()
+    outdir = luigi.Parameter()
+    model = luigi.EnumParameter(enum=Model)
+    vertices = luigi.TupleParameter(default=(5, 5))
+    method = luigi.Parameter(default="shear")
+    pixel_quality = luigi.BoolParameter()
+    land_sea_path = luigi.Parameter()
+    aerosol_fname = luigi.Parameter(significant=False)
+    brdf_path = luigi.Parameter(significant=False)
+    brdf_premodis_path = luigi.Parameter(significant=False)
+    ozone_path = luigi.Parameter(significant=False)
+    water_vapour_path = luigi.Parameter(significant=False)
+    dem_path = luigi.Parameter(significant=False)
+    ecmwf_path = luigi.Parameter(significant=False)
+    invariant_height_fname = luigi.Parameter(significant=False)
+    dsm_fname = luigi.Parameter(significant=False)
+    modtran_exe = luigi.Parameter(significant=False)
+    tle_path = luigi.Parameter(significant=False)
+    rori = luigi.FloatParameter(default=0.52, significant=False)
+    compression = luigi.Parameter(default="lzf", significant=False)
+    y_tile = luigi.IntParameter(default=100, significant=False)
 
     def requires(self):
         with open(self.level1_list) as src:
@@ -118,6 +143,7 @@ class ARD(luigi.WrapperTask):
                 "dem_path": self.dem_path,
                 "ecmwf_path": self.ecmwf_path,
                 "invariant_height_fname": self.invariant_height_fname,
+                "dsm_fname": self.dsm_fname,
             }
             yield Standard(**kwargs)
 

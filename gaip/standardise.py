@@ -38,6 +38,12 @@ def card4l(
     landsea,
     ecmwf_path,
     tle_path,
+    aerosol_fname,
+    brdf_path,
+    brdf_premodis_path,
+    ozone_path,
+    water_vapour_path,
+    dem_path,
     dsm_fname,
     invariant_fname,
     nbar_paths,
@@ -200,6 +206,14 @@ def card4l(
                     )
 
             # nbar and sbt ancillary
+            nbar_paths = {
+                "aerosol_fname": aerosol_fname,
+                "water_vapour_path": water_vapour_path,
+                "ozone_path": ozone_path,
+                "dem_path": dem_path,
+                "brdf_path": brdf_path,
+                "brdf_premodis_path": brdf_premodis_path,
+            }
             collect_ancillary(
                 acqs[0],
                 group[GroupName.sat_sol_group.value],
