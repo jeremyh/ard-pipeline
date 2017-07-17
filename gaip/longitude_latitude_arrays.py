@@ -157,7 +157,10 @@ def create_lon_lat_grids(
     else:
         fid = out_group
 
-    grp = fid.create_group(GroupName.lon_lat_group.value)
+    if GroupName.lon_lat_group.value not in fid:
+        fid.create_group(GroupName.lon_lat_group.value)
+
+    grp = fid[GroupName.lon_lat_group.value]
 
     # define some base attributes for the image datasets
     attrs = {

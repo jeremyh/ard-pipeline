@@ -104,8 +104,10 @@ def incident_angles(
     else:
         fid = out_group
 
-    grp = fid.create_group(GroupName.incident_group.value)
+    if GroupName.incident_group.value not in fid:
+        fid.create_group(GroupName.incident_group.value)
 
+    grp = fid[GroupName.incident_group.value]
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
     )
@@ -249,8 +251,10 @@ def exiting_angles(
     else:
         fid = out_group
 
-    grp = fid.create_group(GroupName.exiting_group.value)
+    if GroupName.exiting_group.value not in fid:
+        fid.create_group(GroupName.exiting_group.value)
 
+    grp = fid[GroupName.exiting_group.value]
     kwargs = dataset_compression_kwargs(compression=compression, chunks=(1, cols))
     no_data = -999
     kwargs["shape"] = shape
@@ -411,8 +415,10 @@ def relative_azimuth_slope(
     else:
         fid = out_group
 
-    grp = fid.create_group(GroupName.rel_slp_group.value)
+    if GroupName.rel_slp_group.value not in fid:
+        fid.create_group(GroupName.rel_slp_group.value)
 
+    grp = fid[GroupName.rel_slp_group.value]
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
     )

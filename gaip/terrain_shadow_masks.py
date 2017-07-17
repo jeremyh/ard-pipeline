@@ -99,7 +99,10 @@ def self_shadow(
     else:
         fid = out_group
 
-    grp = fid.create_group(GroupName.shadow_group.value)
+    if GroupName.shadow_group.value not in fid:
+        fid.create_group(GroupName.shadow_group.value)
+
+    grp = fid[GroupName.shadow_group.value]
 
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
@@ -473,7 +476,10 @@ def calculate_cast_shadow(
     else:
         fid = out_group
 
-    grp = fid.create_group(GroupName.shadow_group.value)
+    if GroupName.shadow_group.value not in fid:
+        fid.create_group(GroupName.shadow_group.value)
+
+    grp = fid[GroupName.shadow_group.value]
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
     )
@@ -596,7 +602,10 @@ def combine_shadow_masks(
     else:
         fid = out_group
 
-    grp = fid.create_group(GroupName.shadow_group.value)
+    if GroupName.shadow_group.value not in fid:
+        fid.create_group(GroupName.shadow_group.value)
+
+    grp = fid[GroupName.shadow_group.value]
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
     )

@@ -119,7 +119,10 @@ def slope_aspect_arrays(
     else:
         fid = out_group
 
-    group = fid.create_group(GroupName.slp_asp_group.value)
+    if GroupName.slp_asp_group.value not in fid:
+        fid.create_group(GroupName.slp_asp_group.value)
+
+    group = fid[GroupName.slp_asp_group.value]
 
     # metadata for calculation
     param_group = group.create_group("parameters")

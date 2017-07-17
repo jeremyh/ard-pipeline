@@ -852,7 +852,10 @@ def calculate_angles(
     else:
         fid = out_group
 
-    grp = fid.create_group(GroupName.sat_sol_group.value)
+    if GroupName.sat_sol_group.value not in fid:
+        fid.create_group(GroupName.sat_sol_group.value)
+
+    grp = fid[GroupName.sat_sol_group.value]
 
     # store the parameter settings used with the satellite and solar angles
     # function
