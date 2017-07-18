@@ -9,7 +9,14 @@ import h5py
 from gaip import constants
 from gaip.acquisition import acquisitions
 from gaip.ancillary import aggregate_ancillary, collect_ancillary
-from gaip.constants import POINT_ALBEDO_FMT, BandType, GroupName, Model
+from gaip.constants import (
+    ALBEDO_FMT,
+    POINT_ALBEDO_FMT,
+    POINT_FMT,
+    BandType,
+    GroupName,
+    Model,
+)
 from gaip.dsm import get_dsm
 from gaip.incident_exiting_angles import (
     exiting_angles,
@@ -69,7 +76,7 @@ def card4l(
 
     TODO: modtran path, ancillary paths, tle path, compression, ytile
     """
-    tp5_fmt = "".join([POINT_ALBEDO_FMT, ".tp5"])
+    tp5_fmt = pjoin(POINT_FMT, ALBEDO_FMT, "".join([POINT_ALBEDO_FMT, ".tp5"]))
     nvertices = vertices[0] * vertices[1]
 
     scene = acquisitions(level1)
@@ -276,12 +283,12 @@ def card4l(
                 point, albedo = key
 
                 with tempfile.TemporaryDirectory() as tmpdir:
+                    prepare_modtran(acqs, point, [albedo], tmpdir, modtran_exe)
+
                     # tp5 data
                     fname = pjoin(tmpdir, tp5_fmt.format(p=point, a=albedo))
                     with open(fname, "w") as src:
                         src.writelines(tp5_data[key])
-
-                    prepare_modtran(acqs, point, [albedo], tmpdir, modtran_exe)
 
                     run_modtran(
                         acqs,
