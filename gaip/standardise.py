@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import logging
 import tempfile
 from os.path import join as pjoin
 from posixpath import join as ppjoin
@@ -40,6 +41,8 @@ from gaip.terrain_shadow_masks import (
     combine_shadow_masks,
     self_shadow,
 )
+
+INTERFACE_LOGGER = logging.getLogger("luigi-interface")
 
 
 def get_buffer(group):
