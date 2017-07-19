@@ -23,7 +23,7 @@ source {env}
 
 {daemon}
 
-luigi --module gaip.multifile_workflow ARD --model {model} --level1-list {scene_list} --outdir {outdir} --workers 16{scheduler} --vertices '{vertices}' --method {method}{pq}
+luigi --module gaip.{workflow} ARD --model {model} --level1-list {scene_list} --outdir {outdir} --workers 16{scheduler} --vertices '{vertices}' --method {method}{pq}
 """
 
 DSH_TEMPLATE = """#!/bin/bash
@@ -43,7 +43,7 @@ OUTDIRS=({outdirs})
 for i in "${{!FILES[@]}}"; do
   X=$(($i+1))
   pbsdsh -n $((16 *$X)) -- bash -l -c "source {env}; ${{DAEMONS[$i]}}; luigi \\
-    --module gaip.multifile_workflow ARD \\
+    --module gaip.{workflow} ARD \\
     --model {model} \\
     --level1-list ${{FILES[$i]}} \\
     --outdir ${{OUTDIRS[$i]}} \\
@@ -76,6 +76,7 @@ def _submit_dsh(
     email,
     env,
     test,
+    workflow,
 ):
     """Submit a single PBSDSH formatted job."""
     files = []
@@ -124,6 +125,7 @@ def _submit_dsh(
         outdirs="".join(outdirs),
         vertices=vertices,
         method=method,
+        workflow=workflow,
     )
 
     out_fname = pjoin(batch_logdir, FMT2.format(model=model, jobid=batchid))
@@ -156,6 +158,7 @@ def _submit_multiple(
     local_scheduler,
     env,
     test,
+    workflow,
 ):
     """Submit multiple PBS formatted jobs."""
     print(f"Executing Batch: {batchid}")
@@ -199,6 +202,7 @@ def _submit_multiple(
             scheduler=scheduler,
             vertices=vertices,
             method=method,
+            workflow=workflow,
         )
 
         out_fname = pjoin(jobdir, FMT2.format(model=model, jobid=jobid))
@@ -231,6 +235,7 @@ def run(
     local_scheduler=False,
     dsh=False,
     test=False,
+    multifile=False,
 ):
     """Base level program."""
     with open(level1) as src:
@@ -248,6 +253,8 @@ def run(
     ncpus = 16 * nodes
 
     pq = " --pixel-quality" if pixel_quality else ""
+
+    workflow = "multifile_workflow" if multifile else "singlefile_workflow"
 
     if test:
         print(f"Mocking... Submitting Batch: {batchid} ...Mocking")
@@ -272,6 +279,7 @@ def run(
             email,
             env,
             test,
+            workflow,
         )
     else:
         _submit_multiple(
@@ -292,6 +300,7 @@ def run(
             local_scheduler,
             env,
             test,
+            workflow,
         )
 
 
@@ -342,7 +351,7 @@ def _parser():
     parser.add_argument("--project", help="Project code to run under.", required=True)
     parser.add_argument(
         "--queue",
-        default="mormal",
+        default="normal",
         help=("Queue to submit the job into, " "eg normal, express."),
     )
     parser.add_argument("--hours", help="Job walltime in hours.", default=48)
@@ -356,6 +365,14 @@ def _parser():
     )
     parser.add_argument(
         "--dsh", help="Run using PBS Distributed Shell.", action="store_true"
+    )
+    parser.add_argument(
+        "--multifile",
+        action="store_true",
+        help=(
+            "Run gaip using the multi-file workflow. "
+            "Default is to output to a single file."
+        ),
     )
     parser.add_argument(
         "--test",
@@ -386,6 +403,7 @@ def main():
         args.local_scheduler,
         args.dsh,
         args.test,
+        args.multifile,
     )
 
 
