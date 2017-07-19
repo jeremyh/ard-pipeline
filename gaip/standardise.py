@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
+import logging
 import tempfile
 from os.path import join as pjoin
 from posixpath import join as ppjoin
 
 import h5py
-import structlog
+from structlog import wrap_logger
 
 from gaip import constants
 from gaip.acquisition import acquisitions
@@ -42,7 +43,7 @@ from gaip.terrain_shadow_masks import (
     self_shadow,
 )
 
-LOG = structlog.get_logger("luigi-interface")
+LOG = wrap_logger(logging.getLogger("luigi-interface"))
 
 
 def get_buffer(group):
