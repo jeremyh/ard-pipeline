@@ -43,7 +43,7 @@ from gaip.terrain_shadow_masks import (
     self_shadow,
 )
 
-LOG = wrap_logger(logging.getLogger("luigi-interface"))
+LOG = wrap_logger(logging.getLogger("gaip-card4l"))
 
 
 def get_buffer(group):
