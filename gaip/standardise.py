@@ -7,6 +7,7 @@ from posixpath import join as ppjoin
 
 import h5py
 from structlog import wrap_logger
+from structlog.processors import JSONRenderer
 
 from gaip import constants
 from gaip.acquisition import acquisitions
@@ -43,7 +44,10 @@ from gaip.terrain_shadow_masks import (
     self_shadow,
 )
 
-LOG = wrap_logger(logging.getLogger("gaip-card4l"))
+LOG = wrap_logger(
+    logging.getLogger("gaip-card4l"),
+    processors=[JSONRenderer(indent=1, sort_keys=True)],
+)
 
 
 def get_buffer(group):
@@ -58,7 +62,6 @@ def card4l(
     method,
     pixel_quality,
     landsea,
-    ecmwf_path,
     tle_path,
     aerosol_fname,
     brdf_path,
@@ -70,6 +73,7 @@ def card4l(
     invariant_fname,
     modtran_exe,
     out_fname,
+    ecmwf_path=None,
     rori=0.52,
     compression="lzf",
     y_tile=100,
@@ -77,8 +81,6 @@ def card4l(
     """CEOS Analysis Ready Data for Land.
     A workflow for producing standardised products that meet the
     CARD4L specification.
-
-    TODO: modtran path, ancillary paths, tle path, compression, ytile
     """
     tp5_fmt = pjoin(POINT_FMT, ALBEDO_FMT, "".join([POINT_ALBEDO_FMT, ".tp5"]))
     nvertices = vertices[0] * vertices[1]
@@ -96,11 +98,6 @@ def card4l(
     # SBT band id's
     band_ids = constants.sbt_bands(satellite, sensor)
     sbt_bands = [a.band_num for a in acqs if a.band_num in band_ids]
-
-    if model == Model.standard or model == Model.sbt:
-        sbt_path = ecmwf_path
-    else:
-        sbt_path = None
 
     with h5py.File(out_fname, "w") as fid:
         for grn_name in scene.granules:
@@ -261,7 +258,7 @@ def card4l(
                 acqs[0],
                 group[GroupName.sat_sol_group.value],
                 nbar_paths,
-                sbt_path,
+                ecmwf_path,
                 invariant_fname,
                 vertices,
                 granule_group,
