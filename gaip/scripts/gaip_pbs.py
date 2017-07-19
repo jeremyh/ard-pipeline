@@ -235,7 +235,7 @@ def run(
     local_scheduler=False,
     dsh=False,
     test=False,
-    multifile=False,
+    singlefile=False,
 ):
     """Base level program."""
     with open(level1) as src:
@@ -254,7 +254,7 @@ def run(
 
     pq = " --pixel-quality" if pixel_quality else ""
 
-    workflow = "multifile_workflow" if multifile else "singlefile_workflow"
+    workflow = "singlefile_workflow" if singlefile else "multifile_workflow"
 
     if test:
         print(f"Mocking... Submitting Batch: {batchid} ...Mocking")
@@ -367,11 +367,11 @@ def _parser():
         "--dsh", help="Run using PBS Distributed Shell.", action="store_true"
     )
     parser.add_argument(
-        "--multifile",
+        "--singlefile",
         action="store_true",
         help=(
-            "Run gaip using the multi-file workflow. "
-            "Default is to output to a single file."
+            "Run gaip using the single-file workflow. "
+            "Default is to output multiple files."
         ),
     )
     parser.add_argument(
@@ -403,7 +403,7 @@ def main():
         args.local_scheduler,
         args.dsh,
         args.test,
-        args.multifile,
+        args.singlefile,
     )
 
 
