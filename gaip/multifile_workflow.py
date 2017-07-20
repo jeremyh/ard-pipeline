@@ -195,7 +195,6 @@ class AncillaryData(luigi.Task):
     def run(self):
         container = acquisitions(self.level1)
         acq = container.get_acquisitions(granule=self.granule)[0]
-        work_root = container.get_root(self.work_root, granule=self.granule)
         sbt_path = None
 
         nbar_paths = {
@@ -217,10 +216,9 @@ class AncillaryData(luigi.Task):
                 nbar_paths,
                 sbt_path,
                 self.invariant_height_fname,
-                vertices=self.vertices,
-                out_fname=out_fname,
-                work_path=work_root,
-                compression=self.compression,
+                self.vertices,
+                out_fname,
+                self.compression,
             )
 
 

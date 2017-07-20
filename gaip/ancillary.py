@@ -118,7 +118,6 @@ def _collect_ancillary(
     vertices=(3, 3),
     out_fname=None,
     compression="lzf",
-    work_path="",
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -136,7 +135,6 @@ def _collect_ancillary(
             vertices,
             out_fid,
             compression,
-            work_path,
         )
 
     return
@@ -151,7 +149,6 @@ def collect_ancillary(
     vertices=(3, 3),
     out_group=None,
     compression="lzf",
-    work_path="",
 ):
     """Collects the ancillary required for NBAR and optionally SBT.
     This could be better handled if using the `opendatacube` project
@@ -206,10 +203,6 @@ def collect_ancillary(
         * 'mafisc'
         * An integer [1-9] (Deflate/gzip)
 
-    :param work_path:
-        A `str` containing the pathname to the work directory to be
-        used for temporary files. Default is the current directory.
-
     :return:
         An opened `h5py.File` object, that is either in-memory using the
         `core` driver, or on disk.
@@ -247,11 +240,7 @@ def collect_ancillary(
         )
 
     collect_nbar_ancillary(
-        acquisition,
-        out_group=group,
-        work_path=work_path,
-        compression=compression,
-        **nbar_paths,
+        acquisition, out_group=group, compression=compression, **nbar_paths
     )
 
     if out_group is None:
@@ -406,7 +395,6 @@ def collect_nbar_ancillary(
     brdf_premodis_path=None,
     out_group=None,
     compression="lzf",
-    work_path="",
 ):
     """Collects the ancillary information required to create NBAR.
 
@@ -451,11 +439,6 @@ def collect_nbar_ancillary(
         * 'mafisc'
         * An integer [1-9] (Deflate/gzip)
 
-    :param work_path:
-        A `str` containing the path to a temporary directory where
-        any BRDF images will be extracted to. Defaults to the current
-        working directory.
-
     :return:
         An opened `h5py.File` object, that is either in-memory using the
         `core` driver, or on disk.
@@ -497,14 +480,7 @@ def collect_nbar_ancillary(
 
     # brdf
     group = fid.create_group("brdf-image-datasets")
-    data = get_brdf_data(
-        acquisition,
-        brdf_path,
-        brdf_premodis_path,
-        group,
-        compression=compression,
-        work_path=work_path,
-    )
+    data = get_brdf_data(acquisition, brdf_path, brdf_premodis_path, group, compression)
     dname_format = DatasetName.brdf_fmt.value
     for key in data:
         band, factor = key
