@@ -6,6 +6,7 @@ import math
 from posixpath import join as ppjoin
 
 import h5py
+import numexpr
 import numpy as np
 from scipy.interpolate import Rbf
 
@@ -304,7 +305,7 @@ def sheared_bilinear_interpolate(
 
             return xx / width  # * width.mean() if matrix nearly singular
 
-    def patch(i, j, x=x, with_shear=True):
+    def patch(i, j, x=x, y=y, with_shear=True):
         """Bilinear cell."""
         vertices = locations[i : i + 2, j : j + 2].reshape(4, 2)
         values = samples[i : i + 2, j : j + 2].reshape(4)
@@ -321,7 +322,11 @@ def sheared_bilinear_interpolate(
 
         a = np.linalg.solve(matrix, values)  # determine coefficients
 
-        return a[0] + a[1] * y + a[2] * x + a[3] * x * y  # broadcast as raster
+        # return a[0] + a[1]*y + a[2]*x + a[3]*x*y # broadcast as raster
+
+        # Note, broadcast creates additional working arrays.
+        a0, a1, a2, a3 = a
+        return numexpr.evaluate("a0 + a1*y + a2*x + a3*x*y")
 
     result = np.full((rows, cols), np.nan, dtype=np.float32)
     for i in range(grid_size):
