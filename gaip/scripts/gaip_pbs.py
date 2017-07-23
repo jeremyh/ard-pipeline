@@ -249,8 +249,8 @@ def run(
     batch_outdir = pjoin(outdir, f"batchid-{batchid}")
 
     # compute resources
-    memory = 32 * nodes
-    ncpus = 16 * nodes
+    memory = 32 * nodes if dsh else 32
+    ncpus = 16 * nodes if dsh else 16
 
     pq = " --pixel-quality" if pixel_quality else ""
 
