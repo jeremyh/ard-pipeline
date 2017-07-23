@@ -209,13 +209,13 @@ def _submit_multiple(
         with open(out_fname, "w") as src:
             src.write(pbs)
 
-    if test:
-        print(f"Mocking... Submitting Job: {jobid} ...Mocking")
-        print(f"qsub {out_fname}")
-    else:
-        os.chdir(dirname(out_fname))
-        print(f"Submitting Job: {jobid}")
-        subprocess.call(["qsub", out_fname])
+        if test:
+            print(f"Mocking... Submitting Job: {jobid} ...Mocking")
+            print(f"qsub {out_fname}")
+        else:
+            os.chdir(dirname(out_fname))
+            print(f"Submitting Job: {jobid}")
+            subprocess.call(["qsub", out_fname])
 
 
 def run(
