@@ -237,7 +237,36 @@ def sheared_bilinear_interpolate(
     shear=True,
     both_sides=False,
 ):
-    """Generalisation of the original NBAR interpolation scheme."""
+    """Generalisation of the original NBAR interpolation scheme.
+
+    Same interface as:
+        gaip.interpolation.fortran_bilinear_interpolate
+    with following exceptions:
+        -   locations/samples may be greater than 9 (e.g. 25, 49, etc)
+        -   two additional configuation options:
+
+    :bool shear:
+        If false then apply textbook bilinear interpolation. Note this
+        expects that the locations describe a rectilinear grid. If true
+        then make adjustments for grid distortion and curvature of
+        boxlines (row_start, row_centre and row_end).
+        See also `both_sides`.
+
+    :bool both_sides:
+        Only has effect if shear is True.
+        If false then apply original modification like used in the
+        previous fortran version.
+        If true then instead apply corrections for trapezoidal shape of
+        4-point grid cells.
+        If the grid/boxlines have a sheared parallelogram shape (rather
+        than more general sheared trapezoidal shapes) then both
+        methods should produce equivalent output, otherwise the
+        original version is expected to introduce larger discontinuities
+        between cells.
+
+    Optimised to reduce memory footprint (no large rasters are
+    temporarily allocated).
+    """
     n = len(samples)
     grid_size = int(math.sqrt(n)) - 1
 
@@ -245,10 +274,11 @@ def sheared_bilinear_interpolate(
     assert not (grid_size % 2)
     # Assume count of samples is 9 or 25, 49, 81.. (Grid size is 2, 4, 6, ..)
 
+    # facilitate indexing
     locations = locations.reshape((grid_size + 1, grid_size + 1, 2))
     samples = samples.reshape((grid_size + 1,) * 2)
 
-    # -------------------------
+    # BOXLINE:
     # Parcel boundaries follow satellite track (by 1D linear interpolation)
 
     lines = np.empty((grid_size + 1, rows), dtype=np.uint32)
@@ -265,10 +295,9 @@ def sheared_bilinear_interpolate(
             i / middle_vertex
         )
 
-    lines = lines.reshape(grid_size + 1, rows, 1)  # enable broadcast
+    # enable broadcast
+    lines = lines.reshape(grid_size + 1, rows, 1)
     row_start = row_start[:, None]
-
-    # ----------------------
 
     # Generate coordinate arrays
     y, x = np.ogrid[:rows, :cols]
@@ -288,6 +317,7 @@ def sheared_bilinear_interpolate(
                 .reshape(4, 2)
                 .astype(np.float32, copy=True)
             )
+            # note, copying permits modification by shear
 
             # build numexpr to update cell with interpolation
 
@@ -301,9 +331,11 @@ def sheared_bilinear_interpolate(
                 sheared = (
                     "x - row_start" if not both_sides else "(x - left) / (right - left)"
                 )  # if near-singular matrix warnings, multiply by a constant typical width-between-samples
+
+                # apply shear to interpolation
                 bilinear = bilinear.replace("x", "(" + sheared + ")")
 
-                # get original y,x coordinates (i.e. indices) for 4 vertices
+                # retrieve original y,x coordinates (i.e. indices) for 4 vertices
                 vi, vj = map(list, vertices.T.astype(int))
 
                 # Update vertices with same warp as for the interpolation
@@ -315,13 +347,15 @@ def sheared_bilinear_interpolate(
                 )
                 vertices[:, 1] = numexpr.evaluate(sheared, local_dict=four_pts)
 
-            # determine coefficients
+            # determine bilinear coefficients
 
             matrix = np.ones((4, 4))
             matrix[:, 1:3] = vertices
             matrix[:, 3] = vertices[:, 0] * vertices[:, 1]
 
             a0, a1, a2, a3 = np.linalg.solve(matrix, values)
+
+            # update output raster
 
             expression = f"where({subset}, {bilinear}, result)"
 
