@@ -33,7 +33,14 @@ from luigi.util import inherits, requires
 from gaip import constants
 from gaip.acquisition import acquisitions
 from gaip.ancillary import _aggregate_ancillary, _collect_ancillary
-from gaip.constants import ALBEDO_FMT, POINT_ALBEDO_FMT, POINT_FMT, BandType, Model
+from gaip.constants import (
+    ALBEDO_FMT,
+    POINT_ALBEDO_FMT,
+    POINT_FMT,
+    BandType,
+    Method,
+    Model,
+)
 from gaip.dsm import _get_dsm
 from gaip.incident_exiting_angles import (
     _incident_exiting_angles,
@@ -404,7 +411,7 @@ class InterpolateCoefficient(luigi.Task):
     factor = luigi.Parameter()
     base_dir = luigi.Parameter(default="_interpolation", significant=False)
     model = luigi.EnumParameter(enum=Model)
-    method = luigi.Parameter(default="shear")
+    method = luigi.EnumParameter(enum=Method, default=Method.shear)
 
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.vertices]
@@ -452,7 +459,7 @@ class InterpolateCoefficients(luigi.Task):
 
     vertices = luigi.TupleParameter()
     model = luigi.EnumParameter(enum=Model)
-    method = luigi.Parameter(default="shear")
+    method = luigi.EnumParameter(enum=Method, default=Method.shear)
 
     def requires(self):
         container = acquisitions(self.level1)
@@ -984,7 +991,7 @@ class ARD(luigi.WrapperTask):
     model = luigi.EnumParameter(enum=Model)
     vertices = luigi.TupleParameter(default=(5, 5))
     pixel_quality = luigi.BoolParameter()
-    method = luigi.Parameter(default="shear")
+    method = luigi.EnumParameter(enum=Method, default=Method.shear)
 
     def requires(self):
         with open(self.level1_list) as src:

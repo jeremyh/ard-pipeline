@@ -28,7 +28,7 @@ from os.path import join as pjoin
 
 import luigi
 
-from gaip.constants import Model
+from gaip.constants import Method, Model
 from gaip.standardise import card4l
 
 ERROR_LOGGER = logging.getLogger("luigi-error")
@@ -117,7 +117,7 @@ class ARD(luigi.WrapperTask):
     outdir = luigi.Parameter()
     model = luigi.EnumParameter(enum=Model)
     vertices = luigi.TupleParameter(default=(5, 5))
-    method = luigi.Parameter(default="shear")
+    method = luigi.EnumParameter(enum=Method, default=Method.shear)
     pixel_quality = luigi.BoolParameter()
     land_sea_path = luigi.Parameter()
     aerosol_fname = luigi.Parameter(significant=False)
