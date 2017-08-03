@@ -11,29 +11,24 @@ from os.path import join as pjoin
 
 from gaip.tiling import scatter
 
-PBS_TEMPLATE = """#!/bin/bash
-#PBS -P {project}
-#PBS -q {queue}
-#PBS -l walltime={hours}:00:00,mem={memory}GB,ncpus={ncpus},jobfs=50GB
-#PBS -l wd
-#PBS -me
-#PBS -M {email}
-
-source {env}
-
-{daemon}
-
-luigi --module gaip.{workflow} ARD --model {model} --level1-list {scene_list} --outdir {outdir} --workers 16{scheduler} --vertices '{vertices}' --method {method}{pq}
-"""
-
-DSH_TEMPLATE = """#!/bin/bash
+PBS_RESOURCES = """#!/bin/bash
 #PBS -P {project}
 #PBS -q {queue}
 #PBS -l walltime={hours}:00:00,mem={memory}GB,ncpus={ncpus},jobfs=50GB,other=pernodejobfs
 #PBS -l wd
 #PBS -me
 #PBS -M {email}
+"""
 
+NODE_TEMPLATE = """{pbs_resources}
+source {env}
+
+{daemon}
+
+luigi {options} --level1-list {scene_list} --outdir {outdir} --workers 16{scheduler}
+"""
+
+DSH_TEMPLATE = """{pbs_resources}
 FILES=({files})
 
 DAEMONS=({daemons})
@@ -43,40 +38,24 @@ OUTDIRS=({outdirs})
 for i in "${{!FILES[@]}}"; do
   X=$(($i+1))
   pbsdsh -n $((16 *$X)) -- bash -l -c "source {env}; ${{DAEMONS[$i]}}; luigi \\
-    --module gaip.{workflow} ARD \\
-    --model {model} \\
+    {options} \\
     --level1-list ${{FILES[$i]}} \\
     --outdir ${{OUTDIRS[$i]}} \\
-    --workers 16 \\
-    --vertices '{vertices}' \\
-    --method {method}{pq}" &
+    --workers 16" &
 done;
 wait
 """
 
+
 FMT1 = "level1-scenes-{jobid}.txt"
-FMT2 = "{model}-ard-{jobid}.bash"
+FMT2 = "gaip-{jobid}.bash"
 DAEMON_FMT = "luigid --background --logdir {}"
+ARD_FMT = "--module gaip.{workflow} ARD --model {model} --vertices '{vertices}' --method {method}{pq}"  # pylint: disable=line-too-long
+TASK_FMT = "--module gaip.multifile_workflow CallTask --task {task}"
 
 
 def _submit_dsh(
-    scattered,
-    vertices,
-    model,
-    method,
-    pq,
-    batchid,
-    batch_logdir,
-    batch_outdir,
-    project,
-    queue,
-    memory,
-    ncpus,
-    hours,
-    email,
-    env,
-    test,
-    workflow,
+    scattered, options, env, batchid, batch_logdir, batch_outdir, pbs_resources, test
 ):
     """Submit a single PBSDSH formatted job."""
     files = []
@@ -111,24 +90,15 @@ def _submit_dsh(
     outdirs = [f'"{f}"\n' for f in outdirs]
 
     pbs = DSH_TEMPLATE.format(
-        project=project,
-        queue=queue,
-        hours=hours,
-        memory=memory,
-        ncpus=ncpus,
-        email=email,
-        files="".join(files),
+        pbs_resources=pbs_resources,
         env=env,
+        options=options,
+        files="".join(files),
         daemons="".join(daemons),
-        model=model,
-        pq=pq,
         outdirs="".join(outdirs),
-        vertices=vertices,
-        method=method,
-        workflow=workflow,
     )
 
-    out_fname = pjoin(batch_logdir, FMT2.format(model=model, jobid=batchid))
+    out_fname = pjoin(batch_logdir, FMT2.format(jobid=batchid))
     with open(out_fname, "w") as src:
         src.write(pbs)
 
@@ -142,23 +112,14 @@ def _submit_dsh(
 
 def _submit_multiple(
     scattered,
-    vertices,
-    model,
-    method,
-    pq,
+    options,
+    env,
     batchid,
     batch_logdir,
     batch_outdir,
-    project,
-    queue,
-    memory,
-    ncpus,
-    hours,
-    email,
     local_scheduler,
-    env,
+    pbs_resources,
     test,
-    workflow,
 ):
     """Submit multiple PBS formatted jobs."""
     print(f"Executing Batch: {batchid}")
@@ -186,26 +147,17 @@ def _submit_multiple(
         with open(out_fname, "w") as src:
             src.writelines(block)
 
-        pbs = PBS_TEMPLATE.format(
-            project=project,
-            queue=queue,
-            hours=hours,
-            memory=memory,
-            ncpus=ncpus,
-            email=email,
+        pbs = NODE_TEMPLATE.format(
+            pbs_resources=pbs_resources,
             env=env,
             daemon=daemon,
-            model=model,
-            pq=pq,
+            options=options,
             scene_list=out_fname,
             outdir=job_outdir,
             scheduler=scheduler,
-            vertices=vertices,
-            method=method,
-            workflow=workflow,
         )
 
-        out_fname = pjoin(jobdir, FMT2.format(model=model, jobid=jobid))
+        out_fname = pjoin(jobdir, FMT2.format(jobid=jobid))
         with open(out_fname, "w") as src:
             src.write(pbs)
 
@@ -236,6 +188,7 @@ def run(
     dsh=False,
     test=False,
     singlefile=False,
+    task=None,
 ):
     """Base level program."""
     with open(level1) as src:
@@ -252,9 +205,26 @@ def run(
     memory = 32 * nodes if dsh else 32
     ncpus = 16 * nodes if dsh else 16
 
+    pbs_resources = PBS_RESOURCES.format(
+        project=project,
+        queue=queue,
+        hours=hours,
+        memory=memory,
+        ncpus=ncpus,
+        email=email,
+    )
+
     pq = " --pixel-quality" if pixel_quality else ""
 
     workflow = "singlefile_workflow" if singlefile else "multifile_workflow"
+
+    # luigi task workflow options
+    if task is None:
+        options = ARD_FMT.format(
+            workflow=workflow, model=model, pq=pq, vertices=vertices, method=method
+        )
+    else:
+        options = TASK_FMT.format(task=task)
 
     if test:
         print(f"Mocking... Submitting Batch: {batchid} ...Mocking")
@@ -264,43 +234,25 @@ def run(
     if dsh:
         _submit_dsh(
             scattered,
-            vertices,
-            model,
-            method,
-            pq,
+            options,
+            env,
             batchid,
             batch_logdir,
             batch_outdir,
-            project,
-            queue,
-            memory,
-            ncpus,
-            hours,
-            email,
-            env,
+            pbs_resources,
             test,
-            workflow,
         )
     else:
         _submit_multiple(
             scattered,
-            vertices,
-            model,
-            method,
-            pq,
+            options,
+            env,
             batchid,
             batch_logdir,
             batch_outdir,
-            project,
-            queue,
-            memory,
-            ncpus,
-            hours,
-            email,
             local_scheduler,
-            env,
+            pbs_resources,
             test,
-            workflow,
         )
 
 
@@ -375,6 +327,15 @@ def _parser():
         ),
     )
     parser.add_argument(
+        "--task",
+        help=(
+            "Specify a luigi Task contained within the "
+            "gaip.multifile_workflow module and run "
+            "each scene listed in level1-list through to "
+            "that Task level."
+        ),
+    )
+    parser.add_argument(
         "--test",
         action="store_true",
         help=("Test job execution (Don't submit the job to " "the PBS queue)."),
@@ -404,6 +365,7 @@ def main():
         args.dsh,
         args.test,
         args.singlefile,
+        args.task,
     )
 
 
