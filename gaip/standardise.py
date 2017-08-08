@@ -45,7 +45,7 @@ from gaip.terrain_shadow_masks import (
 )
 
 LOG = wrap_logger(
-    logging.getLogger("gaip-card4l"),
+    logging.getLogger("gaip-status"),
     processors=[JSONRenderer(indent=1, sort_keys=True)],
 )
 
