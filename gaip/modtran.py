@@ -215,10 +215,6 @@ def format_tp5(
                 )
                 write_scalar(np.string_(data), dname, group, input_data)
 
-            # attach location info to each point Group
-            lonlat = (coordinator["longitude"][p], coordinator["latitude"][p])
-            group[POINT_FMT.format(p=p)].attrs["lonlat"] = lonlat
-
     # create tp5 for sbt if it has been collected
     if ancillary_group.attrs.get("sbt-ancillary"):
         dname = ppjoin(POINT_FMT, DatasetName.atmospheric_profile.value)
@@ -260,6 +256,11 @@ def format_tp5(
                 DatasetName.tp5.value,
             )
             write_scalar(np.string_(data), out_dname, group, input_data)
+
+    # attach location info to each point Group
+    for p in range(npoints):
+        lonlat = (coordinator["longitude"][p], coordinator["latitude"][p])
+        group[POINT_FMT.format(p=p)].attrs["lonlat"] = lonlat
 
     return tp5_data, out_group
 
