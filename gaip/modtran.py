@@ -254,12 +254,12 @@ def format_tp5(
 
             data = THERMAL_TRANSMITTANCE.format(**input_data)
             tp5_data[(p, Model.sbt.albedos[0])] = data
-            dname = ppjoin(
+            out_dname = ppjoin(
                 POINT_FMT.format(p=p),
                 ALBEDO_FMT.format(a=Model.sbt.albedos[0]),
                 DatasetName.tp5.value,
             )
-            write_scalar(np.string_(data), dname, group, input_data)
+            write_scalar(np.string_(data), out_dname, group, input_data)
 
     return tp5_data, out_group
 
