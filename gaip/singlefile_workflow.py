@@ -49,10 +49,10 @@ def on_failure(task, exception):
     """Capture any Task Failure here."""
     ERROR_LOGGER.error(
         task=task.get_task_family(),
-        params=task.get_params(),
+        params=task.to_str_params(),
         scene=task.level1,
         exception=exception.__str__(),
-        traceback=traceback.format_exc(),
+        traceback=traceback.format_exc().splitlines(),
     )
 
 
