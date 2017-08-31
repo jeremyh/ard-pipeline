@@ -56,7 +56,7 @@ def on_failure(task, exception):
     )
 
 
-class Standard(luigi.Task):
+class DataStandardisation(luigi.Task):
     """Runs the standardised product workflow."""
 
     level1 = luigi.Parameter()
@@ -170,7 +170,7 @@ class ARD(luigi.WrapperTask):
                 "tle_path": self.tle_path,
                 "rori": self.rori,
             }
-            yield Standard(**kwargs)
+            yield DataStandardisation(**kwargs)
 
 
 if __name__ == "__main__":
