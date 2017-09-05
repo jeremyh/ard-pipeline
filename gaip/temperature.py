@@ -158,10 +158,11 @@ def surface_brightness_temperature(
 
         acq.data(**acq_args)
         upwelling_radiation[idx]
-        transmittance[idx]
+        trans = transmittance[idx]
+        mask = ~np.isfinite(trans)
         expr = "(radiance-path_up) / trans"
         corrected_radiance = numexpr.evaluate(expr)
-        mask = corrected_radiance <= 0
+        mask |= corrected_radiance <= 0
         expr = "k2 / log(k1 / corrected_radiance + 1)"
         brightness_temp = numexpr.evaluate(expr)
         brightness_temp[mask] = kwargs["fillvalue"]
