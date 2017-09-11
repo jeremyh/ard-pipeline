@@ -16,7 +16,7 @@ import yaml
 from yaml.representer import Representer
 
 import gaip
-from gaip.constants import POINT_FMT, DatasetName, NBARConstants
+from gaip.constants import POINT_FMT, DatasetName, GroupName, NBARConstants
 from gaip.hdf5 import read_h5_table, read_scalar, write_scalar
 
 yaml.add_representer(np.int8, Representer.represent_int)
@@ -162,14 +162,19 @@ def create_ard_yaml(acquisition, ancillary_group, out_group, sbt=False):
 
     def load_ancillary(acquisition, fid, sbt=False):
         """Load the ancillary data retrieved during the workflow."""
+        # retrieve the averaged ancillary if available
+        anc_grp = fid.get(GroupName.ancillary_avg_group.value)
+        if anc_grp is None:
+            anc_grp = fid
+
         dname = DatasetName.aerosol.value
-        aerosol_data = read_scalar(fid, dname)
+        aerosol_data = read_scalar(anc_grp, dname)
         dname = DatasetName.water_vapour.value
-        water_vapour_data = read_scalar(fid, dname)
+        water_vapour_data = read_scalar(anc_grp, dname)
         dname = DatasetName.ozone.value
-        ozone_data = read_scalar(fid, dname)
+        ozone_data = read_scalar(anc_grp, dname)
         dname = DatasetName.elevation.value
-        elevation_data = read_scalar(fid, dname)
+        elevation_data = read_scalar(anc_grp, dname)
 
         ancillary = {
             "aerosol": aerosol_data,
@@ -210,8 +215,6 @@ def create_ard_yaml(acquisition, ancillary_group, out_group, sbt=False):
         "scene_centre_datetime": acquisition.scene_centre_datetime,
         "platform": acquisition.spacecraft_id,
         "sensor": acquisition.sensor_id,
-        "path": acquisition.path,
-        "row": acquisition.row,
     }
 
     # ancillary metadata tracking
