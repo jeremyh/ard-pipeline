@@ -27,10 +27,11 @@ from os.path import basename
 from os.path import join as pjoin
 
 import luigi
+from luigi.util import inherits
 from structlog import wrap_logger
 from structlog.processors import JSONRenderer
 
-from gaip.constants import Method, Model
+from gaip.constants import Model
 from gaip.standardise import card4l
 
 ERROR_LOGGER = wrap_logger(
@@ -66,11 +67,11 @@ class DataStandardisation(luigi.Task):
     method = luigi.Parameter(default="shear")
     pixel_quality = luigi.BoolParameter()
     land_sea_path = luigi.Parameter()
-    aerosol_fname = luigi.Parameter(significant=False)
+    aerosol = luigi.DictParameter({"default": 0.05}, significant=False)
     brdf_path = luigi.Parameter(significant=False)
     brdf_premodis_path = luigi.Parameter(significant=False)
     ozone_path = luigi.Parameter(significant=False)
-    water_vapour_path = luigi.Parameter(significant=False)
+    water_vapour = luigi.DictParameter({"default": 1.5}, significant=False)
     dem_path = luigi.Parameter(significant=False)
     ecmwf_path = luigi.Parameter(significant=False)
     invariant_height_fname = luigi.Parameter(significant=False)
@@ -97,11 +98,11 @@ class DataStandardisation(luigi.Task):
                 self.pixel_quality,
                 self.land_sea_path,
                 self.tle_path,
-                self.aerosol_fname,
+                self.aerosol,
                 self.brdf_path,
                 self.brdf_premodis_path,
                 self.ozone_path,
-                self.water_vapour_path,
+                self.water_vapour,
                 self.dem_path,
                 self.dsm_fname,
                 self.invariant_height_fname,
@@ -114,30 +115,11 @@ class DataStandardisation(luigi.Task):
             )
 
 
+@inherits(DataStandardisation)
 class ARD(luigi.WrapperTask):
     """Kicks off ARD tasks for each level1 entry."""
 
     level1_list = luigi.Parameter()
-    outdir = luigi.Parameter()
-    model = luigi.EnumParameter(enum=Model)
-    vertices = luigi.TupleParameter(default=(5, 5))
-    method = luigi.EnumParameter(enum=Method, default=Method.shear)
-    pixel_quality = luigi.BoolParameter()
-    land_sea_path = luigi.Parameter()
-    aerosol_fname = luigi.Parameter(significant=False)
-    brdf_path = luigi.Parameter(significant=False)
-    brdf_premodis_path = luigi.Parameter(significant=False)
-    ozone_path = luigi.Parameter(significant=False)
-    water_vapour_path = luigi.Parameter(significant=False)
-    dem_path = luigi.Parameter(significant=False)
-    ecmwf_path = luigi.Parameter(significant=False)
-    invariant_height_fname = luigi.Parameter(significant=False)
-    dsm_fname = luigi.Parameter(significant=False)
-    modtran_exe = luigi.Parameter(significant=False)
-    tle_path = luigi.Parameter(significant=False)
-    rori = luigi.FloatParameter(default=0.52, significant=False)
-    compression = luigi.Parameter(default="lzf", significant=False)
-    y_tile = luigi.IntParameter(default=100, significant=False)
 
     def requires(self):
         with open(self.level1_list) as src:
@@ -158,11 +140,11 @@ class ARD(luigi.WrapperTask):
                 "modtran_exe": self.modtran_exe,
                 "outdir": self.outdir,
                 "land_sea_path": self.land_sea_path,
-                "aerosol_fname": self.aerosol_fname,
+                "aerosol": self.aerosol,
                 "brdf_path": self.brdf_path,
                 "brdf_premodis_path": self.brdf_premodis_path,
                 "ozone_path": self.ozone_path,
-                "water_vapour_path": self.water_vapour_path,
+                "water_vapour": self.water_vapour,
                 "dem_path": self.dem_path,
                 "ecmwf_path": ecmwf_path,
                 "invariant_height_fname": self.invariant_height_fname,
