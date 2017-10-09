@@ -179,9 +179,6 @@ class AcquisitionsContainer:
 class Acquisition:
     """Acquisition metadata."""
 
-    # def __init__(self, metadata):
-    #     for v in metadata.values():
-    #         self.__dict__.update(v)
     def __init__(
         self,
         pathname,
@@ -203,6 +200,8 @@ class Acquisition:
 
         if metadata is not None:
             for key, value in metadata.items():
+                if key == "band_type":
+                    value = BandType[key]
                 setattr(self, key, value)
 
         self._open()
