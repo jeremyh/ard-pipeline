@@ -491,7 +491,7 @@ def setup_orbital_elements(acquisition, tle_path):
         # angular velocity (rad sec-1)
         dset["angular_velocity"] = acquisition.omega
     else:
-        ephemeral.compute(acquisition.scene_center_datetime)
+        ephemeral.compute(acquisition.acquisition_datetime)
         pi = np.pi
         n = ephemeral._n  # number or orbits per day
         s = 24 * 60 * 60  # Seconds in a day
@@ -797,7 +797,7 @@ def calculate_angles(
         `core` driver, or on disk.
     """
     acq = acquisition
-    century = calculate_julian_century(acq.scene_center_datetime)
+    century = calculate_julian_century(acq.acquisition_datetime)
     geobox = acq.gridded_geo_box()
 
     # longitude and latitude datasets
@@ -863,8 +863,8 @@ def calculate_angles(
         "lines": acq.lines,
         "samples": acq.samples,
         "century": century,
-        "hours": acq.decimal_hour,
-        "scene_acquisition_datetime": acq.scene_center_datetime,
+        "hours": acq.decimal_hour(),
+        "scene_acquisition_datetime": acq.acquisition_datetime,
         "centre_longitude_latitude": centre_xy,
         "minimum_latiude": min_lat,
         "maximum_latiude": max_lat,
@@ -953,7 +953,7 @@ def calculate_angles(
                 lon_data[i],
                 spheroid[0],
                 orbital_elements[0],
-                acq.decimal_hour,
+                acq.decimal_hour(),
                 century,
                 12,
                 smodel[0],

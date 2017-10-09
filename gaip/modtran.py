@@ -177,7 +177,7 @@ def format_tp5(
         out_group.create_group(GroupName.atmospheric_inputs_grp.value)
 
     group = out_group[GroupName.atmospheric_inputs_grp.value]
-    iso_time = acquisitions[0].scene_centre_datetime.isoformat()
+    iso_time = acquisitions[0].acquisition_datetime.isoformat()
     group.attrs["acquisition-datetime"] = iso_time
 
     tp5_data = {}
@@ -196,7 +196,7 @@ def format_tp5(
                     "elevation": elevation,
                     "sat_height": acquisitions[0].altitude / 1000.0,
                     "sat_view": view_corrected[p],
-                    "doy": acquisitions[0].julian_day,
+                    "doy": acquisitions[0].julian_day(),
                     "binary": "T",
                 }
                 if alb == Model.nbar.albedos[2]:
@@ -207,7 +207,7 @@ def format_tp5(
                     input_data["albedo"] = float(alb)
                     input_data["lat"] = lat[p]
                     input_data["lon"] = rlon[p]
-                    input_data["time"] = acquisitions[0].decimal_hour
+                    input_data["time"] = acquisitions[0].decimal_hour()
                     input_data["sat_azimuth"] = azi_corrected[p]
                     data = albedo_profile.format(**input_data)
 

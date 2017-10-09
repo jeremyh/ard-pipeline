@@ -298,7 +298,7 @@ def collect_sbt_ancillary(
 
     fid.attrs["sbt-ancillary"] = True
 
-    dt = acquisition.scene_center_datetime
+    dt = acquisition.acquisition_datetime
 
     description = (
         "Combined Surface and Pressure Layer data retrieved from "
@@ -463,7 +463,7 @@ def collect_nbar_ancillary(
     else:
         fid = out_group
 
-    dt = acquisition.scene_center_datetime
+    dt = acquisition.acquisition_datetime
     geobox = acquisition.gridded_geo_box()
 
     aerosol = get_aerosol_data(acquisition, aerosol_fname)
@@ -578,7 +578,7 @@ def get_aerosol_data(acquisition, aerosol_fname):
     more control over how the data is selected geo-metrically.
     Better control over timedeltas.
     """
-    dt = acquisition.scene_center_datetime
+    dt = acquisition.acquisition_datetime
     geobox = acquisition.gridded_geo_box()
     roi_poly = Polygon(
         [geobox.ul_lonlat, geobox.ur_lonlat, geobox.lr_lonlat, geobox.ll_lonlat]
@@ -688,7 +688,7 @@ def get_water_vapour(acquisition, vapour_path, scale_factor=0.1):
     """Retrieve the water vapour value for an `acquisition` and the
     path for the water vapour ancillary data.
     """
-    dt = acquisition.scene_center_datetime
+    dt = acquisition.acquisition_datetime
     geobox = acquisition.gridded_geo_box()
 
     year = dt.strftime("%Y")

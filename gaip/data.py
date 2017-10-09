@@ -52,9 +52,7 @@ def data(
     The parameter `masked` indicates whether or not to return a masked array.
     Default is False.
     """
-    dirname = acq.dir_name
-    filename = acq.file_name
-    with rasterio.open(pjoin(dirname, filename), "r") as fo:
+    with rasterio.open(pathname) as fo:
         # convert to at sensor radiance as required
         if apply_gain_offset:
             if out is None:
@@ -88,9 +86,7 @@ def data_and_box(acq, out=None, window=None, masked=False):
     The parameter `masked` indicates whether or not to return a masked array.
     Default is False.
     """
-    dirname = acq.dir_name
-    filename = acq.file_name
-    with rasterio.open(pjoin(dirname, filename), "r") as fo:
+    with rasterio.open(pathname) as fo:
         box = GriddedGeoBox.from_dataset(fo)
         if window is not None:
             rows = window[0][1] - window[0][0]

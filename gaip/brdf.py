@@ -499,7 +499,7 @@ def get_brdf_data(
     geobox = acquisition.gridded_geo_box()
 
     # Get the date of acquisition
-    dt = acquisition.scene_center_datetime.date()
+    dt = acquisition.acquisition_datetime.date()
 
     # Get the boundary extents of the image
     nw = geobox.ul_lonlat
