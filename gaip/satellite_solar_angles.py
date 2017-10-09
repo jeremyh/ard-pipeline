@@ -864,7 +864,7 @@ def calculate_angles(
         "samples": acq.samples,
         "century": century,
         "hours": acq.decimal_hour(),
-        "scene_acquisition_datetime": acq.acquisition_datetime,
+        "acquisition_datetime": acq.acquisition_datetime,
         "centre_longitude_latitude": centre_xy,
         "minimum_latiude": min_lat,
         "maximum_latiude": max_lat,
