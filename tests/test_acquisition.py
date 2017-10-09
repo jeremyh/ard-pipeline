@@ -8,6 +8,7 @@ from gaip.constants import BandType
 
 DATA_DIR = pjoin(dirname(abspath(__file__)), "data")
 
+# TODO; update the scenes with resampled versions
 L5_MTL1 = pjoin(DATA_DIR, "LANDSAT5", "L5090081_08120090407_MTL.txt")
 L5_MTL2 = pjoin(
     DATA_DIR, "LANDSAT5", "LT05_L1TP_095066_20100601_20170222_01_T1_MTL.txt"
@@ -109,52 +110,23 @@ class Landsat5Mtl1AcquisitionTest(unittest.TestCase):
         assert self.acqs[5].band_type == BandType.Thermal
         assert self.acqs[6].band_type == BandType.Reflective
 
-    # TODO: need extra name mappings to get the different names across versions
-    # def test_grid_cell_size(self):
-    #     self.assertEqual(self.acqs[0].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[1].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[2].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[3].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[4].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[5].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[6].grid_cell_size, 25.0)
-
-    def test_scene_center_time(self):
-        for acq in self.acqs:
-            assert acq.scene_center_time == datetime.time(23, 36, 9, 88050)
-
     def test_acquisition_datetime(self):
         for acq in self.acqs:
             assert acq.acquisition_datetime == datetime.datetime(
                 2009, 4, 7, 23, 36, 9, 88050
             )
 
-    def test_min_max_radiance_band1(self):
+    def test_min_radiance_band1(self):
         assert self.acqs[0].min_radiance == -1.52
+
+    def test_max_radiance_band1(self):
         assert self.acqs[0].max_radiance == 193.0
 
-    def test_min_max_radiance_band2(self):
-        assert self.acqs[0].min_radiance == -1.52
-        assert self.acqs[0].max_radiance == 193.0
+    def test_min_quantize_band1(self):
+        assert self.acqs[0].min_quantize == 1.0
 
-    def test_min_max_radiance_band3(self):
-        assert self.acqs[0].min_radiance == -1.52
-        assert self.acqs[0].max_radiance == 193.0
-
-    def test_lmin(self):
-        assert self.acqs[0].lmin == -1.52
-
-    def test_lmax(self):
-        assert self.acqs[0].lmax == 193.0
-
-    def test_qcalmin(self):
-        assert self.acqs[0].qcalmin == 1.0
-
-    def test_qcalmax(self):
-        assert self.acqs[0].qcalmax == 255.0
-
-    def test_zone_number(self):
-        assert self.acqs[0].zone_number == -56
+    def test_max_quantize_band1(self):
+        assert self.acqs[0].max_quantize == 255.0
 
     def test_sun_azimuth(self):
         assert self.acqs[0].sun_azimuth == 48.1772887
@@ -168,13 +140,13 @@ class Landsat5Mtl1AcquisitionTest(unittest.TestCase):
     def test_bias(self):
         self.assertAlmostEqual(self.acqs[0].bias, -2.2858267716535465)
 
-    def test_sensor(self):
+    def test_sensor_id(self):
         for acq in self.acqs:
             assert acq.sensor_id == "TM"
 
-    def test_satellite(self):
+    def test_platform_id(self):
         for acq in self.acqs:
-            assert acq.spacecraft_id == "LANDSAT_5"
+            assert acq.platform_id == "LANDSAT_5"
 
 
 class Landsat5Mtl2AcquisitionTest(unittest.TestCase):
@@ -195,40 +167,23 @@ class Landsat5Mtl2AcquisitionTest(unittest.TestCase):
         assert self.acqs[6].band_type == BandType.Reflective
         assert self.acqs[7].band_type == BandType.Quality
 
-    # TODO: need extra name mappings to get the different names across versions
-    # def test_grid_cell_size(self):
-    #     self.assertEqual(self.acqs[0].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[1].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[2].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[3].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[4].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[5].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[6].grid_cell_size, 25.0)
-
-    def test_scene_center_time(self):
-        for acq in self.acqs:
-            assert acq.scene_center_time == datetime.time(0, 4, 43, 174081)
-
     def test_acquisition_datetime(self):
         for acq in self.acqs:
             assert acq.acquisition_datetime == datetime.datetime(
                 2010, 6, 1, 0, 4, 43, 174081
             )
 
-    def test_min_max_radiance_band1(self):
+    def test_min_radiance_band1(self):
         assert self.acqs[0].min_radiance == -1.52
+
+    def test_max_radiance_band1(self):
         assert self.acqs[0].max_radiance == 193.0
 
-    def test_min_max_radiance_band2(self):
-        assert self.acqs[0].min_radiance == -1.52
-        assert self.acqs[0].max_radiance == 193.0
+    def test_min_quantize_band1(self):
+        assert self.acqs[0].min_quantize == 1.0
 
-    def test_min_max_radiance_band3(self):
-        assert self.acqs[0].min_radiance == -1.52
-        assert self.acqs[0].max_radiance == 193.0
-
-    def test_zone_number(self):
-        assert self.acqs[0].utm_zone == -55
+    def test_max_quantize_band1(self):
+        assert self.acqs[0].max_quantize == 255.0
 
     def test_sun_azimuth(self):
         assert self.acqs[0].sun_azimuth == 43.24285506
@@ -242,11 +197,11 @@ class Landsat5Mtl2AcquisitionTest(unittest.TestCase):
     def test_bias(self):
         self.assertAlmostEqual(self.acqs[0].bias, -2.2858267716535465)
 
-    def test_sensor(self):
+    def test_sensor_id(self):
         for acq in self.acqs:
             assert acq.sensor_id == "TM"
 
-    def test_satellite(self):
+    def test_platform_id(self):
         for acq in self.acqs:
             assert acq.spacecraft_id == "LANDSAT_5"
 
@@ -270,54 +225,23 @@ class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
         assert self.acqs[7].band_type == BandType.Reflective
         assert self.acqs[8].band_type == BandType.Panchromatic
 
-    # TODO: need extra name mappings to get the different names across versions
-    # def test_grid_cell_size(self):
-    #     self.assertEqual(self.acqs[0].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[1].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[2].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[3].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[4].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[5].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[6].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[7].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[8].grid_cell_size, 12.5)
-
-    def test_scene_center_time(self):
-        for acq in self.acqs:
-            assert acq.scene_center_time == datetime.time(23, 39, 26, 931462)
-
     def test_acquisition_datetime(self):
         for acq in self.acqs:
             assert acq.acquisition_datetime == datetime.datetime(
                 2009, 4, 15, 23, 39, 26, 931462
             )
 
-    def test_min_max_radiance_band1(self):
+    def test_min_radiance_band1(self):
         assert self.acqs[0].min_radiance == -6.2
+
+    def test_max_radiance_band1(self):
         assert self.acqs[0].max_radiance == 191.6
 
-    def test_min_max_radiance_band2(self):
-        assert self.acqs[0].min_radiance == -6.2
-        assert self.acqs[0].max_radiance == 191.6
+    def test_min_quantize_band1(self):
+        assert self.acqs[0].min_quantize == 1.0
 
-    def test_min_max_radiance_band3(self):
-        assert self.acqs[0].min_radiance == -6.2
-        assert self.acqs[0].max_radiance == 191.6
-
-    def test_lmin(self):
-        assert self.acqs[0].lmin == -6.2
-
-    def test_lmax(self):
-        assert self.acqs[0].lmax == 191.6
-
-    def test_qcalmin(self):
-        assert self.acqs[0].qcalmin == 1.0
-
-    def test_qcalmax(self):
-        assert self.acqs[0].qcalmax == 255.0
-
-    def test_zone_number(self):
-        assert self.acqs[0].zone_number == -56
+    def test_max_quantize_band1(self):
+        assert self.acqs[0].max_quantize == 255.0
 
     def test_sun_azimuth(self):
         assert self.acqs[0].sun_azimuth == 44.5023798
@@ -331,13 +255,13 @@ class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
     def test_bias(self):
         self.assertAlmostEqual(self.acqs[0].bias, -6.978740157480303)
 
-    def test_sensor(self):
+    def test_sensor_id(self):
         for acq in self.acqs:
             assert acq.sensor_id == "ETM+"
 
-    def test_satellite(self):
+    def test_platform_id(self):
         for acq in self.acqs:
-            assert acq.spacecraft_id == "LANDSAT_7"
+            assert acq.platform_id == "LANDSAT_7"
 
 
 class Landsat7Mtl2AcquisitionTest(unittest.TestCase):
@@ -360,42 +284,23 @@ class Landsat7Mtl2AcquisitionTest(unittest.TestCase):
         assert self.acqs[8].band_type == BandType.Panchromatic
         assert self.acqs[9].band_type == BandType.Quality
 
-    # TODO: need extra name mappings to get the different names across versions
-    # def test_grid_cell_size(self):
-    #     self.assertEqual(self.acqs[0].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[1].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[2].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[3].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[4].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[5].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[6].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[7].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[8].grid_cell_size, 12.5)
-
-    def test_scene_center_time(self):
-        for acq in self.acqs:
-            assert acq.scene_center_time == datetime.time(1, 47, 55, 878250)
-
     def test_acquisition_datetime(self):
         for acq in self.acqs:
             assert acq.acquisition_datetime == datetime.datetime(
                 2002, 2, 18, 1, 47, 55, 878250
             )
 
-    def test_min_max_radiance_band1(self):
+    def test_min_radiance_band1(self):
         assert self.acqs[0].min_radiance == -6.2
+
+    def test_max_radiance_band1(self):
         assert self.acqs[0].max_radiance == 191.6
 
-    def test_min_max_radiance_band2(self):
-        assert self.acqs[0].min_radiance == -6.2
-        assert self.acqs[0].max_radiance == 191.6
+    def test_min_quantize_band1(self):
+        assert self.acqs[0].min_quantize == 1.0
 
-    def test_min_max_radiance_band3(self):
-        assert self.acqs[0].min_radiance == -6.2
-        assert self.acqs[0].max_radiance == 191.6
-
-    def test_zone_number(self):
-        assert self.acqs[0].utm_zone == -51
+    def test_max_quantize_band1(self):
+        assert self.acqs[0].max_quantize == 255.0
 
     def test_sun_azimuth(self):
         assert self.acqs[0].sun_azimuth == 98.1470638
@@ -409,13 +314,13 @@ class Landsat7Mtl2AcquisitionTest(unittest.TestCase):
     def test_bias(self):
         self.assertAlmostEqual(self.acqs[0].bias, -6.978740157480303)
 
-    def test_sensor(self):
+    def test_sensor_id(self):
         for acq in self.acqs:
             assert acq.sensor_id == "ETM+"
 
-    def test_satellite(self):
+    def test_platform_id(self):
         for acq in self.acqs:
-            assert acq.spacecraft_id == "LANDSAT_7"
+            assert acq.platform_id == "LANDSAT_7"
 
 
 class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
@@ -425,10 +330,6 @@ class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
     def test_type(self):
         for acq in self.acqs:
             assert isinstance(acq, Landsat8Acquisition)
-
-    def test_scene_center_time(self):
-        for acq in self.acqs:
-            assert acq.scene_center_time == datetime.time(23, 52, 10, 108347)
 
     def test_band_type(self):
         assert self.acqs[0].band_type == BandType.Reflective
@@ -442,51 +343,23 @@ class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
         assert self.acqs[8].band_type == BandType.Atmosphere
         assert self.acqs[9].band_type == BandType.Quality
 
-    # TODO: need extra name mappings to get the different names across versions
-    # def test_grid_cell_size(self):
-    #     self.assertEqual(self.acqs[0].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[1].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[2].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[3].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[4].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[5].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[6].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[7].grid_cell_size, 12.5)
-    #     self.assertEqual(self.acqs[8].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[9].grid_cell_size, 25.0)
-
     def test_acquisition_datetime(self):
         for acq in self.acqs:
             assert acq.acquisition_datetime == datetime.datetime(
                 2013, 10, 11, 23, 52, 10, 108347
             )
 
-    def test_min_max_radiance_band1(self):
+    def test_min_radiance_band1(self):
         assert self.acqs[0].min_radiance == -64.75256
+
+    def test_max_radiance_band1(self):
         assert self.acqs[0].max_radiance == 784.11609
 
-    def test_min_max_radiance_band2(self):
-        assert self.acqs[0].min_radiance == -64.75256
-        assert self.acqs[0].max_radiance == 784.11609
+    def test_min_quantize_band1(self):
+        assert self.acqs[0].min_quantize == 1.0
 
-    def test_min_max_radiance_band3(self):
-        assert self.acqs[0].min_radiance == -64.75256
-        assert self.acqs[0].max_radiance == 784.11609
-
-    def test_lmin(self):
-        assert self.acqs[0].lmin == -64.75256
-
-    def test_lmax(self):
-        assert self.acqs[0].lmax == 784.11609
-
-    def test_qcalmin(self):
-        assert self.acqs[0].qcalmin == 1
-
-    def test_qcalmax(self):
-        assert self.acqs[0].qcalmax == 65535
-
-    def test_zone_number(self):
-        assert self.acqs[0].utm_zone == -55
+    def test_max_quantize_band1(self):
+        assert self.acqs[0].max_quantize == 65535
 
     def test_sun_azimuth(self):
         assert self.acqs[0].sun_azimuth == 50.86088724
@@ -500,13 +373,13 @@ class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
     def test_bias(self):
         self.assertAlmostEqual(self.acqs[0].bias, -64.76551)
 
-    def test_sensor(self):
+    def test_sensor_id(self):
         for acq in self.acqs:
             assert acq.sensor_id == "OLI"
 
-    def test_satellite(self):
+    def test_platform_id(self):
         for acq in self.acqs:
-            assert acq.spacecraft_id == "LANDSAT_8"
+            assert acq.platform_id == "LANDSAT_8"
 
 
 class Landsat8Mtl2AcquisitionTest(unittest.TestCase):
@@ -516,10 +389,6 @@ class Landsat8Mtl2AcquisitionTest(unittest.TestCase):
     def test_type(self):
         for acq in self.acqs:
             assert isinstance(acq, Landsat8Acquisition)
-
-    def test_scene_center_time(self):
-        for acq in self.acqs:
-            assert acq.scene_center_time == datetime.time(0, 46, 10, 530409)
 
     def test_band_type(self):
         assert self.acqs[0].band_type == BandType.Reflective
@@ -535,27 +404,16 @@ class Landsat8Mtl2AcquisitionTest(unittest.TestCase):
         assert self.acqs[10].band_type == BandType.Atmosphere
         assert self.acqs[11].band_type == BandType.Quality
 
-    # TODO: need extra name mappings to get the different names across versions
-    # def test_grid_cell_size(self):
-    #     self.assertEqual(self.acqs[0].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[1].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[2].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[3].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[4].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[5].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[6].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[7].grid_cell_size, 12.5)
-    #     self.assertEqual(self.acqs[8].grid_cell_size, 25.0)
-    #     self.assertEqual(self.acqs[9].grid_cell_size, 25.0)
-
     def test_acquisition_datetime(self):
         for acq in self.acqs:
             assert acq.acquisition_datetime == datetime.datetime(
                 2016, 10, 3, 0, 46, 10, 530409
             )
 
-    def test_min_max_radiance_band1(self):
+    def test_min_radiance_band1(self):
         assert self.acqs[0].min_radiance == -62.69242
+
+    def test_max_radiance_band1(self):
         assert self.acqs[0].max_radiance == 759.16895
 
     def test_min_max_radiance_band2(self):
@@ -566,20 +424,11 @@ class Landsat8Mtl2AcquisitionTest(unittest.TestCase):
         assert self.acqs[4].min_radiance == -59.15772
         assert self.acqs[4].max_radiance == 716.36584
 
-    def test_lmin(self):
-        assert self.acqs[0].lmin == -62.69242
+    def test_min_quantize_band1(self):
+        assert self.acqs[0].min_quantize == 1.0
 
-    def test_lmax(self):
-        assert self.acqs[0].lmax == 759.16895
-
-    def test_qcalmin(self):
-        assert self.acqs[0].qcalmin == 1
-
-    def test_qcalmax(self):
-        assert self.acqs[0].qcalmax == 65535
-
-    def test_zone_number(self):
-        assert self.acqs[0].utm_zone == -53
+    def test_max_quantize_band1(self):
+        assert self.acqs[0].max_quantize == 65535
 
     def test_sun_azimuth(self):
         assert self.acqs[0].sun_azimuth == 48.79660801
@@ -593,13 +442,13 @@ class Landsat8Mtl2AcquisitionTest(unittest.TestCase):
     def test_bias(self):
         self.assertAlmostEqual(self.acqs[0].bias, -62.70496)
 
-    def test_sensor(self):
+    def test_sensor_id(self):
         for acq in self.acqs:
             assert acq.sensor_id == "OLI_TIRS"
 
-    def test_satellite(self):
+    def test_platform_id(self):
         for acq in self.acqs:
-            assert acq.spacecraft_id == "LANDSAT_8"
+            assert acq.platform_id == "LANDSAT_8"
 
 
 if __name__ == "__main__":
