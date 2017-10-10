@@ -13,6 +13,7 @@ from xml.etree import ElementTree
 import pandas as pd
 import rasterio
 from dateutil import parser
+from nested_lookup import nested_lookup
 from pkg_resources import resource_stream
 
 from gaip.constants import BandType
@@ -201,7 +202,7 @@ class Acquisition:
         if metadata is not None:
             for key, value in metadata.items():
                 if key == "band_type":
-                    value = BandType[key]
+                    value = BandType[value]
                 setattr(self, key, value)
 
         self._open()
@@ -413,7 +414,7 @@ class Landsat5Acquisition(LandsatAcquisition):
             metadata=metadata,
         )
 
-        self.platform_id = "LANDSAT-5"
+        self.platform_id = "LANDSAT_5"
         self.sensor_id = "TM"
         self.tle_format = "l5_%4d%s_norad.txt"
         self.tag = "LS5"
@@ -444,7 +445,7 @@ class Landsat7Acquisition(LandsatAcquisition):
             metadata=metadata,
         )
 
-        self.platform = "LANDSAT-7"
+        self.platform_id = "LANDSAT_7"
         self.sensor_id = "ETM+"
         self.tle_format = "L7%4d%sASNNOR.S00"
         self.tag = "LS7"
@@ -475,7 +476,7 @@ class Landsat8Acquisition(LandsatAcquisition):
             metadata=metadata,
         )
 
-        self.platform_id = "LANDSAT-8"
+        self.platform_id = "LANDSAT_8"
         self.sensor_id = "OLI"
         self.tle_format = "L8%4d%sASNNOR.S00"
         self.tag = "LS8"
@@ -542,7 +543,7 @@ def acquisitions(path):
         try:
             acqs = acquisitions_via_mtl(path)
         except OSError:
-            acqs = acquisitions_via_geotiff(path)
+            raise OSError(f"No acquisitions found in: {path}")
 
     return acqs
 
@@ -624,12 +625,14 @@ def acquisitions_via_mtl(path):
         acqtype = LandsatAcquisition
 
     # solar angles
-    if "PRODUCT_PARAMETERS" in data:
-        solar_azimuth = data["PRODUCT_PARAMETERS"]["sun_azimuth"]
-        solar_elevation = data["PRODUCT_PARAMETERS"]["sun_elevation"]
-    else:
-        solar_azimuth = data["IMAGE_ATTRIBUTES"]["sun_azimuth"]
-        solar_elevation = data["IMAGE_ATTRIBUTES"]["sun_elevation"]
+    # if 'PRODUCT_PARAMETERS' in data:
+    #     solar_azimuth = data['PRODUCT_PARAMETERS']['sun_azimuth']
+    #     solar_elevation = data['PRODUCT_PARAMETERS']['sun_elevation']
+    # else:
+    #     solar_azimuth = data['IMAGE_ATTRIBUTES']['sun_azimuth']
+    #     solar_elevation = data['IMAGE_ATTRIBUTES']['sun_elevation']
+    solar_azimuth = nested_lookup("sun_azimuth", data)[0]
+    solar_elevation = nested_lookup("sun_elevation", data)[0]
 
     # bands to ignore
     ignore = ["band_quality"]
