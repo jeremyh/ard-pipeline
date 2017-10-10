@@ -1,41 +1,44 @@
-"""Core code."""
+"""
+Core code.
+"""
+from __future__ import absolute_import, print_function
+import os
+from os.path import isdir, join as pjoin, dirname, basename, exists, splitext
+import re
 import copy
+import json
 import datetime
 import glob
-import json
-import os
-import re
-from functools import total_ordering
-from os.path import basename, dirname, exists, isdir, splitext
-from os.path import join as pjoin
 from xml.etree import ElementTree
-
-import pandas as pd
-import rasterio
+from functools import total_ordering
 from dateutil import parser
-from nested_lookup import nested_lookup
+import pandas
 from pkg_resources import resource_stream
+from nested_lookup import nested_lookup
 
-from gaip.constants import BandType
+import rasterio
 from gaip.geobox import GriddedGeoBox
 from gaip.modtran import read_spectral_response
 from gaip.mtl import load_mtl
+from gaip.constants import BandType
 
-with open(pjoin(dirname(__file__), "sensors.json")) as fo:
+
+with open(pjoin(dirname(__file__), 'sensors.json')) as fo:
     SENSORS = json.load(fo)
 
-
 def fixname(s):
-    """Fix satellite name. Performs 'Landsat7' to 'LANDSAT_7' but also
-    handles 'LANDSAT8' to 'LANDSAT_8'.
+    """Fix satellite name.
+       Performs 'Landsat7' to 'LANDSAT_7', 'LANDSAT8' to 'LANDSAT_8',
+       'Landsat-5' to 'LANDSAT_5'.
     """
-    return re.sub(
-        r"([a-zA-Z]+)_?(\d)", lambda m: m.group(1).upper() + "_" + m.group(2), s
-    )
+    return re.sub(r'([a-zA-Z]+)[_-]?(\d)',
+                  lambda m: m.group(1).upper() + '_' + m.group(2), s)
 
 
-class AcquisitionsContainer:
-    """A container for dealing with a hierarchial structure
+class AcquisitionsContainer(object):
+
+    """
+    A container for dealing with a hierarchial structure
     of acquisitions from different groups, granules, but
     all part of the same geospatial area or scene.
 
@@ -53,30 +56,32 @@ class AcquisitionsContainer:
         self._label = label
 
     def __repr__(self):
-        fmt = (
-            "****Tiled scene****:\n{tiled}\n"
-            "****Granules****:\n{granules}\n"
-            "****Groups****:\n{groups}"
-        )
+        fmt = ("****Tiled scene****:\n{tiled}\n"
+               "****Granules****:\n{granules}\n"
+               "****Groups****:\n{groups}")
         granules = "\n".join(self.granules) if self.tiled else ""
         groups = "\n".join(self.groups)
         return fmt.format(tiled=self.tiled, granules=granules, groups=groups)
 
     @property
     def label(self):
-        """Return the scene label."""
+        """
+        Return the scene label.
+        """
         return self._label
 
     @property
     def tiled(self):
-        """Indicates whether or not a scene is partitioned into several
+        """
+        Indicates whether or not a scene is partitioned into several
         tiles referred to as granules.
         """
         return self._tiled
 
     @property
     def granules(self):
-        """Lists the available granules within a scene.
+        """
+        Lists the available granules within a scene.
         If `AcquisitionsContainer.tiled` is False, then [None] is
         returned.
         """
@@ -84,7 +89,9 @@ class AcquisitionsContainer:
 
     @property
     def groups(self):
-        """Lists the available groups within a scene."""
+        """
+        Lists the available groups within a scene.
+        """
         if self.tiled:
             grps = sorted(list(self._granules.get(self.granules[0]).keys()))
         else:
@@ -92,7 +99,8 @@ class AcquisitionsContainer:
         return grps
 
     def get_acquisitions(self, group=None, granule=None):
-        """Return a list of acquisitions for a given granule and group.
+        """
+        Return a list of acquisitions for a given granule and group.
 
         :param group:
             A `str` defining the group layer from which to retrieve
@@ -124,7 +132,8 @@ class AcquisitionsContainer:
         return acqs
 
     def get_granule(self, granule=None):
-        """Return a granule containing groups of `Acquisition` objects.
+        """
+        Return a granule containing groups of `Acquisition` objects.
 
         :param granule:
             A `str` defining the granule layer from which to retrieve
@@ -143,8 +152,9 @@ class AcquisitionsContainer:
         else:
             return self._granules[granule]
 
-    def get_root(self, path="/", group=None, granule=None):
-        """Get the root level file system path for a granule and/or group
+    def get_root(self, path='/', group=None, granule=None):
+        """
+        Get the root level file system path for a granule and/or group
         within the `AcquisitionContainer` object.
 
         :param path:
@@ -177,17 +187,12 @@ class AcquisitionsContainer:
 
 
 @total_ordering
-class Acquisition:
+class Acquisition(object):
+
     """Acquisition metadata."""
 
-    def __init__(
-        self,
-        pathname,
-        acquisition_datetime,
-        band_name="BAND 1",
-        band_id="1",
-        metadata=None,
-    ):
+    def __init__(self, pathname, acquisition_datetime, band_name='BAND 1',
+                 band_id='1', metadata=None):
         self._pathname = pathname
         self._acquisition_datetime = acquisition_datetime
         self._band_name = band_name
@@ -201,7 +206,7 @@ class Acquisition:
 
         if metadata is not None:
             for key, value in metadata.items():
-                if key == "band_type":
+                if key == 'band_type':
                     value = BandType[value]
                 setattr(self, key, value)
 
@@ -244,7 +249,8 @@ class Acquisition:
 
     @property
     def scaled_radiance(self):
-        """Do we have a scaled "at sensor radiance" unit?
+        """
+        Do we have a scaled "at sensor radiance" unit?
         If `True`, then this property needs to be overridden, and define
         the bias and gain properties.
         """
@@ -265,21 +271,16 @@ class Acquisition:
         return self.sortkey() < other.sortkey()
 
     def __repr__(self):
-        return "Acquisition(band_name=" + self.band_name + ")"
+        return 'Acquisition(band_name=' + self.band_name + ')'
 
     def sortkey(self):
         """Representation used for sorting objects."""
         return self.band_name
 
-    def data(
-        self,
-        out=None,
-        window=None,
-        masked=False,
-        apply_gain_offset=False,
-        out_no_data=-999,
-    ):
-        """Return `numpy.array` of the data for this acquisition.
+    def data(self, out=None, window=None, masked=False,
+             apply_gain_offset=False, out_no_data=-999):
+        """
+        Return `numpy.array` of the data for this acquisition.
         If `out` is supplied, it must be a numpy.array into which
         the Acquisition's data will be read.
         """
@@ -305,7 +306,8 @@ class Acquisition:
             return ds.read(1, out=out, window=window, masked=masked)
 
     def data_and_box(self, out=None, window=None, masked=False):
-        """Return a tuple comprising the `numpy.array` of the data for this
+        """
+        Return a tuple comprising the `numpy.array` of the data for this
         Acquisition and the `GriddedGeoBox` describing the spatial extent.
         If `out` is supplied, it must be a numpy.array into which
         the Acquisition's data will be read.
@@ -322,9 +324,8 @@ class Acquisition:
 
                 # Get the new UL co-ordinates of the array
                 ul_x, ul_y = ds.transform * (window[1][0], window[0][0])
-                box = GriddedGeoBox(
-                    shape=(rows, cols), origin=(ul_x, ul_y), pixelsize=res, crs=prj
-                )
+                box = GriddedGeoBox(shape=(rows, cols), origin=(ul_x, ul_y),
+                                    pixelsize=res, crs=prj)
             return (fo.read(1, out=out, window=window, masked=masked), box)
 
     def gridded_geo_box(self):
@@ -335,19 +336,21 @@ class Acquisition:
     def decimal_hour(self):
         """The time in decimal."""
         time = self.acquisition_datetime
-        dec_hour = (
-            time.hour
-            + (time.minute + (time.second + time.microsecond / 1000000.0) / 60.0) / 60.0
-        )
+        dec_hour = (time.hour + (time.minute + (time.second
+                                                + time.microsecond / 1000000.0)
+                                 / 60.0) / 60.0)
         return dec_hour
 
     def julian_day(self):
-        """Return the Juilan Day of the acquisition_datetime."""
-        return int(self.acquisition_datetime.strftime("%j"))
+        """
+        Return the Juilan Day of the acquisition_datetime.
+        """
+        return int(self.acquisition_datetime.strftime('%j'))
 
     @property
     def no_data(self):
-        """Return the no_data value for this acquisition.
+        """
+        Return the no_data value for this acquisition.
         Assumes that the acquisition is a single band file.
         """
         with rasterio.open(self.pathname) as ds:
@@ -355,8 +358,10 @@ class Acquisition:
             return nodata_list[0]
 
     def spectral_response(self, as_list=False):
-        """Reads the spectral response for the sensor."""
-        fname = "spectral_response/%s" % self.spectral_filter_file
+        """
+        Reads the spectral response for the sensor.
+        """
+        fname = 'spectral_response/%s' % self.spectral_filter_file
         spectral_range = range(*self.spectral_range)
         with resource_stream(__name__, fname) as src:
             df = read_spectral_response(src, as_list, spectral_range)
@@ -364,60 +369,45 @@ class Acquisition:
 
 
 class LandsatAcquisition(Acquisition):
+
     """A Landsat acquisition."""
 
-    def __init__(
-        self,
-        pathname,
-        acquisition_datetime,
-        band_name="BAND 1",
-        band_id="1",
-        metadata=None,
-    ):
+    def __init__(self, pathname, acquisition_datetime, band_name='BAND 1',
+                 band_id='1', metadata=None):
         self.min_radiance = 0
         self.max_radiance = 1
         self.min_quantize = 0
         self.max_quantize = 1
 
-        super().__init__(
-            pathname,
-            acquisition_datetime,
-            band_name=band_name,
-            band_id=band_id,
-            metadata=metadata,
-        )
+        super(LandsatAcquisition, self).__init__(pathname,
+                                                 acquisition_datetime,
+                                                 band_name=band_name,
+                                                 band_id=band_id,
+                                                 metadata=metadata)
 
-        self._gain = (self.max_radiance - self.min_radiance) / (
-            self.max_quantize - self.min_quantize
-        )
+        self._gain = ((self.max_radiance - self.min_radiance) /
+                      (self.max_quantize - self.min_quantize))
         self._bias = self.max_radiance - (self.gain * self.max_quantize)
 
         self._scaled_radiance = True
 
 
 class Landsat5Acquisition(LandsatAcquisition):
-    """Landsat 5 acquisition."""
 
-    def __init__(
-        self,
-        pathname,
-        acquisition_datetime,
-        band_name="BAND 1",
-        band_id="1",
-        metadata=None,
-    ):
-        super().__init__(
-            pathname,
-            acquisition_datetime,
-            band_name=band_name,
-            band_id=band_id,
-            metadata=metadata,
-        )
+    """ Landsat 5 acquisition. """
 
-        self.platform_id = "LANDSAT_5"
-        self.sensor_id = "TM"
-        self.tle_format = "l5_%4d%s_norad.txt"
-        self.tag = "LS5"
+    def __init__(self, pathname, acquisition_datetime, band_name='BAND 1',
+                 band_id='1', metadata=None):
+        super(Landsat5Acquisition, self).__init__(pathname,
+                                                  acquisition_datetime,
+                                                  band_name=band_name,
+                                                  band_id=band_id,
+                                                  metadata=metadata)
+
+        self.platform_id = 'LANDSAT_5'
+        self.sensor_id = 'TM'
+        self.tle_format = 'l5_%4d%s_norad.txt'
+        self.tag = 'LS5'
         self.altitude = 705000.0
         self.inclination = 1.7139133254584316445390643346558
         self.omega = 0.001059
@@ -427,28 +417,21 @@ class Landsat5Acquisition(LandsatAcquisition):
 
 
 class Landsat7Acquisition(LandsatAcquisition):
-    """Landsat 7 acquisition."""
 
-    def __init__(
-        self,
-        pathname,
-        acquisition_datetime,
-        band_name="BAND 1",
-        band_id="1",
-        metadata=None,
-    ):
-        super().__init__(
-            pathname,
-            acquisition_datetime,
-            band_name=band_name,
-            band_id=band_id,
-            metadata=metadata,
-        )
+    """ Landsat 7 acquisition. """
 
-        self.platform_id = "LANDSAT_7"
-        self.sensor_id = "ETM+"
-        self.tle_format = "L7%4d%sASNNOR.S00"
-        self.tag = "LS7"
+    def __init__(self, pathname, acquisition_datetime, band_name='BAND 1',
+                 band_id='1', metadata=None):
+        super(Landsat7Acquisition, self).__init__(pathname,
+                                                  acquisition_datetime,
+                                                  band_name=band_name,
+                                                  band_id=band_id,
+                                                  metadata=metadata)
+
+        self.platform_id = 'LANDSAT_7'
+        self.sensor_id = 'ETM+'
+        self.tle_format = 'L7%4d%sASNNOR.S00'
+        self.tag = 'LS7'
         self.altitude = 705000.0
         self.inclination = 1.7139133254584316445390643346558
         self.omega = 0.001059
@@ -458,28 +441,21 @@ class Landsat7Acquisition(LandsatAcquisition):
 
 
 class Landsat8Acquisition(LandsatAcquisition):
-    """Landsat 8 acquisition."""
 
-    def __init__(
-        self,
-        pathname,
-        acquisition_datetime,
-        band_name="BAND 1",
-        band_id="1",
-        metadata=None,
-    ):
-        super().__init__(
-            pathname,
-            acquisition_datetime,
-            band_name=band_name,
-            band_id=band_id,
-            metadata=metadata,
-        )
+    """ Landsat 8 acquisition. """
 
-        self.platform_id = "LANDSAT_8"
-        self.sensor_id = "OLI"
-        self.tle_format = "L8%4d%sASNNOR.S00"
-        self.tag = "LS8"
+    def __init__(self, pathname, acquisition_datetime, band_name='BAND 1',
+                 band_id='1', metadata=None):
+        super(Landsat8Acquisition, self).__init__(pathname,
+                                                  acquisition_datetime,
+                                                  band_name=band_name,
+                                                  band_id=band_id,
+                                                  metadata=metadata)
+
+        self.platform_id = 'LANDSAT_8'
+        self.sensor_id = 'OLI'
+        self.tle_format = 'L8%4d%sASNNOR.S00'
+        self.tag = 'LS8'
         self.altitude = 705000.0
         self.inclination = 1.7139133254584316445390643346558
         self.omega = 0.001059
@@ -489,30 +465,29 @@ class Landsat8Acquisition(LandsatAcquisition):
 
 
 ACQUISITION_TYPE = {
-    "Landsat5_TM": Landsat5Acquisition,
-    "Landsat7_ETM+": Landsat7Acquisition,
-    "LANDSAT_5_TM": Landsat5Acquisition,
-    "LANDSAT_7_ETM+": Landsat7Acquisition,
-    "LANDSAT_8_OLI": Landsat8Acquisition,
-    "LANDSAT_8_OLI_TIRS": Landsat8Acquisition,
+    'Landsat5_TM': Landsat5Acquisition,
+    'Landsat7_ETM+': Landsat7Acquisition,
+    'LANDSAT_5_TM': Landsat5Acquisition,
+    'LANDSAT_7_ETM+': Landsat7Acquisition,
+    'LANDSAT_8_OLI': Landsat8Acquisition,
+    'LANDSAT_8_OLI_TIRS': Landsat8Acquisition
 }
 
 
-def find_in(path, s, suffix="txt"):
+def find_in(path, s, suffix='txt'):
     """Search through `path` and its children for the first occurance of a
-    file with `s` in its name. Returns the path of the file or `None`.
-    """
+    file with `s` in its name. Returns the path of the file or `None`. """
     for root, _, files in os.walk(path):
         for f in files:
             if s in f and f.endswith(suffix):
                 return os.path.join(root, f)
     return None
 
-
 def find_all_in(path, s):
-    """Search through `path` and its children for all occurances of
+    """
+    Search through `path` and its children for all occurances of
     files with `s` in their name. Returns the (possibly empty) list
-    of file paths.
+    of file paths
     """
     result = []
     for root, _, files in os.walk(path):
@@ -523,7 +498,8 @@ def find_all_in(path, s):
 
 
 def acquisitions(path):
-    """Return a list of Acquisition objects from `path`. The argument `path`
+    """
+    Return a list of Acquisition objects from `path`. The argument `path`
     can be a MTL file or a directory name.
 
     If `path` is a directory will be searched to find an MTL file. If this
@@ -532,6 +508,7 @@ def acquisitions(path):
 
     The search will include the `path` directory and its children.
     """
+
     # try:
     #     acqs = acquisitions_via_mtl(path)
     # except OSError:
@@ -539,51 +516,139 @@ def acquisitions(path):
 
     try:
         acqs = acquisitions_via_safe(path)
-    except OSError:
+    except IOError:
         try:
             acqs = acquisitions_via_mtl(path)
         except OSError:
-            raise OSError(f"No acquisitions found in: {path}")
+            raise IOError("No acquisitions found in: {}".format(path))
 
     return acqs
 
-
 def acquisitions2(pathname):
-    """Return an acquisitions container."""
-    if ".zip" in splitext(pathname):
+    """
+    Return an acquisitions container.
+    """
+    if '.zip' in splitext(pathname):
         # assume it is the SAFE format from ESA and open it
-        acquisitions_via_safe2(pathname)
-
+        container = acquisitions_via_safe2(pathname)
 
 def acquisitions_via_safe2(pathname):
-    """Read the SAFE format and return an acquisitions container."""
+    """
+    Read the SAFE format and return an acquisitions container.
+    """
+    def group_helper(fname, resolution_groups):
+        """
+        A helper function to find the resolution group
+        and the band_id, and bail rather than loop over
+        everything.
+        """
+        for key, group in resolution_groups:
+            for item in group:
+                if item in fname:
+                    band_id = re.sub(r'B[0]?', '', item)
+                    band_name = 'BAND {}'.format(band_id)
+                    return key, band_name, band_id
+
     archive = zipfile.ZipFile(pathname)
     xmlfiles = [s for s in archive.namelist() if "MTD_MSIL1C.xml" in s]
 
     if len(xmlfiles) == 0:
-        pattern = pathname.replace("PRD_MSIL1C", "MTD_SAFL1C")
-        pattern = pattern.replace(".zip", ".xml")
-        [s for s in archive.namelist() if pattern in s]
+        pattern = pathname.replace('PRD_MSIL1C', 'MTD_SAFL1C')
+        pattern = pattern.replace('.zip', '.xml')
+        xmlzipfiles = [s for s in archive.namelist() if pattern in s]
 
     mtd_xml = archive.read(xmlfiles[0])
     xml_root = ElementTree.XML(mtd_xml)
 
     # what do we do about the 'scene_centre_time' ???
     # DATATAKE_SENSING_START is another potential field to read...
-    parser.parse(xml_root.findall("./*/Product_Info/PRODUCT_START_TIME")[0].text)
-    parser.parse(xml_root.findall("./*/Product_Info/PRODUCT_STOP_TIME")[0].text)
+    product_start_time = parser.parse(xml_root.findall('./*/Product_Info/PRODUCT_START_TIME')[0].text)
+    product_stop_time = parser.parse(xml_root.findall('./*/Product_Info/PRODUCT_STOP_TIME')[0].text)
+    datatake_time = parser.parse(xml_root.findall('./*/Product_Info/*/DATATAKE_SENSING_START')[0].text)
 
-    xml_root.findall("./*/Product_Info/*/SPACECRAFT_NAME")[0].text
+    platform_id = xml_root.findall('./*/Product_Info/*/SPACECRAFT_NAME')[0].text
     # need sensor name
+
+    # safe archive for S2a has two band name mappings, and we need to map ours
+    band_map = {'0': '1', '1': '2', '2': '3', '3': '4', '4': '5', '5': '6',
+                '6': '7', '7': '8', '8': '8a', '9': '9', '10': '10',
+                '11': '11'}
+
+    # earth -> sun distance in AU
+    d2 = float(root.findall('./*/Product_Image_Characteristics/Reflectance_Conversion/U')[0].text)
+
+    # exoatmospheric solar irradiance
+    solar_irradiance = {}
+    for irradiance in xml_root.iter('SOLAR_IRRADIANCE'):
+        band_irradiance = irradiance.attrib
+        mapped_band_id = band_map[band_irradiance['bandId']]
+        solar_irradiance[mapped_band_id] = float(band_irradiance['value'])
+
+    # assume multiple granules
+    single_granule_archive = False
+
+    granules = {granule.get('granuleIdentifier'): [imid.text for imid in granule.findall('IMAGE_ID')]
+                for granule in xml_root.findall('./*/Product_Info/Product_Organisation/Granule_List/Granules')}
+
+    if not granules:
+        single_granule_archive = True
+        granules = {granule.get('granuleIdentifier'): [imid.text for imid in granule.findall('IMAGE_FILE')]
+                    for granule in xml_root.findall('./*/Product_Info/Product_Organisation/Granule_List/Granule')}
+
+    # resolution groups
+    band_groups = {'R10m': ['B02', 'B03', 'B04', 'B08'],
+                   'R20m': ['B05', 'B06', 'B07', 'B11', 'B12', 'B8A'],
+                   'R60m': ['B01', 'B09', 'B10']}
+    # r10m = ['B02', 'B03', 'B04', 'B08']
+    # r20m = ['B05', 'B06', 'B07', 'B11', 'B12', 'B8A']
+    # r60m = ['B01', 'B09', 'B10']
+
+    for granule_id, images in granules.items():
+        res_groups = {'R10m': [],
+                      'R20m': [],
+                      'R60m': []}
+
+        granule_xmls = [s for s in archive.namelist() if 'MTD_TL.xml' in s]
+        if len(granule_xmls) == 0:
+            pattern = granule_id.replace('MSI', 'MTD')
+            pattern = pattern.replace(''.join(['_N', processing_baseline]),
+                                      '.xml')
+
+            granule_xmls = [s for s in archive.namelist() if pattern in s]
+
+        granule_xml = archive.read(granule_xmls[0])
+        granule_root = ElementTree.XML(granule_xml)
+
+        img_data_path = ''.join(['zip:', path, '!', archive.namelist()[0]])
+
+        if not single_granule_archive:
+            img_data_path = ''.join([img_data_path,
+                                     pjoin('GRANULE', granule_id, 'IMG_DATA')])
+
+        # is this the acquisition time???
+        acq_time = parser.parse(granule_root.findall('./*/SENSING_TIME')[0].text)
+
+        for image in images:
+            # image filename
+            img_fname = ''.join([pjoin(img_data_path, image), '.jp2'])
+
+            # band name and id
+            group, band_name, band_id = group_helper(img_fname, band_groups)
+
+            irrad = [for i[band_mapsolar_irradiance
+
+            res_groups[group].append(Sentinel2aAcquisition(img_fname,
+                                                           band_name, band_id,
+                                                           attrs)
 
 
 def acquisitions_via_mtl(path):
     """Obtain a list of Acquisition objects from `path`. The argument `path`
     can be a MTL file or a directory name. If `path` is a directory then the
-    MTL file will be search for in the directory and its children.
-    """
+    MTL file will be search for in the directory and its children."""
+
     if isdir(path):
-        filename = find_in(path, "MTL")
+        filename = find_in(path, 'MTL')
     else:
         filename = path
 
@@ -594,51 +659,45 @@ def acquisitions_via_mtl(path):
     dir_name = os.path.dirname(os.path.abspath(filename))
 
     data = load_mtl(filename)
-    bandfiles = [
-        k for k in data["PRODUCT_METADATA"].keys() if "band" in k and "file_name" in k
-    ]
-    bands_ = [b.replace("file_name", "").strip("_") for b in bandfiles]
+    bandfiles = [k for k in data['PRODUCT_METADATA'].keys() if 'band' in k
+                 and 'file_name' in k]
+    bands_ = [b.replace('file_name', '').strip('_') for b in bandfiles]
 
     # create an acquisition object for each band and attach
     # some appropriate metadata/attributes
 
     # shortcuts to the requried levels
-    prod_md = data["PRODUCT_METADATA"]
-    rad_md = data["MIN_MAX_RADIANCE"]
-    quant_md = data["MIN_MAX_PIXEL_VALUE"]
+    prod_md = data['PRODUCT_METADATA']
+    rad_md = data['MIN_MAX_RADIANCE']
+    quant_md = data['MIN_MAX_PIXEL_VALUE']
 
     # acquisition datetime
-    acq_date = prod_md.get("acquisition_date", prod_md["date_acquired"])
-    centre_time = prod_md.get("scene_center_scan_time", prod_md["scene_center_time"])
+    acq_date = prod_md.get('acquisition_date', prod_md['date_acquired'])
+    centre_time = prod_md.get('scene_center_scan_time',
+                              prod_md['scene_center_time'])
     acq_datetime = datetime.datetime.combine(acq_date, centre_time)
 
     # platform and sensor id's
-    platform_id = fixname(prod_md["spacecraft_id"])
-    sensor_id = prod_md["sensor_id"]
-    if sensor_id == "ETM":
-        sensor_id = "ETM+"
+    platform_id = fixname(prod_md['spacecraft_id'])
+    sensor_id = prod_md['sensor_id']
+    if sensor_id == 'ETM':
+        sensor_id = 'ETM+'
 
     # get the appropriate landsat acquisition class
     try:
-        acqtype = ACQUISITION_TYPE["_".join([platform_id, sensor_id])]
+        acqtype = ACQUISITION_TYPE['_'.join([platform_id, sensor_id])]
     except KeyError:
         acqtype = LandsatAcquisition
 
     # solar angles
-    # if 'PRODUCT_PARAMETERS' in data:
-    #     solar_azimuth = data['PRODUCT_PARAMETERS']['sun_azimuth']
-    #     solar_elevation = data['PRODUCT_PARAMETERS']['sun_elevation']
-    # else:
-    #     solar_azimuth = data['IMAGE_ATTRIBUTES']['sun_azimuth']
-    #     solar_elevation = data['IMAGE_ATTRIBUTES']['sun_elevation']
-    solar_azimuth = nested_lookup("sun_azimuth", data)[0]
-    solar_elevation = nested_lookup("sun_elevation", data)[0]
+    solar_azimuth = nested_lookup('sun_azimuth', data)[0]
+    solar_elevation = nested_lookup('sun_elevation', data)[0]
 
     # bands to ignore
-    ignore = ["band_quality"]
+    ignore = ['band_quality']
 
     # supported bands for the given platform & sensor id's
-    supported_bands = SENSORS[platform_id][sensor_id]["bands"]
+    supported_bands = SENSORS[platform_id][sensor_id]['bands']
 
     acqs = []
     for band in bands_:
@@ -646,10 +705,10 @@ def acquisitions_via_mtl(path):
             continue
 
         # band id
-        if "vcid" in band:
-            band_id = band.replace("_vcid_", "").replace("band", "").strip("_")
+        if 'vcid' in band:
+            band_id = band.replace('_vcid_', '').replace('band', '').strip('_')
         else:
-            band_id = band.replace("band", "").strip("_")
+            band_id = band.replace('band', '').strip('_')
 
         if band_id not in supported_bands:
             continue
@@ -658,42 +717,44 @@ def acquisitions_via_mtl(path):
         sensor_band_info = supported_bands[band_id]
 
         # band id name, band filename, band full file pathname
-        band_name = f"BAND {band_id}"
-        band_fname = prod_md.get(f"{band}_file_name", prod_md[f"file_name_{band}"])
+        band_name = 'BAND {}'.format(band_id)
+        band_fname = prod_md.get('{}_file_name'.format(band),
+                                 prod_md['file_name_{}'.format(band)])
         fname = pjoin(dir_name, band_fname)
 
-        min_rad = rad_md.get(f"lmin_{band}", rad_md[f"radiance_minimum_{band}"])
-        max_rad = rad_md.get(f"lmax_{band}", rad_md[f"radiance_maximum_{band}"])
+        min_rad = rad_md.get('lmin_{}'.format(band),
+                             rad_md['radiance_minimum_{}'.format(band)])
+        max_rad = rad_md.get('lmax_{}'.format(band),
+                             rad_md['radiance_maximum_{}'.format(band)])
 
-        min_quant = quant_md.get(
-            f"qcalmin_{band}", quant_md[f"quantize_cal_min_{band}"]
-        )
-        max_quant = quant_md.get(
-            f"qcalmax_{band}", quant_md[f"quantize_cal_max_{band}"]
-        )
+        min_quant = quant_md.get('qcalmin_{}'.format(band),
+                                 quant_md['quantize_cal_min_{}'.format(band)])
+        max_quant = quant_md.get('qcalmax_{}'.format(band),
+                                 quant_md['quantize_cal_max_{}'.format(band)])
 
         # metadata
         attrs = {k: v for k, v in sensor_band_info.items()}
-        attrs["solar_azimuth"] = solar_azimuth
-        attrs["solar_elevation"] = solar_elevation
-        attrs["min_radiance"] = min_rad
-        attrs["max_radiance"] = max_rad
-        attrs["min_quantize"] = min_quant
-        attrs["max_quantize"] = max_quant
+        attrs['solar_azimuth'] = solar_azimuth
+        attrs['solar_elevation'] = solar_elevation
+        attrs['min_radiance'] = min_rad
+        attrs['max_radiance'] = max_rad
+        attrs['min_quantize'] = min_quant
+        attrs['max_quantize'] = max_quant
 
         acqs.append(acqtype(fname, acq_datetime, band_name, band_id, attrs))
 
-    return AcquisitionsContainer(label=basename(path), groups={"product": sorted(acqs)})
+    return AcquisitionsContainer(label=basename(path),
+                                 groups={'product': sorted(acqs)})
 
 
 def acquisitions_via_safe(path):
-    """Collect the TOA Radiance images for each granule within a scene.
+    """
+    Collect the TOA Radiance images for each granule within a scene.
     Multi-granule & multi-resolution hierarchy format.
     Returns a dict of granules, each granule contains a dict of resolutions,
     and each resolution contains a list of acquisition objects.
 
     Example:
-    -------
     {'GRANULE_1': {'R10m': [`acquisition_1`,...,`acquisition_n`],
                    'R20m': [`acquisition_1`,...,`acquisition_n`],
                    'R60m': [`acquisition_1`,...,`acquisition_n`]},
@@ -707,15 +768,15 @@ def acquisitions_via_safe(path):
 
     gps_fname = pjoin(path, "GPS_points")
 
-    granule_dir = pjoin(path, "GRANULE")
+    granule_dir = pjoin(path, 'GRANULE')
     if not exists(granule_dir):
-        raise OSError(f"GRANULE directory not found: {granule_dir}")
+        raise IOError("GRANULE directory not found: {}".format(granule_dir))
 
     res_dirs = ["R10m", "R20m", "R60m"]
     for granule in os.listdir(granule_dir):
         resolutions = {}
 
-        img_dir = pjoin(pjoin(granule_dir, granule), "IMG_DATA")
+        img_dir = pjoin(pjoin(granule_dir, granule), 'IMG_DATA')
         if not exists(img_dir):
             continue
 
@@ -724,94 +785,94 @@ def acquisitions_via_safe(path):
             data_dir = pjoin(img_dir, res_dir)
             cwd = os.getcwd()
             os.chdir(data_dir)
-            bands = glob.glob("L_output*.hdr")
+            bands = glob.glob('L_output*.hdr')
             os.chdir(cwd)
-            bands = [pjoin(data_dir, b.replace(".hdr", "")) for b in bands]
+            bands = [pjoin(data_dir, b.replace('.hdr', '')) for b in bands]
 
-            tile_metadata_fname = f"tile_metadata_{res_dir[1:3]}"
-            with open(pjoin(data_dir, tile_metadata_fname)) as src:
+            tile_metadata_fname = 'tile_metadata_{}'.format(res_dir[1:3])
+            with open(pjoin(data_dir, tile_metadata_fname), 'r') as src:
                 md = src.readlines()
 
             metadata = {}
             for m in md:
-                k, v = m.split("=")
+                k, v = m.split('=')
                 metadata[k.strip()] = v.strip()
 
-            metadata["EPSG"] = int(metadata["EPSG"])
+            metadata['EPSG'] = int(metadata['EPSG'])
 
-            dt = pd.to_datetime(metadata["SENSING_TIME"]).to_pydatetime()
-            metadata["SENSING_TIME"] = dt
+            dt = pandas.to_datetime(metadata['SENSING_TIME']).to_pydatetime()
+            metadata['SENSING_TIME'] = dt
 
-            clon, clat = metadata["centre_lon_lat"].split()
-            metadata["centre_lon_lat"] = (float(clon), float(clat))
+            clon, clat = metadata['centre_lon_lat'].split()
+            metadata['centre_lon_lat'] = (float(clon), float(clat))
 
-            ll_lon, ll_lat = metadata["ll_lon_and_ll_lat"].split()
-            metadata["ll_lon_and_ll_lat"] = (float(ll_lon), float(ll_lat))
+            ll_lon, ll_lat = metadata['ll_lon_and_ll_lat'].split()
+            metadata['ll_lon_and_ll_lat'] = (float(ll_lon), float(ll_lat))
 
-            lr_lon, lr_lat = metadata["lr_lon_and_lr_lat"].split()
-            metadata["lr_lon_and_lr_lat"] = (float(lr_lon), float(lr_lat))
+            lr_lon, lr_lat = metadata['lr_lon_and_lr_lat'].split()
+            metadata['lr_lon_and_lr_lat'] = (float(lr_lon), float(lr_lat))
 
-            ul_lon, ul_lat = metadata["ul_lon_and_ul_lat"].split()
-            metadata["ul_lon_and_ul_lat"] = (float(ul_lon), float(ul_lat))
+            ul_lon, ul_lat = metadata['ul_lon_and_ul_lat'].split()
+            metadata['ul_lon_and_ul_lat'] = (float(ul_lon), float(ul_lat))
 
-            ur_lon, ur_lat = metadata["ur_lon_and_ur_lat"].split()
-            metadata["ur_lon_and_ur_lat"] = (float(ur_lon), float(ur_lat))
+            ur_lon, ur_lat = metadata['ur_lon_and_ur_lat'].split()
+            metadata['ur_lon_and_ur_lat'] = (float(ur_lon), float(ur_lat))
 
-            metadata["ncols"] = int(metadata["ncols"])
-            metadata["nrows"] = int(metadata["nrows"])
+            metadata['ncols'] = int(metadata['ncols'])
+            metadata['nrows'] = int(metadata['nrows'])
 
-            metadata["ulx"] = float(metadata["ulx"])
-            metadata["uly"] = float(metadata["uly"])
+            metadata['ulx'] = float(metadata['ulx'])
+            metadata['uly'] = float(metadata['uly'])
 
-            metadata["resolution"] = float(metadata["resolution"])
+            metadata['resolution'] = float(metadata['resolution'])
 
-            metadata["GPS_Filename"] = gps_fname
+            metadata['GPS_Filename'] = gps_fname
 
-            metadata["sensor_id"] = "MSI"
+            metadata['sensor_id'] = "MSI"
 
             data = {}
-            data["PRODUCT_METADATA"] = copy.deepcopy(metadata)
+            data['PRODUCT_METADATA'] = copy.deepcopy(metadata)
 
-            # metadata['SPACECRAFT'] = {}
-            data["SPACECRAFT"] = {}
+            #metadata['SPACECRAFT'] = {}
+            data['SPACECRAFT'] = {}
             db = SENSORS[spacecraft]
             for k, v in db.items():
-                if k != "sensors":
+                if k is not 'sensors':
                     try:
-                        data["SPACECRAFT"][k] = v
+                        data['SPACECRAFT'][k] = v
                     except AttributeError:
-                        data["SPACECRAFT"][k] = v
+                        data['SPACECRAFT'][k] = v
 
-            data["SENSOR_INFO"] = {}
-            db = db["sensors"][sensor]
+            data['SENSOR_INFO'] = {}
+            db = db['sensors'][sensor]
 
             for k, v in db.items():
-                if k != "bands":
-                    data["SENSOR_INFO"][k] = v
+                if k is not 'bands':
+                    data['SENSOR_INFO'][k] = v
 
             for band in bands:
                 dname = dirname(band)
                 fname = basename(band)
                 md = copy.deepcopy(data)
-                band_md = md["PRODUCT_METADATA"]
-                band_md["dir_name"] = dname
-                band_md["file_name"] = fname
-                bnum = fname.split("_")[2]
+                band_md = md['PRODUCT_METADATA']
+                band_md['dir_name'] = dname
+                band_md['file_name'] = fname
+                bnum = fname.split('_')[2]
                 band_name = bnum
 
-                md["BAND_INFO"] = {}
+                md['BAND_INFO'] = {}
                 db_copy = copy.deepcopy(db)
-                db_copy = db_copy["bands"][band_name]
+                db_copy = db_copy['bands'][band_name]
 
                 for k, v in db_copy.items():
-                    md["BAND_INFO"][k] = v
+                    md['BAND_INFO'][k] = v
 
-                band_type = db_copy["type_desc"]
-                md["BAND_INFO"]["band_type"] = BandType[band_type]
-                band_md["band_type"] = BandType[band_type]
+                band_type = db_copy['type_desc']
+                md['BAND_INFO']['band_type'] = BandType[band_type]
+                band_md['band_type'] = BandType[band_type]
 
-                band_md["band_name"] = f"band_{bnum}"
-                band_md["band_num"] = bnum
+                band_md['band_name'] = 'band_{}'.format(bnum)
+                band_md['band_num'] = bnum
 
                 acqs.append(Sentinel2aAcquisition(md))
 
@@ -822,26 +883,19 @@ def acquisitions_via_safe(path):
 
 
 class Sentinel2aAcquisition(Acquisition):
-    def __init__(
-        self,
-        pathname,
-        acquisition_datetime,
-        band_name="BAND 1",
-        band_id="1",
-        metadata=None,
-    ):
-        super().__init__(
-            pathname,
-            acquisition_datetime,
-            band_name=band_name,
-            band_id=band_id,
-            metadata=metadata,
-        )
 
-        self.platform_id: "SENTINEL-2A"
-        self.sensor_id = "MSI"
-        self.tle_format = "S2A%4d%sASNNOR.S00"
-        self.tag = "S2A"
+    def __init__(self, pathname, acquisition_datetime, band_name='BAND 1',
+                 band_id='1', metadata=None):
+        super(Sentinel2aAcquisition, self).__init__(pathname,
+                                                    acquisition_datetime,
+                                                    band_name=band_name,
+                                                    band_id=band_id,
+                                                    metadata=metadata)
+
+        self.platform_id: 'SENTINEL-2A'
+        self.sensor_id = 'MSI'
+        self.tle_format = 'S2A%4d%sASNNOR.S00'
+        self.tag = 'S2A'
         self.altitude: 786000.0
         self.inclination: 1.721243708316808
         self.omega: 0.001039918
@@ -852,17 +906,18 @@ class Sentinel2aAcquisition(Acquisition):
         self._gain = 0.01
         self._bias = 0.0
 
-        # geobox = self.gridded_geo_box()
-        # ymin = numpy.min([geobox.ul_lonlat[1], geobox.ur_lonlat[1],
+        #geobox = self.gridded_geo_box()
+        #ymin = numpy.min([geobox.ul_lonlat[1], geobox.ur_lonlat[1],
         #                  geobox.lr_lonlat[1], geobox.ll_lonlat[1]])
-        # ymax= numpy.max([geobox.ul_lonlat[1], geobox.ur_lonlat[1],
+        #ymax= numpy.max([geobox.ul_lonlat[1], geobox.ur_lonlat[1],
         #                 geobox.lr_lonlat[1], geobox.ll_lonlat[1]])
 
-        # subs = df[(df.lat >= ymin) & (df.lat <= ymax)]
-        # idx = subs.shape[0] // 2 - 1
-        # alon0 = subs.iloc[idx].lon
-        # alat0 = subs.iloc[idx].lat
+        #subs = df[(df.lat >= ymin) & (df.lat <= ymax)]
+        #idx = subs.shape[0] // 2 - 1
+        #alon0 = subs.iloc[idx].lon
+        #alat0 = subs.iloc[idx].lat
 
     def read_gps_file(self):
-        df = pd.read_csv(self.GPS_Filename, sep=" ", names=["lon", "lat"], header=None)
+        df = pandas.read_csv(self.GPS_Filename, sep=' ', names=['lon', 'lat'],
+                             header=None)
         return df
