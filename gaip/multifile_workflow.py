@@ -412,7 +412,7 @@ class InterpolateCoefficient(luigi.Task):
     """Runs the interpolation function for a given band."""
 
     vertices = luigi.TupleParameter()
-    band_num = luigi.Parameter()
+    band_id = luigi.Parameter()
     factor = luigi.Parameter()
     base_dir = luigi.Parameter(default="_interpolation", significant=False)
     model = luigi.EnumParameter(enum=Model)
@@ -430,7 +430,7 @@ class InterpolateCoefficient(luigi.Task):
         out_path = acquisitions(self.level1).get_root(
             self.work_root, self.group, self.granule
         )
-        out_fname = f"{self.factor}-band-{self.band_num}.h5"
+        out_fname = f"{self.factor}-band-{self.band_id}.h5"
         return luigi.LocalTarget(pjoin(out_path, self.base_dir, out_fname))
 
     def run(self):
@@ -439,7 +439,7 @@ class InterpolateCoefficient(luigi.Task):
         coefficients_fname = self.input()["coef"].path
         ancillary_fname = self.input()["ancillary"].path
 
-        acq = [acq for acq in acqs if acq.band_num == self.band_num][0]
+        acq = [acq for acq in acqs if acq.band_id == self.band_id][0]
 
         with self.output().temporary_path() as out_fname:
             _interpolate(
@@ -471,17 +471,17 @@ class InterpolateCoefficients(luigi.Task):
         acqs = container.get_acquisitions(group=self.group, granule=self.granule)
 
         # Retrieve the satellite and sensor for the acquisition
-        satellite = acqs[0].spacecraft_id
+        satellite = acqs[0].platform_id
         sensor = acqs[0].sensor_id
 
         # NBAR band id's
         nbar_constants = constants.NBARConstants(satellite, sensor)
         band_ids = nbar_constants.get_nbar_lut()
-        nbar_bands = [a.band_num for a in acqs if a.band_num in band_ids]
+        nbar_bands = [a.band_id for a in acqs if a.band_id in band_ids]
 
         # SBT band id's
         band_ids = constants.sbt_bands(satellite, sensor)
-        sbt_bands = [a.band_num for a in acqs if a.band_num in band_ids]
+        sbt_bands = [a.band_id for a in acqs if a.band_id in band_ids]
 
         tasks = {}
         for factor in self.model.factors:
@@ -497,7 +497,7 @@ class InterpolateCoefficients(luigi.Task):
                     "work_root": self.work_root,
                     "granule": self.granule,
                     "group": self.group,
-                    "band_num": band,
+                    "band_id": band,
                     "factor": factor,
                     "model": self.model,
                     "vertices": self.vertices,
@@ -828,7 +828,7 @@ class CalculateShadowMasks(luigi.Task):
 class SurfaceReflectance(luigi.Task):
     """Run the terrain correction over a given band."""
 
-    band_num = luigi.Parameter()
+    band_id = luigi.Parameter()
     rori = luigi.FloatParameter(default=0.52, significant=False)
     base_dir = luigi.Parameter(default="_standardised", significant=False)
 
@@ -850,7 +850,7 @@ class SurfaceReflectance(luigi.Task):
         out_path = acquisitions(self.level1).get_root(
             self.work_root, self.group, self.granule
         )
-        fname = f"reflectance-{self.band_num}.h5"
+        fname = f"reflectance-{self.band_id}.h5"
         return luigi.LocalTarget(pjoin(out_path, self.base_dir, fname))
 
     def run(self):
@@ -869,7 +869,7 @@ class SurfaceReflectance(luigi.Task):
         ancillary_fname = inputs["ancillary"].path
 
         # get the acquisition we wish to process
-        acq = [acq for acq in acqs if acq.band_num == self.band_num][0]
+        acq = [acq for acq in acqs if acq.band_id == self.band_id][0]
 
         with self.output().temporary_path() as out_fname:
             _calculate_reflectance(
@@ -904,13 +904,13 @@ class SurfaceTemperature(luigi.Task):
         out_path = acquisitions(self.level1).get_root(
             self.work_root, self.group, self.granule
         )
-        fname = f"temperature-{self.band_num}.h5"
+        fname = f"temperature-{self.band_id}.h5"
         return luigi.LocalTarget(pjoin(out_path, self.base_dir, fname))
 
     def run(self):
         container = acquisitions(self.level1)
         acqs = container.get_acquisitions(self.group, self.granule)
-        acq = [acq for acq in acqs if acq.band_num == self.band_num][0]
+        acq = [acq for acq in acqs if acq.band_id == self.band_id][0]
 
         with self.output().temporary_path() as out_fname:
             interpolation_fname = self.input()["interpolation"].path
@@ -940,19 +940,19 @@ class DataStandardisation(luigi.Task):
         acqs = container.get_acquisitions(group=self.group, granule=self.granule)
 
         # Retrieve the satellite and sensor for the acquisition
-        satellite = acqs[0].spacecraft_id
+        satellite = acqs[0].platform_id
         sensor = acqs[0].sensor_id
 
         # NBAR band id's
         if self.model == Model.standard or self.model == Model.nbar:
             nbar_constants = constants.NBARConstants(satellite, sensor)
             band_ids = nbar_constants.get_nbar_lut()
-            bands.extend([a for a in acqs if a.band_num in band_ids])
+            bands.extend([a for a in acqs if a.band_id in band_ids])
 
         # SBT band id's
         if self.model == Model.standard or self.model == Model.sbt:
             band_ids = constants.sbt_bands(satellite, sensor)
-            bands.extend([a for a in acqs if a.band_num in band_ids])
+            bands.extend([a for a in acqs if a.band_id in band_ids])
 
         tasks = []
         for band in bands:
@@ -961,7 +961,7 @@ class DataStandardisation(luigi.Task):
                 "work_root": self.work_root,
                 "granule": self.granule,
                 "group": self.group,
-                "band_num": band.band_num,
+                "band_id": band.band_id,
                 "model": self.model,
                 "vertices": self.vertices,
                 "method": self.method,
