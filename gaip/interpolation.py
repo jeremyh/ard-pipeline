@@ -433,8 +433,7 @@ def interpolate(
     start = boxline.start_index.values + 1
     end = boxline.end_index.values + 1
 
-    band = acq.band_num
-    band_records = coefficients.band_id == f"BAND {band}"
+    band_records = coefficients.band_name == acq.band_name
     samples = coefficients[factor][band_records].values
 
     func_map = {
@@ -469,7 +468,7 @@ def interpolate(
     group = fid[GroupName.interp_group.value]
 
     fmt = DatasetName.interpolation_fmt.value
-    dset_name = fmt.format(factor=factor, band=band)
+    dset_name = fmt.format(factor=factor, band=acq.band_id)
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
     )
@@ -484,7 +483,7 @@ def interpolate(
     desc = (
         "Contains the interpolated result of factor {} " "for band {} from sensor {}."
     )
-    attrs["Description"] = desc.format(factor, band, acq.satellite_name)
+    attrs["Description"] = desc.format(factor, acq.band_id, acq.satellite_name)
     write_h5_image(result, dset_name, group, attrs, **kwargs)
 
     if out_group is None:

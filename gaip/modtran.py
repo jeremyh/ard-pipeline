@@ -708,7 +708,7 @@ def read_spectral_response(fname, as_list=False, spectral_range=None):
             [l.split("  ") for l in lines[idx + 1 : ids[i + 1]]], dtype="float"
         )
         df = pd.DataFrame(
-            {"band_id": lines[idx], "wavelength": data[:, 0], "response": data[:, 1]}
+            {"band_name": lines[idx], "wavelength": data[:, 0], "response": data[:, 1]}
         )
         response[lines[idx]] = df
 
@@ -716,7 +716,7 @@ def read_spectral_response(fname, as_list=False, spectral_range=None):
     idx = ids[-1]
     data = np.array([l.split("  ") for l in lines[idx + 1 :]], dtype="float")
     df = pd.DataFrame(
-        {"band_id": lines[idx], "wavelength": data[:, 0], "response": data[:, 1]}
+        {"band_name": lines[idx], "wavelength": data[:, 0], "response": data[:, 1]}
     )
     response[lines[idx]] = df
 
@@ -727,7 +727,7 @@ def read_spectral_response(fname, as_list=False, spectral_range=None):
 
     for band in response:
         base_df = pd.DataFrame(
-            {"wavelength": wavelengths, "response": 0.0, "band_id": band},
+            {"wavelength": wavelengths, "response": 0.0, "band_name": band},
             index=wavelengths,
         )
         df = response[band]
@@ -735,8 +735,8 @@ def read_spectral_response(fname, as_list=False, spectral_range=None):
 
         response[band] = base_df
 
-    spectral_response = pd.concat(response, names=["band_id", "wavelength"])
-    spectral_response.drop(["band_id", "wavelength"], inplace=True, axis=1)
+    spectral_response = pd.concat(response, names=["band_name", "wavelength"])
+    spectral_response.drop(["band_name", "wavelength"], inplace=True, axis=1)
 
     return spectral_response
 
@@ -836,10 +836,10 @@ def read_modtran_channel(fname, acquisition, albedo):
 
     :return:
         A `pandas.DataFrame` containing the channel data, and index
-        by the `band_id`.
+        by the `band_name`.
     """
     response = acquisition.spectral_response()
-    nbands = response.index.get_level_values("band_id").unique().shape[0]
+    nbands = response.index.get_level_values("band_name").unique().shape[0]
     if albedo == Model.sbt.albedos[0]:
         upward_radiation = pd.read_csv(
             fname, skiprows=5, header=None, delim_whitespace=True, nrows=nbands
@@ -851,16 +851,16 @@ def read_modtran_channel(fname, acquisition, albedo):
             delim_whitespace=True,
             nrows=nbands,
         )
-        upward_radiation["band_id"] = (
+        upward_radiation["band_name"] = (
             upward_radiation[16] + " " + upward_radiation[17].astype(str)
         )
-        downward_radiation["band_id"] = (
+        downward_radiation["band_name"] = (
             downward_radiation[16] + " " + downward_radiation[17].astype(str)
         )
         upward_radiation.drop([16, 17], inplace=True, axis=1)
         downward_radiation.drop([16, 17], inplace=True, axis=1)
-        upward_radiation.set_index("band_id", inplace=True)
-        downward_radiation.set_index("band_id", inplace=True)
+        upward_radiation.set_index("band_name", inplace=True)
+        downward_radiation.set_index("band_name", inplace=True)
         upward_radiation.columns = upward_radiation.columns.astype(str)
         downward_radiation.columns = downward_radiation.columns.astype(str)
 
@@ -869,9 +869,9 @@ def read_modtran_channel(fname, acquisition, albedo):
         chn_data = pd.read_csv(
             fname, skiprows=5, header=None, nrows=nbands, delim_whitespace=True
         )
-        chn_data["band_id"] = chn_data[20] + " " + chn_data[21].astype(str)
+        chn_data["band_name"] = chn_data[20] + " " + chn_data[21].astype(str)
         chn_data.drop([20, 21], inplace=True, axis=1)
-        chn_data.set_index("band_id", inplace=True)
+        chn_data.set_index("band_name", inplace=True)
         chn_data.columns = chn_data.columns.astype(str)
 
         return chn_data
@@ -910,8 +910,8 @@ def calculate_solar_radiation(
     idx = levels - 1
 
     # group via the available bands
-    band_index = spectral_response.index.get_level_values("band_id")
-    groups = spectral_response.groupby(band_index)
+    band_name = spectral_response.index.get_level_values("band_name")
+    groups = spectral_response.groupby(band_name)
 
     # output dataframe
     # later on the process can be refined to only evaluate the bands
@@ -933,8 +933,6 @@ def calculate_solar_radiation(
 
     # loop over each band and get the solar radiation
     for band, grp in groups:
-        # df.ix[band, 'band_id'] = band
-
         # downward diffuse at bottom of atmospheric levels
         diffuse_bottom = (
             grp.ix[band, st_wl]["response"] * flux_data.ix[st_wl, "downward_diffuse"][0]
