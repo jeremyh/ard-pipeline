@@ -293,17 +293,12 @@ def calculate_reflectance(
         idx = (slice(tile[0][0], tile[0][1]), slice(tile[1][0], tile[1][1]))
 
         # define some static arguments
-        acq_args = {
-            "window": tile,
-            "masked": False,
-            "apply_gain_offset": acq.scaled_radiance,
-            "out_no_data": kwargs["fillvalue"],
-        }
+        acq_args = {"window": tile, "out_no_data": kwargs["fillvalue"]}
         f32_args = {"dtype": np.float32, "transpose": True}
 
         # Read the data corresponding to the current tile for all dataset
         # Convert the datatype if required and transpose
-        band_data = as_array(acq.data(**acq_args), **f32_args)
+        band_data = as_array(acq.radiance_data(**acq_args), **f32_args)
 
         shadow = as_array(shadow_dataset[idx], np.int8, transpose=True)
         solar_zenith = as_array(solar_zenith_dset[idx], **f32_args)
