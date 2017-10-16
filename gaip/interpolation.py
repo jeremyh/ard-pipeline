@@ -483,7 +483,7 @@ def interpolate(
     desc = (
         "Contains the interpolated result of factor {} " "for band {} from sensor {}."
     )
-    attrs["Description"] = desc.format(factor, acq.band_id, acq.satellite_name)
+    attrs["Description"] = desc.format(factor, acq.band_id, acq.sensor_id)
     write_h5_image(result, dset_name, group, attrs, **kwargs)
 
     if out_group is None:
