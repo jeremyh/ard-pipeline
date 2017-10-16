@@ -875,7 +875,9 @@ class Sentinel2aAcquisition(Acquisition):
         """Returns the recorded gps data as a `pandas.DataFrame`."""
         # open the zip archive and get the xml root
         archive = zipfile.ZipFile(self.pathname)
-        xml_file = [s for s in archive.namelist() if "MTD_DS.xml" in s][0]
+        xml_file = [
+            s for s in archive.namelist() if ("DATASTRIP" in s) & (".xml" in s)
+        ][0]
         xml_root = ElementTree.XML(archive.read(xml_file))
 
         # coordinate transform
