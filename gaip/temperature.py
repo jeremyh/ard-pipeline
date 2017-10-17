@@ -96,7 +96,7 @@ def surface_brightness_temperature(
     """
     acq = acquisition
     geobox = acq.gridded_geo_box()
-    bn = acq.band_id
+    bn = acq.band_name
 
     # retrieve the upwelling radiation and transmittance datasets
     dname_fmt = DatasetName.interpolation_fmt.value
@@ -133,10 +133,11 @@ def surface_brightness_temperature(
         "platform_id": acq.platform_id,
         "sensor_id": acq.sensor_id,
         "band_id": acq.band_id,
+        "band_name": bn,
     }
 
     name_fmt = DatasetName.temperature_fmt.value
-    dataset_name = name_fmt.format(band=acq.band_id)
+    dataset_name = name_fmt.format(band=acq.band_name)
     out_dset = group.create_dataset(dataset_name, **kwargs)
 
     desc = "Surface Brightness Temperature in Kelvin."
