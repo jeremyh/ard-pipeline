@@ -11,7 +11,7 @@ import numpy as np
 from scipy.interpolate import Rbf
 
 from gaip.constants import DatasetName, GroupName, Method, Model
-from gaip.hdf5 import dataset_compression_kwargs, read_h5_table, write_h5_image
+from gaip.hdf5 import dataset_compression_kwargs, find, read_h5_table, write_h5_image
 
 DEFAULT_ORIGIN = (0, 0)
 DEFAULT_SHAPE = (8, 8)
@@ -468,7 +468,7 @@ def interpolate(
     group = fid[GroupName.interp_group.value]
 
     fmt = DatasetName.interpolation_fmt.value
-    dset_name = fmt.format(factor=factor, band=acq.band_id)
+    dset_name = fmt.format(factor=factor, band=acq.band_name)
     kwargs = dataset_compression_kwargs(
         compression=compression, chunks=(1, geobox.x_size())
     )
@@ -498,7 +498,7 @@ def link_interpolated_data(data, out_fname):
     for key in data:
         fname = data[key]
         with h5py.File(fname, "r") as fid:
-            dataset_names = list(fid[group_path].keys())
+            dataset_names = find(fid, dataset_class="IMAGE")
 
         with h5py.File(out_fname, "a") as fid:
             for dname in dataset_names:
