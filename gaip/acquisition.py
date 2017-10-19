@@ -372,6 +372,7 @@ class LandsatAcquisition(Acquisition):
 
         super().__init__(
             pathname,
+            uri,
             acquisition_datetime,
             band_name=band_name,
             band_id=band_id,
