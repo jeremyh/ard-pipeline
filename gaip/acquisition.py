@@ -14,7 +14,7 @@ import os
 import re
 import zipfile
 from functools import total_ordering
-from os.path import basename, dirname, isdir
+from os.path import basename, dirname, isdir, splitext
 from os.path import join as pjoin
 from xml.etree import ElementTree
 
@@ -570,9 +570,9 @@ def acquisitions(path):
     acquisitions for each Granule Group (if applicable) and
     each sub Group.
     """
-    try:
+    if splitext(path)[1] == ".zip":
         container = acquisitions_via_safe(path)
-    except zipfile.BadZipFile:
+    else:
         try:
             container = acquisitions_via_mtl(path)
         except OSError:
