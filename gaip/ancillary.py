@@ -18,7 +18,7 @@ from shapely import wkt
 from shapely.geometry import Point, Polygon
 
 from gaip.brdf import get_brdf_data
-from gaip.constants import POINT_FMT, DatasetName, GroupName
+from gaip.constants import POINT_FMT, BandType, DatasetName, GroupName
 from gaip.data import get_pixel
 from gaip.hdf5 import (
     attach_attributes,
@@ -110,7 +110,7 @@ def relative_humdity(surface_temp, dewpoint_temp, kelvin=True):
 
 
 def _collect_ancillary(
-    acquisition,
+    container,
     satellite_solar_fname,
     nbar_paths,
     sbt_path=None,
@@ -127,7 +127,7 @@ def _collect_ancillary(
     ) as out_fid:
         sat_sol_grp = fid[GroupName.sat_sol_group.value]
         collect_ancillary(
-            acquisition,
+            container,
             sat_sol_grp,
             nbar_paths,
             sbt_path,
@@ -141,7 +141,7 @@ def _collect_ancillary(
 
 
 def collect_ancillary(
-    acquisition,
+    container,
     satellite_solar_group,
     nbar_paths,
     sbt_path=None,
@@ -155,8 +155,8 @@ def collect_ancillary(
     to handle ancillary retrieval, rather than directory passing,
     and filename grepping.
 
-    :param acquisition:
-        An instance of an `Acquisition` object.
+    :param container:
+        An instance of an `AcquisitionsContainer` object.
 
     :param satellite_solar_group:
         The root HDF5 `Group` that contains the solar zenith and
@@ -215,6 +215,8 @@ def collect_ancillary(
 
     group = fid.create_group(GroupName.ancillary_group.value)
 
+    acquisition = container.get_acquisitions()[0]
+
     boxline_dataset = satellite_solar_group[DatasetName.boxline.value][:]
     coordinator = create_vertices(acquisition, boxline_dataset, vertices)
     lonlats = zip(coordinator["longitude"], coordinator["latitude"])
@@ -240,7 +242,7 @@ def collect_ancillary(
         )
 
     collect_nbar_ancillary(
-        acquisition, out_group=group, compression=compression, **nbar_paths
+        container, out_group=group, compression=compression, **nbar_paths
     )
 
     if out_group is None:
@@ -386,7 +388,7 @@ def collect_sbt_ancillary(
 
 
 def collect_nbar_ancillary(
-    acquisition,
+    container,
     aerosol_fname=None,
     water_vapour_path=None,
     ozone_path=None,
@@ -398,8 +400,8 @@ def collect_nbar_ancillary(
 ):
     """Collects the ancillary information required to create NBAR.
 
-    :param acquisition:
-        An instance of an `Acquisition` object.
+    :param container:
+        An instance of an `AcquisitionsContainer` object.
 
     :param aerosol_fname:
         A `str` containing the full file pathname to the `HDF5` file
@@ -443,26 +445,13 @@ def collect_nbar_ancillary(
         An opened `h5py.File` object, that is either in-memory using the
         `core` driver, or on disk.
     """
-
-    def _format_brdf_attrs(factor):
-        """Converts BRDF shortnames to longnames."""
-        scattering_names = {"iso": "isometric", "vol": "volumetric", "geo": "geometric"}
-
-        attrs = {}
-        description = (
-            "Bidirectional Reflectance Distribution Function "
-            "for the {} scattering fraction."
-        )
-        attrs["Description"] = description.format(scattering_names[factor])
-
-        return attrs
-
     # Initialise the output files
     if out_group is None:
         fid = h5py.File("nbar-ancillary.h5", driver="core", backing_store=False)
     else:
         fid = out_group
 
+    acquisition = container.get_acquisitions()[0]
     dt = acquisition.acquisition_datetime
     geobox = acquisition.gridded_geo_box()
 
@@ -480,16 +469,20 @@ def collect_nbar_ancillary(
 
     # brdf
     group = fid.create_group("brdf-image-datasets")
-    data = get_brdf_data(acquisition, brdf_path, brdf_premodis_path, group, compression)
     dname_format = DatasetName.brdf_fmt.value
-    for key in data:
-        band, factor = key
-        attrs = _format_brdf_attrs(factor)
-        for k in attrs:
-            data[key][k] = attrs[k]
-        dname = dname_format.format(band=band, factor=factor)
-        brdf_value = data[key].pop("value")
-        write_scalar(brdf_value, dname, fid, data[key])
+    for group in container.groups:
+        for acq in container.get_acquisitions(group=group):
+            if acq.band_type is not BandType.Reflective:
+                continue
+            data = get_brdf_data(acq, brdf_path, brdf_premodis_path, group, compression)
+
+            # output
+            for param in data:
+                dname = dname_format.format(
+                    parameter=param.name, band_name=acq.band_name
+                )
+                brdf_value = data[param].pop("value")
+                write_scalar(brdf_value, dname, fid, data[param])
 
     if out_group is None:
         return fid

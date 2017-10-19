@@ -204,7 +204,7 @@ class AncillaryData(luigi.Task):
 
     def run(self):
         container = acquisitions(self.level1)
-        acq = container.get_acquisitions(granule=self.granule)[0]
+        grn = container.get_granule(granule=self.granule, container=True)
         sbt_path = None
 
         nbar_paths = {
@@ -221,7 +221,7 @@ class AncillaryData(luigi.Task):
 
         with self.output().temporary_path() as out_fname:
             _collect_ancillary(
-                acq,
+                grn,
                 self.input().path,
                 nbar_paths,
                 sbt_path,
@@ -864,6 +864,7 @@ class SurfaceReflectance(luigi.Task):
         with self.output().temporary_path() as out_fname:
             _calculate_reflectance(
                 acq,
+                acqs,
                 interpolation_fname,
                 sat_sol_fname,
                 slp_asp_fname,
@@ -907,6 +908,7 @@ class SurfaceTemperature(luigi.Task):
             ancillary_fname = self.input()["ancillary"].path
             _surface_brightness_temperature(
                 acq,
+                acqs,
                 interpolation_fname,
                 ancillary_fname,
                 out_fname,

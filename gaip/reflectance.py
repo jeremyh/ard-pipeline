@@ -11,7 +11,7 @@ import h5py
 import numpy as np
 
 from gaip.__surface_reflectance import reflectance
-from gaip.constants import DatasetName, GroupName
+from gaip.constants import BrdfParameters, DatasetName, GroupName
 from gaip.data import as_array
 from gaip.hdf5 import (
     attach_image_attributes,
@@ -25,6 +25,7 @@ from gaip.tiling import generate_tiles
 
 def _calculate_reflectance(
     acquisition,
+    acquisitions,
     interpolation_fname,
     satellite_solar_angles_fname,
     slope_aspect_fname,
@@ -80,7 +81,7 @@ def _calculate_reflectance(
             y_tile,
         )
 
-        create_ard_yaml(acquisition, grp8, fid)
+        create_ard_yaml(acquisitions, grp8, fid)
 
 
 def calculate_reflectance(
@@ -201,13 +202,13 @@ def calculate_reflectance(
     bn = acq.band_name
 
     dname_fmt = DatasetName.interpolation_fmt.value
-    fv_dataset = interpolation_group[dname_fmt.format(factor="fv", band=bn)]
-    fs_dataset = interpolation_group[dname_fmt.format(factor="fs", band=bn)]
-    b_dataset = interpolation_group[dname_fmt.format(factor="b", band=bn)]
-    s_dataset = interpolation_group[dname_fmt.format(factor="s", band=bn)]
-    a_dataset = interpolation_group[dname_fmt.format(factor="a", band=bn)]
-    dir_dataset = interpolation_group[dname_fmt.format(factor="dir", band=bn)]
-    dif_dataset = interpolation_group[dname_fmt.format(factor="dif", band=bn)]
+    fv_dataset = interpolation_group[dname_fmt.format(factor="fv", band_name=bn)]
+    fs_dataset = interpolation_group[dname_fmt.format(factor="fs", band_name=bn)]
+    b_dataset = interpolation_group[dname_fmt.format(factor="b", band_name=bn)]
+    s_dataset = interpolation_group[dname_fmt.format(factor="s", band_name=bn)]
+    a_dataset = interpolation_group[dname_fmt.format(factor="a", band_name=bn)]
+    dir_dataset = interpolation_group[dname_fmt.format(factor="dir", band_name=bn)]
+    dif_dataset = interpolation_group[dname_fmt.format(factor="dif", band_name=bn)]
     ts_dataset = interpolation_group[dname_fmt.format(factor="ts", band=bn)]
     solar_zenith_dset = satellite_solar_group[DatasetName.solar_zenith.value]
     solar_azimuth_dset = satellite_solar_group[DatasetName.solar_azimuth.value]
@@ -221,9 +222,14 @@ def calculate_reflectance(
     shadow_dataset = shadow_masks_group[DatasetName.combined_shadow.value]
 
     dname_fmt = DatasetName.brdf_fmt.value
-    brdf_iso = ancillary_group[dname_fmt.format(band=bn, factor="iso")][()]
-    brdf_vol = ancillary_group[dname_fmt.format(band=bn, factor="vol")][()]
-    brdf_geo = ancillary_group[dname_fmt.format(band=bn, factor="geo")][()]
+    dname = dname_fmt.format(band_name=bn, parameter=BrdfParameters.iso.name)
+    brdf_iso = ancillary_group[dname][()]
+
+    dname = dname_fmt.format(band_name=bn, parameter=BrdfParameters.vol.name)
+    brdf_vol = ancillary_group[dname][()]
+
+    dname = dname_fmt.format(band_name=bn, parameter=BrdfParameters.geo.name)
+    brdf_geo = ancillary_group[dname][()]
 
     # Initialise the output file
     if out_group is None:
@@ -244,7 +250,7 @@ def calculate_reflectance(
 
     # create the datasets
     dname_fmt = DatasetName.reflectance_fmt.value
-    dname = dname_fmt.format(product="lambertian", band=bn)
+    dname = dname_fmt.format(product="lambertian", band_name=bn)
     lmbrt_dset = grp.create_dataset(dname, **kwargs)
 
     dname = dname_fmt.format(product="brdf", band=bn)

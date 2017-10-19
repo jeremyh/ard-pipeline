@@ -16,7 +16,7 @@ import yaml
 from yaml.representer import Representer
 
 import gaip
-from gaip.constants import POINT_FMT, DatasetName, GroupName, NBARConstants
+from gaip.constants import POINT_FMT, BandType, BrdfParameters, DatasetName, GroupName
 from gaip.hdf5 import read_h5_table, read_scalar, write_scalar
 
 yaml.add_representer(np.int8, Representer.represent_int)
@@ -80,12 +80,12 @@ def read_meatadata_tags(fname, bands):
     return pd.DataFrame(tag_data)
 
 
-def create_ard_yaml(acquisition, ancillary_group, out_group, sbt=False):
+def create_ard_yaml(acquisitions, ancillary_group, out_group, sbt=False):
     """Write the NBAR metadata captured during the entire workflow to a
     HDF5 SCALAR dataset using the yaml document format.
 
-    :param acquisition:
-        An instance of `acquisition`.
+    :param acquisitions:
+        A `list` of `Acquisition` instances.
 
     :param ancillary_group:
         The root HDF5 `Group` that contains the ancillary data
@@ -160,7 +160,7 @@ def create_ard_yaml(acquisition, ancillary_group, out_group, sbt=False):
 
         return point_data
 
-    def load_ancillary(acquisition, fid, sbt=False):
+    def load_ancillary(acquisitions, fid, sbt=False):
         """Load the ancillary data retrieved during the workflow."""
         # retrieve the averaged ancillary if available
         anc_grp = fid.get(GroupName.ancillary_avg_group.value)
@@ -188,27 +188,26 @@ def create_ard_yaml(acquisition, ancillary_group, out_group, sbt=False):
             for key in sbt_ancillary:
                 ancillary[key] = sbt_ancillary[key]
         else:
-            # Get the required BRDF LUT & factors list
-            nbar_constants = NBARConstants(
-                acquisition.platform_id, acquisition.sensor_id
-            )
-            bands = nbar_constants.get_brdf_lut()
-            brdf_factors = nbar_constants.get_brdf_factors()
             brdf_data = {}
-            band_fmt = "band_{}"
-            for band in bands:
+            for acq in acquisitions:
+                if acq.band_type == BandType.Thermal:
+                    continue
+
                 brdf = {}
-                for factor in brdf_factors:
+                bn = acq.band_name
+                for param in BrdfParameters:
                     fmt = DatasetName.brdf_fmt.value
-                    dset = fid[fmt.format(band=band, factor=factor)]
-                    brdf[factor] = {k: v for k, v in dset.attrs.items()}
-                    brdf[factor]["value"] = dset[()]
-                brdf_data[band_fmt.format(band)] = brdf
+                    dset = fid[fmt.format(band_name=bn, parameter=param)]
+                    brdf[param.name] = {k: v for k, v in dset.attrs.items()}
+                    brdf[param.name]["value"] = dset[()]
+
+                brdf_data[bn] = brdf
 
             ancillary["brdf"] = brdf_data
 
         return ancillary
 
+    acquisition = acquisitions[0]
     level1_path = acquisition.pathname
     source_info = {
         "source_level1": level1_path,
@@ -221,7 +220,7 @@ def create_ard_yaml(acquisition, ancillary_group, out_group, sbt=False):
     for key, value in extract_ancillary_metadata(level1_path).items():
         source_info[key] = value
 
-    ancillary = load_ancillary(acquisition, ancillary_group, sbt)
+    ancillary = load_ancillary(acquisitions, ancillary_group, sbt)
 
     software_versions = {
         "gaip": {
