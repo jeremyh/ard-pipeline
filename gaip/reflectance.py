@@ -209,7 +209,7 @@ def calculate_reflectance(
     a_dataset = interpolation_group[dname_fmt.format(factor="a", band_name=bn)]
     dir_dataset = interpolation_group[dname_fmt.format(factor="dir", band_name=bn)]
     dif_dataset = interpolation_group[dname_fmt.format(factor="dif", band_name=bn)]
-    ts_dataset = interpolation_group[dname_fmt.format(factor="ts", band=bn)]
+    ts_dataset = interpolation_group[dname_fmt.format(factor="ts", band_name=bn)]
     solar_zenith_dset = satellite_solar_group[DatasetName.solar_zenith.value]
     solar_azimuth_dset = satellite_solar_group[DatasetName.solar_azimuth.value]
     satellite_v_dset = satellite_solar_group[DatasetName.satellite_view.value]
@@ -253,10 +253,10 @@ def calculate_reflectance(
     dname = dname_fmt.format(product="lambertian", band_name=bn)
     lmbrt_dset = grp.create_dataset(dname, **kwargs)
 
-    dname = dname_fmt.format(product="brdf", band=bn)
+    dname = dname_fmt.format(product="brdf", band_name=bn)
     brdf_dset = grp.create_dataset(dname, **kwargs)
 
-    dname = dname_fmt.format(product="terrain", band=bn)
+    dname = dname_fmt.format(product="terrain", band_name=bn)
     tc_dset = grp.create_dataset(dname, **kwargs)
 
     # attach some attributes to the image datasets
