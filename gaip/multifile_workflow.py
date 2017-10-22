@@ -962,7 +962,7 @@ class DataStandardisation(luigi.Task):
         out_path = acquisitions(self.level1).get_root(
             self.work_root, self.group, self.granule
         )
-        return luigi.LocalTarget(pjoin(out_path, "standard-products.h5"))
+        return luigi.LocalTarget(pjoin(out_path, "standardised-products.h5"))
 
     def run(self):
         with self.output().temporary_path() as out_fname:
