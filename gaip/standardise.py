@@ -243,6 +243,7 @@ def card4l(
                 "brdf_premodis_path": brdf_premodis_path,
             }
             grn_con = scene.get_granule(granule=grn_name, container=True)
+            group = granule_group[scene.groups[0]]
             collect_ancillary(
                 grn_con,
                 group[GroupName.sat_sol_group.value],
