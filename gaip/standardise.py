@@ -242,8 +242,9 @@ def card4l(
                 "brdf_path": brdf_path,
                 "brdf_premodis_path": brdf_premodis_path,
             }
+            grn_con = scene.get_granule(granule=grn_name, container=True)
             collect_ancillary(
-                acqs[0],
+                grn_con,
                 group[GroupName.sat_sol_group.value],
                 nbar_paths,
                 ecmwf_path,
