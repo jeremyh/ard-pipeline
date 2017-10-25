@@ -31,6 +31,7 @@ from os.path import join as pjoin
 
 import numpy as np
 from osgeo import gdal, gdalconst, osr
+from shapely import wkt
 from shapely.geometry import Polygon
 
 from gaip.constants import BrdfParameters
@@ -143,6 +144,7 @@ class BRDFLoader:
             i_ul = (intersection.bounds[0], intersection.bounds[-1])
             i_lr = (intersection.bounds[2], intersection.bounds[1])
             self.roi = {"UL": i_ul, "LR": i_lr}
+            self.roi_polygon = roi_poly
 
     def load(self):
         """Open file and load data arrays and required metadata.
@@ -574,8 +576,9 @@ def get_brdf_data(
         results[BrdfParameters.vol] = {"value": 0.0}
         results[BrdfParameters.geo] = {"value": 0.0}
 
-    # add very basic brdf description metadata
+    # add very basic brdf description metadata and the roi polygon
     for param in BrdfParameters:
         results[param]["BRDF-Parameter"] = param.name
+        results[param]["roi_wkt"] = wkt.dumps(brdf_object.roi_polygon)
 
     return results
