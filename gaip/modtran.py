@@ -592,7 +592,7 @@ def components(
 
     :param accumulation_albedo_t:
         A `pandas.DataFrame` containing the solar accumulated
-        irradiance (for albeod t; transmittance) and structured as
+        irradiance (for albed0 t; transmittance) and structured as
         returned by the `calculate_solar_radiation` function.
         Only used for NBAR calculations.
 
