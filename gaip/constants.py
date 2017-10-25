@@ -7,27 +7,9 @@ import re
 from enum import Enum
 from os.path import join as pjoin
 
-ALL_FACTORS = [
-    "FS",
-    "FV",
-    "A",
-    "B",
-    "S",
-    "DIR",
-    "DIF",
-    "TS",
-    "PATH-UP",
-    "PATH-DOWN",
-    "TRANSMITTANCE-UP",
-]
-
-ALL_ALBEDOS = ["0", "1", "T", "TH"]
-
 POINT_FMT = "POINT-{p}"
 ALBEDO_FMT = "ALBEDO-{a}"
 POINT_ALBEDO_FMT = "".join([POINT_FMT, "-", ALBEDO_FMT])
-
-ARD_PRODUCTS = ["BRDF", "TERRAIN", "LAMBERTIAN", "SBT"]
 
 
 class Model(Enum):
@@ -43,14 +25,15 @@ class Model(Enum):
     sbt = 3
 
     @property
-    def factors(self):
-        """Returns the factor names used for interpolation for a given
-        Model.<option>.
+    def atmos_components(self):
+        """Returns the atmospheric components names used for interpolation
+        for a given Model.<option>.
         """
+        atmos_var = list(AtmosphericComponents)
         fmap = {
-            Model.standard: ALL_FACTORS,
-            Model.nbar: ALL_FACTORS[0:8],
-            Model.sbt: ALL_FACTORS[8:],
+            Model.standard: atmos_var,
+            Model.nbar: atmos_var[0:8],
+            Model.sbt: atmos_var[8:],
         }
         return fmap.get(self)
 
@@ -59,11 +42,8 @@ class Model(Enum):
         """Returns the albedo names used for specific Atmospheric
         evaluations for a given Model.<option>.
         """
-        amap = {
-            Model.standard: ALL_ALBEDOS,
-            Model.nbar: ALL_ALBEDOS[0:-1],
-            Model.sbt: [ALL_ALBEDOS[-1]],
-        }
+        albs = list(Albedos)
+        amap = {Model.standard: albs, Model.nbar: albs[0:-1], Model.sbt: [albs[-1]]}
         return amap.get(self)
 
     @property
@@ -71,10 +51,11 @@ class Model(Enum):
         """Returns the ARD products available for a given
         Model.<option>.
         """
+        products = list(ArdProducts)
         amap = {
-            Model.standard: ARD_PRODUCTS,
-            Model.nbar: ARD_PRODUCTS[0:-1],
-            Model.sbt: [ARD_PRODUCTS[-1]],
+            Model.standard: products,
+            Model.nbar: products[0:-1],
+            Model.sbt: [products[-1]],
         }
         return amap.get(self)
 
@@ -157,7 +138,7 @@ class DatasetName(Enum):
     dsm_smoothed = "DSM-SMOOTHED"
 
     # gaip.interpolation
-    interpolation_fmt = "{factor}/{band_name}"
+    interpolation_fmt = "{component}/{band_name}"
 
     # gaip.modtran
     tp5 = "TP5-DATA"
@@ -167,8 +148,8 @@ class DatasetName(Enum):
     upward_radiation_channel = "UPWARD-RADIATION-CHANNEL"
     downward_radiation_channel = "DOWNWARD-RADIATION-CHANNEL"
     channel = "CHANNEL"
-    nbar_coefficients = "NBAR-COEFFICIENTS"
-    sbt_coefficients = "SBT-COEFFICIENTS"
+    nbar_components = "NBAR-COMPONENTS"
+    sbt_components = "SBT-COMPONENTS"
 
     # gaip.pq
     pixel_quality = "PIXEL-QUALITY/PIXEL-QUALITY"
@@ -190,8 +171,8 @@ class GroupName(Enum):
     ancillary_avg_group = "AVERAGED-ANCILLARY"
     atmospheric_inputs_grp = "ATMOSPHERIC-INPUTS"
     atmospheric_results_grp = "ATMOSPHERIC-RESULTS"
-    coefficients_group = "COEFFICIENTS"
-    interp_group = "INTERPOLATED-COEFFICIENTS"
+    components_group = "ATMOSPHERIC-COMPONENTS"
+    interp_group = "INTERPOLATED-ATMOSPHERIC-COMPONENTS"
     elevation_group = "ELEVATION"
     slp_asp_group = "SLOPE-ASPECT"
     incident_group = "INCIDENT-ANGLES"
@@ -203,7 +184,7 @@ class GroupName(Enum):
 
 class Method(Enum):
     """Defines the Interpolation method used for interpolating the
-    atmospheric coefficients.
+    atmospheric components.
     """
 
     bilinear = 0
@@ -216,9 +197,43 @@ class Method(Enum):
 class BrdfParameters(Enum):
     """Defines the BRDF Parameters used in BRDF correction."""
 
-    iso = 0
-    vol = 1
-    geo = 2
+    iso = "ISO"
+    vol = "VOL"
+    geo = "GEO"
+
+
+class ArdProducts(Enum):
+    """Defines the output ARD products that gaip produces."""
+
+    nbar = "NBAR"
+    nbart = "NBART"
+    lambertian = "LAMBERTIAN"
+    sbt = "SBT"
+
+
+class Albedos(Enum):
+    """Defines the albedo labels that gaip uses."""
+
+    albedo_0 = "0"
+    albeod_1 = "1"
+    albedo_t = "T"
+    albedo_th = "TH"
+
+
+class AtmosphericComponents(Enum):  # param, coeff, vari... what to use
+    """Defines the atmospheric component names that gaip uses."""
+
+    fs = "FS"
+    fv = "FV"
+    a = "A"
+    b = "B"
+    s = "S"
+    dir = "DIR"
+    dif = "DIF"
+    ts = "TS"
+    path_up = "PATH-UP"
+    path_down = "PATH-DOWN"
+    transmittance_up = "TRANSMITTANCE-UP"
 
 
 class PQbits(Enum):

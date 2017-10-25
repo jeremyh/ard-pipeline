@@ -28,12 +28,7 @@ from gaip.incident_exiting_angles import (
 from gaip.interpolation import interpolate
 from gaip.longitude_latitude_arrays import create_lon_lat_grids
 from gaip.metadata import create_ard_yaml
-from gaip.modtran import (
-    calculate_coefficients,
-    format_tp5,
-    prepare_modtran,
-    run_modtran,
-)
+from gaip.modtran import calculate_components, format_tp5, prepare_modtran, run_modtran
 from gaip.reflectance import calculate_reflectance
 from gaip.satellite_solar_angles import calculate_angles
 from gaip.slope_aspect import slope_aspect_arrays
@@ -323,13 +318,13 @@ def card4l(
                         compression,
                     )
 
-            # coefficients
-            log.info("Coefficients")
+            # atmospheric components
+            log.info("Components")
             pth = GroupName.atmospheric_results_grp.value
             results_group = granule_group[pth]
-            calculate_coefficients(results_group, granule_group, compression)
+            calculate_components(results_group, granule_group, compression)
 
-            # interpolate coefficients
+            # interpolate components
             for grp_name in scene.groups:
                 log = LOG.bind(
                     scene=scene.label, granule=grn_name, granule_group=grp_name
@@ -345,19 +340,23 @@ def card4l(
 
                 group = granule_group[grp_name]
                 sat_sol_grp = group[GroupName.sat_sol_group.value]
-                coef_grp = granule_group[GroupName.coefficients_group.value]
+                coef_grp = granule_group[GroupName.components.value]
 
-                for factor in model.factors:
-                    if factor in Model.nbar.factors:
+                for component in model.atmos_components:
+                    if component in Model.nbar.atmos_components:
                         band_acqs = nbar_acqs
                     else:
                         band_acqs = sbt_acqs
 
                     for acq in band_acqs:
-                        log.info("Interpolate", band_id=acq.band_id, factor=factor)
+                        log.info(
+                            "Interpolate",
+                            band_id=acq.band_id,
+                            component=component.value,
+                        )
                         interpolate(
                             acq,
-                            factor,
+                            component,
                             ancillary_group,
                             sat_sol_grp,
                             coef_grp,
