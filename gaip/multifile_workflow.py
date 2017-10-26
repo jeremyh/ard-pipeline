@@ -22,10 +22,14 @@ Workflow settings can be configured in `luigi.cfg` file.
 # pylint: disable=protected-access
 
 import logging
+import os
 import traceback
-from os.path import basename, dirname
+from os.path import basename, dirname, normpath, splitext
 from os.path import join as pjoin
+from posixpath import join as ppjoin
+from posixpath import normpath as pnormpath
 
+import h5py
 import luigi
 from luigi.local_target import LocalFileSystem
 from luigi.util import inherits, requires
@@ -43,6 +47,7 @@ from gaip.constants import (
     Model,
 )
 from gaip.dsm import _get_dsm
+from gaip.hdf5 import create_external_link
 from gaip.incident_exiting_angles import (
     _incident_exiting_angles,
     _relative_azimuth_slope,
@@ -975,6 +980,54 @@ class DataStandardisation(luigi.Task):
                 run_pq(self.level1, out_fname, self.land_sea_path, self.compression)
 
 
+class LinkGaipOutputs(luigi.Task):
+    """Link all the multifile outputs from gaip into a single file."""
+
+    level1 = luigi.Parameter()
+    work_root = luigi.Parameter()
+    model = luigi.EnumParameter(enum=Model)
+    vertices = luigi.TupleParameter(default=(5, 5))
+    pixel_quality = luigi.BoolParameter()
+    method = luigi.EnumParameter(enum=Method, default=Method.shear)
+
+    def requires(self):
+        container = acquisitions(self.level1)
+        for granule in container.granules:
+            for group in container.groups:
+                kwargs = {
+                    "level1": self.level1,
+                    "work_root": self.work_root,
+                    "granule": granule,
+                    "group": group,
+                    "model": self.model,
+                    "vertices": self.vertices,
+                    "pixel_quality": self.pixel_quality,
+                    "method": self.method,
+                }
+                yield DataStandardisation(**kwargs)
+
+    def output(self):
+        return luigi.LocalTarget(f"{normpath(self.work_root)}.h5")
+
+    def run(self):
+        with self.output().temporary_path() as out_fname:
+            for root, _, files in os.walk(self.work_root):
+                for file_ in files:
+                    if splitext(file_)[1] == ".h5":
+                        fname = pjoin(root, file_)
+                        grp_name = dirname(fname.replace(self.work_root, ""))
+
+                        # just a sanity check for windows paths
+                        grp_name = pnormpath(grp_name.replace("\\", "/"))
+
+                        with h5py.File(fname, "r") as fid:
+                            paths = [p for p in fid]
+
+                        for pth in paths:
+                            new_path = ppjoin(grp_name, pth)
+                            create_external_link(fname, pth, out_fname, new_path)
+
+
 class ARD(luigi.WrapperTask):
     """Kicks off ARD tasks for each level1 entry."""
 
@@ -989,23 +1042,19 @@ class ARD(luigi.WrapperTask):
         with open(self.level1_list) as src:
             level1_scenes = [scene.strip() for scene in src.readlines()]
 
-        for scene in level1_scenes:
-            work_name = f"{basename(scene)}.gaip"
+        for level1 in level1_scenes:
+            work_name = f"{basename(level1)}.gaip"
             work_root = pjoin(self.outdir, work_name)
-            container = acquisitions(scene)
-            for granule in container.granules:
-                for group in container.groups:
-                    kwargs = {
-                        "level1": scene,
-                        "work_root": work_root,
-                        "granule": granule,
-                        "group": group,
-                        "model": self.model,
-                        "vertices": self.vertices,
-                        "pixel_quality": self.pixel_quality,
-                        "method": self.method,
-                    }
-                    yield DataStandardisation(**kwargs)
+            kwargs = {
+                "level1": level1,
+                "work_root": work_root,
+                "model": self.model,
+                "vertices": self.vertices,
+                "pixel_quality": self.pixel_quality,
+                "method": self.method,
+            }
+
+            yield LinkGaipOutputs(*kwargs)
 
 
 class CallTask(luigi.WrapperTask):
