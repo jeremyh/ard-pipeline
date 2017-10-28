@@ -71,7 +71,6 @@ def card4l(
     ecmwf_path=None,
     rori=0.52,
     compression="lzf",
-    y_tile=100,
 ):
     """CEOS Analysis Ready Data for Land.
     A workflow for producing standardised products that meet the
@@ -98,12 +97,7 @@ def card4l(
 
                 # longitude and latitude
                 log.info("Latitude-Longitude")
-                create_lon_lat_grids(
-                    acqs[0].gridded_geo_box(),
-                    group,
-                    compression=compression,
-                    y_tile=y_tile,
-                )
+                create_lon_lat_grids(acqs[0], group, compression)
 
                 # satellite and solar angles
                 log.info("Satellite-Solar-Angles")
@@ -113,19 +107,13 @@ def card4l(
                     group,
                     compression,
                     tle_path,
-                    y_tile,
                 )
 
                 if model == Model.standard or model == model.nbar:
                     # DEM
                     log.info("DEM-retriveal")
                     get_dsm(
-                        acqs[0],
-                        dsm_fname,
-                        get_buffer(grp_name),
-                        group,
-                        compression,
-                        y_tile,
+                        acqs[0], dsm_fname, get_buffer(grp_name), group, compression
                     )
 
                     # slope & aspect
@@ -136,7 +124,6 @@ def card4l(
                         get_buffer(grp_name),
                         group,
                         compression,
-                        y_tile,
                     )
 
                     # incident angles
@@ -146,7 +133,6 @@ def card4l(
                         group[GroupName.slp_asp_group.value],
                         group,
                         compression,
-                        y_tile,
                     )
 
                     # exiting angles
@@ -156,7 +142,6 @@ def card4l(
                         group[GroupName.slp_asp_group.value],
                         group,
                         compression,
-                        y_tile,
                     )
 
                     # relative azimuth slope
@@ -168,7 +153,6 @@ def card4l(
                         group[exiting_group_name],
                         group,
                         compression,
-                        y_tile,
                     )
 
                     # self shadow
@@ -178,7 +162,6 @@ def card4l(
                         group[exiting_group_name],
                         group,
                         compression,
-                        y_tile,
                     )
 
                     # cast shadow solar source direction
@@ -193,7 +176,6 @@ def card4l(
                         500,
                         group,
                         compression,
-                        y_tile,
                     )
 
                     # cast shadow satellite source direction
@@ -207,7 +189,6 @@ def card4l(
                         500,
                         group,
                         compression,
-                        y_tile,
                         False,
                     )
 
@@ -219,7 +200,6 @@ def card4l(
                         group[GroupName.shadow_group.value],
                         group,
                         compression,
-                        y_tile,
                     )
 
             # nbar and sbt ancillary
@@ -340,7 +320,7 @@ def card4l(
 
                 group = granule_group[grp_name]
                 sat_sol_grp = group[GroupName.sat_sol_group.value]
-                coef_grp = granule_group[GroupName.components.value]
+                comp_grp = granule_group[GroupName.components.value]
 
                 for component in model.atmos_components:
                     if component in Model.nbar.atmos_components:
@@ -359,10 +339,9 @@ def card4l(
                             component,
                             ancillary_group,
                             sat_sol_grp,
-                            coef_grp,
+                            comp_grp,
                             group,
                             compression,
-                            y_tile,
                             method,
                         )
 
@@ -380,7 +359,7 @@ def card4l(
                     if acq.band_type == BandType.Thermal:
                         log.info("SBT", band_id=acq.band_id)
                         surface_brightness_temperature(
-                            acq, interp_grp, group, compression, y_tile
+                            acq, interp_grp, group, compression
                         )
                     else:
                         slp_asp_grp = group[GroupName.slp_asp_group.value]
@@ -388,6 +367,7 @@ def card4l(
                         incident_grp = group[GroupName.incident_group.value]
                         exiting_grp = group[GroupName.exiting_group.value]
                         shadow_grp = group[GroupName.shadow_group.value]
+
                         log.info("Surface-Reflectance", band_id=acq.band_id)
                         calculate_reflectance(
                             acq,
@@ -402,7 +382,6 @@ def card4l(
                             rori,
                             group,
                             compression,
-                            y_tile,
                         )
 
                 # metadata yaml's

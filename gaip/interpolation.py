@@ -379,7 +379,6 @@ def _interpolate(
     ancillary_fname,
     out_fname,
     compression,
-    y_tile,
     method,
 ):
     """A private wrapper for dealing with the internal custom workings of the
@@ -393,9 +392,7 @@ def _interpolate(
         grp1 = anc[GroupName.ancillary_group.value]
         grp2 = sat_sol[GroupName.sat_sol_group.value]
         grp3 = comp[GroupName.components_group.value]
-        interpolate(
-            acq, component, grp1, grp2, grp3, out_fid, compression, y_tile, method
-        )
+        interpolate(acq, component, grp1, grp2, grp3, out_fid, compression, method)
 
 
 def interpolate(
@@ -406,7 +403,6 @@ def interpolate(
     components_group,
     out_group=None,
     compression="lzf",
-    y_tile=100,
     method=Method.shearb,
 ):
     # TODO: more docstrings
@@ -476,9 +472,7 @@ def interpolate(
 
     fmt = DatasetName.interpolation_fmt.value
     dset_name = fmt.format(component=component.value, band_name=acq.band_name)
-    kwargs = dataset_compression_kwargs(
-        compression=compression, chunks=(1, geobox.x_size())
-    )
+    kwargs = dataset_compression_kwargs(compression=compression, chunks=acq.tile_size)
     no_data = -999
     kwargs["fillvalue"] = no_data
     attrs = {

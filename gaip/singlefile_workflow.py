@@ -79,7 +79,6 @@ class DataStandardisation(luigi.Task):
     tle_path = luigi.Parameter(significant=False)
     rori = luigi.FloatParameter(default=0.52, significant=False)
     compression = luigi.Parameter(default="lzf", significant=False)
-    y_tile = luigi.IntParameter(default=100, significant=False)
 
     def output(self):
         fmt = "{scene}.gaip.h5"
@@ -110,7 +109,6 @@ class DataStandardisation(luigi.Task):
                 self.ecmwf_path,
                 self.rori,
                 self.compression,
-                self.y_tile,
             )
 
 
@@ -137,7 +135,6 @@ class ARD(luigi.WrapperTask):
     tle_path = luigi.Parameter(significant=False)
     rori = luigi.FloatParameter(default=0.52, significant=False)
     compression = luigi.Parameter(default="lzf", significant=False)
-    y_tile = luigi.IntParameter(default=100, significant=False)
 
     def requires(self):
         with open(self.level1_list) as src:
