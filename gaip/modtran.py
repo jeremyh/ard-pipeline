@@ -290,6 +290,7 @@ def _run_modtran(
     with h5py.File(atmospheric_inputs_fname, "r") as atmos_fid, h5py.File(
         out_fname, "w"
     ) as fid:
+        [Albedos(a) for a in albedos]
         atmos_grp = atmos_fid[GroupName.atmospheric_inputs_grp.value]
         run_modtran(
             acquisitions,
