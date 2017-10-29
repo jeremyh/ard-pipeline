@@ -1022,7 +1022,7 @@ class ARD(luigi.WrapperTask):
                 "method": self.method,
             }
 
-            yield LinkGaipOutputs(*kwargs)
+            yield LinkGaipOutputs(**kwargs)
 
 
 class CallTask(luigi.WrapperTask):
