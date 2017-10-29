@@ -42,6 +42,7 @@ from gaip.constants import (
     ALBEDO_FMT,
     POINT_ALBEDO_FMT,
     POINT_FMT,
+    AtmosphericComponents,
     BandType,
     Method,
     Model,
@@ -325,7 +326,7 @@ class AtmosphericsCase(luigi.Task):
         out_path = acquisitions(self.level1).get_root(
             self.work_root, granule=self.granule
         )
-        albedos = "-".join([a.value for a in self.albedos])
+        albedos = "-".join([a for a in self.albedos])
         out_fname = "".join([POINT_ALBEDO_FMT.format(p=self.point, a=albedos), ".h5"])
         return luigi.LocalTarget(pjoin(out_path, self.base_dir, out_fname))
 
@@ -367,10 +368,10 @@ class Atmospherics(luigi.Task):
             kwargs = {"point": point, "model": self.model}
             if self.separate:
                 for albedo in self.model.albedos:
-                    kwargs["albedos"] = [albedo]
+                    kwargs["albedos"] = [albedo.value]
                     yield AtmosphericsCase(*args, **kwargs)
             else:
-                kwargs["albedos"] = self.model.albedos
+                kwargs["albedos"] = [a.value for a in self.model.albedos]
                 yield AtmosphericsCase(*args, **kwargs)
 
     def output(self):
@@ -411,7 +412,7 @@ class InterpolateComponent(luigi.Task):
 
     vertices = luigi.TupleParameter()
     band_id = luigi.Parameter()
-    component = luigi.Parameter()
+    component = luigi.EnumParameter(enum=AtmosphericComponents)
     base_dir = luigi.Parameter(default="_interpolation", significant=False)
     model = luigi.EnumParameter(enum=Model)
     method = luigi.EnumParameter(enum=Method, default=Method.shear)
