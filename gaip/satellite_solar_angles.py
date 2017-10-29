@@ -675,7 +675,7 @@ def _store_parameter_settings(
     """An internal function for storing the parameter settings for the
     calculate_angles workflow.
     """
-    group = fid.create_group("parameters")
+    group = fid.create_group("PARAMETERS")
     attach_attributes(group, params)
 
     # sheroid
