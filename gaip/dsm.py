@@ -74,9 +74,8 @@ def get_dsm(acquisition, national_dsm, margins, out_group=None, compression="lzf
         as an in-memory hdf5 file, i.e. the `core` driver. Otherwise,
         a writeable HDF5 `Group` object.
 
-        The dataset names will be as follows:
+        The dataset name will be as follows:
 
-        * DatasetName.dsm
         * DatasetName.dsm_smoothed
 
     :param compression:
