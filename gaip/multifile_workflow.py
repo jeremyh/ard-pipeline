@@ -431,7 +431,7 @@ class InterpolateComponent(luigi.Task):
         out_path = acquisitions(self.level1).get_root(
             self.work_root, self.group, self.granule
         )
-        out_fname = f"{self.component.value}-band-{self.band_id}.h5"
+        out_fname = f"{self.component.value}-{self.band_name}.h5"
         return luigi.LocalTarget(pjoin(out_path, self.base_dir, out_fname))
 
     def run(self):
