@@ -320,7 +320,7 @@ def card4l(
 
                 group = granule_group[grp_name]
                 sat_sol_grp = group[GroupName.sat_sol_group.value]
-                comp_grp = granule_group[GroupName.components.value]
+                comp_grp = granule_group[GroupName.components_group.value]
 
                 for component in model.atmos_components:
                     if component in Model.nbar.atmos_components:
