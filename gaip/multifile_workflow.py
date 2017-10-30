@@ -42,6 +42,7 @@ from gaip.constants import (
     ALBEDO_FMT,
     POINT_ALBEDO_FMT,
     POINT_FMT,
+    Albedos,
     AtmosphericComponents,
     BandType,
     Method,
@@ -336,8 +337,9 @@ class AtmosphericsCase(luigi.Task):
         acqs = container.get_acquisitions(granule=self.granule)
         atmospheric_inputs_fname = self.input().path
         base_dir = pjoin(out_path, self.base_dir)
+        albedos = [Albedos(a) for a in self.albedos]
 
-        prepare_modtran(acqs, self.point, self.albedos, base_dir, self.exe)
+        prepare_modtran(acqs, self.point, albedos, base_dir, self.exe)
 
         with self.output().temporary_path() as out_fname:
             nvertices = self.vertices[0] * self.vertices[1]
@@ -346,7 +348,7 @@ class AtmosphericsCase(luigi.Task):
                 self.exe,
                 base_dir,
                 self.point,
-                self.albedos,
+                albedos,
                 self.model,
                 nvertices,
                 atmospheric_inputs_fname,
