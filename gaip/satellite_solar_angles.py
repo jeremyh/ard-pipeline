@@ -934,7 +934,7 @@ def calculate_angles(
             row_id = idx[0].start + i + 1  # FORTRAN 1 based index
             stat = angle(
                 dims[1],
-                dims[0],
+                acq.lines,
                 row_id,
                 lat_data[i],
                 lon_data[i],
@@ -951,9 +951,10 @@ def calculate_angles(
                 soazi[i],
                 rela_angle[i],
                 time[i],
-                x_cent[idx[0]],
-                n_cent[idx[0]],
+                x_cent,
+                n_cent,
             )
+            # x_cent[idx[0]], n_cent[idx[0]])
 
             if stat != 0:
                 msg = (
