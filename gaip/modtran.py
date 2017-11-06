@@ -531,11 +531,11 @@ def calculate_components(atmospheric_results_group, out_group, compression="lzf"
             "channel_data": channel_data,
             "upward_radiation": upward,
             "downward_radiation": downward,
-            "point": point,
         }
 
         result = components(**kwargs)
 
+        # insert some datetime/geospatial fields
         if result[0] is not None:
             result[0].insert(0, "POINT", point)
             result[0].insert(1, "LONGITUDE", lonlat[0])
@@ -588,7 +588,6 @@ def components(
     channel_data=None,
     upward_radiation=None,
     downward_radiation=None,
-    point=0,
 ):
     """Calculate the components for a given point.
     Calculate the atmospheric components from the MODTRAN output
@@ -633,10 +632,6 @@ def components(
         `read_modtran_channel` function.
         Only used for SBT calculations.
 
-    :param points:
-        An integer containing the number of location points over
-        which MODTRAN was run. Default is 0.
-
     :return:
         A `tuple` (nbar_components, sbt_components) whereby each
         item is a `pandas.DataFrame` containing the atmospheric
@@ -660,12 +655,9 @@ def components(
         ts_dir = dir_0 / dir0_top
         tv_dir = dir_t / dirt_top
 
-        # TODO: better descriptive names
-        columns = ["POINT"]
-        columns.extend([v.value for v in Model.nbar.atmos_components])
+        columns = [v.value for v in Model.nbar.atmos_components]
         nbar = pd.DataFrame(columns=columns, index=channel_data.index)
 
-        nbar["POINT"] = point
         nbar[AC.fs.value] = ts_dir / ts_total
         nbar[AC.fv.value] = tv_dir / tv_total
         nbar[AC.a.value] = (diff_0 + dir_0) / np.pi * tv_total
@@ -676,12 +668,10 @@ def components(
         nbar[AC.ts.value] = ts_dir
 
     if upward_radiation is not None:
-        columns = ["POINT"]
-        columns.extend([v.value for v in Model.sbt.atmos_components])
+        columns = [v.value for v in Model.sbt.atmos_components]
         columns.extend(["TRANSMITTANCE-DOWN"])  # Currently not required
         sbt = pd.DataFrame(columns=columns, index=upward_radiation.index)
 
-        sbt["POINT"] = point
         sbt[AC.path_up.value] = upward_radiation["3"] * 10000000
         sbt[AC.transmittance_up.value] = upward_radiation["14"]
         sbt[AC.path_down.value] = downward_radiation["3"] * 10000000
