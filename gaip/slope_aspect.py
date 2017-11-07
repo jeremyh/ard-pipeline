@@ -120,7 +120,7 @@ def slope_aspect_arrays(
     group = fid[GroupName.slp_asp_group.value]
 
     # metadata for calculation
-    param_group = group.create_group("parameters")
+    param_group = group.create_group("PARAMETERS")
     param_group.attrs["dsm_index"] = ((ystart, ystop), (xstart, xstop))
     param_group.attrs["pixel_buffer"] = "1 pixel"
 
