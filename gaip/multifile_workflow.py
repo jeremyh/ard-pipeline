@@ -63,7 +63,7 @@ from gaip.modtran import (
     link_atmospheric_results,
     prepare_modtran,
 )
-from gaip.pq import can_pq, run_pq
+from gaip.pq import _run_pq, can_pq
 from gaip.reflectance import _calculate_reflectance, link_standard_data
 from gaip.satellite_solar_angles import _calculate_angles
 from gaip.slope_aspect import _slope_aspect_arrays
@@ -948,7 +948,13 @@ class DataStandardisation(luigi.Task):
             link_standard_data(fnames, out_fname)
             sbt_only = self.model == Model.sbt
             if self.pixel_quality and can_pq(self.level1) and not sbt_only:
-                run_pq(self.level1, out_fname, self.land_sea_path, self.compression)
+                _run_pq(
+                    self.level1,
+                    out_fname,
+                    self.group,
+                    self.land_sea_path,
+                    self.compression,
+                )
 
 
 class LinkGaipOutputs(luigi.Task):
@@ -999,6 +1005,11 @@ class LinkGaipOutputs(luigi.Task):
                         for pth in paths:
                             new_path = ppjoin(grp_name, pth)
                             create_external_link(fname, pth, out_fname, new_path)
+
+            with h5py.File(out_fname) as fid:
+                container = acquisitions(self.level1)
+                fid.attrs["level1_uri"] = self.level1
+                fid.attrs["tiled"] = container.tiled
 
 
 class ARD(luigi.WrapperTask):

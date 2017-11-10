@@ -19,6 +19,7 @@ from gaip.constants import (
     GroupName,
     Model,
 )
+from gaip.constants import ArdProducts as AP
 from gaip.dsm import get_dsm
 from gaip.incident_exiting_angles import (
     exiting_angles,
@@ -29,6 +30,7 @@ from gaip.interpolation import interpolate
 from gaip.longitude_latitude_arrays import create_lon_lat_grids
 from gaip.metadata import create_ard_yaml
 from gaip.modtran import calculate_components, format_tp5, prepare_modtran, run_modtran
+from gaip.pq import can_pq, run_pq
 from gaip.reflectance import calculate_reflectance
 from gaip.satellite_solar_angles import calculate_angles
 from gaip.slope_aspect import slope_aspect_arrays
@@ -82,6 +84,9 @@ def card4l(
     scene = acquisitions(level1)
 
     with h5py.File(out_fname, "w") as fid:
+        fid.attrs["level1_uri"] = level1
+        fid.attrs["tiled"] = scene.tiled
+
         for grn_name in scene.granules:
             if grn_name is None:
                 granule_group = fid["/"]
@@ -390,3 +395,9 @@ def card4l(
 
                 if model == Model.standard or model == model.sbt:
                     create_ard_yaml(band_acqs, ancillary_group, group, True)
+
+                # pixel quality
+                sbt_only = model == Model.sbt
+                if pixel_quality and can_pq(level1) and not sbt_only:
+                    run_pq(level1, group, landsea, group, compression, AP.nbar)
+                    run_pq(level1, group, landsea, group, compression, AP.nbart)
