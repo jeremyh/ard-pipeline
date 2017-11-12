@@ -170,6 +170,7 @@ def _submit_multiple(
             subprocess.call(["qsub", out_fname])
 
 
+# pylint: disable=too-many-arguments
 def run(
     level1,
     vertices="(5, 5)",

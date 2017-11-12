@@ -180,7 +180,7 @@ def interpolate_grid(
         interpolate_block(origin, shape, eval_func, grid)
     else:
         blocks = subdivide(origin, shape)
-        for kUL, kUR, kLL, kLR in blocks.values():
+        for kUL, _, _, kLR in blocks.values():
             block_shape = (kLR[0] - kUL[0] + 1, kLR[1] - kUL[1] + 1)
             interpolate_grid(depth - 1, kUL, block_shape, eval_func, grid)
 
@@ -276,7 +276,7 @@ def sheared_bilinear_interpolate(
     grid_size = int(math.sqrt(n)) - 1
 
     assert (grid_size + 1) ** 2 == n
-    assert not (grid_size % 2)
+    assert not grid_size % 2
     # Assume count of samples is 9 or 25, 49, 81.. (Grid size is 2, 4, 6, ..)
 
     # facilitate indexing

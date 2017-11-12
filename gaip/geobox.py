@@ -374,7 +374,7 @@ class GriddedGeoBox:
 
         (lon1, lat1) = self.transform * (x, y + 0.5)
         (lon2, lat2) = self.transform * (x + 1, y + 0.5)
-        x_size, _az_to, _az_from = vinc_dist(
+        x_size, _, _ = vinc_dist(
             spheroid[1],
             spheroid[0],
             radians(lat1),

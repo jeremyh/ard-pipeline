@@ -29,6 +29,7 @@ from osgeo import gdal
 from skimage import measure, morphology, segmentation
 
 # Sun earth distance look up table
+# pylint: disable=line-too-long
 sun_earth_distance = {
     1: 0.98331,
     2: 0.98330,
@@ -586,7 +587,7 @@ def lndhdrread(filename):
     LID = data["SPACECRAFT_ID"]
     Lnum = int(LID[len(LID) - 1])
 
-    if (Lnum >= 4) & (Lnum <= 7):
+    if Lnum >= 4 and Lnum <= 7:
         # LS8 variables only. The original MATLAB function returns all
         # variables.
         Refmax = None
@@ -934,14 +935,17 @@ def lndhdrread(filename):
     else:
         raise Exception("This sensor is not Landsat 4, 5, 7, or 8!")
 
-    if (doy < 1) or (doy > 366):
+    if doy < 1 or doy > 366:
         raise ValueError(
             "Invalid Day of Year metadata value - expected (1,366) got %s" % doy
         )
 
-    # The new version returns Lmax,Lmin,Qcalmax,Qcalmin,Refmax,Refmin,ijdim_ref,ijdim_thm,reso_ref,reso_thm,ul,zen,azi,zc,Lnum,doy
+    # The new version returns Lmax, Lmin, Qcalmax, Qcalmin, Refmax,
+    # Refmin, ijdim_ref, ijdim_thm, reso_ref, reso_thm, ul, zen,
+    # azi, zc, Lnum, doy
     # return
-    # (Lmax,Lmin,Qcalmax,Qcalmin,ijdim_ref,ijdim_thm,reso_ref,reso_thm,ul,zen,azi,zc,Lnum,doy)
+    # (Lmax, Lmin, Qcalmax, Qcalmin, ijdim_ref, ijdim_thm,
+    #  reso_ref, reso_thm, ul, zen, azi, zc, Lnum, doy)
     return (
         Lmax,
         Lmin,
@@ -998,7 +1002,7 @@ def nd2toarbt(filename, images=None):
     ul = (ul[0] - float(reso_ref) / 2, ul[1] + float(reso_ref) / 2)
     resolu = (reso_ref, reso_ref)
 
-    if (Lnum >= 4) & (Lnum <= 7):
+    if Lnum >= 4 and Lnum <= 7:
         # Band6
         if Lnum == 7:
             n_B6 = match_file(base, ".*B6_VCID_1.TIF")
@@ -1008,7 +1012,7 @@ def nd2toarbt(filename, images=None):
         # Check that the thermal band resolution matches the reflectance bands.
         ref_lines, ref_samples = ijdim_ref
         thm_lines, thm_samples = ijdim_thm
-        if (thm_lines != ref_lines) | (thm_samples != ref_samples):
+        if thm_lines != ref_lines or thm_samples != ref_samples:
             im_B6 = imread(
                 n_B6, resample=True, samples=ref_samples, lines=ref_lines
             ).astype(np.float32)
@@ -1244,7 +1248,7 @@ def nd2toarbt(filename, images=None):
         ref_lines, ref_samples = ijdim_ref
         thm_lines, thm_samples = ijdim_thm
 
-        if (thm_lines != ref_lines) | (thm_samples != ref_samples):
+        if thm_lines != ref_lines or thm_samples != ref_samples:
             im_B10 = imread(
                 n_B10, resample=True, samples=ref_samples, lines=ref_lines
             ).astype(np.float32)
@@ -1739,13 +1743,13 @@ def plcloud(
         cloud_temp = Temp[cloud_mask]
 
         logging.debug(
-            "FMASK snow percent: %f"
-            % ((float(Snow[mask].sum()) / float(mask.sum())) * 100.0)
+            "FMASK snow percent: %f",
+            ((float(Snow[mask].sum()) / float(mask.sum())) * 100.0),
         )
         aux_data["fmask_snow_percent"] = (
             float(Snow[mask].sum()) * 100.0 / float(mask.sum())
         )
-        logging.debug("FMASK cloud mean: %f C" % (np.mean(cloud_temp) / 100.0))
+        logging.debug("FMASK cloud mean: %f C", (np.mean(cloud_temp) / 100.0))
         aux_data["fmask_cloud_mean_temp_deg_C"] = np.mean(cloud_temp) / 100.0
 
         if np.sum(cloud_mask) > 0:
@@ -1754,13 +1758,13 @@ def plcloud(
             pct_lower = np.percentile(cloud_temp, 83.5) / 100.0
             pct_upper_max = np.percentile(cloud_temp, 98.75) / 100.0
 
-            logging.debug("FMASK Standard Deviation: %f C" % cloud_stddev)
+            logging.debug("FMASK Standard Deviation: %f C", cloud_stddev)
             aux_data["FMASK_std_dev_degC"] = cloud_stddev
-            logging.debug("FMASK 97.5 percentile: %f C" % pct_upper)
+            logging.debug("FMASK 97.5 percentile: %f C", pct_upper)
             aux_data["FMASK_97.5_percentile"] = pct_upper
-            logging.debug("FMASK 83.5 percentile: %f C" % pct_lower)
+            logging.debug("FMASK 83.5 percentile: %f C", pct_lower)
             aux_data["FMASK_83.5_percentile"] = pct_lower
-            logging.debug("FMASK 98.75 percentile: %f C" % pct_upper_max)
+            logging.debug("FMASK 98.75 percentile: %f C", pct_upper_max)
             aux_data["FMASK_98.75_percentile"] = pct_upper_max
 
     cloud_skew = 0.0  # TODO
@@ -1770,7 +1774,7 @@ def plcloud(
     except ZeroDivisionError:
         cloud_percent = 0.0
 
-    logging.debug("FMASK Final Cloud Layer Percent: %f" % cloud_percent)
+    logging.debug("FMASK Final Cloud Layer Percent: %f", cloud_percent)
     aux_data["FMASK_cloud_layer_percent"] = cloud_percent
     aux_data["FMASK_processing_time"] = processing_time
 
@@ -2101,6 +2105,7 @@ def fcssm(
                         "shad_test": shadow_test[tmp_id],
                     },
                 )
+
                 matched_all = np.sum(match_id) + out_all
 
                 # the id that is the total pixel (exclude original cloud)

@@ -257,7 +257,8 @@ def card4l(
             acqs = scene.get_acquisitions(granule=grn_name, group=grp_name)
             root_path = ppjoin(scene.get_root(granule=grn_name), grp_name)
 
-            # TODO check that the average ancilary group can be parsed to reflectance and other functions
+            # TODO: check that the average ancilary group can be parsed
+            #       to reflectance and other functions
             if scene.tiled:
                 ancillary_group = granule_group[GroupName.ancillary_group.value]
             else:
