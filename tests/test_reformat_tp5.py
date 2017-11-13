@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from gaip import (
+
+from gaip.modtran_profiles import (
     MIDLAT_SUMMER_ALBEDO,
     MIDLAT_SUMMER_TRANSMITTANCE,
     TROPICAL_ALBEDO,

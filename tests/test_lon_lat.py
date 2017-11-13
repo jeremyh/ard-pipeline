@@ -15,6 +15,7 @@ from gaip.longitude_latitude_arrays import create_lon_lat_grids
 CRS = "EPSG:4326"
 
 
+@unittest.skip("Requires refactoring")
 class TestLonLatArrays(unittest.TestCase):
     def test_lon_array(self):
         """Test that the interpolated longitude array has sensible
