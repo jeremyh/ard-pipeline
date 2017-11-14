@@ -18,6 +18,7 @@ LS8_SCENE1 = pjoin(
 )
 
 
+@unittest.skip("Requires refactoring")
 class AcquisitionLoadMtlTest(unittest.TestCase):
     def test_load_acquisitions_ls5_scene1(self):
         acq = acquisitions(LS5_SCENE1).get_acquisitions()
@@ -32,6 +33,7 @@ class AcquisitionLoadMtlTest(unittest.TestCase):
         assert len(acq) == 9
 
 
+@unittest.skip("Requires refactoring")
 class AcquisitionsContainerTest(unittest.TestCase):
     def test_groups_ls5_scene1(self):
         scene = acquisitions(LS5_SCENE1)
@@ -58,6 +60,7 @@ class AcquisitionsContainerTest(unittest.TestCase):
         assert scene.granules[0] is None
 
 
+@unittest.skip("Requires refactoring")
 class Landsat5Scene1AcquisitionTest(unittest.TestCase):
     def setUp(self):
         self.acqs = acquisitions(LS5_SCENE1).get_acquisitions()
@@ -114,6 +117,7 @@ class Landsat5Scene1AcquisitionTest(unittest.TestCase):
             assert acq.platform_id == "LANDSAT_5"
 
 
+@unittest.skip("Requires refactoring")
 class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
     def setUp(self):
         self.acqs = acquisitions(LS7_SCENE1).get_acquisitions()
@@ -171,6 +175,7 @@ class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
             assert acq.platform_id == "LANDSAT_7"
 
 
+@unittest.skip("Requires refactoring")
 class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
     def setUp(self):
         self.acqs = acquisitions(LS8_SCENE1).get_acquisitions()
