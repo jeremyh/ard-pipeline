@@ -128,7 +128,7 @@ def create_centreline_dataset(geobox, x, n, out_group):
         "Contains the array, latitude and longitude coordinates of the "
         "satellite track path."
     )
-    attrs = {"Description": desc, "array_coordinate_offset": 0}
+    attrs = {"description": desc, "array_coordinate_offset": 0}
     attach_table_attributes(cent_dset, title="Centreline", attrs=attrs)
 
 
@@ -251,7 +251,7 @@ def create_boxline(
 
     kwargs = dataset_compression_kwargs()
     desc = "Contains the bi-section, column start and column end array " "coordinates."
-    attrs = {"Description": desc, "array_coordinate_offset": 0}
+    attrs = {"description": desc, "array_coordinate_offset": 0}
     dname = DatasetName.boxline.value
     box_dset = out_group.create_dataset(dname, data=boxline, **kwargs)
     attach_table_attributes(box_dset, title="Boxline", attrs=attrs)
@@ -680,7 +680,7 @@ def _store_parameter_settings(
 
     # sheroid
     desc = "The spheroid used in the satellite and solar angles calculation."
-    attrs = {"Description": desc}
+    attrs = {"description": desc}
     dname = DatasetName.spheroid.value
     sph_dset = group.create_dataset(dname, data=spheriod)
     attach_table_attributes(sph_dset, title="Spheroid", attrs=attrs)
@@ -690,14 +690,14 @@ def _store_parameter_settings(
         "The satellite orbital parameters used in the satellite and "
         "solar angles calculation."
     )
-    attrs = {"Description": desc}
+    attrs = {"description": desc}
     dname = DatasetName.orbital_elements.value
     orb_dset = group.create_dataset(dname, data=orbital_elements)
     attach_table_attributes(orb_dset, title="Orbital Elements", attrs=attrs)
 
     # satellite model
     desc = "The satellite model used in the satellite and solar angles " "calculation."
-    attrs = {"Description": desc}
+    attrs = {"description": desc}
     dname = DatasetName.satellite_model.value
     sat_dset = group.create_dataset(dname, data=satellite_model)
     attach_table_attributes(sat_dset, title="Satellite Model", attrs=attrs)
@@ -707,7 +707,7 @@ def _store_parameter_settings(
         "The satellite track information used in the satellite and solar "
         "angles calculation."
     )
-    attrs = {"Description": desc}
+    attrs = {"description": desc}
     dname = DatasetName.satellite_track.value
     track_dset = group.create_dataset(dname, data=satellite_track)
     attach_table_attributes(track_dset, title="Satellite Track", attrs=attrs)
@@ -880,30 +880,30 @@ def calculate_angles(
         "no_data_value": no_data,
     }
     desc = "Contains the satellite viewing angle in degrees."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(sat_v_ds, attrs)
 
     desc = "Contains the satellite azimuth angle in degrees."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(sat_az_ds, attrs)
 
     desc = "Contains the solar zenith angle in degrees."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(sol_z_ds, attrs)
 
     desc = "Contains the solar azimuth angle in degrees."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(sol_az_ds, attrs)
 
     desc = "Contains the relative azimuth angle in degrees."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(rel_az_ds, attrs)
 
     desc = (
         "Contains the satellite acquisition time grid in seconds before "
         "and after the scene acquisition datetime."
     )
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(time_ds, attrs)
 
     # Initialise centre line variables

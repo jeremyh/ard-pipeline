@@ -117,7 +117,7 @@ def image_residual(
     attrs = {}
     attrs["crs_wkt"] = geobox.crs.ExportToWkt()
     attrs["geotransform"] = (geobox.transform.to_gdal(),)
-    attrs["Description"] = "Residual"
+    attrs["description"] = "Residual"
     attrs["min_residual"] = min_residual
     attrs["max_residual"] = max_residual
     attrs["percent_difference"] = pct_difference
@@ -132,7 +132,7 @@ def image_residual(
     hist = h["histogram"]
 
     attrs = {}
-    attrs["Description"] = "Frequency distribution of the residuals"
+    attrs["description"] = "Frequency distribution of the residuals"
     attrs["omin"] = h["omin"]
     attrs["omax"] = h["omax"]
     dtype = np.dtype(
@@ -157,7 +157,7 @@ def image_residual(
     cdf = np.cumsum(hist / hist.sum())
 
     attrs = {}
-    attrs["Description"] = "Cumulative distribution of the residuals"
+    attrs["description"] = "Cumulative distribution of the residuals"
     attrs["omin"] = h["omin"]
     attrs["omax"] = h["omax"]
     attrs["90th_percentile"] = h["loc"][np.searchsorted(cdf, 0.9)]
@@ -223,7 +223,7 @@ def scalar_residual(ref_fid, test_fid, pathname, out_fid, save_inputs):
     # copy the attrs
     attrs = ref_data.copy()
     attrs.pop("value")
-    attrs["Description"] = "Equivalency Test"
+    attrs["description"] = "Equivalency Test"
 
     # this'll handle string types, but we won't get a numerical
     # difference value for numerical values, only a bool
@@ -296,7 +296,7 @@ def table_residual(ref_fid, test_fid, pathname, out_fid, compression, save_input
 
     # output
     attrs = {
-        "Description": "Residuals of numerical columns only",
+        "description": "Residuals of numerical columns only",
         "columns_ignored": np.array(cols, VLEN_STRING),
         "equivalent": equal,
     }

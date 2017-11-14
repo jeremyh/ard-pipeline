@@ -489,7 +489,7 @@ def interpolate(
         "Contains the interpolated result of component {} "
         "for band {} from sensor {}."
     )
-    attrs["Description"] = desc.format(component.value, acq.band_id, acq.sensor_id)
+    attrs["description"] = desc.format(component.value, acq.band_id, acq.sensor_id)
     write_h5_image(result, dset_name, group, attrs, **kwargs)
 
     if out_group is None:

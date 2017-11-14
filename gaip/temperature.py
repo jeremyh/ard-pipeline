@@ -135,7 +135,7 @@ def surface_brightness_temperature(
     out_dset = group.create_dataset(dataset_name, **kwargs)
 
     desc = "Surface Brightness Temperature in Kelvin."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(out_dset, attrs)
 
     # constants

@@ -284,17 +284,17 @@ def calculate_reflectance(
     }
 
     desc = "Contains the lambertian reflectance data scaled by 10000."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(lmbrt_dset, attrs)
 
     desc = "Contains the brdf corrected reflectance data scaled by 10000."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(nbar_dset, attrs)
 
     desc = (
         "Contains the brdf and terrain corrected reflectance data scaled " "by 10000."
     )
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(nbart_dset, attrs)
 
     # process by tile

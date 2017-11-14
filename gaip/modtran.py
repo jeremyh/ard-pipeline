@@ -366,14 +366,14 @@ def run_modtran(
             # upward radiation
             attrs = base_attrs.copy()
             dataset_name = DatasetName.upward_radiation_channel.value
-            attrs["Description"] = "Upward radiation channel output from " "MODTRAN"
+            attrs["description"] = "Upward radiation channel output from " "MODTRAN"
             dset_name = ppjoin(group_path, dataset_name)
             write_dataframe(channel_data[0], dset_name, fid, attrs=attrs)
 
             # downward radiation
             attrs = base_attrs.copy()
             dataset_name = DatasetName.downward_radiation_channel.value
-            attrs["Description"] = "Downward radiation channel output from " "MODTRAN"
+            attrs["description"] = "Downward radiation channel output from " "MODTRAN"
             dset_name = ppjoin(group_path, dataset_name)
             write_dataframe(channel_data[1], dset_name, fid, attrs=attrs)
         else:
@@ -385,12 +385,12 @@ def run_modtran(
             # ouput the flux data
             attrs = base_attrs.copy()
             dset_name = ppjoin(group_path, DatasetName.flux.value)
-            attrs["Description"] = "Flux output from MODTRAN"
+            attrs["description"] = "Flux output from MODTRAN"
             write_dataframe(flux_data, dset_name, fid, attrs=attrs)
 
             # output the altitude data
             attrs = base_attrs.copy()
-            attrs["Description"] = "Altitudes output from MODTRAN"
+            attrs["description"] = "Altitudes output from MODTRAN"
             attrs["altitude_levels"] = altitudes.shape[0]
             attrs["units"] = "km"
             dset_name = ppjoin(group_path, DatasetName.altitudes.value)
@@ -406,12 +406,12 @@ def run_modtran(
             attrs = base_attrs.copy()
             dset_name = ppjoin(group_path, DatasetName.solar_irradiance.value)
             description = "Accumulated solar irradiation for point {} " "and albedo {}."
-            attrs["Description"] = description.format(point, albedo.value)
+            attrs["description"] = description.format(point, albedo.value)
             write_dataframe(accumulated, dset_name, fid, compression, attrs=attrs)
 
             attrs = base_attrs.copy()
             dataset_name = DatasetName.channel.value
-            attrs["Description"] = "Channel output from MODTRAN"
+            attrs["description"] = "Channel output from MODTRAN"
             dset_name = ppjoin(group_path, dataset_name)
             write_dataframe(channel_data, dset_name, fid, attrs=attrs)
 
@@ -560,7 +560,7 @@ def calculate_components(atmospheric_results_group, out_group, compression="lzf"
 
     attrs = {"npoints": npoints}
     description = "Components derived from the VNIR solar irradiation."
-    attrs["Description"] = description
+    attrs["description"] = description
     dname = DatasetName.nbar_components.value
 
     if GroupName.components_group.value not in fid:
@@ -571,7 +571,7 @@ def calculate_components(atmospheric_results_group, out_group, compression="lzf"
         write_dataframe(nbar_components, dname, group, compression, attrs=attrs)
 
     description = "Components derived from the THERMAL solar irradiation."
-    attrs["Description"] = description
+    attrs["description"] = description
     dname = DatasetName.sbt_components.value
 
     if sbt_atmos:

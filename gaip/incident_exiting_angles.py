@@ -120,11 +120,11 @@ def incident_angles(
         "no_data_value": no_data,
     }
     desc = "Contains the incident angles in degrees."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(incident_dset, attrs)
 
     desc = "Contains the azimuthal incident angles in degrees."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(azi_inc_dset, attrs)
 
     # process by tile
@@ -256,11 +256,11 @@ def exiting_angles(
         "no_data_value": no_data,
     }
     desc = "Contains the exiting angles in degrees."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(exiting_dset, attrs)
 
     desc = "Contains the azimuthal exiting angles in degrees."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(azi_exit_dset, attrs)
 
     # process by tile
@@ -404,7 +404,7 @@ def relative_azimuth_slope(
         "no_data_value": no_data,
     }
     desc = "Contains the relative azimuth angles on the slope surface in " "degrees."
-    attrs["Description"] = desc
+    attrs["description"] = desc
     attach_image_attributes(out_dset, attrs)
 
     # process by tile
