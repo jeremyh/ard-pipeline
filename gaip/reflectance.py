@@ -280,7 +280,7 @@ def calculate_reflectance(
         "sensor_id": acq.sensor_id,
         "band_id": acq.band_id,
         "band_name": bn,
-        "band_description": acq.desc,
+        "alias": acq.alias,
     }
 
     desc = "Contains the lambertian reflectance data scaled by 10000."

@@ -480,6 +480,10 @@ def interpolate(
         "geotransform": geobox.transform.to_gdal(),
         "no_data_value": no_data,
         "interpolation_method": method.name,
+        "band_id": acq.band_id,
+        "band_name": acq.band_name,
+        "alias": acq.alias,
+        "component": component.value,
     }
     desc = (
         "Contains the interpolated result of component {} "
