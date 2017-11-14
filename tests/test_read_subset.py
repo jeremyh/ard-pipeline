@@ -121,6 +121,7 @@ class TestReadSubset(unittest.TestCase):
         # Cleanup
         shutil.rmtree(temp_dir)
 
+    @unittest.skip("Requires refactoring")
     def test_correct_subset(self):
         """Test that the subset is what we expect.
         Read a 10 by 10 starting at the UL corner.
