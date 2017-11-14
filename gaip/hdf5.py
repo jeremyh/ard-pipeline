@@ -360,7 +360,7 @@ def write_dataframe(df, dset_name, group, compression="lzf", title="Table", attr
         dtype_metadata[f"{col_name}_dtype"] = val.name
         if val.name == "object":
             dtype.append((col_name, VLEN_STRING))
-        elif "datetime64" in val.name:
+        elif ("datetime64" in val.name) or ("timedelta64" in val.name):
             dtype.append((col_name, "int64"))
         else:
             dtype.append((col_name, val))
