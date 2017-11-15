@@ -6,6 +6,7 @@ example usage:
 """
 import logging
 import os
+from pathlib import Path
 
 import click
 import numpy as np
@@ -40,7 +41,9 @@ def main(output, datasets):
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
     for dataset in datasets:
         path = dataset
-        contiguity = path+".contiguity.img"
+        stem = Path(path).stem
+        out = os.path.join(output, stem)
+        contiguity = out+".contiguity.img"
         logging.info("Create contiguity image " + contiguity)
         do_contiguity(path, contiguity)
 
