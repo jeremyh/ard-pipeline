@@ -230,6 +230,10 @@ class Acquisition:
         self._band_name = band_name
         self._band_id = band_id
 
+        self._norad_id = None
+        self._classification_type = None
+        self._international_designator = None
+
         self._gps_file = False
 
         if metadata is not None:
@@ -273,6 +277,21 @@ class Acquisition:
     def band_id(self):
         """The band id as given in the `sensors.json` file."""
         return self._band_id
+
+    @property
+    def norad_id(self):
+        """The NORAD catalog id number."""
+        return self._norad_id
+
+    @property
+    def classification_type(self):
+        """The classification type; eg 'U' = unclassified."""
+        return self._classification_type
+
+    @property
+    def international_designator(self):
+        """The international designator."""
+        return self._international_designator
 
     @property
     def samples(self):
@@ -488,6 +507,10 @@ class Landsat5Acquisition(LandsatAcquisition):
         self.semi_major_axis = 7083160.0
         self.maximum_view_angle = 9.0
 
+        self._norad_id = 14780
+        self._classification_type = "U"
+        self._international_designator = "84021A"
+
 
 class Landsat7Acquisition(LandsatAcquisition):
     """Landsat 7 acquisition."""
@@ -521,6 +544,10 @@ class Landsat7Acquisition(LandsatAcquisition):
         self.semi_major_axis = 7083160.0
         self.maximum_view_angle = 9.0
 
+        self._norad_id = 25682
+        self._classification_type = "U"
+        self._international_designator = "99020A"
+
 
 class Landsat8Acquisition(LandsatAcquisition):
     """Landsat 8 acquisition."""
@@ -553,6 +580,10 @@ class Landsat8Acquisition(LandsatAcquisition):
         self.radius = 7285600.0
         self.semi_major_axis = 7083160.0
         self.maximum_view_angle = 9.0
+
+        self._norad_id = 39084
+        self._classification_type = "U"
+        self._international_designator = "13008A"
 
 
 ACQUISITION_TYPE = {
@@ -920,6 +951,10 @@ class Sentinel2aAcquisition(Acquisition):
         self.omega = 0.001039918
         self.semi_major_axis = 7164137.0
         self.maximum_view_angle = 20.0
+
+        self._norad_id = 40697
+        self._classification_type = "U"
+        self._international_designator = "15028A"
 
         self._gps_file = True
         self._solar_zenith = None
