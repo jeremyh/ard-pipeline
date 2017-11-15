@@ -2,9 +2,12 @@
 
 import tempfile
 import unittest
+from os.path import abspath, dirname
 from os.path import join as pjoin
 
 from gaip.modtran_profiles import MIDLAT_SUMMER_ALBEDO, MIDLAT_SUMMER_TRANSMITTANCE
+
+DATA_DIR = pjoin(dirname(abspath(__file__)), "data")
 
 
 class Tp5ReformatTest(unittest.TestCase):
@@ -16,7 +19,7 @@ class Tp5ReformatTest(unittest.TestCase):
         """Test a mid latitude summer albedo 0 profile."""
         self.maxDiff = None
 
-        with open("data/TL_alb_0.tp5") as src:
+        with open(pjoin(DATA_DIR, "TL_alb_0.tp5")) as src:
             ref_albedo = "".join(src.readlines())
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -50,7 +53,7 @@ class Tp5ReformatTest(unittest.TestCase):
         """Test a mid latitude summer transmittance profile."""
         self.maxDiff = None
 
-        with open("data/TL_alb_t.tp5") as src:
+        with open(pjoin(DATA_DIR, "TL_alb_t.tp5")) as src:
             ref_trans = "".join(src.readlines())
 
         with tempfile.TemporaryDirectory() as tmpdir:
