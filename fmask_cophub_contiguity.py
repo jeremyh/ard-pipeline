@@ -5,7 +5,7 @@ Australian Copernicus Data Hub - http://www.copernicus.gov.au/ - for direct (zip
 by datacube.
 
 example usage:
-    fmask_cophub_contiguity S2A_MSIL1C_20170104T052712_N0204_R019_T43MDR_20170104T052713.zip
+    fmask_cophub_contiguity.py S2A_MSIL1C_20170104T052712_N0204_R019_T43MDR_20170104T052713.zip
     --output /tmp/
 """
 import logging
@@ -21,6 +21,7 @@ import rasterio
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
+
 def do_contiguity(fname, output):
     """Write a contiguity mask file based on the intersection of valid data pixels across all
     bands from the input file and output to the specified directory.
@@ -33,6 +34,7 @@ def do_contiguity(fname, output):
                 count=1, crs=bands.crs, transform=bands.transform, dtype='uint8') as outfile: outfile.write_band(1, ones)
     bands.close()
     return None
+
 
 def prepare_dataset(path):
     """Returns a dictionary of image paths, granue id and metadata file location for the granules
@@ -121,6 +123,7 @@ def prepare_dataset(path):
 @click.argument('datasets',
                 type=click.Path(exists=True, readable=True, writable=False),
                 nargs=-1)
+
 
 def main(output, datasets):
     """For each dataset in input 'datasets' generate FMask and Contiguity
