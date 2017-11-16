@@ -138,6 +138,7 @@ def surface_brightness_temperature(
     attrs["description"] = desc
     attach_image_attributes(out_dset, attrs)
 
+    # pylint: disable=unused-variable
     # constants
 
     # process each tile

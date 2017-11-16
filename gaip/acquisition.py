@@ -1083,7 +1083,7 @@ class Sentinel2aAcquisition(Acquisition):
             idx = (slice(window[0][0], window[0][1]), slice(window[1][0], window[1][1]))
 
         # coefficients
-        # pylint: disable=unused-argument
+        # pylint: disable=unused-argument,unused-variable
         np.float32(1 / (self.c1 * self.qv))
         np.float32(np.pi * self.d2)
         np.float32(self.solar_irradiance / 10)

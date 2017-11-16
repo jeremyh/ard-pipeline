@@ -52,6 +52,8 @@ import numpy as np
 
 __version__ = "1.0.1"
 
+# pylint: disable=invalid-name
+
 
 class GreatCircle:
     """formula for perfect sphere from Ed Williams' 'Aviation Formulary'
@@ -163,6 +165,7 @@ class GreatCircle:
             lons = [math.degrees(lonpt)]
             lats = [math.degrees(latpt)]
             for n in range(npoints - 2):
+                # pylint: disable=unused-variable
                 latptnew, lonptnew, alpha21 = vinc_pt(
                     self.f, self.a, latpt, lonpt, azimuth, incdist
                 )

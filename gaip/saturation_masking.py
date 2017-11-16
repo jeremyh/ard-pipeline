@@ -53,7 +53,6 @@ def set_saturation_bits(acquisitions, pq_const, result):
     logging.debug("set_saturation_bits() called")
     band_list = pq_const.saturation_bands
     full_band_list = pq_const.available_bands
-    pq_const.get_array_band_lookup(band_list)
 
     bit_index_list = pq_const.saturation_bits
     logging.debug("bit_index_list = %s", bit_index_list)

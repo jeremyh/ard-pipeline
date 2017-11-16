@@ -9,6 +9,8 @@ import rasterio as rio
 from gaip.data import write_img
 from gaip.geobox import GriddedGeoBox
 
+# pylint: disable=invalid-name
+
 
 def get_utm_zone(pos_longlat):
     """Return the UTM zone number corresponding to the supplied position.

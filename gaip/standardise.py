@@ -52,6 +52,7 @@ def get_buffer(group):
     return buf[group]
 
 
+# pylint disable=too-many-arguments
 def card4l(
     level1,
     model,

@@ -28,6 +28,9 @@ import scipy.stats
 from osgeo import gdal
 from skimage import measure, morphology, segmentation
 
+# pylint: disable=invalid-name
+
+
 # Sun earth distance look up table
 # pylint: disable=line-too-long
 sun_earth_distance = {
@@ -444,8 +447,8 @@ def imread(filename, resample=False, samples=None, lines=None):
         outds.SetProjection(img.GetProjection())
         gdal.ReprojectImage(img, outds)
         return outds.ReadAsArray()
-    else:
-        return band.ReadAsArray()
+
+    return band.ReadAsArray()
 
 
 def imfill_pybuffer(img, ts):
@@ -975,6 +978,7 @@ def nd2toarbt(filename, images=None):
     :param images:
         A numpy.ndarray of pre-calculated reflectance values for each landsat band, to be used instead of calculating our own.
     """
+    # pylint: disable=unused-variable
     (
         Lmax,
         Lmin,
@@ -1401,7 +1405,7 @@ def plcloud(
     images=None,
     shadow_prob=False,
     mask=None,
-    aux_data={},
+    aux_data=None,
 ):
     """Calculates a cloud mask for a landsat 5/7 scene.
 
@@ -1426,6 +1430,9 @@ def plcloud(
     :return:
         Tuple (zen,azi,ptm, temperature band (celcius*100),t_templ,t_temph, water mask, snow mask, cloud mask , shadow probability,dim,ul,resolu,zc).
     """
+    # pylint: disable=unused-variable
+
+    aux_data = aux_data or {}
     start_time = time.time()
 
     (

@@ -360,6 +360,7 @@ def sheared_bilinear_interpolate(
             matrix[:, 1:3] = vertices
             matrix[:, 3] = vertices[:, 0] * vertices[:, 1]
 
+            # pylint: disable=unused-variable
             a0, a1, a2, a3 = np.linalg.solve(matrix, values)
 
             # update output raster

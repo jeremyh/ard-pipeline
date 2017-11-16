@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-from osgeo import gdal, osr
+from osgeo import gdal
 
 from gaip.metadata import extract_ancillary_metadata
 
@@ -65,12 +65,6 @@ def calc_land_sea_mask(
         imgx = int(np.round((location[0] - geoTransform[0]) / geoTransform[1]))
         imgy = int(np.round((geoTransform[3] - location[1]) / np.abs(geoTransform[5])))
         return (imgy, imgx)
-
-    # get lat/long of geo_box origin
-
-    to_crs = osr.SpatialReference()
-    to_crs.SetFromUserInput("EPSG:4326")
-    geo_box.transform_coordinates(geo_box.origin, to_crs)
 
     # get Land/Sea data file for this bounding box
     utm_zone = geo_box.crs.GetUTMZone()

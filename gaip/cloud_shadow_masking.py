@@ -110,6 +110,8 @@ def cloud_shadow(
         An 2D np array mask with 0 for Shadow and the relevant bit
         specified in bitpos for Not Shadow.
     """
+    # pylint: disable=unused-variable
+
     aux_data = aux_data or {}
     geoTransform = geo_box.transform.to_gdal()
 
