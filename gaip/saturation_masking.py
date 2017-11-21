@@ -27,7 +27,7 @@ def saturation_mask(band_array, under_sat=1, over_sat=255, use_numexpr=True):
     """
     if len(band_array) == 0:
         return None
-    assert type(band_array) == np.ndarray, "Input is not valid"
+    assert isinstance(band_array, np.ndarry), "Input is not valid"
 
     if use_numexpr:
         msg = (
@@ -53,7 +53,6 @@ def set_saturation_bits(acquisitions, pq_const, result):
     logging.debug("set_saturation_bits() called")
     band_list = pq_const.saturation_bands
     full_band_list = pq_const.available_bands
-    pq_const.get_array_band_lookup(band_list)
 
     bit_index_list = pq_const.saturation_bits
     logging.debug("bit_index_list = %s", bit_index_list)
@@ -62,7 +61,7 @@ def set_saturation_bits(acquisitions, pq_const, result):
 
     for band in band_list:
         if band not in full_band_list:
-            logging.warning(f"Ignoring invalid band number: {band}")
+            logging.warning("Ignoring invalid band number: %s", band)
             continue
 
         band_index = full_band_list.index(band)

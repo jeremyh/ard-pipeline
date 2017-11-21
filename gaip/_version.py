@@ -9,6 +9,7 @@
 
 """Git implementation of _version.py."""
 
+
 import errno
 import os
 import re
@@ -116,7 +117,7 @@ def versions_from_parentdir(parentdir_prefix, root, verbose):
     """
     rootdirs = []
 
-    for i in range(3):
+    for _ in range(3):
         dirname = os.path.basename(root)
         if dirname.startswith(parentdir_prefix):
             return {
@@ -238,11 +239,13 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
     expanded, and _version.py hasn't already been rewritten with a short
     version string, meaning we're inside a checked out source tree.
     """
-    GITS = ["git"]
+    git_executables = ["git"]
     if sys.platform == "win32":
-        GITS = ["git.cmd", "git.exe"]
+        git_executables = ["git.cmd", "git.exe"]
 
-    out, rc = run_command(GITS, ["rev-parse", "--git-dir"], cwd=root, hide_stderr=True)
+    _, rc = run_command(
+        git_executables, ["rev-parse", "--git-dir"], cwd=root, hide_stderr=True
+    )
     if rc != 0:
         if verbose:
             print("Directory %s not under git control" % root)
@@ -251,7 +254,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
     # if there is a tag matching tag_prefix, this yields TAG-NUM-gHEX[-dirty]
     # if there isn't one, this yields HEX[-dirty] (no NUM)
     describe_out, rc = run_command(
-        GITS,
+        git_executables,
         [
             "describe",
             "--tags",
@@ -267,7 +270,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
     if describe_out is None:
         raise NotThisMethod("'git describe' failed")
     describe_out = describe_out.strip()
-    full_out, rc = run_command(GITS, ["rev-parse", "HEAD"], cwd=root)
+    full_out, rc = run_command(git_executables, ["rev-parse", "HEAD"], cwd=root)
     if full_out is None:
         raise NotThisMethod("'git rev-parse' failed")
     full_out = full_out.strip()
@@ -318,13 +321,15 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
     else:
         # HEX: no tags
         pieces["closest-tag"] = None
-        count_out, rc = run_command(GITS, ["rev-list", "HEAD", "--count"], cwd=root)
+        count_out, rc = run_command(
+            git_executables, ["rev-list", "HEAD", "--count"], cwd=root
+        )
         pieces["distance"] = int(count_out)  # total number of commits
 
     # commit date: see ISO-8601 comment in git_versions_from_keywords()
-    date = run_command(GITS, ["show", "-s", "--format=%ci", "HEAD"], cwd=root)[
-        0
-    ].strip()
+    date = run_command(
+        git_executables, ["show", "-s", "--format=%ci", "HEAD"], cwd=root
+    )[0].strip()
     pieces["date"] = date.strip().replace(" ", "T", 1).replace(" ", "", 1)
 
     return pieces
@@ -524,7 +529,7 @@ def get_versions():
         # versionfile_source is the relative path from the top of the source
         # tree (where the .git directory might live) to this file. Invert
         # this to find the root from __file__.
-        for i in cfg.versionfile_source.split("/"):
+        for _ in cfg.versionfile_source.split("/"):
             root = os.path.dirname(root)
     except NameError:
         return {

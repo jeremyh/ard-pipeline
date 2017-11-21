@@ -28,8 +28,6 @@ def read_pix(filename):
     idxlat = np.fromfile(src, dtype="int16", count=recs[2])
     date = np.fromfile(src, dtype="int16", count=recs[2] * 3).reshape(3, recs[2])
     time = np.fromfile(src, dtype="int16", count=recs[2] * 3).reshape(3, recs[2])
-    np.fromfile(src, dtype="float32", count=recs[2])
-    np.fromfile(src, dtype="float32", count=recs[2])
     aot = np.fromfile(src, dtype="float32", count=recs[2])
     src.close()
 

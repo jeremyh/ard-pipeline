@@ -4,6 +4,7 @@
 reference file, with the equivalent dataset from a test file.
 """
 
+
 import argparse
 from functools import partial
 from posixpath import basename as pbasename
@@ -537,7 +538,7 @@ def _parser():
         action="store_true",
         help=(
             "Save the reference and test datasets "
-            "alongside the resdiual/difference datasets."
+            "alongside the residual/difference datasets."
         ),
     )
 
