@@ -465,10 +465,7 @@ def as_array(array, dtype, transpose=False):
     if array.dtype != dtype:
         if transpose:
             return array.astype(dtype).transpose()
-        else:
-            return array.astype(dtype)
-    else:
-        if transpose:
-            return array.transpose()
-        else:
-            return array
+        return array.astype(dtype)
+    if transpose:
+        return array.transpose()
+    return array
