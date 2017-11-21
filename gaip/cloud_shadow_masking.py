@@ -397,7 +397,7 @@ def cloud_shadow(
 
     # Get the indices of cloud
     # need the actual indices rather than a boolean array
-    cindex = np.where(cloud_mask is False)
+    cindex = np.where(~cloud_mask)
 
     # Return mask with all true there is no cloud
     if len(cindex[0]) == 0:
