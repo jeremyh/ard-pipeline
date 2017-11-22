@@ -1,6 +1,6 @@
 """Setup gaip."""
 
-
+import setuptools
 from numpy.distutils.core import setup
 
 import versioneer
@@ -60,6 +60,7 @@ setup(
     license="CC0 1.0 Universal",
     author="The gaip authors",
     maintainer="gaip developers",
+    packages=setuptools.find_packages(),
     scripts=[
         "utils/test_satellite_solar_angles",
         "utils/test_dsm",

@@ -79,6 +79,7 @@ class DataStandardisation(luigi.Task):
     tle_path = luigi.Parameter(significant=False)
     rori = luigi.FloatParameter(default=0.52, significant=False)
     compression = luigi.Parameter(default="lzf", significant=False)
+    acq_parser_hint = luigi.Parameter(default=None)
 
     def output(self):
         fmt = "{scene}.gaip.h5"
@@ -109,6 +110,7 @@ class DataStandardisation(luigi.Task):
                 self.ecmwf_path,
                 self.rori,
                 self.compression,
+                self.acq_parser_hint,
             )
 
 

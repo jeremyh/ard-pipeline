@@ -74,6 +74,7 @@ def card4l(
     ecmwf_path=None,
     rori=0.52,
     compression="lzf",
+    acq_parser_hint=None,
 ):
     """CEOS Analysis Ready Data for Land.
     A workflow for producing standardised products that meet the
@@ -82,7 +83,7 @@ def card4l(
     tp5_fmt = pjoin(POINT_FMT, ALBEDO_FMT, "".join([POINT_ALBEDO_FMT, ".tp5"]))
     nvertices = vertices[0] * vertices[1]
 
-    scene = acquisitions(level1)
+    scene = acquisitions(level1, hint=acq_parser_hint)
 
     with h5py.File(out_fname, "w") as fid:
         fid.attrs["level1_uri"] = level1
@@ -400,6 +401,22 @@ def card4l(
 
                 # pixel quality
                 sbt_only = model == Model.sbt
-                if pixel_quality and can_pq(level1) and not sbt_only:
-                    run_pq(level1, group, landsea, group, compression, AP.nbar)
-                    run_pq(level1, group, landsea, group, compression, AP.nbart)
+                if pixel_quality and can_pq(level1, acq_parser_hint) and not sbt_only:
+                    run_pq(
+                        level1,
+                        group,
+                        landsea,
+                        group,
+                        compression,
+                        AP.nbar,
+                        acq_parser_hint,
+                    )
+                    run_pq(
+                        level1,
+                        group,
+                        landsea,
+                        group,
+                        compression,
+                        AP.nbart,
+                        acq_parser_hint,
+                    )
