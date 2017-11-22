@@ -225,8 +225,31 @@ def get_landsat_temperature(acquisitions, pq_const):
 
     # Function returns a list of one item. Take the first item.
     acq = [a for a in acqs if a.band_id == thermal_band][0]
-    radiance = acq.data(apply_gain_offset=True)
+    radiance = acq.radiance_data()
 
     kelvin_array = temperature_conversion(radiance, acq.K1, acq.K2)
 
     return kelvin_array.astype("float32")
+
+
+def temperature_at_sensor(thermal_acquisition, window=None):
+    """Given a thermal acquisition, convert to at sensor temperature
+    in Kelivn.
+
+    :param thermal_acquisition:
+        An acquisition with a band_type of BandType.Thermal.
+
+    :param window:
+        Defines a subset ((ystart, yend), (xstart, xend)) in array
+        co-ordinates. Default is None.
+
+    :return:
+        A `NumPy` array of whose shape is given by:
+        (thermal_acquisition.lines, thermal_acquisition.samples)
+        or the dimensions given by the `window` parameter.
+    """
+    # pylint: disable=unused-variable
+    thermal_acquisition.radiance_data(window=window)
+    result = numexpr.evaluate("k2 / (log(k1 / data + 1))")
+
+    return result

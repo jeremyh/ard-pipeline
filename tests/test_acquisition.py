@@ -5,6 +5,7 @@ from os.path import join as pjoin
 
 from gaip.acquisition import Landsat8Acquisition, LandsatAcquisition, acquisitions
 from gaip.constants import BandType
+from gaip.temperature import temperature_at_sensor
 
 DATA_DIR = pjoin(dirname(abspath(__file__)), "data")
 
@@ -127,6 +128,10 @@ class Landsat5Scene1AcquisitionTest(unittest.TestCase):
     def test_spectral_filter_file_thermal(self):
         assert self.acqs[5].spectral_filter_file == "landsat5_thermal.flt"
 
+    def test_temperature(self):
+        result = temperature_at_sensor(self.acqs[5], window=((40, 41), (40, 41)))
+        self.assertAlmostEqual(result[0, 0], 292.87979272)
+
 
 class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
     def setUp(self):
@@ -198,6 +203,14 @@ class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
 
     def test_spectral_filter_file_thermal(self):
         assert self.acqs[5].spectral_filter_file == "landsat7_thermal.flt"
+
+    def test_temperature61(self):
+        result = temperature_at_sensor(self.acqs[5], window=((41, 42), (41, 42)))
+        self.assertAlmostEqual(result[0, 0], 297.00875604)
+
+    def test_temperature62(self):
+        result = temperature_at_sensor(self.acqs[6], window=((41, 42), (41, 42)))
+        self.assertAlmostEqual(result[0, 0], 297.3971409)
 
 
 class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
@@ -271,6 +284,14 @@ class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
 
     def test_spectral_filter_file_thermal(self):
         assert self.acqs[1].spectral_filter_file == "landsat8_thermal.flt"
+
+    def test_temperature10(self):
+        result = temperature_at_sensor(self.acqs[1], window=((41, 42), (41, 42)))
+        self.assertAlmostEqual(result[0, 0], 293.63805603)
+
+    def test_temperature11(self):
+        result = temperature_at_sensor(self.acqs[2], window=((41, 42), (41, 42)))
+        self.assertAlmostEqual(result[0, 0], 292.90268541)
 
 
 if __name__ == "__main__":
