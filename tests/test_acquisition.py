@@ -3,7 +3,8 @@ import unittest
 from os.path import abspath, dirname
 from os.path import join as pjoin
 
-from gaip.acquisition import Landsat8Acquisition, LandsatAcquisition, acquisitions
+from gaip.acquisition import acquisitions
+from gaip.acquisition.landsat import Landsat8Acquisition, LandsatAcquisition
 from gaip.constants import BandType
 from gaip.temperature import temperature_at_sensor
 
