@@ -277,9 +277,7 @@ def acquisitions_s2_directory(pathname):
 
     acquisition_data = {}
     for fn, terms in search_paths.items():
-        xml_root = None
-        with open("/home/ubuntu/granule/" + fn) as fd:
-            xml_root = ElementTree.XML(fd.read())
+        xml_root = ElementTree.parse(pathname + "/" + fn)
         for term in terms:
             acquisition_data[term["key"]] = term["parse"](
                 xml_root.findall(term["search_path"])
