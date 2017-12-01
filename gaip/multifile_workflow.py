@@ -128,9 +128,9 @@ class CalculateLonLatGrids(luigi.Task):
 
     level1 = luigi.Parameter()
     work_root = luigi.Parameter(significant=False)
-    acq_parser_hint = luigi.Parameter(default=None)
     granule = luigi.Parameter(default=None)
     group = luigi.Parameter()
+    acq_parser_hint = luigi.Parameter(default=None)
     compression = luigi.Parameter(default="lzf", significant=False)
 
     def requires(self):
@@ -159,7 +159,6 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
     """Calculate the satellite and solar grids."""
 
     tle_path = luigi.Parameter(significant=False)
-    acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.group]
@@ -188,9 +187,9 @@ class AncillaryData(luigi.Task):
     level1 = luigi.Parameter()
     work_root = luigi.Parameter(significant=False)
     granule = luigi.Parameter(default=None)
-    acq_parser_hint = luigi.Parameter(default=None)
     vertices = luigi.TupleParameter()
     model = luigi.EnumParameter(enum=Model)
+    acq_parser_hint = luigi.Parameter(default=None)
     aerosol_fname = luigi.Parameter(significant=False)
     brdf_path = luigi.Parameter(significant=False)
     brdf_premodis_path = luigi.Parameter(significant=False)
@@ -248,8 +247,8 @@ class WriteTp5(luigi.Task):
     level1 = luigi.Parameter()
     work_root = luigi.Parameter(significant=False)
     granule = luigi.Parameter(default=None)
-    acq_parser_hint = luigi.Parameter(default=None)
     vertices = luigi.TupleParameter()
+    acq_parser_hint = luigi.Parameter(default=None)
     model = luigi.EnumParameter(enum=Model)
     base_dir = luigi.Parameter(default="_atmospherics", significant=False)
     compression = luigi.Parameter(default="lzf", significant=False)
@@ -333,7 +332,6 @@ class AtmosphericsCase(luigi.Task):
 
     point = luigi.Parameter()
     albedos = luigi.ListParameter()
-    acq_parser_hint = luigi.Parameter(default=None)
     exe = luigi.Parameter(significant=False)
 
     def output(self):
@@ -375,7 +373,6 @@ class Atmospherics(luigi.Task):
     """Kicks off MODTRAN calculations for all points and albedos."""
 
     model = luigi.EnumParameter(enum=Model)
-    acq_parser_hint = luigi.Parameter(default=None)
     separate = luigi.BoolParameter()
 
     def requires(self):
@@ -408,8 +405,6 @@ class CalculateComponents(luigi.Task):
     correction model.
     """
 
-    acq_parser_hint = luigi.Parameter(default=None)
-
     def output(self):
         out_path = acquisitions(self.level1, self.acq_parser_hint).get_root(
             self.work_root, granule=self.granule
@@ -430,7 +425,6 @@ class InterpolateComponent(luigi.Task):
 
     vertices = luigi.TupleParameter()
     band_id = luigi.Parameter()
-    acq_parser_hint = luigi.Parameter(default=None)
     component = luigi.EnumParameter(enum=AtmosphericComponents)
     base_dir = luigi.Parameter(default="_interpolation", significant=False)
     model = luigi.EnumParameter(enum=Model)
@@ -485,7 +479,6 @@ class InterpolateComponents(luigi.Task):
     vertices = luigi.TupleParameter()
     model = luigi.EnumParameter(enum=Model)
     method = luigi.EnumParameter(enum=Method, default=Method.shear)
-    acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
         container = acquisitions(self.level1, self.acq_parser_hint)
@@ -542,7 +535,6 @@ class DEMExtraction(luigi.Task):
     """
 
     dsm_fname = luigi.Parameter(default="dsm.tif", significant=False)
-    acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
         return WorkRoot(self.level1, self.work_root)
@@ -567,8 +559,6 @@ class DEMExtraction(luigi.Task):
 class SlopeAndAspect(luigi.Task):
     """Compute the slope and aspect images."""
 
-    acq_parser_hint = luigi.Parameter(default=None)
-
     def output(self):
         out_path = acquisitions(self.level1, self.acq_parser_hint).get_root(
             self.work_root, self.group, self.granule
@@ -591,8 +581,6 @@ class SlopeAndAspect(luigi.Task):
 @inherits(CalculateLonLatGrids)
 class IncidentAngles(luigi.Task):
     """Compute the incident angles."""
-
-    acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.group]
@@ -622,8 +610,6 @@ class IncidentAngles(luigi.Task):
 class ExitingAngles(luigi.Task):
     """Compute the exiting angles."""
 
-    acq_parser_hint = luigi.Parameter(default=None)
-
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.group]
         return {
@@ -652,8 +638,6 @@ class ExitingAngles(luigi.Task):
 class RelativeAzimuthSlope(luigi.Task):
     """Compute the relative azimuth angle on the slope surface."""
 
-    acq_parser_hint = luigi.Parameter(default=None)
-
     def requires(self):
         return {
             "incident": self.clone(IncidentAngles),
@@ -681,7 +665,6 @@ class RelativeAzimuthSlope(luigi.Task):
 class SelfShadow(luigi.Task):
     """Calculate the self shadow mask."""
 
-    acq_parser_hint = luigi.Parameter(default=None)
     base_dir = luigi.Parameter(default="_shadow", significant=False)
 
     def requires(self):
@@ -711,8 +694,6 @@ class CalculateCastShadowSun(luigi.Task):
     """Calculates the Cast shadow mask in the direction back to the
     sun.
     """
-
-    acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.group]
@@ -760,8 +741,6 @@ class CalculateCastShadowSatellite(luigi.Task):
     """Calculates the Cast shadow mask in the direction back to the
     sun.
     """
-
-    acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.group]
@@ -812,8 +791,6 @@ class CalculateShadowMasks(luigi.Task):
     but combines the results into a single file.
     """
 
-    acq_parser_hint = luigi.Parameter(default=None)
-
     def requires(self):
         return {
             "sun": self.clone(CalculateCastShadowSun),
@@ -846,7 +823,6 @@ class SurfaceReflectance(luigi.Task):
     band_id = luigi.Parameter()
     rori = luigi.FloatParameter(default=0.52, significant=False)
     base_dir = luigi.Parameter(default="_standardised", significant=False)
-    acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
         reqs = {
@@ -909,8 +885,6 @@ class SurfaceReflectance(luigi.Task):
 class SurfaceTemperature(luigi.Task):
     """Calculates surface brightness temperature for a given band."""
 
-    acq_parser_hint = luigi.Parameter(default=None)
-
     def requires(self):
         reqs = {
             "interpolation": self.clone(InterpolateComponents),
@@ -951,7 +925,6 @@ class DataStandardisation(luigi.Task):
 
     land_sea_path = luigi.Parameter()
     pixel_quality = luigi.BoolParameter()
-    acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
         band_acqs = []
@@ -1021,6 +994,7 @@ class LinkGaipOutputs(luigi.Task):
     vertices = luigi.TupleParameter(default=(5, 5))
     pixel_quality = luigi.BoolParameter()
     method = luigi.EnumParameter(enum=Method, default=Method.shear)
+    acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
         container = acquisitions(self.level1, self.acq_parser_hint)
