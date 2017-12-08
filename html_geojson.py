@@ -1,6 +1,5 @@
-"""Execution method for contiguous observations within band stack
-example usage:
-    python html_geojson.py ALLBANDS_20m.contiguity.img.
+"""Execution method for creation of map.html and bounding geojson:
+python html_geojson.py ALLBANDS_20m.contiguity.img.
 """
 import logging
 import os
@@ -111,3 +110,4 @@ def main(contiguity):
     m.save(html_path)
 if __name__ == "__main__":
     main()
+
