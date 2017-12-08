@@ -4,7 +4,6 @@ import argparse
 
 import numpy as np
 import rasterio
-from rasterio.enums import Resampling
 from skimage.exposure import rescale_intensity
 
 FACTORS = [2, 4, 8, 16, 32]
@@ -89,7 +88,8 @@ def quicklook(fname, out_fname, src_min, src_max, out_min=0, out_max=255):
 
                 out_ds.write(scaled, i + 1)
 
-            out_ds.build_overviews(FACTORS, Resampling.average)
+            # as we're warping after this, it is probably not needed
+            # out_ds.build_overviews(FACTORS, Resampling.average)
 
 
 if __name__ == '__main__':
