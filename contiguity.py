@@ -11,6 +11,8 @@ from pathlib import Path
 import click
 import numpy as np
 import rasterio
+from gaip.data import write_img
+from gaip.geobox import GriddedGeoBox
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
@@ -18,13 +20,20 @@ def do_contiguity(fname, output):
     """Write a contiguity mask file based on the intersection of valid data pixels across all
     bands from the input file and output to the specified directory.
     """
-    bands = rasterio.open(fname)
-    ones = np.ones((bands.height, bands.width), dtype='uint8')
-    for band in bands.indexes:
-        ones &= bands.read(band) > 0
-    with rasterio.open(output, 'w', driver='HFA', width=bands.width, height=bands.height, \
-                count=1, crs=bands.crs, transform=bands.transform, dtype='uint8') as outfile: outfile.write_band(1, ones)
-    bands.close()
+    with rasterio.open(fname) as ds:
+        geobox = GriddedGeoBox.from_dataset(ds)
+        yblock, xblock = ds.block_shapes[0]
+        ones = np.ones((ds.height, ds.width), dtype='uint8')
+        for band in ds.indexes:
+            ones &= ds.read(band) > 0
+
+    co_options = {'compress': 'deflate',
+                  'zelevel': 4,
+                  'blockxsize': xblock,
+                  'blockysize': yblock}
+    write_img(ones, output, cogtif=True, levels=[2, 4, 8, 16, 32],
+              geobox=geobox, options=co_options)
+
     return None
 
 @click.command(help=__doc__)
