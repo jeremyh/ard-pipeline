@@ -2,11 +2,17 @@
 ---------------------.
 """
 
+import subprocess
+import tempfile
+from os.path import basename, dirname
+from os.path import join as pjoin
+
 import h5py
 import numpy as np
 import rasterio
 from rasterio.crs import CRS
-from rasterio.warp import Resampling, reproject
+from rasterio.enums import Resampling
+from rasterio.warp import reproject
 
 from gaip.geobox import GriddedGeoBox
 from gaip.tiling import generate_tiles
@@ -85,12 +91,14 @@ def stack_data(acqs_list, fn=(lambda acq: True), window=None, masked=False):
 def write_img(
     array,
     filename,
-    fmt="ENVI",
+    driver="GTiff",
     geobox=None,
     nodata=None,
-    compress=None,
     tags=None,
     options=None,
+    cogtif=False,
+    levels=None,
+    resampling=Resampling.average,
 ):
     """Writes a 2D/3D image to disk using rasterio.
 
@@ -100,9 +108,9 @@ def write_img(
     :param filename:
         A string containing the output file name.
 
-    :param fmt:
-        A string containing a GDAL compliant image fmt. Default is
-        'ENVI'.
+    :param driver:
+        A string containing a GDAL compliant image driver. Default is
+        'GTiff'.
 
     :param geobox:
         An instance of a GriddedGeoBox object.
@@ -110,15 +118,36 @@ def write_img(
     :param nodata:
         A value representing the no data value for the array.
 
-    :param compress:
-        A compression algorithm name (e.g. 'lzw').
-
     :param tags:
         A dictionary of dataset-level metadata.
 
     :param options:
         A dictionary containing other dataset creation options.
         See creation options for the respective GDAL formats.
+
+    :param cogtif:
+        If set to True, override the `driver` keyword with `GTiff`
+        and create a Cloud Optimised GeoTiff. Default is False.
+        See:
+        https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF
+
+    :param levels:
+        If cogtif is set to True, build overviews/pyramids
+        according to levels. Default levels are [2, 4, 8, 16, 32].
+
+    :param resampling:
+        If cogtif is set to True, build overviews/pyramids using
+        a resampling method from `rasterio.enums.Resampling`.
+        Default is `Resampling.average`.
+
+    :notes:
+        If array is an instance of a `h5py.Dataset`, then the output
+        file will include blocksizes based on the `h5py.Dataset's`
+        chunks. To override the blocksizes, specify them using the
+        `options` keyword. Eg {'blockxsize': 512, 'blockysize': 512}.
+        If `cogtif` is set to True, the default blocksizes will be
+        256x256. To override this behaviour, specify them using the
+        `options` keyword. Eg {'blockxsize': 512, 'blockysize': 512}.
     """
     # Get the datatype of the array
     dtype = array.dtype.name
@@ -159,16 +188,9 @@ def write_img(
         transform = None
         projection = None
 
-    kwargs = {
-        "count": bands,
-        "width": samples,
-        "height": lines,
-        "crs": projection,
-        "transform": transform,
-        "dtype": dtype,
-        "driver": fmt,
-        "nodata": nodata,
-    }
+    # override the driver if we are creating a cogtif
+    if cogtif:
+        driver = "GTiff"
 
     # compression predictor choices
     predictor = {
@@ -184,9 +206,17 @@ def write_img(
         "float64": 3,
     }
 
-    if fmt == "GTiff" and compress is not None:
-        kwargs["compress"] = compress
-        kwargs["predictor"] = predictor[dtype]
+    kwargs = {
+        "count": bands,
+        "width": samples,
+        "height": lines,
+        "crs": projection,
+        "transform": transform,
+        "dtype": dtype,
+        "driver": driver,
+        "nodata": nodata,
+        "predictor": predictor[dtype],
+    }
 
     if isinstance(array, h5py.Dataset):
         # TODO: if array is 3D get x & y chunks
@@ -194,6 +224,7 @@ def write_img(
         tiles = generate_tiles(samples, lines, x_tile, y_tile)
 
         # add blocksizes to the creation keywords
+        kwargs["tiled"] = "yes"
         kwargs["blockxsize"] = x_tile
         kwargs["blockysize"] = y_tile
 
@@ -202,26 +233,58 @@ def write_img(
         for key in options:
             kwargs[key] = options[key]
 
-    with rasterio.open(filename, "w", **kwargs) as outds:
-        if bands == 1:
-            if isinstance(array, h5py.Dataset):
-                for tile in tiles:
-                    idx = (slice(tile[0][0], tile[0][1]), slice(tile[1][0], tile[1][1]))
-                    outds.write(array[idx], 1, window=tile)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_fname = pjoin(tmpdir, basename(filename)) if cogtif else filename
+
+        with rasterio.open(out_fname, "w", **kwargs) as outds:
+            if cogtif:
+                if levels is None:
+                    levels = [2, 4, 8, 16, 32]
+                outds.build_overviews(levels, resampling)
+
+            if bands == 1:
+                if isinstance(array, h5py.Dataset):
+                    for tile in tiles:
+                        idx = (
+                            slice(tile[0][0], tile[0][1]),
+                            slice(tile[1][0], tile[1][1]),
+                        )
+                        outds.write(array[idx], 1, window=tile)
+                else:
+                    outds.write(array, 1)
             else:
-                outds.write(array, 1)
-        else:
-            if isinstance(array, h5py.Dataset):
-                for tile in tiles:
-                    idx = (slice(tile[0][0], tile[0][1]), slice(tile[1][0], tile[1][1]))
-                    subs = array[:, idx[0], idx[1]]
+                if isinstance(array, h5py.Dataset):
+                    for tile in tiles:
+                        idx = (
+                            slice(tile[0][0], tile[0][1]),
+                            slice(tile[1][0], tile[1][1]),
+                        )
+                        subs = array[:, idx[0], idx[1]]
+                        for i in range(bands):
+                            outds.write(subs[i], i + 1, window=tile)
+                else:
                     for i in range(bands):
-                        outds.write(subs[i], i + 1, window=tile)
-            else:
-                for i in range(bands):
-                    outds.write(array[i], i + 1)
-        if tags is not None:
-            outds.update_tags(**tags)
+                        outds.write(array[i], i + 1)
+            if tags is not None:
+                outds.update_tags(**tags)
+
+        if cogtif:
+            cmd = [
+                "gdal_translate",
+                "-co",
+                "TILED=YES",
+                "-co",
+                "COPY_SRC_OVERVIEWS=YES",
+                "-co",
+                "{}={}".format("PREDICTOR", predictor[dtype]),
+            ]
+
+            for key, value in options.items():
+                cmd.extend(["-co", f"{key}={value}"])
+
+            cmd.extend([out_fname, filename])
+
+            subprocess.check_call(cmd, cwd=dirname(filename))
 
 
 def read_subset(fname, ul_xy, ur_xy, lr_xy, ll_xy, bands=1):
