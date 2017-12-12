@@ -98,7 +98,7 @@ def write_img(
     options=None,
     cogtif=False,
     levels=None,
-    resampling=Resampling.average,
+    resampling=Resampling.nearest,
 ):
     """Writes a 2D/3D image to disk using rasterio.
 
@@ -138,7 +138,7 @@ def write_img(
     :param resampling:
         If cogtif is set to True, build overviews/pyramids using
         a resampling method from `rasterio.enums.Resampling`.
-        Default is `Resampling.average`.
+        Default is `Resampling.nearest`.
 
     :notes:
         If array is an instance of a `h5py.Dataset`, then the output
@@ -237,11 +237,6 @@ def write_img(
         out_fname = pjoin(tmpdir, basename(filename)) if cogtif else filename
 
         with rasterio.open(out_fname, "w", **kwargs) as outds:
-            if cogtif:
-                if levels is None:
-                    levels = [2, 4, 8, 16, 32]
-                outds.build_overviews(levels, resampling)
-
             if bands == 1:
                 if isinstance(array, h5py.Dataset):
                     for tile in tiles:
@@ -267,6 +262,12 @@ def write_img(
                         outds.write(array[i], i + 1)
             if tags is not None:
                 outds.update_tags(**tags)
+
+            # overviews/pyramids
+            if cogtif:
+                if levels is None:
+                    levels = [2, 4, 8, 16, 32]
+                outds.build_overviews(levels, resampling)
 
         if cogtif:
             cmd = [
