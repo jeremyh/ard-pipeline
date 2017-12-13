@@ -356,7 +356,7 @@ class AtmosphericsCase(luigi.Task):
             nvertices = self.vertices[0] * self.vertices[1]
             _run_modtran(
                 acqs,
-                self.exe,
+                self.modtran_exe,
                 base_dir,
                 self.point,
                 albedos,
