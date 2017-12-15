@@ -15,6 +15,7 @@ import yaml
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
+
 def image_dict(target):
     """Returns a datacube-compatible dictionary of TIF image paths."""
     nbar_match_dict = {'blue': 'B02',
@@ -47,6 +48,7 @@ def image_dict(target):
 
     img_dict = {}
 
+    # pixel quality datasets
     for file in os.listdir(target):
         if '.TIF' in file:
             for band_label, band_name in pq_match_dict.items():
@@ -54,6 +56,7 @@ def image_dict(target):
                     fname = os.path.join(target, file)
                     img_dict[band_label] = {'path': fname, 'layer': 1}
 
+    # nbar datasets
     nbar_target = os.path.join(target, 'NBAR')
     for file in os.listdir(nbar_target):
         if '.TIF' in file:
@@ -62,6 +65,7 @@ def image_dict(target):
                     fname = os.path.join(nbar_target, file)
                     img_dict[band_label] = {'path': fname, 'layer': 1}
 
+    # nbart datasets
     nbart_target = os.path.join(target, 'NBART')
     for file in os.listdir(nbart_target):
         if '.TIF' in file:
