@@ -32,7 +32,7 @@ class RunFmask(Luigi.Task):
         return WorkDir(self.level1, self.outdir)
 
     def output(self):
-        out_fname = pjoin(self.outdir, f"{self.task[0]}.cloud.img")
+        out_fname = pjoin(self.outdir, f"{self.task[1]}.cloud.img")
 
         return luigi.LocalTarget(out_fname)
 
