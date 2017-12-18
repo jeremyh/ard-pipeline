@@ -6,7 +6,7 @@ from pathlib import Path
 from eodatasets.verify import PackageChecksum
 
 
-def main(out_fname):
+def checksum(out_fname):
     """Checksum all files adjacent to and heirarchially below the
     output file.
 
@@ -34,4 +34,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.out_fname)
+    checksum(args.out_fname)
