@@ -23,7 +23,7 @@ def valid_region(fname, mask_value=None):
     mask = None
     logging.info("Valid regions for %s", fname)
     # ensure formats match
-    with rasterio.open(str(fname), 'r') as dataset:
+    with rasterio.open(str(fname), "r") as dataset:
         transform = dataset.transform.to_gdal()
         crs = dataset.crs.to_dict()
         img = dataset.read(1)
@@ -37,8 +37,10 @@ def valid_region(fname, mask_value=None):
         else:
             mask |= new_mask
 
-    shapes = rasterio.features.shapes(mask.astype('uint8'), mask=mask)
-    shape = shapely.ops.unary_union([shapely.geometry.shape(shape) for shape, val in shapes if val == 1])
+    shapes = rasterio.features.shapes(mask.astype("uint8"), mask=mask)
+    shape = shapely.ops.unary_union(
+        [shapely.geometry.shape(shape) for shape, val in shapes if val == 1]
+    )
 
     # convex hull
     geom = shape.convex_hull
@@ -53,7 +55,17 @@ def valid_region(fname, mask_value=None):
     geom = geom.intersection(shapely.geometry.box(0, 0, mask.shape[1], mask.shape[0]))
 
     # transform from pixel space into CRS space
-    geom = shapely.affinity.affine_transform(geom, (transform[1], transform[2], transform[4], transform[5], transform[0], transform[3]))
+    geom = shapely.affinity.affine_transform(
+        geom,
+        (
+            transform[1],
+            transform[2],
+            transform[4],
+            transform[5],
+            transform[0],
+            transform[3],
+        ),
+    )
 
     return geom, crs
 
@@ -86,55 +98,60 @@ def html_map(contiguity_fname, html_out_fname, json_out_fname):
         pass
 
     # Find metadata yaml and add to geopandas attributes
-    #metadata = os.path.abspath(os.path.join(out_dir, "..", "ARD-METADATA.yaml"))
+    # metadata = os.path.abspath(os.path.join(out_dir, "..", "ARD-METADATA.yaml"))
 
     logging.info("Create valid bounds " + json_out_fname)
     geom = valid_region(contiguity_fname)
     gpdsr, crs = gpd.GeoSeries([geom])
     gpdsr.crs = crs
-    gpdsr = gpdsr.to_crs({'init': 'epsg:4326'})
+    gpdsr = gpdsr.to_crs({"init": "epsg:4326"})
 
     # TODO - Add metadata to PopUp
-    #with open(metadata, 'r') as stream:
+    # with open(metadata, 'r') as stream:
     #    try:
     #        yaml_metadata = yaml.load(stream)
     #    except yaml.YAMLError as exc:
     #        print(exc)
-    #gpdyaml = gpd.GeoSeries(yaml_metadata)
+    # gpdyaml = gpd.GeoSeries(yaml_metadata)
 
-    gpdsr.to_file(json_out_fname, driver='GeoJSON')
+    gpdsr.to_file(json_out_fname, driver="GeoJSON")
     m = folium.Map()
 
-    #GeoJson(gpdsr, name='geojson').add_to(m)
+    # GeoJson(gpdsr, name='geojson').add_to(m)
     def style_function(x):
         return {"fillColor": None, "color": "#0000ff"}
-    GeoJson(json_out_fname, name='bounds.geojson', style_function=style_function).add_to(m)
+
+    GeoJson(
+        json_out_fname, name="bounds.geojson", style_function=style_function
+    ).add_to(m)
     # TODO - add MGRS tile reference to map with layer active = False
-    #style_function = lambda x: {'fillColor': None, 'fillOpacity': 0.1, 'weight': 0.1,
+    # style_function = lambda x: {'fillColor': None, 'fillOpacity': 0.1, 'weight': 0.1,
     #                               'color' : '#ff0000'}
-    #GeoJson('/home/simonaoliver/reference/agdcv2-reference/MGRS_Australia.geojson', name='MGRS_tiles.geojson', style_function=style_function).add_to(m)
+    # GeoJson('/home/simonaoliver/reference/agdcv2-reference/MGRS_Australia.geojson', name='MGRS_tiles.geojson', style_function=style_function).add_to(m)
 
     m.fit_bounds(GeoJson(gpdsr).get_bounds())
     folium.LatLngPopup().add_to(m)
 
-    #m.add_child(folium.Popup("Insert Date Here"))
+    # m.add_child(folium.Popup("Insert Date Here"))
     folium.LayerControl().add_to(m)
     m.save(html_out_fname)
 
 
 @click.command(help=__doc__)
-@click.argument('contiguity',
-                type=click.Path(exists=True, readable=True, writable=False),
-                nargs=-1)
+@click.argument(
+    "contiguity", type=click.Path(exists=True, readable=True, writable=False), nargs=-1
+)
 def main(contiguity):
     """For input contiguity write geojson valid data extent and publish html folium map to
     'contiguity directory'.
     """
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
+    )
     contiguity = os.path.abspath(str(contiguity[0]))
     out_dir = os.path.dirname(contiguity)
-    geo_path = os.path.join(out_dir, 'bounds.geojson')
-    html_path = os.path.join(out_dir, 'map.html')
+    geo_path = os.path.join(out_dir, "bounds.geojson")
+    html_path = os.path.join(out_dir, "map.html")
 
     html_map(contiguity, html_path, geo_path)
 

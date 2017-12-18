@@ -58,32 +58,35 @@ def quicklook(fname, out_fname, src_min, src_max, out_min=0, out_max=255):
     """
     bands = [4, 3, 2]
     with rasterio.open(fname) as ds:
-
         # no data locations
-        nulls = np.zeros((ds.height, ds.width), dtype='bool')
+        nulls = np.zeros((ds.height, ds.width), dtype="bool")
         for band in bands:
             nulls |= ds.read(band) == ds.nodata
 
-        kwargs = {'driver': "GTiff",
-                  'height': ds.height,
-                  'width': ds.width,
-                  'count': 3,
-                  'dtype': 'uint8',
-                  'crs': ds.crs,
-                  'transform': ds.transform,
-                  'nodata': 0,
-                  'compress': 'jpeg',
-                  'photometric': 'YCBCR',
-                  'tiled': 'yes',
-                  'blockxsize': 512,
-                  'blockysize': 512}
+        kwargs = {
+            "driver": "GTiff",
+            "height": ds.height,
+            "width": ds.width,
+            "count": 3,
+            "dtype": "uint8",
+            "crs": ds.crs,
+            "transform": ds.transform,
+            "nodata": 0,
+            "compress": "jpeg",
+            "photometric": "YCBCR",
+            "tiled": "yes",
+            "blockxsize": 512,
+            "blockysize": 512,
+        }
 
-        with rasterio.open(out_fname, 'w', **kwargs) as out_ds:
+        with rasterio.open(out_fname, "w", **kwargs) as out_ds:
             for i, band in enumerate(bands):
-                scaled = rescale_intensity(ds.read(band),
-                                           in_range=(src_min, src_max),
-                                           out_range=(out_min, out_max))
-                scaled = scaled.astype('uint8')
+                scaled = rescale_intensity(
+                    ds.read(band),
+                    in_range=(src_min, src_max),
+                    out_range=(out_min, out_max),
+                )
+                scaled = scaled.astype("uint8")
                 scaled[nulls] = 0
 
                 out_ds.write(scaled, i + 1)
@@ -92,23 +95,23 @@ def quicklook(fname, out_fname, src_min, src_max, out_min=0, out_max=255):
             # out_ds.build_overviews(FACTORS, Resampling.average)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     description = "Quicklook generation."
     parser = argparse.ArgumentParser(description=description)
 
-    parser.add_argument("--filename", required=True,
-                        help="The input filename.")
-    parser.add_argument("--out_fname", required=True,
-                        help="The output filename.")
-    parser.add_argument("--src_min", type=int, required=True,
-                        help="Source minimum")
-    parser.add_argument("--src_max", type=int, required=True,
-                        help="Source maximum")
-    parser.add_argument("--out_min", type=int, default=0,
-                        help="Output minimum")
-    parser.add_argument("--out_max", type=int, default=255,
-                        help="Output maximum")
+    parser.add_argument("--filename", required=True, help="The input filename.")
+    parser.add_argument("--out_fname", required=True, help="The output filename.")
+    parser.add_argument("--src_min", type=int, required=True, help="Source minimum")
+    parser.add_argument("--src_max", type=int, required=True, help="Source maximum")
+    parser.add_argument("--out_min", type=int, default=0, help="Output minimum")
+    parser.add_argument("--out_max", type=int, default=255, help="Output maximum")
 
     args = parser.parse_args()
-    quicklook(args.filename, args.out_fname, args.src_min, args.src_max,
-              args.out_min, args.out_max)
+    quicklook(
+        args.filename,
+        args.out_fname,
+        args.src_min,
+        args.src_max,
+        args.out_min,
+        args.out_max,
+    )
