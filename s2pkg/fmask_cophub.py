@@ -149,14 +149,15 @@ def prepare_dataset(path):
     return tasks
 
 
-def fmask(dataset_path, task, outdir):
+def fmask(dataset_path, task, out_fname):
     """Execute the fmask process."""
     img_dict, granule_id, mtd_xml = task
-    with tempfile.TemporaryDirectory(dir=outdir, prefix="pythonfmask-") as tmpdir:
+    with tempfile.TemporaryDirectory(
+        dir=os.path.basename(out_fname), prefix="pythonfmask-"
+    ) as tmpdir:
         # filenames
         vrt_fname = os.path.join(tmpdir, granule_id + ".vrt")
         angles_fname = os.path.join(tmpdir, granule_id + ".angles.img")
-        cloud_fname = os.path.join(outdir, granule_id + ".cloud.img")
 
         # zipfile extraction
         zipfile_path = os.path.join(tmpdir, Path(mtd_xml).name)
@@ -204,9 +205,9 @@ def fmask(dataset_path, task, outdir):
             + " -z "
             + angles_fname
             + " -o "
-            + cloud_fname
+            + out_fname
         )
-        logging.info("Create fmask output " + cloud_fname)
+        logging.info("Create fmask output " + out_fname)
         os.system(command)
 
 
