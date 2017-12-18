@@ -10,5 +10,6 @@ setup(
         "Code will eventually be ported eo-datasets."
     ),
     packages=["s2pkg"],
+    scripts=["bin/s2package"],
     include_package_data=True,
 )
