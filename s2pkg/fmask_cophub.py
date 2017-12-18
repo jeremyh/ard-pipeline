@@ -259,7 +259,8 @@ def main(output, datasets):
         path = Path(dataset)
         tasks = prepare_dataset(path)
         for i in tasks:
-            fmask(path, i, outpath)
+            out_fname = os.path.join(outpath, f"{i[1]}.cloud.img")
+            fmask(path, i, out_fname)
 
 
 if __name__ == "__main__":
