@@ -229,7 +229,7 @@ def fmask_cogtif(fname, out_fname):
     ]
 
     logging.info("Create fmask cogtif " + out_fname)
-    os.system(command)
+    os.system(" ".join(command))
 
 
 @click.command(help=__doc__)
