@@ -282,7 +282,8 @@ def package(l1_path, gaip_fname, fmask_path, yamls_path, outdir):
         None; The packages will be written to disk directly.
     """
     scene = acquisitions(l1_path)
-    with open(pjoin(yamls_path, f"{scene.label}.yaml")) as src:
+    yaml_fname = pjoin(yamls_path, basename(dirname(l1_path)), f"{scene.label}.yaml")
+    with open(yaml_fname) as src:
         l1_documents = {doc["tile_id"]: doc for doc in yaml.load_all(src)}
 
     with h5py.File(gaip_fname, "r") as fid:
