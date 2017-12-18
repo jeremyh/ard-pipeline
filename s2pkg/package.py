@@ -3,6 +3,7 @@
 import argparse
 import glob
 import os
+import re
 import tempfile
 from os.path import basename, dirname, exists, splitext
 from os.path import join as pjoin
@@ -43,6 +44,7 @@ yaml.add_representer(np.ndarray, Representer.represent_list)
 
 PRODUCTS = ["NBAR", "NBART"]
 LEVELS = [2, 4, 8, 16, 32]
+PATTERN = re.compile(r"(.*_)(B[0-9][A0-9])(\.TIF)")
 
 
 def run_command(command, work_dir):
@@ -66,12 +68,14 @@ def gaip_unpack(scene, granule, h5group, outdir):
 
             # base_dir = pjoin(splitext(basename(acq.pathname))[0], granule)
             base_fname = f"{splitext(basename(acq.uri))[0]}.TIF"
+            match = PATTERN.match(base_fname)
+            fname = f"{match[1]}{product}_{match[2]}{match[3]}"
             out_fname = pjoin(
                 outdir,
                 # base_dir.replace('L1C', 'ARD'),
                 # granule.replace('L1C', 'ARD'),
                 product,
-                base_fname.replace("L1C", product),
+                fname.replace("L1C", "ARD"),
             )
 
             # output
