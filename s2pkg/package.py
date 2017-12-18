@@ -49,7 +49,7 @@ PATTERN = re.compile(r"(.*_)(B[0-9][A0-9])(\.TIF)")
 
 def run_command(command, work_dir):
     """A simple utility to execute a subprocess command."""
-    check_call(command, cwd=work_dir)
+    check_call(" ".join(command), shell=True, cwd=work_dir)
 
 
 def gaip_unpack(scene, granule, h5group, outdir):
@@ -200,7 +200,8 @@ def create_quicklook(outdir):
                 "-co",
                 "PHOTOMETRIC=YCBCR",
                 "-co",
-                "TILED=YES" "-tr",
+                "TILED=YES",
+                "-tr",
                 "0.0001",
                 "0.0001",
                 tmp_fname1,
