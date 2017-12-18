@@ -1,66 +1,62 @@
 #!/usr/bin/env python
 
-import os
-from os.path import join as pjoin, basename, dirname, splitext, exists
-from subprocess import check_call
-import tempfile
-import glob
 import argparse
-from pkg_resources import resource_stream
-import numpy
+import glob
+import os
+import tempfile
+from os.path import basename, dirname, exists, splitext
+from os.path import join as pjoin
+from subprocess import check_call
+
 import h5py
-from rasterio.enums import Resampling
-
+import numpy as np
 import yaml
-from yaml.representer import Representer
-
 from gaip.acquisition import acquisitions
 from gaip.data import write_img
-from gaip.hdf5 import find
 from gaip.geobox import GriddedGeoBox
+from gaip.hdf5 import find
+from pkg_resources import resource_stream
+from rasterio.enums import Resampling
+from yaml.representer import Representer
 
 import s2pkg
-from s2pkg import checksum
+from s2pkg.checksum import checksum
 from s2pkg.contiguity import do_contiguity
 from s2pkg.contrast import quicklook
 from s2pkg.fmask_cophub import fmask_cogtif
 from s2pkg.html_geojson import html_map
 from s2pkg.yaml_merge import merge_metadata
 
-yaml.add_representer(numpy.int8, Representer.represent_int)
-yaml.add_representer(numpy.uint8, Representer.represent_int)
-yaml.add_representer(numpy.int16, Representer.represent_int)
-yaml.add_representer(numpy.uint16, Representer.represent_int)
-yaml.add_representer(numpy.int32, Representer.represent_int)
-yaml.add_representer(numpy.uint32, Representer.represent_int)
-yaml.add_representer(numpy.int, Representer.represent_int)
-yaml.add_representer(numpy.int64, Representer.represent_int)
-yaml.add_representer(numpy.uint64, Representer.represent_int)
-yaml.add_representer(numpy.float, Representer.represent_float)
-yaml.add_representer(numpy.float32, Representer.represent_float)
-yaml.add_representer(numpy.float64, Representer.represent_float)
-yaml.add_representer(numpy.ndarray, Representer.represent_list)
+yaml.add_representer(np.int8, Representer.represent_int)
+yaml.add_representer(np.uint8, Representer.represent_int)
+yaml.add_representer(np.int16, Representer.represent_int)
+yaml.add_representer(np.uint16, Representer.represent_int)
+yaml.add_representer(np.int32, Representer.represent_int)
+yaml.add_representer(np.uint32, Representer.represent_int)
+yaml.add_representer(int, Representer.represent_int)
+yaml.add_representer(np.int64, Representer.represent_int)
+yaml.add_representer(np.uint64, Representer.represent_int)
+yaml.add_representer(float, Representer.represent_float)
+yaml.add_representer(np.float32, Representer.represent_float)
+yaml.add_representer(np.float64, Representer.represent_float)
+yaml.add_representer(np.ndarray, Representer.represent_list)
 
 PRODUCTS = ['NBAR', 'NBART']
 LEVELS = [2, 4, 8, 16, 32]
 
 
 def run_command(command, work_dir):
-    """
-    A simple utility to execute a subprocess command.
-    """
+    """A simple utility to execute a subprocess command."""
     check_call(command, cwd=work_dir)
 
 
 def gaip_unpack(scene, granule, h5group, outdir):
-    """
-    Unpack and package the NBAR and NBART products.
-    """
+    """Unpack and package the NBAR and NBART products."""
     # listing of all datasets of IMAGE CLASS type
     img_paths = find(h5group, 'IMAGE')
 
     for product in PRODUCTS:
-        for pathname in [p for p in img_paths if '/{}/'.format(product) in p]:
+        for pathname in [p for p in img_paths if f'/{product}/' in p]:
 
             dataset = h5group[pathname]
             if dataset.attrs['band_name'] == 'BAND-9':
@@ -72,7 +68,7 @@ def gaip_unpack(scene, granule, h5group, outdir):
                    a.band_name == dataset.attrs['band_name']][0]
 
             # base_dir = pjoin(splitext(basename(acq.pathname))[0], granule)
-            base_fname = '{}.TIF'.format(splitext(basename(acq.uri))[0])
+            base_fname = f'{splitext(basename(acq.uri))[0]}.TIF'
             out_fname = pjoin(outdir,
                               # base_dir.replace('L1C', 'ARD'),
                               # granule.replace('L1C', 'ARD'),
@@ -100,9 +96,7 @@ def gaip_unpack(scene, granule, h5group, outdir):
 
 
 def build_vrts(outdir):
-    """
-    Build the various vrt's.
-    """
+    """Build the various vrt's."""
     exe = 'gdalbuildvrt'
 
     for product in PRODUCTS:
@@ -110,7 +104,7 @@ def build_vrts(outdir):
         expr = pjoin(out_path, '*_B02.TIF')
         base_name = basename(glob.glob(expr)[0]).replace('B02.TIF', '')
 
-        out_fname = '{}ALLBANDS_20m.vrt'.format(base_name)
+        out_fname = f'{base_name}ALLBANDS_20m.vrt'
         cmd = [exe,
                '-resolution',
                'user',
@@ -125,7 +119,7 @@ def build_vrts(outdir):
                '*_B1[1-2].TIF']
         run_command(cmd, out_path)
 
-        out_fname = '{}10m.vrt'.format(base_name)
+        out_fname = f'{base_name}10m.vrt'
         cmd = [exe,
                '-separate',
                '-overwrite',
@@ -133,7 +127,7 @@ def build_vrts(outdir):
                '*_B0[2-48].TIF']
         run_command(cmd, out_path)
 
-        out_fname = '{}20m.vrt'.format(base_name)
+        out_fname = f'{base_name}20m.vrt'
         cmd = [exe,
                '-separate',
                '-overwrite',
@@ -143,7 +137,7 @@ def build_vrts(outdir):
                '*_B1[1-2].TIF']
         run_command(cmd, out_path)
 
-        out_fname = '{}60m.vrt'.format(base_name)
+        out_fname = f'{base_name}60m.vrt'
         cmd = [exe,
                '-separate',
                '-overwrite',
@@ -153,9 +147,7 @@ def build_vrts(outdir):
 
 
 def create_contiguity(outdir):
-    """
-    Create the contiguity dataset for each
-    """
+    """Create the contiguity dataset for each."""
     for product in PRODUCTS:
         out_path = pjoin(outdir, product)
         expr = pjoin(out_path, '*ALLBANDS_20m.vrt')
@@ -167,9 +159,7 @@ def create_contiguity(outdir):
 
 
 def create_html_map(outdir):
-    """
-    Create the html map and GeoJSON valid data extents files.
-    """
+    """Create the html map and GeoJSON valid data extents files."""
     expr = pjoin(outdir, 'NBAR', '*_CONTIGUITY.TIF')
     contiguity_fname = glob.glob(expr)[0]
     html_fname = pjoin(outdir, 'map.html')
@@ -180,9 +170,7 @@ def create_html_map(outdir):
 
 
 def create_quicklook(outdir):
-    """
-    Create the quicklook and thumbnail images.
-    """
+    """Create the quicklook and thumbnail images."""
     for product in PRODUCTS:
         out_path = pjoin(outdir, product)
         fname = glob.glob(pjoin(out_path, '*10m.vrt'))[0]
@@ -255,28 +243,22 @@ def create_quicklook(outdir):
 
 
 def create_readme(outdir):
-    """
-    Create the readme file.
-    """
+    """Create the readme file."""
     with resource_stream(s2pkg.__name__, '_README') as src:
         with open(pjoin(outdir, 'README'), 'w') as out_src:
             out_src.writelines([l.decode('utf-8') for l in src.readlines()])
 
 
-def create_checksum(outdir)
-    """
-    Create the checksum file.
-    """
+def create_checksum(outdir):
+    """Create the checksum file."""
     out_fname = pjoin(outdir, 'CHECKSUM.sha1')
     checksum(out_fname)
 
 
-def main(l1_path, gaip_fname, fmask_path, yamls_path, outdir):
-    """
-    Main level
-    """
+def package(l1_path, gaip_fname, fmask_path, yamls_path, outdir):
+    """Main level."""
     scene = acquisitions(l1_path)
-    with open(pjoin(yamls_path, '{}.yaml'.format(scene.label)), 'r') as src:
+    with open(pjoin(yamls_path, f'{scene.label}.yaml')) as src:
         l1_documents = {doc['tile_id']: doc for doc in yaml.load_all(src)}
 
     with h5py.File(gaip_fname, 'r') as fid:
@@ -290,8 +272,8 @@ def main(l1_path, gaip_fname, fmask_path, yamls_path, outdir):
             out_path = pjoin(outdir, ard_granule)
 
             # fmask cogtif conversion
-            fmask_cogtif(pjoin(fmask_path, '{}.cloud.img'.format(granule)),
-                         pjoin(out_path, '{}_QA.TIF'.format(ard_granule)))
+            fmask_cogtif(pjoin(fmask_path, f'{granule}.cloud.img'),
+                         pjoin(out_path, f'{ard_granule}_QA.TIF'))
 
             # unpack the data produced by gaip
             gaip_tags = gaip_unpack(scene, granule, h5group, out_path)
@@ -329,5 +311,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.level1_pathname, args.gaip_filename, args.fmask_pathname,
-         args.prepare_yamls, args.outdir)
+    package(args.level1_pathname, args.gaip_filename, args.fmask_pathname,
+            args.prepare_yamls, args.outdir)
