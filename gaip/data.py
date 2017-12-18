@@ -2,6 +2,7 @@
 ---------------------.
 """
 
+import logging
 import subprocess
 import tempfile
 from os.path import basename, dirname
@@ -176,7 +177,7 @@ def write_img(
         lines = dims[1]
         bands = dims[0]
     else:
-        print("Input array is not of 2 or 3 dimensions!!!")
+        logging.error("Input array is not of 2 or 3 dimensions!!!")
         err = f"Array dimensions: {ndims}"
         raise IndexError(err)
 
