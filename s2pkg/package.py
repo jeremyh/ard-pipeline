@@ -16,12 +16,13 @@ from gaip.data import write_img
 from gaip.geobox import GriddedGeoBox
 from gaip.hdf5 import find
 from rasterio.enums import Resampling
+from yaml.representer import Representer
+
 from s2pkg.contiguity import do_contiguity
 from s2pkg.contrast import quicklook
 from s2pkg.fmask_cophub import fmask_cogtif
 from s2pkg.html_geojson import html_map
 from s2pkg.yaml_merge import merge_metadata
-from yaml.representer import Representer
 
 yaml.add_representer(np.int8, Representer.represent_int)
 yaml.add_representer(np.uint8, Representer.represent_int)
