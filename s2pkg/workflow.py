@@ -11,19 +11,26 @@ from s2pkg.fmask_cophub import fmask, prepare_dataset
 from s2pkg.package import package
 
 
-class WorkDir(Luigi.Task):
+class WorkDir(luigi.Task):
+    """Initialises the working directory in a controlled manner.
+    Alternatively this could be initialised upfront during the
+    Ard Task submission phase.
+    """
+
     level1 = luigi.Parameter()
     outdir = luigi.Parameter()
 
     def output(self):
-        return Luigi.LocalTarget(self.outdir)
+        return luigi.LocalTarget(self.outdir)
 
     def run(self):
         local_fs = LocalFileSystem()
         local_fs.mkdir(self.output().path)
 
 
-class RunFmask(Luigi.Task):
+class RunFmask(luigi.Task):
+    """Execute the Fmask algorithm for a given granule."""
+
     level1 = luigi.Parameter()
     task = luigi.TupleParameter()
     outdir = luigi.Parameter()
@@ -38,10 +45,12 @@ class RunFmask(Luigi.Task):
 
     def run(self):
         with self.output().temporary_path() as out_fname:
-            fmask(self.level1, task, out_fname)
+            fmask(self.level1, self.task, out_fname)
 
 
-class Fmask(Luigi.WrapperTask):
+class Fmask(luigi.WrapperTask):
+    """A helper task that issues RunFmask Tasks."""
+
     level1 = luigi.Parameter()
     outdir = luigi.Parameter()
 
@@ -52,18 +61,17 @@ class Fmask(Luigi.WrapperTask):
 
 
 # TODO: GQA implementation
-# class Gqa(Luigi.Task):
-#
-#     level1 = luigi.Parameter()
-#     outdir = luigi.Parameter()
+# class Gqa(luigi.Task):
 
-# class Gaip(Luigi.Task):
-#
 #     level1 = luigi.Parameter()
 #     outdir = luigi.Parameter()
 
 
-class Package(Luigi.Task):
+class Package(luigi.Task):
+    """Creates the final packaged product once gaip, Fmask
+    and gqa have executed successfully.
+    """
+
     level1 = luigi.Parameter()
     work_dir = luigi.Parameter()
     pkg_dir = luigi.Parameter()
@@ -71,7 +79,7 @@ class Package(Luigi.Task):
 
     def requires(self):
         tasks = {
-            "gaip": DataStandardisation(),
+            "gaip": DataStandardisation(self.level1, self.work_dir),
             "fmask": Fmask(self.level1, self.work_dir),
         }
         # TODO: GQA implementation
@@ -86,7 +94,7 @@ class Package(Luigi.Task):
             out_fname = pjoin(
                 self.pkg_dir, granule.replace("L1C", "ARD"), "CHECKSUM.sha1"
             )
-            targets.append(Luigi.LocalTarget(out_fname))
+            targets.append(luigi.LocalTarget(out_fname))
 
         return targets
 
@@ -94,13 +102,17 @@ class Package(Luigi.Task):
         package(
             self.level1,
             self.input()["gaip"].path,
-            self.input()["fmask"].path,
-            self.yamls_dir,
             self.work_dir,
+            self.yamls_dir,
+            self.pkg_dir,
         )
 
 
 class Ard(luigi.WrapperTask):
+    """A helper Task that issues Package Tasks for each Level-1
+    dataset listed in the `level1_list` parameter.
+    """
+
     level1_list = luigi.Parameter()
     work_dir = luigi.Parameter()
     pkg_dir = luigi.Parameter()
