@@ -137,7 +137,7 @@ class Package(luigi.Task):
             os.remove(self.work_dir)
 
 
-class ARD(luigi.WrapperTask):
+class ARDP(luigi.WrapperTask):
     """A helper Task that issues Package Tasks for each Level-1
     dataset listed in the `level1_list` parameter.
     """
