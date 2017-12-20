@@ -46,7 +46,7 @@ class RunFmask(luigi.Task):
 
     def run(self):
         with self.output().temporary_path() as out_fname:
-            fmask(self.level1, self.task, out_fname)
+            fmask(self.level1, self.task, out_fname, self.outdir)
 
 
 class Fmask(luigi.WrapperTask):
