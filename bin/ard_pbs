@@ -26,7 +26,7 @@ source {env}
 
 {daemon}
 
-luigi --module s2pkg.workflow ARD --level1-list {scene_list} --work-dir {outdir} --pkg-dir {pkgdir} --workers {workers}
+luigi --module s2pkg.workflow ARDP --level1-list {scene_list} --work-dir {outdir} --pkg-dir {pkgdir} --workers {workers}
 """
 
 
@@ -86,7 +86,7 @@ def _submit_multiple(
     help="The input level1 scene list.",
 )
 @click.option(
-    "--outdir",
+    "--workdir",
     type=click.Path(file_okay=False, writable=True),
     help="The base output working directory.",
 )
@@ -137,7 +137,7 @@ def _submit_multiple(
 # pylint: disable=too-many-arguments
 def main(
     level1_list,
-    outdir,
+    workdir,
     logdir,
     pkgdir,
     env,
@@ -161,7 +161,7 @@ def main(
 
     batchid = uuid.uuid4().hex[0:10]
     batch_logdir = pjoin(logdir, f"batchid-{batchid}")
-    batch_outdir = pjoin(outdir, f"batchid-{batchid}")
+    batch_outdir = pjoin(workdir, f"batchid-{batchid}")
 
     pbs_resources = PBS_RESOURCES.format(
         project=project,
