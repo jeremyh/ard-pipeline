@@ -4,6 +4,7 @@ from os.path import basename
 from os.path import join as pjoin
 
 import luigi
+from gaip.acquisition import acquisitions
 from gaip.singlefile_workflow import DataStandardisation
 from luigi.local_target import LocalFileSystem
 
