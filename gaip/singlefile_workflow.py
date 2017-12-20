@@ -88,6 +88,11 @@ class DataStandardisation(luigi.Task):
         return luigi.LocalTarget(pjoin(self.outdir, out_fname))
 
     def run(self):
+        if self.model == Model.standard or self.model == Model.sbt:
+            ecmwf_path = self.ecmwf_path
+        else:
+            ecmwf_path = None
+
         with self.output().temporary_path() as out_fname:
             card4l(
                 self.level1,
@@ -107,7 +112,7 @@ class DataStandardisation(luigi.Task):
                 self.invariant_height_fname,
                 self.modtran_exe,
                 out_fname,
-                self.ecmwf_path,
+                ecmwf_path,
                 self.rori,
                 self.compression,
                 self.acq_parser_hint,
@@ -141,11 +146,6 @@ class ARD(luigi.WrapperTask):
     def requires(self):
         with open(self.level1_list) as src:
             level1_scenes = [scene.strip() for scene in src.readlines()]
-
-        if self.model == Model.standard or self.model == Model.sbt:
-            ecmwf_path = self.ecmwf_path
-        else:
-            ecmwf_path = None
 
         for scene in level1_scenes:
             kwargs = {
