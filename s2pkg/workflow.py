@@ -109,7 +109,7 @@ class Package(luigi.Task):
         )
 
 
-class Ard(luigi.WrapperTask):
+class ARD(luigi.WrapperTask):
     """A helper Task that issues Package Tasks for each Level-1
     dataset listed in the `level1_list` parameter.
     """
