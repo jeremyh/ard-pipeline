@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from os.path import basename
+from os.path import basename, dirname
 from os.path import join as pjoin
 
 import luigi
@@ -124,7 +124,8 @@ class Ard(luigi.WrapperTask):
 
         for scene in level1_scenes:
             work_dir = pjoin(self.work_dir, f"{basename(scene)}.ARD")
-            yield Package(scene, work_dir, self.pkg_dir)
+            pkg_dir = pjoin(self.pkg_dir, basename(dirname(scene)))
+            yield Package(scene, work_dir, pkg_dir)
 
 
 if __name__ == "__main__":
