@@ -10,6 +10,6 @@ setup(
         "Code will eventually be ported eo-datasets."
     ),
     packages=["s2pkg"],
-    scripts=["bin/s2package", "bin/ard_pbs"],
+    scripts=["bin/s2package", "bin/ard_pbs", "bin/search_s2"],
     include_package_data=True,
 )
