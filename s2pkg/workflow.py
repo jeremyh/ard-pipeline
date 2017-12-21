@@ -102,6 +102,7 @@ class Package(luigi.Task):
     pkg_dir = luigi.Parameter()
     yamls_dir = luigi.Parameter()
     cleanup = luigi.BoolParameter()
+    s3_root = luigi.Parameter()
 
     def requires(self):
         tasks = {
@@ -131,6 +132,7 @@ class Package(luigi.Task):
             self.work_dir,
             self.yamls_dir,
             self.pkg_dir,
+            s3_root,
         )
 
         if self.cleanup:
