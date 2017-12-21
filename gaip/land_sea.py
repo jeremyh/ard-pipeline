@@ -48,7 +48,6 @@ def get_land_sea_mask(
     origin_longlat = gridded_geo_box.transform_coordinates(
         gridded_geo_box.origin, to_crs
     )
-    #    print "origin_lonlat=%s" % (origin_longlat,)
 
     # get Land/Sea data file for this bounding box
     utmZone = abs(get_utm_zone(origin_longlat))
@@ -58,12 +57,9 @@ def get_land_sea_mask(
     with rio.open(utmDataPath) as ds:
         # get the gridded box for the full dataset extent
         landSeaDataGGB = GriddedGeoBox.from_dataset(ds)
-        #        print "land/sea geo_box=%s" % (str(landSeaDataGGB))
-        #        print "land/ses affine=\n%s" % (str(landSeaDataGGB.affine))
 
         # read the subset relating to Flinders Islet
         window = landSeaDataGGB.window(gridded_geo_box)
-        #        print "window=%s" % (str(window))
         out = np.zeros(gridded_geo_box.shape, dtype=np.uint8)
         ds.read(1, window=window, out=out)
 
@@ -124,5 +120,4 @@ if __name__ == "__main__":
     # self.assertEqual(total_pixels, 16000000)
 
     print(f"land={land_pct:f}%, sea={sea_pct:f}%")
-    #    write_img(mask.astype('uint8'), 'mask.tif', fmt="GTiff", geobox=ggb)
-    write_img(mask, "mask.tif", fmt="GTiff", geobox=ggb)
+    write_img(mask, "mask.tif", driver="GTiff", geobox=ggb)
