@@ -3,7 +3,7 @@
 """A temporary workflow for processing S2 data into an ARD package."""
 
 import logging
-import os
+import shutil
 import traceback
 from os.path import basename, dirname
 from os.path import join as pjoin
@@ -132,11 +132,11 @@ class Package(luigi.Task):
             self.work_dir,
             self.yamls_dir,
             self.pkg_dir,
-            s3_root,
+            self.s3_root,
         )
 
         if self.cleanup:
-            os.remove(self.work_dir)
+            shutil.rmtree(self.work_dir)
 
 
 class ARDP(luigi.WrapperTask):
