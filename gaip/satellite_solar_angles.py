@@ -14,10 +14,10 @@ from gaip.__satellite_model import set_satmod
 from gaip.__track_time_info import set_times
 from gaip.constants import DatasetName, GroupName
 from gaip.hdf5 import (
-    attach_attributes,
     attach_image_attributes,
     attach_table_attributes,
     dataset_compression_kwargs,
+    write_scalar,
 )
 from gaip.tle import load_tle
 
@@ -679,8 +679,7 @@ def _store_parameter_settings(
 
     # generic parameters
     dname = DatasetName.generic.value
-    dset = group.create_dataset(dname, "GENERIC PARAMETERS")
-    attach_attributes(dset, params)
+    write_scalar("GENERIC PARAMETERS", dname, group, params)
 
     # sheroid
     desc = "The spheroid used in the satellite and solar angles calculation."
