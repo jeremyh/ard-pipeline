@@ -78,10 +78,11 @@ class Fmask(luigi.WrapperTask):
 
     level1 = luigi.Parameter()
     outdir = luigi.Parameter()
+    acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
         # issues task per granule
-        for task in prepare_dataset(self.level1):
+        for task in prepare_dataset(self.level1, self.acq_parser_hint):
             yield RunFmask(self.level1, task, self.outdir)
 
 
@@ -103,6 +104,7 @@ class Package(luigi.Task):
     yamls_dir = luigi.Parameter()
     cleanup = luigi.BoolParameter()
     s3_root = luigi.Parameter()
+    acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
         tasks = {
@@ -116,7 +118,7 @@ class Package(luigi.Task):
 
     def output(self):
         targets = []
-        container = acquisitions(self.level1)
+        container = acquisitions(self.level1, self.acq_parser_hint)
         for granule in container.granules:
             out_fname = pjoin(
                 self.pkg_dir, granule.replace("L1C", "ARD"), "CHECKSUM.sha1"
@@ -133,6 +135,7 @@ class Package(luigi.Task):
             self.yamls_dir,
             self.pkg_dir,
             self.s3_root,
+            self.acq_parser_hint,
         )
 
         if self.cleanup:
