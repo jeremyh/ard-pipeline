@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Unittesting framework for the `gaip.exiting_angles` function."""
+"""Unittesting framework for the `wagl.exiting_angles` function."""
 
 import argparse
 import unittest
@@ -7,13 +7,12 @@ from argparse import RawTextHelpFormatter
 
 import h5py
 import numpy.testing as npt
-
-from gaip.unittesting_tools import ParameterisedTestCase
+from wagl.unittesting_tools import ParameterisedTestCase
 
 
 class TestExitingAngles(ParameterisedTestCase):
     """Unittesting for the exiting angles computation
-    found in `gaip.exiting_angles`.
+    found in `wagl.exiting_angles`.
 
     Unittests will occur for the following datasets:
 
@@ -49,7 +48,7 @@ class TestExitingAngles(ParameterisedTestCase):
 def _parser():
     """Argument parser."""
     description = (
-        "Unittests for `gaip.exiting_angles` function.\n"
+        "Unittests for `wagl.exiting_angles` function.\n"
         "Comparisons tests will occur for the following "
         "datasets: \n"
         "\t* exiting\n"

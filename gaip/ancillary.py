@@ -16,11 +16,10 @@ import rasterio
 from geopandas import GeoSeries
 from shapely import wkt
 from shapely.geometry import Point, Polygon
-
-from gaip.brdf import get_brdf_data
-from gaip.constants import POINT_FMT, BandType, DatasetName, GroupName
-from gaip.data import get_pixel
-from gaip.hdf5 import (
+from wagl.brdf import get_brdf_data
+from wagl.constants import POINT_FMT, BandType, DatasetName, GroupName
+from wagl.data import get_pixel
+from wagl.hdf5 import (
     attach_attributes,
     attach_table_attributes,
     dataset_compression_kwargs,
@@ -28,8 +27,8 @@ from gaip.hdf5 import (
     write_dataframe,
     write_scalar,
 )
-from gaip.metadata import extract_ancillary_metadata, read_meatadata_tags
-from gaip.satellite_solar_angles import create_vertices
+from wagl.metadata import extract_ancillary_metadata, read_meatadata_tags
+from wagl.satellite_solar_angles import create_vertices
 
 log = logging.getLogger()
 

@@ -10,7 +10,7 @@ import uuid
 from os.path import dirname, exists
 from os.path import join as pjoin
 
-from gaip.tiling import scatter
+from wagl.tiling import scatter
 
 PBS_RESOURCES = """#!/bin/bash
 #PBS -P {project}
@@ -49,10 +49,10 @@ wait
 
 
 FMT1 = "level1-scenes-{jobid}.txt"
-FMT2 = "gaip-{jobid}.bash"
+FMT2 = "wagl-{jobid}.bash"
 DAEMON_FMT = "luigid --background --logdir {}"
-ARD_FMT = "--module gaip.{workflow} ARD --model {model} --vertices '{vertices}' --method {method}{pq}"  # pylint: disable=line-too-long
-TASK_FMT = "--module gaip.multifile_workflow CallTask --task {task}"
+ARD_FMT = "--module wagl.{workflow} ARD --model {model} --vertices '{vertices}' --method {method}{pq}"  # pylint: disable=line-too-long
+TASK_FMT = "--module wagl.multifile_workflow CallTask --task {task}"
 
 
 def _submit_dsh(
@@ -325,7 +325,7 @@ def _parser():
         "--singlefile",
         action="store_true",
         help=(
-            "Run gaip using the single-file workflow. "
+            "Run wagl using the single-file workflow. "
             "Default is to output multiple files."
         ),
     )
@@ -333,7 +333,7 @@ def _parser():
         "--task",
         help=(
             "Specify a luigi Task contained within the "
-            "gaip.multifile_workflow module and run "
+            "wagl.multifile_workflow module and run "
             "each scene listed in level1-list through to "
             "that Task level."
         ),

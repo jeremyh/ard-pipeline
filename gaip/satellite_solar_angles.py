@@ -8,18 +8,17 @@ import ephem
 import h5py
 import numpy as np
 from osgeo import osr
-
-from gaip.__sat_sol_angles import angle
-from gaip.__satellite_model import set_satmod
-from gaip.__track_time_info import set_times
-from gaip.constants import DatasetName, GroupName
-from gaip.hdf5 import (
+from wagl.__sat_sol_angles import angle
+from wagl.__satellite_model import set_satmod
+from wagl.__track_time_info import set_times
+from wagl.constants import DatasetName, GroupName
+from wagl.hdf5 import (
     attach_image_attributes,
     attach_table_attributes,
     dataset_compression_kwargs,
     write_scalar,
 )
-from gaip.tle import load_tle
+from wagl.tle import load_tle
 
 CRS = "EPSG:4326"
 

@@ -5,12 +5,11 @@ import h5py
 import numpy as np
 from rasterio.warp import Resampling
 from scipy import ndimage
-
-from gaip.constants import DatasetName, GroupName
-from gaip.data import reproject_file_to_array
-from gaip.geobox import GriddedGeoBox
-from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
-from gaip.margins import ImageMargins
+from wagl.constants import DatasetName, GroupName
+from wagl.data import reproject_file_to_array
+from wagl.geobox import GriddedGeoBox
+from wagl.hdf5 import attach_image_attributes, dataset_compression_kwargs
+from wagl.margins import ImageMargins
 
 
 def filter_dsm(array):

@@ -7,10 +7,9 @@ from functools import partial
 import h5py
 import numpy as np
 import osr
-
-from gaip.constants import DatasetName, GroupName
-from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
-from gaip.interpolation import interpolate_grid
+from wagl.constants import DatasetName, GroupName
+from wagl.hdf5 import attach_image_attributes, dataset_compression_kwargs
+from wagl.interpolation import interpolate_grid
 
 CRS = "EPSG:4326"
 LON_DESC = "Contains the longitude values for each pixel."

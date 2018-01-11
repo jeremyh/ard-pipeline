@@ -9,19 +9,18 @@ reflectance
 
 import h5py
 import numpy as np
-
-from gaip.__surface_reflectance import reflectance
-from gaip.constants import ArdProducts as AP
-from gaip.constants import AtmosphericComponents as AC
-from gaip.constants import BrdfParameters, DatasetName, GroupName
-from gaip.data import as_array
-from gaip.hdf5 import (
+from wagl.__surface_reflectance import reflectance
+from wagl.constants import ArdProducts as AP
+from wagl.constants import AtmosphericComponents as AC
+from wagl.constants import BrdfParameters, DatasetName, GroupName
+from wagl.data import as_array
+from wagl.hdf5 import (
     attach_image_attributes,
     create_external_link,
     dataset_compression_kwargs,
     find,
 )
-from gaip.metadata import create_ard_yaml
+from wagl.metadata import create_ard_yaml
 
 NO_DATA_VALUE = -999
 

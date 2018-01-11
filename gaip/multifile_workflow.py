@@ -35,10 +35,9 @@ from luigi.local_target import LocalFileSystem
 from luigi.util import inherits, requires
 from structlog import wrap_logger
 from structlog.processors import JSONRenderer
-
-from gaip.acquisition import acquisitions
-from gaip.ancillary import _aggregate_ancillary, _collect_ancillary
-from gaip.constants import (
+from wagl.acquisition import acquisitions
+from wagl.ancillary import _aggregate_ancillary, _collect_ancillary
+from wagl.constants import (
     ALBEDO_FMT,
     POINT_ALBEDO_FMT,
     POINT_FMT,
@@ -48,34 +47,34 @@ from gaip.constants import (
     Method,
     Model,
 )
-from gaip.dsm import _get_dsm
-from gaip.hdf5 import create_external_link
-from gaip.incident_exiting_angles import (
+from wagl.dsm import _get_dsm
+from wagl.hdf5 import create_external_link
+from wagl.incident_exiting_angles import (
     _incident_exiting_angles,
     _relative_azimuth_slope,
 )
-from gaip.interpolation import _interpolate, link_interpolated_data
-from gaip.longitude_latitude_arrays import _create_lon_lat_grids
-from gaip.modtran import (
+from wagl.interpolation import _interpolate, link_interpolated_data
+from wagl.longitude_latitude_arrays import _create_lon_lat_grids
+from wagl.modtran import (
     _calculate_components,
     _format_tp5,
     _run_modtran,
     link_atmospheric_results,
     prepare_modtran,
 )
-from gaip.pq import _run_pq, can_pq
-from gaip.reflectance import _calculate_reflectance, link_standard_data
-from gaip.satellite_solar_angles import _calculate_angles
-from gaip.slope_aspect import _slope_aspect_arrays
-from gaip.temperature import _surface_brightness_temperature
-from gaip.terrain_shadow_masks import (
+from wagl.pq import _run_pq, can_pq
+from wagl.reflectance import _calculate_reflectance, link_standard_data
+from wagl.satellite_solar_angles import _calculate_angles
+from wagl.slope_aspect import _slope_aspect_arrays
+from wagl.temperature import _surface_brightness_temperature
+from wagl.terrain_shadow_masks import (
     _calculate_cast_shadow,
     _combine_shadow,
     _self_shadow,
 )
 
 ERROR_LOGGER = wrap_logger(
-    logging.getLogger("gaip-error"), processors=[JSONRenderer(indent=1, sort_keys=True)]
+    logging.getLogger("wagl-error"), processors=[JSONRenderer(indent=1, sort_keys=True)]
 )
 
 
@@ -989,8 +988,8 @@ class DataStandardisation(luigi.Task):
                 )
 
 
-class LinkGaipOutputs(luigi.Task):
-    """Link all the multifile outputs from gaip into a single file."""
+class LinkwaglOutputs(luigi.Task):
+    """Link all the multifile outputs from wagl into a single file."""
 
     level1 = luigi.Parameter()
     work_root = luigi.Parameter()
@@ -1064,7 +1063,7 @@ class ARD(luigi.WrapperTask):
             level1_scenes = [scene.strip() for scene in src.readlines()]
 
         for level1 in level1_scenes:
-            work_name = f"{basename(level1)}.gaip"
+            work_name = f"{basename(level1)}.wagl"
             work_root = pjoin(self.outdir, work_name)
             kwargs = {
                 "level1": level1,
@@ -1076,7 +1075,7 @@ class ARD(luigi.WrapperTask):
                 "dsm_fname": self.dsm_fname,
             }
 
-            yield LinkGaipOutputs(**kwargs)
+            yield LinkwaglOutputs(**kwargs)
 
 
 class CallTask(luigi.WrapperTask):
@@ -1096,7 +1095,7 @@ class CallTask(luigi.WrapperTask):
             level1_scenes = [scene.strip() for scene in src.readlines()]
 
         for scene in level1_scenes:
-            work_name = f"{basename(scene)}.gaip"
+            work_name = f"{basename(scene)}.wagl"
             work_root = pjoin(self.outdir, work_name)
             container = acquisitions(scene, self.acq_parser_hint)
             for granule in container.granules:

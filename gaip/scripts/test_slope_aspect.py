@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Unittesting framework for the `gaip.slope_aspect_arrays` function."""
+"""Unittesting framework for the `wagl.slope_aspect_arrays` function."""
 
 import argparse
 import unittest
@@ -7,13 +7,12 @@ from argparse import RawTextHelpFormatter
 
 import h5py
 import numpy.testing as npt
-
-from gaip.unittesting_tools import ParameterisedTestCase
+from wagl.unittesting_tools import ParameterisedTestCase
 
 
 class TestSlopeAspect(ParameterisedTestCase):
     """Unittesting for the exiting angles computation
-    found in `gaip.slope_aspect_arrays`.
+    found in `wagl.slope_aspect_arrays`.
 
     Unittests will occur for the following datasets:
 
@@ -49,7 +48,7 @@ class TestSlopeAspect(ParameterisedTestCase):
 def _parser():
     """Argument parser."""
     description = (
-        "Unittests for `gaip.slope_aspect_arrays` function.\n"
+        "Unittests for `wagl.slope_aspect_arrays` function.\n"
         "Comparisons tests will occur for the following "
         "datasets: \n"
         "\t* slope\n"

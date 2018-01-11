@@ -8,9 +8,8 @@ import h5py
 import numexpr
 import numpy as np
 from scipy.interpolate import Rbf
-
-from gaip.constants import DatasetName, GroupName, Method, Model
-from gaip.hdf5 import (
+from wagl.constants import DatasetName, GroupName, Method, Model
+from wagl.hdf5 import (
     create_external_link,
     dataset_compression_kwargs,
     find,
@@ -191,7 +190,7 @@ def fortran_bilinear_interpolate(
     """Original NBAR interpolation scheme.
     Sheared 4-cell bilinear, implemented in fortran.
     """
-    from gaip.__bilinear_interpolation import bilinear_interpolation as fortran
+    from wagl.__bilinear_interpolation import bilinear_interpolation as fortran
 
     assert len(samples) == 3 * 3
     assert len(locations) == len(samples)
@@ -245,7 +244,7 @@ def sheared_bilinear_interpolate(
     """Generalisation of the original NBAR interpolation scheme.
 
     Same interface as:
-        gaip.interpolation.fortran_bilinear_interpolate
+        wagl.interpolation.fortran_bilinear_interpolate
     with following exceptions:
         -   locations/samples may be greater than 9 (e.g. 25, 49, etc)
         -   two additional configuation options:

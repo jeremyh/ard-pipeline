@@ -8,9 +8,8 @@ import h5py
 import osr
 import rasterio as rio
 from affine import Affine
-
-from gaip.satellite_solar_angles import setup_spheroid
-from gaip.vincenty import vinc_dist
+from wagl.satellite_solar_angles import setup_spheroid
+from wagl.vincenty import vinc_dist
 
 # Landsat tranforms have very small determinants
 # the following setting is required, and there is a

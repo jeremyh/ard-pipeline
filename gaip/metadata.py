@@ -12,12 +12,11 @@ from os.path import dirname
 import numpy as np
 import pandas as pd
 import rasterio
+import wagl
 import yaml
+from wagl.constants import POINT_FMT, BandType, BrdfParameters, DatasetName, GroupName
+from wagl.hdf5 import read_h5_table, read_scalar, write_scalar
 from yaml.representer import Representer
-
-import gaip
-from gaip.constants import POINT_FMT, BandType, BrdfParameters, DatasetName, GroupName
-from gaip.hdf5 import read_h5_table, read_scalar, write_scalar
 
 yaml.add_representer(np.int8, Representer.represent_int)
 yaml.add_representer(np.uint8, Representer.represent_int)
@@ -89,7 +88,7 @@ def create_ard_yaml(acquisitions, ancillary_group, out_group, sbt=False):
 
     :param ancillary_group:
         The root HDF5 `Group` that contains the ancillary data
-        collected via gaip.ancillary.collect_ancillary>
+        collected via wagl.ancillary.collect_ancillary>
 
     :param out_group:
         A `h5py.Group` object opened for write access.
@@ -227,9 +226,9 @@ def create_ard_yaml(acquisitions, ancillary_group, out_group, sbt=False):
     ancillary = load_ancillary(acquisitions, ancillary_group, sbt)
 
     software_versions = {
-        "gaip": {
-            "version": gaip.__version__,
-            "repo_url": "https://github.com/GeoscienceAustralia/gaip.git",
+        "wagl": {
+            "version": wagl.__version__,
+            "repo_url": "https://github.com/GeoscienceAustralia/wagl.git",
         },  # pylint: disable=line-too-long
         "modtran": {
             "version": "5.2.1",
@@ -303,8 +302,8 @@ def create_pq_yaml(acquisition, ancillary, tests_run, out_group):
     }
 
     algorithm = {
-        "software_version": gaip.__version__,
-        "software_repository": "https://github.com/GeoscienceAustralia/gaip.git",  # pylint: disable=line-too-long
+        "software_version": wagl.__version__,
+        "software_repository": "https://github.com/GeoscienceAustralia/wagl.git",  # pylint: disable=line-too-long
         "pq_doi": "http://dx.doi.org/10.1109/IGARSS.2013.6723746",
     }
 

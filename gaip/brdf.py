@@ -33,11 +33,10 @@ import numpy as np
 from osgeo import gdal, gdalconst, osr
 from shapely import wkt
 from shapely.geometry import Polygon
-
-from gaip.constants import BrdfParameters
-from gaip.geobox import GriddedGeoBox
-from gaip.hdf5 import dataset_compression_kwargs, write_h5_image
-from gaip.metadata import extract_ancillary_metadata
+from wagl.constants import BrdfParameters
+from wagl.geobox import GriddedGeoBox
+from wagl.hdf5 import dataset_compression_kwargs, write_h5_image
+from wagl.metadata import extract_ancillary_metadata
 
 log = logging.getLogger("root." + __name__)
 

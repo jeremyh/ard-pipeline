@@ -11,18 +11,17 @@ from posixpath import join as ppjoin
 
 import h5py
 import numpy as np
-
-from gaip.__cast_shadow_mask import cast_shadow_main
-from gaip.constants import DatasetName, GroupName
-from gaip.geobox import GriddedGeoBox
-from gaip.hdf5 import (
+from wagl.__cast_shadow_mask import cast_shadow_main
+from wagl.constants import DatasetName, GroupName
+from wagl.geobox import GriddedGeoBox
+from wagl.hdf5 import (
     attach_image_attributes,
     create_external_link,
     dataset_compression_kwargs,
 )
-from gaip.margins import ImageMargins
-from gaip.satellite_solar_angles import setup_spheroid
-from gaip.tiling import generate_tiles
+from wagl.margins import ImageMargins
+from wagl.satellite_solar_angles import setup_spheroid
+from wagl.tiling import generate_tiles
 
 
 def _self_shadow(

@@ -14,9 +14,8 @@ import h5py
 import numpy as np
 import pandas as pd
 from idl_functions import histogram
-
-from gaip.geobox import GriddedGeoBox
-from gaip.hdf5 import (
+from wagl.geobox import GriddedGeoBox
+from wagl.hdf5 import (
     VLEN_STRING,
     dataset_compression_kwargs,
     find,

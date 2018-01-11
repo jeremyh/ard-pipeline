@@ -6,9 +6,8 @@ import logging
 import numpy as np
 from idl_functions import histogram
 from scipy import ndimage
-
-from gaip.data import stack_data
-from gaip.tiling import generate_tiles
+from wagl.data import stack_data
+from wagl.tiling import generate_tiles
 
 
 def calc_contiguity_mask(acquisitions, platform_id):

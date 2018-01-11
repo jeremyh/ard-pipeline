@@ -8,8 +8,7 @@ within a HDF5.
 import argparse
 
 import h5py
-
-from gaip.hdf5 import h5ls
+from wagl.hdf5 import h5ls
 
 
 def run(fname, verbose, pathname):

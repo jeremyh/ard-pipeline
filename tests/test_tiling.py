@@ -6,8 +6,7 @@ import random
 import unittest
 
 import numpy as np
-
-from gaip.tiling import generate_tiles
+from wagl.tiling import generate_tiles
 
 
 class TestGetTile3(unittest.TestCase):

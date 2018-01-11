@@ -9,7 +9,7 @@ imagery, tables, and point/scalar datasets.
 
 It also provides a consistant logical structure allowing an easier
 comparison between 'archives' from different production runs, or
-versions of gaip.
+versions of wagl.
 
 This workflow is more suited to full production runs, where testing
 has ensured that the workflow is sound, and more easilt allows
@@ -29,12 +29,11 @@ from os.path import join as pjoin
 import luigi
 from structlog import wrap_logger
 from structlog.processors import JSONRenderer
-
-from gaip.constants import Method, Model
-from gaip.standardise import card4l
+from wagl.constants import Method, Model
+from wagl.standardise import card4l
 
 ERROR_LOGGER = wrap_logger(
-    logging.getLogger("gaip-error"), processors=[JSONRenderer(indent=1, sort_keys=True)]
+    logging.getLogger("wagl-error"), processors=[JSONRenderer(indent=1, sort_keys=True)]
 )
 INTERFACE_LOGGER = logging.getLogger("luigi-interface")
 
@@ -82,7 +81,7 @@ class DataStandardisation(luigi.Task):
     acq_parser_hint = luigi.Parameter(default=None)
 
     def output(self):
-        fmt = "{scene}.gaip.h5"
+        fmt = "{scene}.wagl.h5"
         scene = basename(self.level1)
         out_fname = fmt.format(scene=scene, model=self.model.name)
         return luigi.LocalTarget(pjoin(self.outdir, out_fname))

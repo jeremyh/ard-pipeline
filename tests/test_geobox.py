@@ -7,9 +7,8 @@ import gdal
 import h5py
 import rasterio as rio
 from osgeo import gdal
-
-from gaip import unittesting_tools as ut
-from gaip.geobox import GriddedGeoBox
+from wagl import unittesting_tools as ut
+from wagl.geobox import GriddedGeoBox
 
 affine.EPSILON = 1e-9
 affine.EPSILON2 = 1e-18

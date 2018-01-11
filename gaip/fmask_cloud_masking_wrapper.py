@@ -1,4 +1,4 @@
-from gaip.acca_cloud_masking import majority_filter
+from wagl.acca_cloud_masking import majority_filter
 
 from . import fmask_cloud_masking as _fmask
 

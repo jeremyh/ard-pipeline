@@ -14,9 +14,8 @@ import rasterio
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
 from rasterio.warp import reproject
-
-from gaip.geobox import GriddedGeoBox
-from gaip.tiling import generate_tiles
+from wagl.geobox import GriddedGeoBox
+from wagl.tiling import generate_tiles
 
 
 def get_pixel(filename, lonlat, band=1):

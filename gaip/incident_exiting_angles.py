@@ -4,14 +4,13 @@
 
 import h5py
 import numpy as np
-
-from gaip.__exiting_angle import exiting_angle
-from gaip.__incident_angle import incident_angle
-from gaip.constants import DatasetName, GroupName
-from gaip.data import as_array
-from gaip.geobox import GriddedGeoBox
-from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
-from gaip.tiling import generate_tiles
+from wagl.__exiting_angle import exiting_angle
+from wagl.__incident_angle import incident_angle
+from wagl.constants import DatasetName, GroupName
+from wagl.data import as_array
+from wagl.geobox import GriddedGeoBox
+from wagl.hdf5 import attach_image_attributes, dataset_compression_kwargs
+from wagl.tiling import generate_tiles
 
 
 def _incident_exiting_angles(

@@ -3,7 +3,7 @@ import unittest
 from os.path import abspath, dirname
 from os.path import join as pjoin
 
-from gaip.mtl import load_mtl, parse_type
+from wagl.mtl import load_mtl, parse_type
 
 DATA_DIR = pjoin(dirname(abspath(__file__)), "data")
 

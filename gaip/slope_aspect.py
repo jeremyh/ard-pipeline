@@ -4,13 +4,12 @@
 
 import h5py
 import numpy as np
-
-from gaip.__slope_aspect import slope_aspect
-from gaip.constants import DatasetName, GroupName
-from gaip.data import as_array
-from gaip.hdf5 import attach_image_attributes, dataset_compression_kwargs
-from gaip.margins import ImageMargins
-from gaip.satellite_solar_angles import setup_spheroid
+from wagl.__slope_aspect import slope_aspect
+from wagl.constants import DatasetName, GroupName
+from wagl.data import as_array
+from wagl.hdf5 import attach_image_attributes, dataset_compression_kwargs
+from wagl.margins import ImageMargins
+from wagl.satellite_solar_angles import setup_spheroid
 
 
 def _slope_aspect_arrays(acquisition, dsm_fname, margins, out_fname, compression="lzf"):
