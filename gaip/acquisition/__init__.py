@@ -140,11 +140,8 @@ def acquisitions_via_mtl(pathname):
         else:
             band_id = band.replace("band", "").strip("_")
 
-        if band_id not in supported_bands:
-            continue
-
         # band info stored in sensors.json
-        sensor_band_info = supported_bands[band_id]
+        sensor_band_info = supported_bands.get(band_id, {})
 
         # band id name, band filename, band full file pathname
         band_fname = prod_md.get(f"{band}_file_name", prod_md[f"file_name_{band}"])
@@ -168,7 +165,9 @@ def acquisitions_via_mtl(pathname):
         attrs["max_radiance"] = max_rad
         attrs["min_quantize"] = min_quant
         attrs["max_quantize"] = max_quant
-        band_name = attrs.pop("band_name")
+        attrs["sensor_band_configured"] = bool(band_id in supported_bands)
+        if "band_name" in attrs:
+            band_name = attrs.pop("band_name")
 
         acqs.append(acqtype(pathname, fname, acq_datetime, band_name, band_id, attrs))
 
@@ -300,9 +299,6 @@ def acquisitions_s2_directory(pathname):
     res_groups = {"R10m": [], "R20m": [], "R60m": []}
 
     for band_id in s2_const.band_map:
-        if s2_const.band_map[band_id] not in supported_bands:
-            continue
-
         band_name = f"B{s2_const.band_map[band_id].zfill(2)}"
         img_fname = pathname + "/" + band_name + ".jp2"
 
@@ -316,14 +312,20 @@ def acquisitions_s2_directory(pathname):
         else:
             continue  # group not found
 
-        attrs = {k: v for k, v in supported_bands[s2_const.band_map[band_id]].items()}
+        # Band may not be defined as a supported band
+        attrs = {
+            k: v for k, v in supported_bands.get(s2_const.band_map[band_id], {}).items()
+        }
+
         attrs["solar_irradiance"] = acquisition_data["solar_irradiance_list"][band_id]
         attrs["d2"] = 1 / acquisition_data["u"]
         attrs["qv"] = acquisition_data["qv"]
         attrs["c1"] = s2_const.c1[s2_const.band_map[band_id]]
         attrs["radiance_scale_factor"] = s2_const.rsf[s2_const.band_map[band_id]]
         attrs["granule_xml"] = granule_xml
-        band_name = attrs.pop("band_name")
+        attrs["sensor_band_configured"] = bool(band_id in supported_bands)
+        if "band_name" in attrs:
+            band_name = attrs.pop("band_name")
 
         acq_time = acquisition_data["acq_time"]
 
@@ -471,11 +473,9 @@ def acquisitions_via_safe(pathname):
 
             # band id
             group, band_id = group_helper(img_fname, band_groups)
-            if band_id not in supported_bands:
-                continue
 
             # band info stored in sensors.json
-            sensor_band_info = supported_bands[band_id]
+            sensor_band_info = supported_bands.get(band_id, {})
 
             # image attributes/metadata
             attrs = {k: v for k, v in sensor_band_info.items()}
@@ -485,7 +485,9 @@ def acquisitions_via_safe(pathname):
             attrs["c1"] = s2_const.c1[band_id]
             attrs["radiance_scale_factor"] = s2_const.rsf[band_id]
             attrs["granule_xml"] = granule_xmls[0]
-            band_name = attrs.pop("band_name")
+            attrs["sensor_band_configured"] = bool(band_id in supported_bands)
+            if "band_name" in attrs:
+                band_name = attrs.pop("band_name")
 
             res_groups[group].append(
                 acqtype(pathname, img_fname, acq_time, band_name, band_id, attrs)
