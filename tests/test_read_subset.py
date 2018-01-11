@@ -6,6 +6,7 @@ import tempfile
 import unittest
 
 import numpy as np
+
 from wagl import unittesting_tools as ut
 from wagl.data import read_subset, write_img
 

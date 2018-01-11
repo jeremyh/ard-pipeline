@@ -7,6 +7,7 @@ import gdal
 import h5py
 import rasterio as rio
 from osgeo import gdal
+
 from wagl import unittesting_tools as ut
 from wagl.geobox import GriddedGeoBox
 

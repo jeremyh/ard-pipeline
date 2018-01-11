@@ -8,6 +8,7 @@ import math
 import unittest
 
 import numpy as np
+
 from wagl.interpolation import bilinear, indices, interpolate_block, subdivide
 
 

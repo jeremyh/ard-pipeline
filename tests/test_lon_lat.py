@@ -8,6 +8,7 @@ from posixpath import join as ppjoin
 import numpy as np
 import numpy.testing as npt
 import osr
+
 from wagl import unittesting_tools as ut
 from wagl.acquisition import acquisitions
 from wagl.constants import DatasetName, GroupName

@@ -3,6 +3,7 @@ from os.path import abspath, dirname
 from os.path import join as pjoin
 
 import ephem
+
 from wagl.acquisition import acquisitions
 from wagl.tle import load_tle
 
