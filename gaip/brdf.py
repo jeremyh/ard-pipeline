@@ -86,7 +86,7 @@ class BRDFLoader:
         self.filename = filename
         self.roi = {"UL": ul, "LR": lr}
 
-        log.info(
+        log.debug(
             "%s: filename=%s, roi=%s",
             self.__class__.__name__,
             self.filename,
@@ -556,7 +556,7 @@ def get_brdf_data(
             # Load the file
             brdf_object = BRDFLoader(hdf_file, ul=geobox.ul_lonlat, lr=geobox.lr_lonlat)
 
-            # gauard against roi's that don't intersect
+            # guard against roi's that don't intersect
             if not brdf_object.intersects:
                 msg = "ROI is outside the BRDF extents!"
                 log.error(msg)

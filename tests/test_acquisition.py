@@ -21,16 +21,26 @@ LS8_SCENE1 = pjoin(
 
 class AcquisitionLoadMtlTest(unittest.TestCase):
     def test_load_acquisitions_ls5_scene1(self):
-        acq = acquisitions(LS5_SCENE1).get_acquisitions()
-        assert len(acq) == 7
+        acq_cont = acquisitions(LS5_SCENE1)
+        assert len(acq_cont.get_acquisitions()) == 7
+        assert len(acq_cont.get_acquisitions(get_configured_bands=True)) == 7
+
+        # acq = acquisitions(LS5_SCENE1).get_acquisitions()
+        # self.assertEqual(len(acq), 7)
 
     def test_load_acquisitions_ls7_scene1(self):
-        acq = acquisitions(LS7_SCENE1).get_acquisitions()
-        assert len(acq) == 8
+        acq_cont = acquisitions(LS7_SCENE1)
+        assert len(acq_cont.get_acquisitions()) == 8
+        assert len(acq_cont.get_acquisitions(get_configured_bands=True)) == 9
+        # acq = acquisitions(LS7_SCENE1).get_acquisitions()
+        # self.assertEqual(len(acq), 8)
 
     def test_load_acquisitions_ls8_scene1(self):
-        acq = acquisitions(LS8_SCENE1).get_acquisitions()
-        assert len(acq) == 9
+        acq_cont = acquisitions(LS7_SCENE1)
+        assert len(acq_cont.get_acquisitions()) == 9
+        assert len(acq_cont.get_acquisitions(get_configured_bands=True)) == 9
+        # acq = acquisitions(LS8_SCENE1).get_acquisitions()
+        # self.assertEqual(len(acq), 9)
 
 
 class AcquisitionsContainerTest(unittest.TestCase):
