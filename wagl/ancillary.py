@@ -391,7 +391,7 @@ def collect_sbt_ancillary(
 
 
 def collect_nbar_ancillary(
-    acquisition,
+    container,
     aerosol_dict=None,
     water_vapour_dict=None,
     ozone_path=None,
