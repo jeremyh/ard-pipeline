@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """Unit test for the bilinear recursive bisection function found in
-gaip.interpolation.bilinear.
+wagl.interpolation.bilinear.
 """
 
 import math
@@ -9,7 +9,7 @@ import unittest
 
 import numpy as np
 
-from gaip.interpolation import bilinear, indices, interpolate_block, subdivide
+from wagl.interpolation import bilinear, indices, interpolate_block, subdivide
 
 
 class BLRBTest(unittest.TestCase):

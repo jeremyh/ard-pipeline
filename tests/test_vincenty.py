@@ -5,7 +5,7 @@
 import math
 import unittest
 
-from gaip.vincenty import GreatCircle, vinc_dist, vinc_pt
+from wagl.vincenty import GreatCircle, vinc_dist, vinc_pt
 
 
 class VincentyTestCase(unittest.TestCase):

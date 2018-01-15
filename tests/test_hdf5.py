@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Test the various utilites contained in the gaip.hdf5 module."""
+"""Test the various utilites contained in the wagl.hdf5 module."""
 
 import datetime
 import unittest
@@ -9,11 +9,11 @@ import h5py
 import numpy as np
 import pandas as pd
 
-from gaip import hdf5
+from wagl import hdf5
 
 
 class HDF5Test(unittest.TestCase):
-    """Test the various utilites contained in the gaip.hdf5 module."""
+    """Test the various utilites contained in the wagl.hdf5 module."""
 
     scalar_data = 66
     image_data = np.random.randint(0, 256, (10, 10))

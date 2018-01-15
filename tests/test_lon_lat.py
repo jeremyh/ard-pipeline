@@ -9,10 +9,10 @@ import numpy as np
 import numpy.testing as npt
 import osr
 
-from gaip import unittesting_tools as ut
-from gaip.acquisition import acquisitions
-from gaip.constants import DatasetName, GroupName
-from gaip.longitude_latitude_arrays import create_lon_lat_grids
+from wagl import unittesting_tools as ut
+from wagl.acquisition import acquisitions
+from wagl.constants import DatasetName, GroupName
+from wagl.longitude_latitude_arrays import create_lon_lat_grids
 
 # WGS84
 CRS = "EPSG:4326"

@@ -1,4 +1,4 @@
-"""Setup gaip."""
+"""Setup wagl."""
 
 import setuptools
 from numpy.distutils.core import setup
@@ -47,19 +47,19 @@ def configuration(parent_package="", top_path=None):
         delegate_options_to_subpackages=True,
     )
 
-    config.add_subpackage("gaip")
+    config.add_subpackage("wagl")
     return config
 
 
 setup(
-    name="gaip",
+    name="wagl",
     configuration=configuration,
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
-    url="https://github.com/GeoscienceAustralia/gaip",
+    url="https://github.com/GeoscienceAustralia/wagl",
     license="CC0 1.0 Universal",
-    author="The gaip authors",
-    maintainer="gaip developers",
+    author="The wagl authors",
+    maintainer="wagl developers",
     packages=setuptools.find_packages(),
     scripts=[
         "utils/test_satellite_solar_angles",
@@ -70,10 +70,10 @@ setup(
         "utils/test_terrain_shadow_masks",
         "utils/test_slope_aspect",
         "utils/aot_converter",
-        "utils/gaip_convert",
-        "utils/gaip_ls",
-        "utils/gaip_residuals",
-        "utils/gaip_pbs",
+        "utils/wagl_convert",
+        "utils/wagl_ls",
+        "utils/wagl_residuals",
+        "utils/wagl_pbs",
     ],
     setup_requires=["pytest-runner"],
     tests_require=tests_require,
