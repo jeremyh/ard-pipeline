@@ -46,7 +46,7 @@ def do_contiguity(fname, output):
 
 
 def prepare_dataset(path):
-    """Returns a dictionary of image paths, granue id and metadata file location for the granules
+    """Returns a dictionary of image paths, granule id and metadata file location for the granules
     contained within the input file.
     """
     tasks = []
