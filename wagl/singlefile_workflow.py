@@ -31,6 +31,7 @@ from luigi.util import inherits
 from structlog import wrap_logger
 from structlog.processors import JSONRenderer
 
+from wagl.acquisition import acquisitions
 from wagl.constants import Method, Model
 from wagl.standardise import card4l
 
@@ -62,6 +63,7 @@ class DataStandardisation(luigi.Task):
 
     level1 = luigi.Parameter()
     outdir = luigi.Parameter()
+    granule = luigi.Parameter(default=None)
     model = luigi.EnumParameter(enum=Model)
     vertices = luigi.TupleParameter(default=(5, 5))
     method = luigi.EnumParameter(enum=Method, default=Method.shear)
@@ -117,6 +119,7 @@ class DataStandardisation(luigi.Task):
                 self.rori,
                 self.compression,
                 self.acq_parser_hint,
+                self.granule,
             )
 
 
@@ -126,7 +129,7 @@ class ARD(luigi.WrapperTask):
 
     level1_list = luigi.Parameter()
 
-    # override so it's not required at the command line
+    # override here so it's not required at the command line or config
     level1 = luigi.Parameter(default=None, significant=False)
 
     def requires(self):
@@ -134,28 +137,31 @@ class ARD(luigi.WrapperTask):
             level1_scenes = [scene.strip() for scene in src.readlines()]
 
         for scene in level1_scenes:
-            kwargs = {
-                "level1": scene,
-                "model": self.model,
-                "vertices": self.vertices,
-                "pixel_quality": self.pixel_quality,
-                "method": self.method,
-                "modtran_exe": self.modtran_exe,
-                "outdir": self.outdir,
-                "land_sea_path": self.land_sea_path,
-                "aerosol": self.aerosol,
-                "brdf_path": self.brdf_path,
-                "brdf_premodis_path": self.brdf_premodis_path,
-                "ozone_path": self.ozone_path,
-                "water_vapour": self.water_vapour,
-                "dem_path": self.dem_path,
-                "ecmwf_path": self.ecmwf_path,
-                "invariant_height_fname": self.invariant_height_fname,
-                "dsm_fname": self.dsm_fname,
-                "tle_path": self.tle_path,
-                "rori": self.rori,
-            }
-            yield DataStandardisation(**kwargs)
+            container = acquisitions(scene)
+            for granule in container.granules:
+                kwargs = {
+                    "level1": scene,
+                    "granule": granule,
+                    "model": self.model,
+                    "vertices": self.vertices,
+                    "pixel_quality": self.pixel_quality,
+                    "method": self.method,
+                    "modtran_exe": self.modtran_exe,
+                    "outdir": self.outdir,
+                    "land_sea_path": self.land_sea_path,
+                    "aerosol": self.aerosol,
+                    "brdf_path": self.brdf_path,
+                    "brdf_premodis_path": self.brdf_premodis_path,
+                    "ozone_path": self.ozone_path,
+                    "water_vapour": self.water_vapour,
+                    "dem_path": self.dem_path,
+                    "ecmwf_path": self.ecmwf_path,
+                    "invariant_height_fname": self.invariant_height_fname,
+                    "dsm_fname": self.dsm_fname,
+                    "tle_path": self.tle_path,
+                    "rori": self.rori,
+                }
+                yield DataStandardisation(**kwargs)
 
 
 if __name__ == "__main__":
