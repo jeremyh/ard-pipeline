@@ -190,11 +190,11 @@ class AncillaryData(luigi.Task):
     vertices = luigi.TupleParameter()
     model = luigi.EnumParameter(enum=Model)
     acq_parser_hint = luigi.Parameter(default=None)
-    aerosol_fname = luigi.Parameter(significant=False)
+    aerosol = luigi.DictParameter({"user": 0.05}, significant=False)
     brdf_path = luigi.Parameter(significant=False)
     brdf_premodis_path = luigi.Parameter(significant=False)
     ozone_path = luigi.Parameter(significant=False)
-    water_vapour_path = luigi.Parameter(significant=False)
+    water_vapour = luigi.DictParameter({"user": 1.5}, significant=False)
     dem_path = luigi.Parameter(significant=False)
     ecmwf_path = luigi.Parameter(significant=False)
     invariant_height_fname = luigi.Parameter(significant=False)
@@ -217,8 +217,8 @@ class AncillaryData(luigi.Task):
         sbt_path = None
 
         nbar_paths = {
-            "aerosol_fname": self.aerosol_fname,
-            "water_vapour_path": self.water_vapour_path,
+            "aerosol_dict": self.aerosol,
+            "water_vapour_dict": self.water_vapour,
             "ozone_path": self.ozone_path,
             "dem_path": self.dem_path,
             "brdf_path": self.brdf_path,
