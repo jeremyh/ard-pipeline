@@ -14,7 +14,7 @@ from collections import OrderedDict
 from pathlib import Path
 
 import click
-from gaip.acquisition import acquisitions
+from wagl.acquisition import acquisitions
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 

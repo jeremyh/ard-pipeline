@@ -11,8 +11,8 @@ from pathlib import Path
 import click
 import numpy as np
 import rasterio
-from gaip.data import write_img
-from gaip.geobox import GriddedGeoBox
+from wagl.data import write_img
+from wagl.geobox import GriddedGeoBox
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 

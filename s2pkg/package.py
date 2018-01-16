@@ -12,12 +12,12 @@ from subprocess import check_call
 import h5py
 import numpy as np
 import yaml
-from gaip.acquisition import acquisitions
-from gaip.data import write_img
-from gaip.geobox import GriddedGeoBox
-from gaip.hdf5 import find
 from pkg_resources import resource_stream
 from rasterio.enums import Resampling
+from wagl.acquisition import acquisitions
+from wagl.data import write_img
+from wagl.geobox import GriddedGeoBox
+from wagl.hdf5 import find
 from yaml.representer import Representer
 
 import s2pkg
@@ -54,7 +54,7 @@ def run_command(command, work_dir):
     check_call(" ".join(command), shell=True, cwd=work_dir)
 
 
-def gaip_unpack(scene, granule, h5group, outdir):
+def wagl_unpack(scene, granule, h5group, outdir):
     """Unpack and package the NBAR and NBART products."""
     # listing of all datasets of IMAGE CLASS type
     img_paths = find(h5group, "IMAGE")
@@ -264,7 +264,7 @@ def create_checksum(outdir):
 
 
 def package(
-    l1_path, gaip_fname, fmask_path, yamls_path, outdir, s3_root, acq_parser_hint=None
+    l1_path, wagl_fname, fmask_path, yamls_path, outdir, s3_root, acq_parser_hint=None
 ):
     """Package an L2 product.
 
@@ -272,8 +272,8 @@ def package(
         A string containing the full file pathname to the Level-1
         dataset.
 
-    :param gaip_fname:
-        A string containing the full file pathname to the gaip
+    :param wagl_fname:
+        A string containing the full file pathname to the wagl
         output dataset.
 
     :param fmask_path:
@@ -299,7 +299,7 @@ def package(
     with open(yaml_fname) as src:
         l1_documents = {doc["tile_id"]: doc for doc in yaml.load_all(src)}
 
-    with h5py.File(gaip_fname, "r") as fid:
+    with h5py.File(wagl_fname, "r") as fid:
         for granule in scene.granules:
             if granule is None:
                 h5group = fid["/"]
@@ -318,8 +318,8 @@ def package(
                 pjoin(out_path, f"{ard_granule}_QA.TIF"),
             )
 
-            # unpack the data produced by gaip
-            gaip_tags = gaip_unpack(scene, granule, h5group, out_path)
+            # unpack the data produced by wagl
+            wagl_tags = wagl_unpack(scene, granule, h5group, out_path)
 
             # vrts, contiguity, map, quicklook, thumbnail, readme, checksum
             build_vrts(out_path)
@@ -330,7 +330,7 @@ def package(
 
             # relative paths yaml doc
             # merge all the yaml documents
-            tags = merge_metadata(l1_documents[granule], gaip_tags, out_path)
+            tags = merge_metadata(l1_documents[granule], wagl_tags, out_path)
 
             with open(pjoin(out_path, "ARD-METADATA.yaml"), "w") as src:
                 yaml.dump(tags, src, default_flow_style=False, indent=4)
@@ -346,12 +346,12 @@ def package(
 
 
 if __name__ == "__main__":
-    description = "Prepare or package a gaip output."
+    description = "Prepare or package a wagl output."
     parser = argparse.ArgumentParser(description=description)
 
     parser.add_argument("--level1-pathname", required=True, help="The level1 pathname.")
     parser.add_argument(
-        "--gaip-filename", required=True, help="The filename of the gaip output."
+        "--wagl-filename", required=True, help="The filename of the wagl output."
     )
     parser.add_argument(
         "--fmask-pathname",
@@ -372,7 +372,7 @@ if __name__ == "__main__":
 
     package(
         args.level1_pathname,
-        args.gaip_filename,
+        args.wagl_filename,
         args.fmask_pathname,
         args.prepare_yamls,
         args.outdir,
