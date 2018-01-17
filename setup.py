@@ -12,6 +12,7 @@ setup(
     packages=["s2pkg"],
     install_requires=[
         "click",
+        "click_datetime",
         "folium",
         "geopandas",
         "h5py",
@@ -23,6 +24,7 @@ setup(
         "shapely",
         "structlog",
         "eodatasets",
+        "checksumdir",
     ],
     dependency_links=[
         "git+http://github.com/GeoscienceAustralia/eo-datasets@develop#egg=eodatasets-0.1dev"
