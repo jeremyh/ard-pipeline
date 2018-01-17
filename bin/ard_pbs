@@ -10,7 +10,7 @@ from os.path import dirname, exists
 from os.path import join as pjoin
 
 import click
-from gaip.tiling import scatter
+from wagl.tiling import scatter
 
 PBS_RESOURCES = """#!/bin/bash
 #PBS -P {project}
