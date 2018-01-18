@@ -27,7 +27,7 @@ from .sentinel import (
     Sentinel2aAcquisition,
     Sentinel2aAcquisitionOnDisk,
     Sentinel2bAcquisition,
-    s2_band_index_to_id,
+    s2_index_to_band_id,
 )
 
 with open(pjoin(dirname(__file__), "sensors.json")) as fo:
@@ -370,7 +370,7 @@ def acquisitions_via_safe(pathname):
     # exoatmospheric solar irradiance
     solar_irradiance = {}
     for irradiance in xml_root.iter("SOLAR_IRRADIANCE"):
-        band_id = s2_band_index_to_id(irradiance.attrib["bandId"])
+        band_id = s2_index_to_band_id(irradiance.attrib["bandId"])
         solar_irradiance[band_id] = float(irradiance.text)
 
     # assume multiple granules
