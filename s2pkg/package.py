@@ -75,7 +75,7 @@ def wagl_unpack(scene, granule, h5group, outdir):
                 match_dict.get("prefix"),
                 product,
                 match_dict.get("band_name"),
-                match.get("extension"),
+                match_dict.get("extension"),
             )
             out_fname = pjoin(
                 outdir,
