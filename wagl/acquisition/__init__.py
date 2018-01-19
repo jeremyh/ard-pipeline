@@ -25,8 +25,9 @@ from .base import AcquisitionsContainer
 from .landsat import ACQUISITION_TYPE, LandsatAcquisition
 from .sentinel import (
     Sentinel2aAcquisition,
-    Sentinel2aAcquisitionOnDisk,
+    Sentinel2aSinergiseAcquisition,
     Sentinel2bAcquisition,
+    Sentinel2bSinergiseAcquisition,
     s2_index_to_band_id,
 )
 
@@ -60,8 +61,8 @@ def acquisitions(path, hint=None):
     acquisitions for each Granule Group (if applicable) and
     each sub Group.
     """
-    if hint == "s2_directory":
-        container = acquisitions_s2_directory(path)
+    if hint == "s2_sinergise":
+        container = acquisitions_s2_sinergise(path)
     elif splitext(path)[1] == ".zip":
         container = acquisitions_via_safe(path)
     else:
@@ -178,7 +179,7 @@ def acquisitions_via_mtl(pathname):
     )
 
 
-def acquisitions_s2_directory(pathname):
+def acquisitions_s2_sinergise(pathname):
     """Collect the TOA Radiance images for each granule within a scene.
     Multi-granule & multi-resolution hierarchy format.
     Returns a dict of granules, each granule contains a dict of resolutions,
@@ -199,7 +200,6 @@ def acquisitions_s2_directory(pathname):
                    'R60m': [`acquisition_1`,...,`acquisition_n`]}}
     """
     granule_xml = pathname + "/metadata.xml"
-    acqtype = Sentinel2aAcquisitionOnDisk
 
     search_paths = {
         "datastrip/metadata.xml": [
@@ -226,7 +226,9 @@ def acquisitions_s2_directory(pathname):
             {
                 "key": "solar_irradiance_list",
                 "search_path": ".//*/SOLAR_IRRADIANCE",
-                "parse": lambda x: {si.attrib["bandId"]: float(si.text) for si in x},
+                "parse": lambda x: {
+                    s2_index_to_band_id(si.attrib["bandId"]): float(si.text) for si in x
+                },
             },
         ],
         "metadata.xml": [
@@ -263,6 +265,12 @@ def acquisitions_s2_directory(pathname):
 
     res_groups = {"R10m": [], "R20m": [], "R60m": []}
 
+    if "S2A" in acquisition_data["granule_id"]:
+        acqtype = Sentinel2aSinergiseAcquisition
+    else:
+        # assume it is S2B
+        acqtype = Sentinel2bSinergiseAcquisition
+
     for band_id in band_configurations:
         # If it is a configured B-format transform it to the correct format
         if re.match("[0-9].?", band_id):
@@ -282,8 +290,11 @@ def acquisitions_s2_directory(pathname):
         else:
             continue  # group not found
 
-        attrs = {k: v for k, v in band_configurations[band_id]}
+        attrs = {k: v for k, v in band_configurations[band_id].items()}
         if attrs.get("supported_band"):
+            attrs["solar_irradiance"] = acquisition_data["solar_irradiance_list"][
+                band_id
+            ]
             attrs["d2"] = 1 / acquisition_data["u"]
             attrs["qv"] = acquisition_data["qv"]
             attrs["granule_xml"] = granule_xml
