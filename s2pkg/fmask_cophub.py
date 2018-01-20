@@ -51,7 +51,7 @@ def prepare_dataset(path, acq_parser_hint=None):
             )
 
             for acq in acqs:
-                image_dict[Path(acq.uri).stem] = {"path": acq.uri, "layer": "1"}
+                image_dict[Path(acq.uri).stem[-3:]] = {"path": acq.uri, "layer": "1"}
 
             tasks.append(tuple([image_dict, granule_id, acq.granule_xml]))
 
