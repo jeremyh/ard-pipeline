@@ -139,6 +139,7 @@ class Package(luigi.Task):
             self.yamls_dir,
             self.pkgdir,
             self.s3_root,
+            self.granule,
             self.acq_parser_hint,
         )
 
