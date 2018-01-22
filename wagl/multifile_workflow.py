@@ -26,6 +26,7 @@ import os
 import traceback
 from os.path import basename, dirname, normpath, splitext
 from os.path import join as pjoin
+from posixpath import join as ppjoin
 
 import h5py
 import luigi
