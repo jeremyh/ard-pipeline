@@ -253,12 +253,14 @@ def card4l(
 
         # radiative transfer for each point and albedo
         for key in tp5_data:
-            log.info("Radiative-Transfer", point=key[0], albedo=key[1].value)
+            point, albedo = key
+
+            log.info("Radiative-Transfer", point=point, albedo=albedo.value)
             with tempfile.TemporaryDirectory() as tmpdir:
-                prepare_modtran(acqs, key[0], [key[1]], tmpdir, modtran_exe)
+                prepare_modtran(acqs, point, [albedo], tmpdir, modtran_exe)
 
                 # tp5 data
-                fname = pjoin(tmpdir, tp5_fmt.format(p=key[0], a=key[1].value))
+                fname = pjoin(tmpdir, tp5_fmt.format(p=point, a=albedo.value))
                 with open(fname, "w") as src:
                     src.writelines(tp5_data[key])
 
@@ -267,8 +269,8 @@ def card4l(
                     inputs_grp,
                     model,
                     nvertices,
-                    key[0],
-                    [key[1]],
+                    point,
+                    [albedo],
                     modtran_exe,
                     tmpdir,
                     fid,
