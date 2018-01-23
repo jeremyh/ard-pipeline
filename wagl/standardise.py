@@ -202,12 +202,8 @@ def card4l(
                 )
 
         # nbar and sbt ancillary
-        LOG.info(
-            "Ancillary-Retrieval",
-            scene=scene.label,
-            granule=granule,
-            granule_group=None,
-        )
+        log = LOG.bind(scene=scene.label, granule=granule, granule_group=None)
+        log.info("Ancillary-Retrieval")
         nbar_paths = {
             "aerosol_dict": aerosol,
             "water_vapour_dict": water_vapour,
@@ -230,7 +226,6 @@ def card4l(
         )
 
         # atmospherics
-        log = LOG.bind(scene=scene.label, granule=granule, granule_group=None)
         log.info("Atmospherics")
 
         # any resolution group is fine
