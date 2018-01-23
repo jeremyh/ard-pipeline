@@ -13,7 +13,7 @@ versions of wagl.
 
 This workflow is more suited to full production runs, where testing
 has ensured that the workflow is sound, and more easilt allows
-thousands of scenes to be submitted to the scheduler at once.
+thousands of level1 datasets to be submitted to the scheduler at once.
 
 Workflow settings can be configured in `luigi.cfg` file.
 """
@@ -52,7 +52,7 @@ def on_failure(task, exception):
     ERROR_LOGGER.error(
         task=task.get_task_family(),
         params=task.to_str_params(),
-        scene=task.level1,
+        level1=task.level1,
         exception=exception.__str__(),
         traceback=traceback.format_exc().splitlines(),
     )
@@ -135,14 +135,14 @@ class ARD(luigi.WrapperTask):
 
     def requires(self):
         with open(self.level1_list) as src:
-            level1_scenes = [scene.strip() for scene in src.readlines()]
+            level1_list = [level1.strip() for level1 in src.readlines()]
 
-        for scene in level1_scenes:
-            container = acquisitions(scene)
+        for level1 in level1_list:
+            container = acquisitions(level1)
             outdir = pjoin(self.outdir, f"{container.label}.wagl")
             for granule in container.granules:
                 kwargs = {
-                    "level1": scene,
+                    "level1": level1,
                     "granule": granule,
                     "model": self.model,
                     "vertices": self.vertices,
