@@ -84,17 +84,19 @@ def card4l(
     tp5_fmt = pjoin(POINT_FMT, ALBEDO_FMT, "".join([POINT_ALBEDO_FMT, ".tp5"]))
     nvertices = vertices[0] * vertices[1]
 
-    scene = acquisitions(level1, hint=acq_parser_hint)
+    container = acquisitions(level1, hint=acq_parser_hint)
 
     # TODO: pass through an acquisitions container rather than pathname
     with h5py.File(out_fname, "w") as fid:
         fid.attrs["level1_uri"] = level1
-        fid.attrs["tiled"] = scene.tiled
+        fid.attrs["tiled"] = container.tiled
 
-        for grp_name in scene.groups:
-            log = LOG.bind(scene=scene.label, granule=granule, granule_group=grp_name)
+        for grp_name in container.groups:
+            log = LOG.bind(
+                level1=container.label, granule=granule, granule_group=grp_name
+            )
             group = fid.create_group(grp_name)
-            acqs = scene.get_acquisitions(granule=granule, group=grp_name)
+            acqs = container.get_acquisitions(granule=granule, group=grp_name)
 
             # longitude and latitude
             log.info("Latitude-Longitude")
@@ -202,7 +204,7 @@ def card4l(
                 )
 
         # nbar and sbt ancillary
-        log = LOG.bind(scene=scene.label, granule=granule, granule_group=None)
+        log = LOG.bind(level1=container.label, granule=granule, granule_group=None)
         log.info("Ancillary-Retrieval")
         nbar_paths = {
             "aerosol_dict": aerosol,
@@ -212,8 +214,8 @@ def card4l(
             "brdf_path": brdf_path,
             "brdf_premodis_path": brdf_premodis_path,
         }
-        grn_con = scene.get_granule(granule=granule, container=True)
-        group = fid[scene.groups[0]]
+        grn_con = container.get_granule(granule=granule, container=True)
+        group = fid[container.groups[0]]
         collect_ancillary(
             grn_con,
             group[GroupName.sat_sol_group.value],
@@ -229,8 +231,8 @@ def card4l(
         log.info("Atmospherics")
 
         # any resolution group is fine
-        grp_name = scene.groups[0]
-        acqs = scene.get_acquisitions(granule=granule, group=grp_name)
+        grp_name = container.groups[0]
+        acqs = container.get_acquisitions(granule=granule, group=grp_name)
 
         ancillary_group = fid[GroupName.ancillary_group.value]
 
@@ -278,12 +280,14 @@ def card4l(
         calculate_components(results_group, fid, compression)
 
         # interpolate components
-        for grp_name in scene.groups:
-            log = LOG.bind(scene=scene.label, granule=granule, granule_group=grp_name)
+        for grp_name in container.groups:
+            log = LOG.bind(
+                level1=container.label, granule=granule, granule_group=grp_name
+            )
             log.info("Interpolation")
 
             # acquisitions and available bands for the current group level
-            acqs = scene.get_acquisitions(granule=granule, group=grp_name)
+            acqs = container.get_acquisitions(granule=granule, group=grp_name)
             nbar_acqs = [acq for acq in acqs if acq.band_type == BandType.Reflective]
             sbt_acqs = [acq for acq in acqs if acq.band_type == BandType.Thermal]
 
