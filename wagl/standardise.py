@@ -354,10 +354,10 @@ def card4l(
                     )
 
             # metadata yaml's
-            if model == Model.standard or model == model.nbar:
+            if model == Model.standard or model == Model.nbar:
                 create_ard_yaml(band_acqs, ancillary_group, group)
 
-            if model == Model.standard or model == model.sbt:
+            if model == Model.standard or model == Model.sbt:
                 create_ard_yaml(band_acqs, ancillary_group, group, True)
 
             # pixel quality
