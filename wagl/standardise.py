@@ -55,6 +55,7 @@ def get_buffer(group):
 # pylint disable=too-many-arguments
 def card4l(
     level1,
+    granule,
     model,
     vertices,
     method,
@@ -75,7 +76,6 @@ def card4l(
     rori=0.52,
     compression="lzf",
     acq_parser_hint=None,
-    granule=None,
 ):
     """CEOS Analysis Ready Data for Land.
     A workflow for producing standardised products that meet the

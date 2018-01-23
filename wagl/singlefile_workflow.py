@@ -100,6 +100,7 @@ class DataStandardisation(luigi.Task):
         with self.output().temporary_path() as out_fname:
             card4l(
                 self.level1,
+                self.granule,
                 self.model,
                 self.vertices,
                 self.method,
@@ -120,7 +121,6 @@ class DataStandardisation(luigi.Task):
                 self.rori,
                 self.compression,
                 self.acq_parser_hint,
-                self.granule,
             )
 
 
