@@ -12,7 +12,7 @@ import numpy as np
 
 from wagl.__surface_reflectance import reflectance
 from wagl.constants import ArdProducts as AP
-from wagl.constants import AtmosphericComponents as AC
+from wagl.constants import AtmosphericCoefficients as AC
 from wagl.constants import BrdfParameters, DatasetName, GroupName
 from wagl.data import as_array
 from wagl.hdf5 import (
@@ -107,7 +107,7 @@ def calculate_reflectance(
 
     :param interpolation_group:
         The root HDF5 `Group` that contains the interpolated
-        atmospheric components.
+        atmospheric coefficients.
         The dataset pathnames are given by:
 
         * DatasetName.interpolation_fmt
@@ -200,28 +200,28 @@ def calculate_reflectance(
 
     dname_fmt = DatasetName.interpolation_fmt.value
     fv_dataset = interpolation_group[
-        dname_fmt.format(component=AC.fv.value, band_name=bn)
+        dname_fmt.format(coefficient=AC.fv.value, band_name=bn)
     ]
     fs_dataset = interpolation_group[
-        dname_fmt.format(component=AC.fs.value, band_name=bn)
+        dname_fmt.format(coefficient=AC.fs.value, band_name=bn)
     ]
     b_dataset = interpolation_group[
-        dname_fmt.format(component=AC.b.value, band_name=bn)
+        dname_fmt.format(coefficient=AC.b.value, band_name=bn)
     ]
     s_dataset = interpolation_group[
-        dname_fmt.format(component=AC.s.value, band_name=bn)
+        dname_fmt.format(coefficient=AC.s.value, band_name=bn)
     ]
     a_dataset = interpolation_group[
-        dname_fmt.format(component=AC.a.value, band_name=bn)
+        dname_fmt.format(coefficient=AC.a.value, band_name=bn)
     ]
     dir_dataset = interpolation_group[
-        dname_fmt.format(component=AC.dir.value, band_name=bn)
+        dname_fmt.format(coefficient=AC.dir.value, band_name=bn)
     ]
     dif_dataset = interpolation_group[
-        dname_fmt.format(component=AC.dif.value, band_name=bn)
+        dname_fmt.format(coefficient=AC.dif.value, band_name=bn)
     ]
     ts_dataset = interpolation_group[
-        dname_fmt.format(component=AC.ts.value, band_name=bn)
+        dname_fmt.format(coefficient=AC.ts.value, band_name=bn)
     ]
     solar_zenith_dset = satellite_solar_group[DatasetName.solar_zenith.value]
     solar_azimuth_dset = satellite_solar_group[DatasetName.solar_azimuth.value]
