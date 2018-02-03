@@ -13,6 +13,7 @@ import json
 import os
 import re
 import zipfile
+from collections import OrderedDict
 from os.path import basename, dirname, isdir, splitext
 from os.path import join as pjoin
 from xml.etree import ElementTree
@@ -30,6 +31,10 @@ from .sentinel import (
     Sentinel2bSinergiseAcquisition,
     s2_index_to_band_id,
 )
+
+# resolution group format
+RESG_FMT = "RES-GROUP-{}"
+
 
 with open(pjoin(dirname(__file__), "sensors.json")) as fo:
     SENSORS = json.load(fo)
@@ -125,6 +130,9 @@ def acquisitions_via_mtl(pathname):
     solar_azimuth = nested_lookup("sun_azimuth", data)[0]
     solar_elevation = nested_lookup("sun_elevation", data)[0]
 
+    # granule id
+    granule_id = nested_lookup("landsat_scene_id", data)[0]
+
     # bands to ignore
     ignore = ["band_quality"]
 
@@ -174,8 +182,18 @@ def acquisitions_via_mtl(pathname):
 
         acqs.append(acqtype(pathname, fname, acq_datetime, band_name, band_id, attrs))
 
+    # 0 -> n resolution sets (higest res to lowest res)
+    resolutions = sorted(set([acq.resolution for acq in acqs]))
+    res_groups = OrderedDict(
+        [(RESG_FMT.format(i), []) for i, _ in enumerate(resolutions)]
+    )
+
+    for acq in sorted(acqs):
+        group = RESG_FMT.format(resolutions.index(acq.resolution))
+        res_groups[group].append(acq)
+
     return AcquisitionsContainer(
-        label=basename(pathname), groups={"product": sorted(acqs)}
+        label=basename(pathname), granules={granule_id: res_groups}
     )
 
 
