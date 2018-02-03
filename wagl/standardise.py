@@ -99,7 +99,7 @@ def card4l(
             log = LOG.bind(
                 level1=container.label, granule=granule, granule_group=grp_name
             )
-            group = fid.create_group(grp_name)
+            group = fid.create_group(ppjoin(granule, grp_name))
             acqs = container.get_acquisitions(granule=granule, group=grp_name)
 
             # longitude and latitude
