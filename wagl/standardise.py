@@ -94,7 +94,6 @@ def card4l(
     # TODO: pass through an acquisitions container rather than pathname
     with h5py.File(out_fname, "w") as fid:
         fid.attrs["level1_uri"] = level1
-        fid.attrs["tiled"] = container.tiled
 
         for grp_name in container.groups:
             log = LOG.bind(

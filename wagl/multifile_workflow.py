@@ -985,9 +985,8 @@ class LinkwaglOutputs(luigi.Task):
                             create_external_link(fname, pth, out_fname, new_path)
 
             with h5py.File(out_fname) as fid:
-                container = acquisitions(self.level1, self.acq_parser_hint)
+                acquisitions(self.level1, self.acq_parser_hint)
                 fid.attrs["level1_uri"] = self.level1
-                fid.attrs["tiled"] = container.tiled
 
 
 class ARD(luigi.WrapperTask):
