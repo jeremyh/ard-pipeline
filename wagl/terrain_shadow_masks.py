@@ -20,7 +20,7 @@ from wagl.hdf5 import (
     create_external_link,
     dataset_compression_kwargs,
 )
-from wagl.margins import ImageMargins
+from wagl.margins import pixel_buffer
 from wagl.satellite_solar_angles import setup_spheroid
 from wagl.tiling import generate_tiles
 
@@ -260,9 +260,7 @@ class CastShadowError(FortranError):
 def _calculate_cast_shadow(
     acquisition,
     dsm_fname,
-    margins,
-    block_height,
-    block_width,
+    buffer_distance,
     satellite_solar_angles_fname,
     out_fname,
     compression="lzf",
@@ -277,15 +275,7 @@ def _calculate_cast_shadow(
         grp1 = dsm_fid[GroupName.elevation_group.value]
         grp2 = fid_sat_sol[GroupName.sat_sol_group.value]
         calculate_cast_shadow(
-            acquisition,
-            grp1,
-            grp2,
-            margins,
-            block_height,
-            block_width,
-            fid,
-            compression,
-            solar_source,
+            acquisition, grp1, grp2, buffer_distance, fid, compression, solar_source
         )
 
 
@@ -293,9 +283,7 @@ def calculate_cast_shadow(
     acquisition,
     dsm_group,
     satellite_solar_group,
-    margins,
-    block_height,
-    block_width,
+    buffer_distance,
     out_group=None,
     compression="lzf",
     solar_source=True,
@@ -321,7 +309,7 @@ def calculate_cast_shadow(
     sub-marix A is set to 500x500
 
     we also need to set extra DEM lines/columns to run the Landsat
-    scene (see parameter ``pix_buf``. This will change with elevation
+    scene. This will change with elevation
     difference within the scene and solar zenith angle. For
     Australian region and Landsat scene with 0.00025 degree
     resolution, the maximum extra lines are set to 250 pixels/lines
@@ -351,18 +339,11 @@ def calculate_cast_shadow(
         * DatasetName.satellite_view
         * DatasetName.satellite_azimuth
 
-    :param margins:
-        An object with members top, bottom, left and right giving the
-        size of the margins (in pixels) which have been added to the
-        corresponding sides of dsm.
-
-    :param block_height:
-        The height (rows) of the window/submatrix used in the cast
-        shadow algorithm.
-
-    :param block_width:
-        The width (rows) of the window/submatrix used in the cast
-        shadow algorithm.
+    :param buffer_distance:
+        A number representing the desired distance (in the same
+        units as the acquisition) in which to calculate the extra
+        number of pixels required to buffer an image.
+        Default is 8000.
 
     :param out_group:
         If set to None (default) then the results will be returned
@@ -409,7 +390,7 @@ def calculate_cast_shadow(
     spheroid, _ = setup_spheroid(geobox.crs.ExportToWkt())
 
     # Define Top, Bottom, Left, Right pixel buffer margins
-    pixel_buf = ImageMargins(margins)
+    margins = pixel_buffer(acquisition, buffer_distance)
 
     if solar_source:
         zenith_name = DatasetName.solar_zenith.value
@@ -422,6 +403,11 @@ def calculate_cast_shadow(
     azimuth_angle = satellite_solar_group[azimuth_name][:]
     elevation = dsm_group[DatasetName.dsm_smoothed.value][:]
 
+    # block height and width of the window/submatrix used in the cast
+    # shadow algorithm
+    block_width = margins.left + margins.right
+    block_height = margins.top + margins.bottom
+
     # Compute the cast shadow mask
     ierr, mask = cast_shadow_main(
         elevation,
@@ -432,10 +418,10 @@ def calculate_cast_shadow(
         spheroid,
         y_origin,
         x_origin,
-        pixel_buf.left,
-        pixel_buf.right,
-        pixel_buf.top,
-        pixel_buf.bottom,
+        margins.left,
+        margins.right,
+        margins.top,
+        margins.bottom,
         block_height,
         block_width,
         is_utm,

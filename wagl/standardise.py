@@ -52,11 +52,6 @@ LOG = wrap_logger(
 )
 
 
-def get_buffer(group):
-    buf = {"product": 250, "R10m": 700, "R20m": 350, "R60m": 120}
-    return buf[group]
-
-
 # pylint disable=too-many-arguments
 def card4l(
     level1,
@@ -79,6 +74,7 @@ def card4l(
     out_fname,
     ecmwf_path=None,
     rori=0.52,
+    buffer_distance=8000,
     compression="lzf",
     acq_parser_hint=None,
 ):
@@ -119,14 +115,14 @@ def card4l(
             if model == Model.standard or model == model.nbar:
                 # DEM
                 log.info("DEM-retriveal")
-                get_dsm(acqs[0], dsm_fname, get_buffer(grp_name), group, compression)
+                get_dsm(acqs[0], dsm_fname, buffer_distance, group, compression)
 
                 # slope & aspect
                 log.info("Slope-Aspect")
                 slope_aspect_arrays(
                     acqs[0],
                     group[GroupName.elevation_group.value],
-                    get_buffer(grp_name),
+                    buffer_distance,
                     group,
                     compression,
                 )
@@ -176,9 +172,7 @@ def card4l(
                     acqs[0],
                     group[dsm_group_name],
                     group[GroupName.sat_sol_group.value],
-                    get_buffer(grp_name),
-                    500,
-                    500,
+                    buffer_distance,
                     group,
                     compression,
                 )
@@ -189,9 +183,7 @@ def card4l(
                     acqs[0],
                     group[dsm_group_name],
                     group[GroupName.sat_sol_group.value],
-                    get_buffer(grp_name),
-                    500,
-                    500,
+                    buffer_distance,
                     group,
                     compression,
                     False,
