@@ -106,7 +106,7 @@ class WorkRoot(luigi.Task):
         out_dirs = [self.reflectance_dir, self.shadow_dir, self.interpolation_dir]
         container = acquisitions(self.level1, self.acq_parser_hint)
         for granule in container.granules:
-            for group in container.groups:
+            for group in container.supported_groups:
                 pth = container.get_root(self.work_root, group, granule)
                 for out_dir in out_dirs:
                     yield luigi.LocalTarget(pjoin(pth, out_dir))
@@ -192,7 +192,7 @@ class AncillaryData(luigi.Task):
     compression = luigi.Parameter(default="lzf", significant=False)
 
     def requires(self):
-        group = acquisitions(self.level1, self.acq_parser_hint).groups[0]
+        group = acquisitions(self.level1, self.acq_parser_hint).supported_groups[0]
         args = [self.level1, self.work_root, self.granule, group]
         return CalculateSatelliteAndSolarGrids(*args)
 
@@ -249,7 +249,7 @@ class WriteTp5(luigi.Task):
             self.level1, self.work_root, self.granule, self.vertices, self.model
         )
 
-        for group in container.groups:
+        for group in container.supported_groups:
             args = [self.level1, self.work_root, self.granule, group]
             tsks = {
                 "sat_sol": CalculateSatelliteAndSolarGrids(*args),
@@ -265,8 +265,7 @@ class WriteTp5(luigi.Task):
 
     def run(self):
         container = acquisitions(self.level1, self.acq_parser_hint)
-        group = container.groups[0]
-        acqs = container.get_acquisitions(group, granule=self.granule)
+        acqs, group = container.get_highest_resolution(granule=self.granule)
 
         # output filename format
         output_fmt = pjoin(POINT_FMT, ALBEDO_FMT, "".join([POINT_ALBEDO_FMT, ".tp5"]))
@@ -947,7 +946,7 @@ class LinkwaglOutputs(luigi.Task):
 
     def requires(self):
         container = acquisitions(self.level1, self.acq_parser_hint)
-        for group in container.groups:
+        for group in container.supported_groups:
             kwargs = {
                 "level1": self.level1,
                 "work_root": self.work_root,
@@ -1048,7 +1047,7 @@ class CallTask(luigi.WrapperTask):
             container = acquisitions(level1, self.acq_parser_hint)
             for granule in container.granules:
                 if "group" in self.task.get_param_names():
-                    for group in container.groups:
+                    for group in container.supported_groups:
                         yield self.task(level1, work_root, granule, group)
                 else:
                     yield self.task(level1, work_root, granule)
