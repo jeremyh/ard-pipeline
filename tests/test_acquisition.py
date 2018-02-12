@@ -27,13 +27,21 @@ class AcquisitionLoadMtlTest(unittest.TestCase):
 
     def test_load_acquisitions_ls7_scene1(self):
         acq_cont = acquisitions(LS7_SCENE1)
-        assert len(acq_cont.get_acquisitions()) == 8
-        assert len(acq_cont.get_acquisitions(only_supported_bands=False)) == 9
+        assert len(acq_cont.get_acquisitions()) == 0
+        assert len(acq_cont.get_acquisitions(only_supported_bands=False)) == 1
+
+    def test_highest_resolution_ls7_scene1(self):
+        acq_cont = acquisitions(LS7_SCENE1)
+        assert len(acq_cont.get_highest_resolution()[0]) == 8
 
     def test_load_acquisitions_ls8_scene1(self):
         acq_cont = acquisitions(LS8_SCENE1)
-        assert len(acq_cont.get_acquisitions()) == 9
-        assert len(acq_cont.get_acquisitions(only_supported_bands=False)) == 11
+        assert len(acq_cont.get_acquisitions()) == 0
+        assert len(acq_cont.get_acquisitions(only_supported_bands=False)) == 1
+
+    def test_highest_resolution_ls8_scene1(self):
+        acq_cont = acquisitions(LS8_SCENE1)
+        assert len(acq_cont.get_highest_resolution()[0]) == 8
 
 
 class AcquisitionsContainerTest(unittest.TestCase):
@@ -43,23 +51,23 @@ class AcquisitionsContainerTest(unittest.TestCase):
 
     def test_groups_ls7_scene1(self):
         scene = acquisitions(LS7_SCENE1)
-        assert len(scene.groups) == 1
+        assert len(scene.groups) == 2
 
     def test_groups_ls8_scene1(self):
         scene = acquisitions(LS8_SCENE1)
-        assert len(scene.groups) == 1
+        assert len(scene.groups) == 2
 
     def test_granules_ls5_scene1(self):
         scene = acquisitions(LS5_SCENE1)
-        assert scene.granules[0] is None
+        assert scene.granules[0] == "LT50900812009097ASA00"
 
     def test_granules_ls7_scene1(self):
         scene = acquisitions(LS7_SCENE1)
-        assert scene.granules[0] is None
+        assert scene.granules[0] == "LE70900812009105ASA00"
 
     def test_granules_ls8_scene1(self):
         scene = acquisitions(LS8_SCENE1)
-        assert scene.granules[0] is None
+        assert scene.granules[0] == "LC80900842013284LGN00"
 
 
 class Landsat5Scene1AcquisitionTest(unittest.TestCase):
@@ -139,7 +147,7 @@ class Landsat5Scene1AcquisitionTest(unittest.TestCase):
 
 class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
     def setUp(self):
-        self.acqs = acquisitions(LS7_SCENE1).get_acquisitions()
+        self.acqs = acquisitions(LS7_SCENE1).get_acquisitions(group="RES-GROUP-1")
 
     def test_type(self):
         for acq in self.acqs:
@@ -219,7 +227,7 @@ class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
 
 class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
     def setUp(self):
-        self.acqs = acquisitions(LS8_SCENE1).get_acquisitions()
+        self.acqs = acquisitions(LS7_SCENE1).get_acquisitions(group="RES-GROUP-1")
 
     def test_type(self):
         for acq in self.acqs:
