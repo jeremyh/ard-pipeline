@@ -10,13 +10,12 @@ from os.path import join as pjoin
 
 import luigi
 from luigi.local_target import LocalFileSystem
+from s2pkg.fmask_cophub import fmask, prepare_dataset
+from s2pkg.package import package
 from structlog import wrap_logger
 from structlog.processors import JSONRenderer
 from wagl.acquisition import acquisitions
 from wagl.singlefile_workflow import DataStandardisation
-
-from s2pkg.fmask_cophub import fmask, prepare_dataset
-from s2pkg.package import package
 
 ERROR_LOGGER = wrap_logger(
     logging.getLogger("ard-error"), processors=[JSONRenderer(indent=1, sort_keys=True)]

@@ -11,22 +11,21 @@ from subprocess import check_call
 
 import h5py
 import numpy as np
+import s2pkg
 import yaml
 from pkg_resources import resource_stream
 from rasterio.enums import Resampling
-from wagl.acquisition import acquisitions
-from wagl.data import write_img
-from wagl.geobox import GriddedGeoBox
-from wagl.hdf5 import find
-from yaml.representer import Representer
-
-import s2pkg
 from s2pkg.checksum import checksum
 from s2pkg.contiguity import do_contiguity
 from s2pkg.contrast import quicklook
 from s2pkg.fmask_cophub import fmask_cogtif
 from s2pkg.html_geojson import html_map
 from s2pkg.yaml_merge import image_dict, merge_metadata
+from wagl.acquisition import acquisitions
+from wagl.data import write_img
+from wagl.geobox import GriddedGeoBox
+from wagl.hdf5 import find
+from yaml.representer import Representer
 
 yaml.add_representer(np.int8, Representer.represent_int)
 yaml.add_representer(np.uint8, Representer.represent_int)
