@@ -3,13 +3,13 @@
 from setuptools import setup
 
 setup(
-    name="s2pkg",
+    name="tesp",
     version="0.0.1",
     description=(
         "A temporary solution to get packaging underway. "
         "Code will eventually be ported eo-datasets."
     ),
-    packages=["s2pkg"],
+    packages=["tesp"],
     install_requires=[
         "click",
         "click_datetime",
