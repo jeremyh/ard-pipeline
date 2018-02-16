@@ -79,13 +79,7 @@ def wagl_unpack(scene, granule, h5group, outdir):
                 match_dict.get("band_name"),
                 match_dict.get("extension"),
             )
-            out_fname = pjoin(
-                outdir,
-                # base_dir.replace('L1C', 'ARD'),
-                # granule.replace('L1C', 'ARD'),
-                product,
-                fname.replace("L1C", "ARD"),
-            )
+            out_fname = pjoin(outdir, product, fname.replace("L1C", "ARD"))
 
             # output
             if not exists(dirname(out_fname)):
