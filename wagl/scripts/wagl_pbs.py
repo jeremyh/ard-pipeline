@@ -51,7 +51,7 @@ wait
 FMT1 = "level1-scenes-{jobid}.txt"
 FMT2 = "wagl-{jobid}.bash"
 DAEMON_FMT = "luigid --background --logdir {}"
-ARD_FMT = "--module wagl.{workflow} ARD --model {model} --vertices '{vertices}' --method {method}{pq}"  # pylint: disable=line-too-long
+ARD_FMT = "--module wagl.{workflow} ARD --model {model} --vertices '{vertices}' --buffer-distance {distance} --method {method}{pq}"  # pylint: disable=line-too-long
 TASK_FMT = "--module wagl.multifile_workflow CallTask --task {task}"
 
 
@@ -185,6 +185,7 @@ def run(
     project=None,
     queue="normal",
     hours=48,
+    buffer_distance=8000,
     email="your.name@something.com",
     local_scheduler=False,
     dsh=False,
@@ -223,7 +224,12 @@ def run(
     # luigi task workflow options
     if task is None:
         options = ARD_FMT.format(
-            workflow=workflow, model=model, pq=pq, vertices=vertices, method=method
+            workflow=workflow,
+            model=model,
+            pq=pq,
+            vertices=vertices,
+            method=method,
+            distance=buffer_distance,
         )
     else:
         options = TASK_FMT.format(task=task)
@@ -289,6 +295,12 @@ def _parser():
         "--method",
         default="shear",
         help=("The interpolation method to invoke, " "eg linear, shear, rbf."),
+    )
+    parser.add_argument(
+        "--buffer-distance",
+        default=8000,
+        type=float,
+        help=("The distance in units to buffer an image's " "extents by."),
     )
     parser.add_argument(
         "--pixel-quality",
@@ -363,6 +375,7 @@ def main():
         args.project,
         args.queue,
         args.hours,
+        args.buffer_distance,
         args.email,
         args.local_scheduler,
         args.dsh,

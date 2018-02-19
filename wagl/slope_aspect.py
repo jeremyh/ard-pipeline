@@ -9,21 +9,23 @@ from wagl.__slope_aspect import slope_aspect
 from wagl.constants import DatasetName, GroupName
 from wagl.data import as_array
 from wagl.hdf5 import attach_image_attributes, dataset_compression_kwargs
-from wagl.margins import ImageMargins
+from wagl.margins import pixel_buffer
 from wagl.satellite_solar_angles import setup_spheroid
 
 
-def _slope_aspect_arrays(acquisition, dsm_fname, margins, out_fname, compression="lzf"):
+def _slope_aspect_arrays(
+    acquisition, dsm_fname, buffer_distance, out_fname, compression="lzf"
+):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
     with h5py.File(dsm_fname, "r") as dsm_fid, h5py.File(out_fname, "w") as fid:
         dsm_grp = dsm_fid[GroupName.elevation_group.value]
-        slope_aspect_arrays(acquisition, dsm_grp, margins, fid, compression)
+        slope_aspect_arrays(acquisition, dsm_grp, buffer_distance, fid, compression)
 
 
 def slope_aspect_arrays(
-    acquisition, dsm_group, margins, out_group=None, compression="lzf"
+    acquisition, dsm_group, buffer_distance, out_group=None, compression="lzf"
 ):
     """Calculates slope and aspect.
 
@@ -40,10 +42,11 @@ def slope_aspect_arrays(
         The dataset must have the same dimensions as `acquisition`
         plus a margin of widths specified by margin.
 
-    :param margins:
-        An object with members top, bottom, left and right giving the
-        size of the margins (in pixels) which have been added to the
-        corresponding sides of dsm.
+    :param buffer_distance:
+        A number representing the desired distance (in the same
+        units as the acquisition) in which to calculate the extra
+        number of pixels required to buffer an image.
+        Default is 8000.
 
     :param out_group:
         If set to None (default) then the results will be returned
@@ -80,7 +83,7 @@ def slope_aspect_arrays(
     is_utm = not geobox.crs.IsGeographic()
 
     # Define Top, Bottom, Left, Right pixel margins
-    pixel_margin = ImageMargins(margins)
+    margins = pixel_buffer(acquisition, buffer_distance)
 
     # Get the x and y pixel sizes
     _, y_origin = geobox.origin
@@ -93,8 +96,8 @@ def slope_aspect_arrays(
 
     # TODO: check that the index is correct
     # Define the index to read the DEM subset
-    ystart, ystop = (pixel_margin.top - 1, -(pixel_margin.bottom - 1))
-    xstart, xstop = (pixel_margin.left - 1, -(pixel_margin.right - 1))
+    ystart, ystop = (margins.top - 1, -(margins.bottom - 1))
+    xstart, xstop = (margins.left - 1, -(margins.right - 1))
     idx = (slice(ystart, ystop), slice(xstart, xstop))
 
     # elevation dataset

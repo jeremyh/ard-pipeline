@@ -218,7 +218,7 @@ def collect_ancillary(
 
     group = fid.create_group(GroupName.ancillary_group.value)
 
-    acquisition = container.get_acquisitions()[0]
+    acquisition = container.get_highest_resolution()[0][0]
 
     boxline_dataset = satellite_solar_group[DatasetName.boxline.value][:]
     coordinator = create_vertices(acquisition, boxline_dataset, vertices)
@@ -458,7 +458,7 @@ def collect_nbar_ancillary(
     else:
         fid = out_group
 
-    acquisition = container.get_acquisitions()[0]
+    acquisition = container.get_highest_resolution()[0][0]
     dt = acquisition.acquisition_datetime
     geobox = acquisition.gridded_geo_box()
 

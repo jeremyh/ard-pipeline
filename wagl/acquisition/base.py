@@ -13,31 +13,25 @@ from ..tiling import generate_tiles
 
 class AcquisitionsContainer:
     """A container for dealing with a hierarchial structure
-    of acquisitions from different groups, granules, but
-    all part of the same geospatial area or scene.
+    of acquisitions from different resolution groups, granules,
+    but all part of the same geospatial area or scene.
 
-    Note: Assuming that each granule contains the same groups.
-
-    The `AcquisitionsContainer.tiled` property indicates whether or
-    not a scene is partitioned into several tiles referred to as
-    granules.
+    Note: Assuming that each granule contains the same resolution
+    groups.
     """
 
-    def __init__(self, label, groups=None, granules=None):
-        self._tiled = False if granules is None else True
-        self._groups = groups
+    def __init__(self, label, granules):
         self._granules = granules
         self._label = label
 
     def __repr__(self):
         fmt = (
-            "****Tiled scene****:\n{tiled}\n"
-            "****Granules****:\n{granules}\n"
-            "****Groups****:\n{groups}"
+            "****Granule ID's****:\n{granules}\n"
+            "\n****Resolution Groups****:\n{groups}"
         )
-        granules = "\n".join(self.granules) if self.tiled else ""
+        granules = "\n".join(self.granules)
         groups = "\n".join(self.groups)
-        return fmt.format(tiled=self.tiled, granules=granules, groups=groups)
+        return fmt.format(granules=granules, groups=groups)
 
     @property
     def label(self):
@@ -45,28 +39,14 @@ class AcquisitionsContainer:
         return self._label
 
     @property
-    def tiled(self):
-        """Indicates whether or not a scene is partitioned into several
-        tiles referred to as granules.
-        """
-        return self._tiled
-
-    @property
     def granules(self):
-        """Lists the available granules within a scene.
-        If `AcquisitionsContainer.tiled` is False, then [None] is
-        returned.
-        """
-        return sorted(list(self._granules.keys())) if self.tiled else [None]
+        """Lists the available granules within a scene."""
+        return sorted(list(self._granules.keys()))
 
     @property
     def groups(self):
         """Lists the available groups within a scene."""
-        if self.tiled:
-            grps = sorted(list(self._granules.get(self.granules[0]).keys()))
-        else:
-            grps = sorted(list(self._groups.keys()))
-        return grps
+        return list(self._granules.get(self.granules[0]).keys())
 
     def get_acquisitions(self, group=None, granule=None, only_supported_bands=True):
         """Return a list of acquisitions for a given granule and group.
@@ -91,17 +71,11 @@ class AcquisitionsContainer:
         :return:
             A `list` of `Acquisition` objects.
         """
-        if self.tiled:
-            groups = self.get_granule(granule=granule)
-            if group is None:
-                acqs = groups[list(groups.keys())[0]]
-            else:
-                acqs = groups[group]
+        groups = self.get_granule(granule=granule)
+        if group is None:
+            acqs = groups[list(groups.keys())[0]]
         else:
-            if group is None:
-                acqs = self._groups[self.groups[0]]
-            else:
-                acqs = self._groups[group]
+            acqs = groups[group]
 
         if only_supported_bands:
             return list(
@@ -122,8 +96,6 @@ class AcquisitionsContainer:
         :param container:
             A boolean indicating whether to return the granule as an
             `AcquisitionsContainer` containing a single granule.
-            If the `AcquisitionsContainer.tiled` is False, then a new
-            instance of the `AcquisitionsContainer` is returned.
             Default is False.
 
         :return:
@@ -131,20 +103,8 @@ class AcquisitionsContainer:
             for a given scene, unless container=True in which a new
             instance of an `AcquisitionsContainer` is returned.
         """
-        if not self.tiled:
-            grps = self._groups
-            if container:
-                return AcquisitionsContainer(label=self.label, groups=grps)
-
-            return grps
-
         if granule is None:
-            grn = self.granules[0]
-            if container:
-                grps = {grn: self._granules[grn]}
-                return AcquisitionsContainer(label=self.label, granules=grps)
-
-            return self._granules[grn]
+            granule = self.granules[0]
 
         if container:
             grps = {granule: self._granules[granule]}
@@ -183,6 +143,40 @@ class AcquisitionsContainer:
             root = pjoin(root, group)
 
         return root
+
+    def get_highest_resolution(self, granule=None):
+        """Retrieve a list of supported acquisitions from the highest
+        resolution group for a given granule. The default is to
+        return the first listed granule, and the first resolution
+        group containing a supported band.
+        Meaning that while there might exist a higher resolution
+        group, the bands might not be supported, in which case
+        the next highest resolution group will be searched.
+
+        :return:
+            A `tuple` of (`list`, group_name) where the `list`
+            contains the acquisitions of supported bands from
+            the highest resolution group, and group_name is the name
+            of the group that the acquisitions came from.
+        """
+        for group in self.groups:
+            acqs = self.get_acquisitions(group, granule)
+            if acqs:
+                break
+        return acqs, group
+
+    @property
+    def supported_groups(self):
+        """Return a list of resolution groups that have supported
+        bands.
+        """
+        groups = []
+        for group in self.groups:
+            acqs = self.get_acquisitions(group=group)
+            if acqs:
+                groups.append(group)
+
+        return groups
 
 
 @total_ordering
@@ -226,6 +220,7 @@ class Acquisition:
             self._samples = ds.width
             self._lines = ds.height
             self._tile_size = ds.block_shapes[0]
+            self._resolution = ds.res
 
     @property
     def pathname(self):
@@ -283,6 +278,13 @@ class Acquisition:
         (ysize, xsize) dimensions.
         """
         return self._tile_size
+
+    @property
+    def resolution(self):
+        """The resolution of the file on disk reported as
+        (y, x).
+        """
+        return self._resolution
 
     @property
     def gps_file(self):
