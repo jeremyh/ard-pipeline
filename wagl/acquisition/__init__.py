@@ -208,9 +208,9 @@ def acquisitions_via_mtl(pathname):
             attrs["max_radiance"] = max_rad
             attrs["min_quantize"] = min_quant
             attrs["max_quantize"] = max_quant
-            band_name = attrs.pop("band_name")
-        else:
-            band_name = band_id
+
+        # band_name is an internal property of acquisitions class
+        band_name = attrs.pop("band_name", band_id)
 
         acqs.append(acqtype(pathname, fname, acq_datetime, band_name, band_id, attrs))
 
@@ -316,8 +316,6 @@ def acquisitions_s2_sinergise(pathname):
         # If it is a configured B-format transform it to the correct format
         if re.match("[0-9].?", band_id):
             band_name = f"B{band_id.zfill(2)}"
-        else:
-            band_name = band_id
 
         img_fname = pathname + "/" + band_name + ".jp2"
 
@@ -335,7 +333,9 @@ def acquisitions_s2_sinergise(pathname):
             attrs["d2"] = 1 / acquisition_data["u"]
             attrs["qv"] = acquisition_data["qv"]
             attrs["granule_xml"] = granule_xml
-            band_name = attrs.pop("band_name")
+
+        # band_name is an internal property of acquisitions class
+        band_name = attrs.pop("band_name", band_id)
 
         acq_time = acquisition_data["acq_time"]
 
@@ -486,9 +486,9 @@ def acquisitions_via_safe(pathname):
                 attrs["d2"] = 1 / u
                 attrs["qv"] = qv
                 attrs["granule_xml"] = granule_xmls[0]
-                band_name = attrs.pop("band_name")
-            else:
-                band_name = band_id
+
+            # band_name is an internal property of acquisitions class
+            band_name = attrs.pop("band_name", band_id)
 
             acqs.append(
                 acqtype(pathname, img_fname, acq_time, band_name, band_id, attrs)
