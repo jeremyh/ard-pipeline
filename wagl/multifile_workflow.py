@@ -84,7 +84,7 @@ def on_failure(task, exception):
     ERROR_LOGGER.error(
         task=task.get_task_family(),
         params=task.to_str_params(),
-        level1=task.level1,
+        level1=getattr(task, "level1", ""),
         exception=exception.__str__(),
         traceback=traceback.format_exc().splitlines(),
     )
