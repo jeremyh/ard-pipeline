@@ -332,7 +332,9 @@ def acquisitions_s2_sinergise(pathname):
             ]
             attrs["d2"] = 1 / acquisition_data["u"]
             attrs["qv"] = acquisition_data["qv"]
-            attrs["granule_xml"] = granule_xml
+
+        # Required attribute for packaging
+        attrs["granule_xml"] = granule_xml
 
         # band_name is an internal property of acquisitions class
         band_name = attrs.pop("band_name", band_id)
@@ -485,7 +487,9 @@ def acquisitions_via_safe(pathname):
                 attrs["solar_irradiance"] = solar_irradiance[band_id]
                 attrs["d2"] = 1 / u
                 attrs["qv"] = qv
-                attrs["granule_xml"] = granule_xmls[0]
+
+            # Required attribute for packaging
+            attrs["granule_xml"] = granule_xmls[0]
 
             # band_name is an internal property of acquisitions class
             band_name = attrs.pop("band_name", band_id)
