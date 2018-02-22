@@ -30,7 +30,7 @@ def on_failure(task, exception):
     ERROR_LOGGER.error(
         task=task.get_task_family(),
         params=task.to_str_params(),
-        level1=task.level1,
+        level1=getattr(task, "level1", ""),
         exception=exception.__str__(),
         traceback=traceback.format_exc().splitlines(),
     )
@@ -156,6 +156,7 @@ class ARDP(luigi.WrapperTask):
     workdir = luigi.Parameter()
     pkgdir = luigi.Parameter()
     acq_parser_hint = luigi.Parameter(default=None)
+    s3_root = luigi.Parameter()
 
     def requires(self):
         with open(self.level1_list) as src:
@@ -168,7 +169,7 @@ class ARDP(luigi.WrapperTask):
                 work_dir = container.get_root(work_root, granule=granule)
                 # TODO; pkgdir for landsat data
                 pkgdir = pjoin(self.pkgdir, basename(dirname(level1)))
-                yield Package(level1, work_dir, granule, pkgdir)
+                yield Package(level1, work_dir, granule, pkgdir, s3_root=self.s3_root)
 
 
 if __name__ == "__main__":
