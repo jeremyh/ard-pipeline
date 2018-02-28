@@ -116,9 +116,9 @@ class Package(luigi.Task):
     workdir = luigi.Parameter()
     granule = luigi.Parameter(default=None)
     pkgdir = luigi.Parameter()
+    s3_root = luigi.Parameter()
     yamls_dir = luigi.Parameter()
     cleanup = luigi.BoolParameter()
-    s3_root = luigi.Parameter()
     acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
@@ -162,6 +162,7 @@ class ARDP(luigi.WrapperTask):
     level1_list = luigi.Parameter()
     workdir = luigi.Parameter()
     pkgdir = luigi.Parameter()
+    s3_root = luigi.Parameter()
     acq_parser_hint = luigi.Parameter(default=None)
     s3_root = luigi.Parameter()
 
@@ -279,7 +280,7 @@ class ARDP_S3(luigi.WrapperTask):
                     granule,
                     pkgdir,
                     s3_bucket=self.s3_bucket,
-                    s3_key_prefix=self.s3_key_prefix,
+                    s3_key_prefix=pjoin(self.s3_key_prefix, ymd),
                     s3_bucket_region=self.s3_bucket_region,
                 )
 
