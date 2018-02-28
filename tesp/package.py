@@ -487,7 +487,7 @@ def package(
         # update to url/http paths
         url_paths = img_paths.copy()
         for key in url_paths:
-            url_paths[key]["path"] = pjoin(url_root, url_paths[key]["path"])
+            url_paths[key]["path"] = ppjoin(url_root, url_paths[key]["path"])
 
         # create http paths for s3 yaml doc
         tags["image"]["bands"] = url_paths
