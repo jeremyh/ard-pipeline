@@ -5,7 +5,7 @@
 import logging
 import shutil
 import traceback
-from os.path import basename, dirname
+from os.path import basename
 from os.path import join as pjoin
 
 import luigi
@@ -167,8 +167,9 @@ class ARDP(luigi.WrapperTask):
             container = acquisitions(level1, self.acq_parser_hint)
             for granule in container.granules:
                 work_dir = container.get_root(work_root, granule=granule)
-                # TODO; pkgdir for landsat data
-                pkgdir = pjoin(self.pkgdir, basename(dirname(level1)))
+                acq = container.get_acquisitions(None, granule, False)
+                ymd = acq.acquisition_datetime.strftime("%Y-%m-%d")
+                pkgdir = pjoin(self.pkgdir, ymd)
                 yield Package(level1, work_dir, granule, pkgdir)
 
 
