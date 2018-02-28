@@ -7,11 +7,14 @@ import re
 import tempfile
 from os.path import basename, dirname, exists, splitext
 from os.path import join as pjoin
+from pathlib import Path
 from subprocess import check_call
 
 import h5py
 import numpy as np
 import yaml
+from eugl.contiguity import contiguity
+from eugl.fmask import fmask_cogtif
 from pkg_resources import resource_stream
 from rasterio.enums import Resampling
 from wagl.acquisition import acquisitions
@@ -22,9 +25,7 @@ from yaml.representer import Representer
 
 import tesp
 from tesp.checksum import checksum
-from tesp.contiguity import do_contiguity
 from tesp.contrast import quicklook
-from tesp.fmask_cophub import fmask_cogtif
 from tesp.html_geojson import html_map
 from tesp.yaml_merge import image_dict, merge_metadata
 
@@ -57,7 +58,7 @@ def run_command(command, work_dir):
     check_call(" ".join(command), shell=True, cwd=work_dir)
 
 
-def wagl_unpack(scene, granule, h5group, outdir):
+def wagl_unpack(container, granule, h5group, outdir):
     """Unpack and package the NBAR and NBART products."""
     # listing of all datasets of IMAGE CLASS type
     img_paths = find(h5group, "IMAGE")
@@ -67,7 +68,9 @@ def wagl_unpack(scene, granule, h5group, outdir):
         for pathname in [p for p in img_paths if f"/{product}/" in p]:
             dataset = h5group[pathname]
 
-            acqs = scene.get_acquisitions(group=pathname.split("/")[0], granule=granule)
+            acqs = container.get_acquisitions(
+                group=pathname.split("/")[0], granule=granule
+            )
             acq = [a for a in acqs if a.band_name == dataset.attrs["band_name"]][0]
 
             base_fname = f"{splitext(basename(acq.uri))[0]}.TIF"
@@ -155,16 +158,40 @@ def build_vrts(outdir):
         run_command(cmd, out_path)
 
 
-def create_contiguity(outdir):
-    """Create the contiguity dataset for each."""
-    for product in PRODUCTS:
-        out_path = pjoin(outdir, product)
-        expr = pjoin(out_path, "*ALLBANDS_20m.vrt")
-        fname = glob.glob(expr)[0]
-        out_fname = fname.replace(".vrt", "_CONTIGUITY.TIF")
+def create_contiguity(container, granule, outdir):
+    """Create the contiguity (all pixels valid) dataset."""
+    # quick decision to use the mode resolution to form contiguity
+    # this rule is expected to change once more people get involved
+    # in the decision making process
+    acqs, _ = container.get_mode_resolution(granule)
 
-        # create contiguity
-        do_contiguity(fname, out_fname)
+    with tempfile.TemporaryDirectory(dir=outdir, prefix="contiguity-") as tmpdir:
+        for product in PRODUCTS:
+            out_path = pjoin(outdir, product)
+            fnames = [str(f) for f in Path(out_path).glob("*.TIF")]
+
+            # output filename
+            match = PATTERN1.match(fnames[0]).groupdict()
+            out_fname = "{}{}{}".format(
+                match.get("prefix"), "CONTIGUITY", match.get("extension")
+            )
+
+            # temp vrt
+            tmp_fname = pjoin(tmpdir, f"{product}.vrt")
+            cmd = [
+                "gdalbuildvrt" "-resolution",
+                "user",
+                "-tr",
+                str(acqs[0].resolution[1]),
+                str(acqs[0].resolution[0]),
+                "-separate",
+                tmp_fname,
+            ]
+            cmd.extend(fnames)
+            run_command(cmd, tmpdir)
+
+            # create contiguity
+            contiguity(tmp_fname, out_fname)
 
 
 def create_html_map(outdir):
@@ -178,20 +205,50 @@ def create_html_map(outdir):
     html_map(contiguity_fname, html_fname, json_fname)
 
 
-def create_quicklook(outdir):
+def create_quicklook(container, outdir):
     """Create the quicklook and thumbnail images."""
-    for product in PRODUCTS:
-        out_path = pjoin(outdir, product)
-        fname = glob.glob(pjoin(out_path, "*10m.vrt"))[0]
-        out_fname1 = fname.replace("10m.vrt", "QUICKLOOK.TIF")
-        out_fname2 = fname.replace("10m.vrt", "THUMBNAIL.JPG")
+    acq = container.get_acquisitions()[0]
 
-        with tempfile.TemporaryDirectory(dir=out_path, prefix="quicklook-") as tmpdir:
-            tmp_fname1 = pjoin(tmpdir, "tmp1.tif")
-            tmp_fname2 = pjoin(tmpdir, "tmp2.tif")
-            quicklook(fname, out_fname=tmp_fname1, src_min=1, src_max=3500, out_min=1)
+    # are quicklooks still needed?
+    # this wildcard mechanism needs to change if quicklooks are to
+    # persist
+    band_wcards = {
+        "LANDSAT_5": "L*_B[4,3,2].TIF",
+        "LANDSAT_7": "L*_B[4,3,2].TIF",
+        "LANDSAT_8": "L*_B[5,4,3].TIF",
+        "SENTINEL_2A": "*_B0[8,4,3].TIF",
+        "SENTINEL_2B": "*_B0[8,4,3].TIF",
+    }
+
+    # appropriate wildcard
+    wcard = band_wcards[acq.platform_id]
+
+    with tempfile.TemporaryDirectory(dir=outdir, prefix="quicklook-") as tmpdir:
+        for product in PRODUCTS:
+            out_path = Path(pjoin(outdir, product))
+            fnames = [str(f) for f in out_path.glob(wcard)]
+
+            # output filenames
+            match = PATTERN1.match(fnames[0]).groupdict()
+            out_fname1 = "{}{}{}".format(
+                match.get("prefix"), "QUICKLOOK", match.get("extension")
+            )
+            out_fname2 = "{}{}{}".format(match.get("prefix"), "THUMBNAIL", ".JPG")
+
+            # initial vrt of required rgb bands
+            tmp_fname1 = pjoin(tmpdir, f"{product}.vrt")
+            cmd = ["gdalbuildvrt", "-separate", tmp_fname1]
+            cmd.extend(fnames)
+            run_command(cmd, tmpdir)
+
+            # quicklook with contrast scaling
+            tmp_fname2 = pjoin(tmpdir, "{}_{}.tif".format(product, "qlook"))
+            quicklook(
+                tmp_fname1, out_fname=tmp_fname2, src_min=1, src_max=3500, out_min=1
+            )
 
             # warp to Lon/Lat WGS84
+            tmp_fname3 = pjoin(tmpdir, "{}_{}.tif".format(product, "warp"))
             cmd = [
                 "gdalwarp",
                 "-t_srs",
@@ -204,17 +261,14 @@ def create_quicklook(outdir):
                 "PHOTOMETRIC=YCBCR",
                 "-co",
                 "TILED=YES",
-                "-tr",
-                "0.0001",
-                "0.0001",
-                tmp_fname1,
                 tmp_fname2,
+                tmp_fname3,
             ]
-            run_command(cmd, out_path)
+            run_command(cmd, tmpdir)
 
             # build overviews/pyramids
-            cmd = ["gdaladdo", "-r", "average", tmp_fname2, "2", "4", "8", "16", "32"]
-            run_command(cmd, out_path)
+            cmd = ["gdaladdo", "-r", "average", tmp_fname3, "2", "4", "8", "16", "32"]
+            run_command(cmd, tmpdir)
 
             # create the cogtif
             cmd = [
@@ -227,10 +281,10 @@ def create_quicklook(outdir):
                 "COMPRESS=JPEG",
                 "-co",
                 "PHOTOMETRIC=YCBCR",
-                tmp_fname2,
+                tmp_fname3,
                 out_fname1,
             ]
-            run_command(cmd, out_path)
+            run_command(cmd, tmpdir)
 
             # create the thumbnail
             cmd = [
@@ -243,7 +297,7 @@ def create_quicklook(outdir):
                 out_fname1,
                 out_fname2,
             ]
-            run_command(cmd, out_path)
+            run_command(cmd, tmpdir)
 
 
 def create_readme(outdir):
@@ -297,8 +351,10 @@ def package(
     :return:
         None; The packages will be written to disk directly.
     """
-    scene = acquisitions(l1_path, acq_parser_hint)
-    yaml_fname = pjoin(yamls_path, basename(dirname(l1_path)), f"{scene.label}.yaml")
+    container = acquisitions(l1_path, acq_parser_hint)
+    yaml_fname = pjoin(
+        yamls_path, basename(dirname(l1_path)), f"{container.label}.yaml"
+    )
     with open(yaml_fname) as src:
         l1_documents = {doc["tile_id"]: doc for doc in yaml.load_all(src)}
 
@@ -309,17 +365,18 @@ def package(
         if not exists(out_path):
             os.makedirs(out_path)
 
+        # unpack the data produced by wagl
+        wagl_tags = wagl_unpack(container, granule, fid[granule], out_path)
+
+        # file based globbing, so can't have any other tifs on disk
+        create_contiguity(container, granule, out_path)
+
         # fmask cogtif conversion
         fmask_cogtif(fmask_fname, pjoin(out_path, f"{grn_id}_QA.TIF"))
 
-        # unpack the data produced by wagl
-        wagl_tags = wagl_unpack(scene, granule, fid[granule], out_path)
-
-        # vrts, contiguity, map, quicklook, thumbnail, readme, checksum
-        build_vrts(out_path)
-        create_contiguity(out_path)
+        # map, quicklook/thumbnail, readme, checksum
         create_html_map(out_path)
-        create_quicklook(out_path)
+        create_quicklook(container, out_path)
         create_readme(out_path)
 
         # relative paths yaml doc
