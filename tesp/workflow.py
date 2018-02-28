@@ -6,9 +6,10 @@ import logging
 import re
 import shutil
 import traceback
-from os.path import basename, dirname
+from os.path import basename
 from os.path import join as pjoin
 from pathlib import Path
+from posixpath import join as ppjoin
 
 import luigi
 from eugl.fmask import fmask
@@ -165,7 +166,6 @@ class ARDP(luigi.WrapperTask):
     pkgdir = luigi.Parameter()
     url_root = luigi.Parameter()
     acq_parser_hint = luigi.Parameter(default=None)
-    s3_root = luigi.Parameter()
 
     def requires(self):
         with open(self.level1_list) as src:
@@ -176,9 +176,11 @@ class ARDP(luigi.WrapperTask):
             container = acquisitions(level1, self.acq_parser_hint)
             for granule in container.granules:
                 work_dir = container.get_root(work_root, granule=granule)
-                # TODO; pkgdir for landsat data
-                pkgdir = pjoin(self.pkgdir, basename(dirname(level1)))
-                yield Package(level1, work_dir, granule, pkgdir, s3_root=self.s3_root)
+                acq = container.get_acquisitions(None, granule, False)[0]
+                ymd = acq.acquisition_datetime.strftime("%Y-%m-%d")
+                pkgdir = pjoin(self.pkgdir, ymd)
+                url_root = pjoin(self.url_root, ymd)
+                yield Package(level1, work_dir, granule, pkgdir, url_root)
 
 
 @inherits(Package)
@@ -205,15 +207,14 @@ class Package_S3(luigi.Task):
         "xml": "text/xml",
         "yaml": "text/plain",
         "yml": "text/plain",
+        "md": "text/plain",
     }
 
     def requires(self):
         s3_root = "http://{}.s3-{}.amazonaws.com/{}".format(
             self.s3_bucket, self.s3_bucket_region, self.s3_key_prefix
         )
-        return Package(
-            self.level1, self.workdir, self.granule, self.pkgdir, s3_root=s3_root
-        )
+        return Package(self.level1, self.workdir, self.granule, self.pkgdir, s3_root)
 
     def output(self):
         # Assumes that the flag file is at the root of the package
@@ -281,7 +282,7 @@ class ARDP_S3(luigi.WrapperTask):
                     granule,
                     pkgdir,
                     s3_bucket=self.s3_bucket,
-                    s3_key_prefix=pjoin(self.s3_key_prefix, ymd),
+                    s3_key_prefix=ppjoin(self.s3_key_prefix, ymd),
                     s3_bucket_region=self.s3_bucket_region,
                 )
 
