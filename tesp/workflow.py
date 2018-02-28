@@ -15,7 +15,7 @@ from structlog.processors import JSONRenderer
 from wagl.acquisition import acquisitions
 from wagl.singlefile_workflow import DataStandardisation
 
-from tesp.fmask_cophub import fmask, prepare_dataset
+from tesp.fmask_cophub import fmask
 from tesp.package import package
 
 ERROR_LOGGER = wrap_logger(
@@ -57,23 +57,26 @@ class RunFmask(luigi.Task):
     """Execute the Fmask algorithm for a given granule."""
 
     level1 = luigi.Parameter()
-    task = luigi.TupleParameter()
+    granule = luigi.Parameter()
     workdir = luigi.Parameter()
+    acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
         # for the time being have fmask require wagl,
         # no point in running fmask if wagl fails...
         # return WorkDir(self.level1, dirname(self.workdir))
-        return DataStandardisation(self.level1, self.workdir, self.task[1])
+        return DataStandardisation(self.level1, self.workdir, self.granule)
 
     def output(self):
-        out_fname = pjoin(self.workdir, f"{self.task[1]}.cloud.img")
+        out_fname = pjoin(self.workdir, f"{self.granule}.fmask.img")
 
         return luigi.LocalTarget(out_fname)
 
     def run(self):
         with self.output().temporary_path() as out_fname:
-            fmask(self.level1, self.task, out_fname, self.workdir)
+            fmask(
+                self.level1, self.granule, out_fname, self.workdir, self.acq_parser_hint
+            )
 
 
 # useful for testing fmask via the CLI
@@ -86,8 +89,9 @@ class Fmask(luigi.WrapperTask):
 
     def requires(self):
         # issues task per granule
-        for task in prepare_dataset(self.level1, self.acq_parser_hint):
-            yield RunFmask(self.level1, task, self.workdir)
+        container = acquisitions(self.level1, self.acq_parser_hint)
+        for granule in container.granules:
+            yield RunFmask(self.level1, granule, self.workdir)
 
 
 # TODO: GQA implementation
@@ -112,12 +116,9 @@ class Package(luigi.Task):
     acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
-        # task items for fmask
-        ftask = prepare_dataset(self.level1, self.acq_parser_hint, self.granule)[0]
-
         tasks = {
             "wagl": DataStandardisation(self.level1, self.workdir, self.granule),
-            "fmask": RunFmask(self.level1, ftask, self.workdir),
+            "fmask": RunFmask(self.level1, self.granule, self.workdir),
         }
         # TODO: GQA implementation
         # 'gqa': Gqa()}
