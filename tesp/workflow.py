@@ -3,20 +3,21 @@
 """A temporary workflow for processing S2 data into an ARD package."""
 
 import logging
+import re
 import shutil
 import traceback
 from os.path import basename
 from os.path import join as pjoin
 
 import luigi
+from eugl.fmask import fmask
 from luigi.local_target import LocalFileSystem
 from structlog import wrap_logger
 from structlog.processors import JSONRenderer
 from wagl.acquisition import acquisitions
 from wagl.singlefile_workflow import DataStandardisation
 
-from tesp.fmask_cophub import fmask
-from tesp.package import package
+from tesp.package import ARD, PATTERN2, package
 
 ERROR_LOGGER = wrap_logger(
     logging.getLogger("ard-error"), processors=[JSONRenderer(indent=1, sort_keys=True)]
@@ -126,8 +127,8 @@ class Package(luigi.Task):
         return tasks
 
     def output(self):
-        granule = self.granule if self.granule else ""
-        out_fname = pjoin(self.pkgdir, granule.replace("L1C", "ARD"), "CHECKSUM.sha1")
+        granule = re.sub(PATTERN2, ARD, self.granule)
+        out_fname = pjoin(self.pkgdir, granule, "CHECKSUM.sha1")
 
         return luigi.LocalTarget(out_fname)
 
