@@ -243,8 +243,6 @@ def create_contiguity(container, granule, outdir):
 
             alias = ALIAS_FMT[product].format("contiguity")
             rel_paths[alias] = {"path": rel_path, "layer": 1}
-            out_path = pjoin(outdir, product)
-            fnames = [str(f) for f in Path(out_path).glob("*.TIF")]
 
             # temp vrt
             tmp_fname = pjoin(tmpdir, f"{product}.vrt")
