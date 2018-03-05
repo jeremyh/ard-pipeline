@@ -266,7 +266,7 @@ def create_contiguity(container, granule, outdir):
 
 def create_html_map(outdir):
     """Create the html map and GeoJSON valid data extents files."""
-    expr = pjoin(outdir, "NBAR", "*_CONTIGUITY.TIF")
+    expr = pjoin(outdir, QA, "*_CONTIGUITY.TIF")
     contiguity_fname = glob.glob(expr)[0]
     html_fname = pjoin(outdir, "map.html")
     json_fname = pjoin(outdir, "bounds.geojson")
@@ -283,11 +283,11 @@ def create_quicklook(container, outdir):
     # this wildcard mechanism needs to change if quicklooks are to
     # persist
     band_wcards = {
-        "LANDSAT_5": "L*_B[4,3,2].TIF",
-        "LANDSAT_7": "L*_B[4,3,2].TIF",
-        "LANDSAT_8": "L*_B[5,4,3].TIF",
-        "SENTINEL_2A": "*_B0[8,4,3].TIF",
-        "SENTINEL_2B": "*_B0[8,4,3].TIF",
+        "LANDSAT_5": "L*_B[3,2,1].TIF",
+        "LANDSAT_7": "L*_B[3,2,1].TIF",
+        "LANDSAT_8": "L*_B[4,3,2].TIF",
+        "SENTINEL_2A": "*_B0[4,3,2].TIF",
+        "SENTINEL_2B": "*_B0[4,3,2].TIF",
     }
 
     # appropriate wildcard
@@ -435,10 +435,10 @@ def package(
     # quick workaround if no source yaml
     if exists(yaml_fname):
         with open(yaml_fname) as src:
-            l1_documents = {doc["tile_id"]: doc for doc in yaml.load_all(src)}
+            l1_documents = {doc[granule]: doc for doc in yaml.load_all(src)}
             l1_tags = l1_documents[granule]
     else:
-        l1_tags = None
+        raise OSError(f"yaml file not found: {yaml_fname}")
 
     with h5py.File(wagl_fname, "r") as fid:
         grn_id = re.sub(PATTERN2, ARD, granule)
@@ -468,7 +468,7 @@ def package(
 
         # fmask cogtif conversion
         rel_path = pjoin(QA, f"{grn_id}_FMASK.TIF")
-        img_paths["pixel_quality"] = {"path": rel_path, "layer": 1}
+        img_paths["fmask"] = {"path": rel_path, "layer": 1}
         fmask_cogtif(fmask_fname, pjoin(out_path, rel_path))
 
         # map, quicklook/thumbnail, readme, checksum
