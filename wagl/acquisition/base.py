@@ -202,6 +202,20 @@ class AcquisitionsContainer:
 
         return groups
 
+    def get_all_acquisitions(self, granule=None):
+        """Retrieve all supported acquisitions from a given granule.
+        This will ignore the fact that acquisitions could be from
+        different resolution groups, and put them all in a single
+        list.
+        """
+        acquisitions = []
+        for group in self.groups:
+            acqs = self.get_acquisitions(group, granule)
+            if acqs:
+                acquisitions.extend(acqs)
+
+        return acquisitions
+
 
 @total_ordering
 class Acquisition:
