@@ -334,8 +334,6 @@ def create_quicklook(container, outdir):
                 "gdalwarp",
                 "-t_srs",
                 '"EPSG:4326"',
-                "-tap",
-                "-tap",
                 "-co",
                 "COMPRESS=JPEG",
                 "-co",
