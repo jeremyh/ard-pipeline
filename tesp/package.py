@@ -442,7 +442,10 @@ def package(
     # quick workaround if no source yaml
     if exists(yaml_fname):
         with open(yaml_fname) as src:
-            l1_documents = {doc[granule]: doc for doc in yaml.load_all(src)}
+            # TODO harmonise field names for different sensors
+            l1_documents = {
+                doc.get("tile_id", doc["label"]): doc for doc in yaml.load_all(src)
+            }
             l1_tags = l1_documents[granule]
     else:
         raise OSError(f"yaml file not found: {yaml_fname}")
