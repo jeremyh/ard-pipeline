@@ -245,13 +245,17 @@ def create_contiguity(container, granule, outdir):
             rel_path = pjoin(QA, base_fname)
             out_fname = pjoin(outdir, rel_path)
 
+            if not exists(dirname(out_fname)):
+                os.makedirs(dirname(out_fname))
+
             alias = ALIAS_FMT[product].format("contiguity")
             rel_paths[alias] = {"path": rel_path, "layer": 1}
 
             # temp vrt
             tmp_fname = pjoin(tmpdir, f"{product}.vrt")
             cmd = [
-                "gdalbuildvrt" "-resolution",
+                "gdalbuildvrt",
+                "-resolution",
                 "user",
                 "-tr",
                 str(acqs[0].resolution[1]),
