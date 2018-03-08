@@ -205,16 +205,21 @@ class Package_S3(luigi.Task):
     }
 
     def requires(self):
-        return Package(self.level1, self.workdir, self.granule, self.pkgdir)
+        s3_root = "http://{}.s3-{}.amazonaws.com/{}".format(
+            self.s3_bucket, self.s3_bucket_region, self.s3_key_prefix
+        )
+        return Package(
+            self.level1, self.workdir, self.granule, self.pkgdir, s3_root=s3_root
+        )
 
     def output(self):
         # Assumes that the flag file is at the root of the package
         resolved_checksum = Path(self.input().path).resolve()
         return S3FlagTarget(
             f"s3://{self.s3_bucket}/{self.s3_key_prefix}/"
-            + resolved_checksum.parent.stem
+            + resolved_checksum.parent.name
             + "/",
-            flag=resolved_checksum.stem + resolved_checksum.suffix,
+            flag=resolved_checksum.name,
         )
 
     def run(self):
