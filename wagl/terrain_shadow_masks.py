@@ -109,6 +109,7 @@ def self_shadow(
     }
     desc = "Self shadow mask derived using the incident and exiting angles."
     attrs["description"] = desc
+    attrs["alias"] = "self-shadow"
     attach_image_attributes(out_dset, attrs)
 
     # process by tile
@@ -462,6 +463,7 @@ def calculate_cast_shadow(
         "The cast shadow mask determined using the {} " "as the source direction."
     ).format(source_dir)
     attrs["description"] = desc
+    attrs["alias"] = f"cast-shadow-{source_dir}".lower()
     attach_image_attributes(out_dset, attrs)
 
     if out_group is None:
@@ -585,6 +587,7 @@ def combine_shadow_masks(
     )
     attrs["description"] = desc
     attrs["mask_values"] = "False = Shadow; True = Non Shadow"
+    attrs["alias"] = "terrain-shadow"
     attach_image_attributes(out_dset, attrs)
 
     # process by tile
