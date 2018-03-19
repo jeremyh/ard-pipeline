@@ -567,8 +567,8 @@ def get_brdf_data(
             brdf_mean_value = brdf_object.mean_data_value()
 
         # Add the brdf filename and mean value to brdf_dict
-        uri = urlparse(hdfFile, scheme="file")
-        res = {"data_source": "BRDF", "uri": uri, "value": brdf_mean_value}
+        url = urlparse(hdfFile, scheme="file").geturl()
+        res = {"data_source": "BRDF", "url": url, "value": brdf_mean_value}
 
         # ancillary metadata tracking
         md = extract_ancillary_metadata(hdfFile)

@@ -598,7 +598,7 @@ def get_aerosol_data(acquisition, aerosol_dict):
         aerosol_fname = aerosol_dict["pathname"]
 
     fid = h5py.File(aerosol_fname, "r")
-    uri = urlparse(aerosol_fname, scheme="file")
+    url = urlparse(aerosol_fname, scheme="file").geturl()
 
     delta_tolerance = datetime.timedelta(days=0.5)
 
@@ -627,7 +627,7 @@ def get_aerosol_data(acquisition, aerosol_dict):
                         "data_source": description,
                         "dataset_pathname": pathname,
                         "query_date": dt,
-                        "uri": uri,
+                        "url": url,
                         "extents": wkt.dumps(intersection),
                     }
 
@@ -666,10 +666,10 @@ def get_elevation_data(lonlat, dem_path):
         str
     """
     datafile = pjoin(dem_path, "DEM_one_deg.tif")
-    uri = urlparse(datafile, scheme="file")
+    url = urlparse(datafile, scheme="file").geturl()
     data = get_pixel(datafile, lonlat) * 0.001  # scale to correct units
 
-    metadata = {"data_source": "Elevation", "uri": uri}
+    metadata = {"data_source": "Elevation", "url": url}
 
     # ancillary metadata tracking
     md = extract_ancillary_metadata(datafile)
@@ -685,10 +685,10 @@ def get_ozone_data(ozone_path, lonlat, time):
     """
     filename = time.strftime("%b").lower() + ".tif"
     datafile = pjoin(ozone_path, filename)
-    uri = urlparse(datafile, scheme="file")
+    url = urlparse(datafile, scheme="file").geturl()
     data = get_pixel(datafile, lonlat)
 
-    metadata = {"data_source": "Ozone", "uri": uri, "query_date": time}
+    metadata = {"data_source": "Ozone", "url": url, "query_date": time}
 
     # ancillary metadata tracking
     md = extract_ancillary_metadata(datafile)
@@ -715,7 +715,7 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1):
         water_vapour_path = water_vapour_dict["pathname"]
 
     datafile = pjoin(water_vapour_path, filename)
-    uri = urlparse(datafile, scheme="file")
+    url = urlparse(datafile, scheme="file").geturl()
 
     # calculate the water vapour band number based on the datetime
 
@@ -745,7 +745,7 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1):
 
     data = data * scale_factor
 
-    metadata = {"data_source": "Water Vapour", "uri": uri, "query_date": dt}
+    metadata = {"data_source": "Water Vapour", "url": url, "query_date": dt}
 
     # ancillary metadata tracking
     md = extract_ancillary_metadata(datafile)
@@ -762,9 +762,9 @@ def ecwmf_elevation(datafile, lonlat):
     2 metres is added to the result before returning.
     """
     data = get_pixel(datafile, lonlat) / 9.80665 / 1000.0 + 0.002
-    uri = urlparse(datafile, scheme="file")
+    url = urlparse(datafile, scheme="file").geturl()
 
-    metadata = {"data_source": "ECWMF Invariant Geo-Potential", "uri": uri}
+    metadata = {"data_source": "ECWMF Invariant Geo-Potential", "url": url}
 
     # ancillary metadata tracking
     md = extract_ancillary_metadata(datafile)
@@ -784,7 +784,7 @@ def ecwmf_temperature_2metre(input_path, lonlat, time):
     data = None
     required_ymd = datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        uri = urlparse(f, scheme="file")
+        url = urlparse(f, scheme="file").geturl()
         ymd = splitext(basename(f))[0].split("_")[1]
         ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
         if ancillary_ymd == required_ymd:
@@ -792,7 +792,7 @@ def ecwmf_temperature_2metre(input_path, lonlat, time):
 
             metadata = {
                 "data_source": "ECWMF 2 metre Temperature",
-                "uri": uri,
+                "url": url,
                 "query_date": time,
             }
 
@@ -817,7 +817,7 @@ def ecwmf_dewpoint_temperature(input_path, lonlat, time):
     data = None
     required_ymd = datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        uri = urlparse(f, scheme="file")
+        url = urlparse(f, scheme="file").geturl()
         ymd = splitext(basename(f))[0].split("_")[1]
         ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
         if ancillary_ymd == required_ymd:
@@ -825,7 +825,7 @@ def ecwmf_dewpoint_temperature(input_path, lonlat, time):
 
             metadata = {
                 "data_source": "ECWMF 2 metre Dewpoint Temperature ",
-                "uri": uri,
+                "url": url,
                 "query_date": time,
             }
 
@@ -852,7 +852,7 @@ def ecwmf_surface_pressure(input_path, lonlat, time):
     data = None
     required_ymd = datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        uri = urlparse(f, scheme="file")
+        url = urlparse(f, scheme="file").geturl()
         ymd = splitext(basename(f))[0].split("_")[1]
         ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
         if ancillary_ymd == required_ymd:
@@ -860,7 +860,7 @@ def ecwmf_surface_pressure(input_path, lonlat, time):
 
             metadata = {
                 "data_source": "ECWMF Surface Pressure",
-                "uri": uri,
+                "url": url,
                 "query_date": time,
             }
 
@@ -885,7 +885,7 @@ def ecwmf_water_vapour(input_path, lonlat, time):
     data = None
     required_ymd = datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        uri = urlparse(f, scheme="file")
+        url = urlparse(f, scheme="file").geturl()
         ymd = splitext(basename(f))[0].split("_")[1]
         ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
         if ancillary_ymd == required_ymd:
@@ -893,7 +893,7 @@ def ecwmf_water_vapour(input_path, lonlat, time):
 
             metadata = {
                 "data_source": "ECWMF Total Column Water Vapour",
-                "uri": uri,
+                "url": url,
                 "query_date": time,
             }
 
@@ -923,7 +923,7 @@ def ecwmf_temperature(input_path, lonlat, time):
     data = None
     required_ymd = datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        uri = urlparse(f, scheme="file")
+        url = urlparse(f, scheme="file").geturl()
         ymd = splitext(basename(f))[0].split("_")[1]
         ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
         if ancillary_ymd == required_ymd:
@@ -932,7 +932,7 @@ def ecwmf_temperature(input_path, lonlat, time):
 
             metadata = {
                 "data_source": "ECWMF Temperature",
-                "uri": uri,
+                "url": url,
                 "query_date": time,
             }
 
@@ -966,7 +966,7 @@ def ecwmf_geo_potential(input_path, lonlat, time):
     data = None
     required_ymd = datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        uri = urlparse(f, scheme="file")
+        url = urlparse(f, scheme="file").geturl()
         ymd = splitext(basename(f))[0].split("_")[1]
         ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
         if ancillary_ymd == required_ymd:
@@ -976,7 +976,7 @@ def ecwmf_geo_potential(input_path, lonlat, time):
 
             metadata = {
                 "data_source": "ECWMF Geo-Potential",
-                "uri": uri,
+                "url": url,
                 "query_date": time,
             }
 
@@ -1010,7 +1010,7 @@ def ecwmf_relative_humidity(input_path, lonlat, time):
     data = None
     required_ymd = datetime.datetime(time.year, time.month, time.day)
     for f in files:
-        uri = urlparse(f, scheme="file")
+        url = urlparse(f, scheme="file").geturl()
         ymd = splitext(basename(f))[0].split("_")[1]
         ancillary_ymd = datetime.datetime.strptime(ymd, "%Y-%m-%d")
         if ancillary_ymd == required_ymd:
@@ -1019,7 +1019,7 @@ def ecwmf_relative_humidity(input_path, lonlat, time):
 
             metadata = {
                 "data_source": "ECWMF Relative Humidity",
-                "uri": uri,
+                "url": url,
                 "query_date": time,
             }
 
