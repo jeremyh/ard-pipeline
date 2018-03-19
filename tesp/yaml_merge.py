@@ -44,7 +44,10 @@ def merge_metadata(level1_tags, wagl_tags, granule, image_paths):
         "extent": level1_tags["extent"],
         "grid_spatial": level1_tags["grid_spatial"],
         "image": {"bands": image_paths},
-        "lineage": {"source_datasets": source_tags},
+        "lineage": {
+            "ancillary": wagl_tags["ancillary"],
+            "source_datasets": source_tags,
+        },
     }
 
     return merged_yaml
