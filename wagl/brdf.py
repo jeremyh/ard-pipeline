@@ -28,6 +28,7 @@ import subprocess
 import tempfile
 from os.path import basename
 from os.path import join as pjoin
+from urllib.parse import urlparse
 
 import numpy as np
 from osgeo import gdal, gdalconst, osr
@@ -566,7 +567,8 @@ def get_brdf_data(
             brdf_mean_value = brdf_object.mean_data_value()
 
         # Add the brdf filename and mean value to brdf_dict
-        res = {"data_source": "BRDF", "data_file": hdfFile, "value": brdf_mean_value}
+        url = urlparse(hdfFile, scheme="file").geturl()
+        res = {"data_source": "BRDF", "url": url, "value": brdf_mean_value}
 
         # ancillary metadata tracking
         md = extract_ancillary_metadata(hdfFile)
@@ -584,7 +586,6 @@ def get_brdf_data(
 
     # add very basic brdf description metadata and the roi polygon
     for param in BrdfParameters:
-        results[param]["BRDF-Parameter"] = param.name
-        results[param]["roi_wkt"] = wkt.dumps(brdf_object.roi_polygon)
+        results[param]["extents"] = wkt.dumps(brdf_object.roi_polygon)
 
     return results
