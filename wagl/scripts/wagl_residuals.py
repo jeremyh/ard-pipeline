@@ -36,7 +36,9 @@ def distribution(data):
     """
     if data.dtype.name in ["float", "float32", "float64"]:
         try:
-            h = histogram(data, omin="omin", omax="omax", locations="loc", nbins=256)
+            h = histogram(
+                data, omin="omin", omax="omax", locations="loc", nbins=256, nan=True
+            )
         except ValueError:
             h = {}
             h["histogram"] = np.zeros((256), dtype="uint32")
@@ -56,6 +58,7 @@ def image_residual(
     """Undertake residual analysis for IMAGE CLASS Datasets.
     A histogram and a cumulative histogram of the residuals are
     calculated and recorded as TABLE CLASS Datasets.
+    Any NaN's in IMAGE datasets will be handled automatically.
 
     :param ref_fid:
         A h5py file object (essentially the root Group), containing
@@ -106,8 +109,8 @@ def image_residual(
 
     # ignore no data values for the time being
     residual = evaluate(ref_dset, test_dset)
-    min_residual = residual.min()
-    max_residual = residual.max()
+    min_residual = np.nanmin(residual)
+    max_residual = np.nanmax(residual)
     pct_difference = (residual != 0).sum() / residual.size * 100
 
     geobox = GriddedGeoBox.from_dataset(ref_dset)
@@ -117,7 +120,7 @@ def image_residual(
     # output residual
     attrs = {}
     attrs["crs_wkt"] = geobox.crs.ExportToWkt()
-    attrs["geotransform"] = (geobox.transform.to_gdal(),)
+    attrs["geotransform"] = geobox.transform.to_gdal()
     attrs["description"] = "Residual"
     attrs["min_residual"] = min_residual
     attrs["max_residual"] = max_residual
@@ -225,6 +228,12 @@ def scalar_residual(ref_fid, test_fid, pathname, out_fid, save_inputs):
     attrs = ref_data.copy()
     attrs.pop("value")
     attrs["description"] = "Equivalency Test"
+
+    # drop 'file_format' as the conversion tool will try to output that format
+    # but currently we're not testing contents, just if it is different
+    # so saying we've created a yaml string when it is a simple bool is
+    # not correct
+    attrs.pop("file_format", None)
 
     # this'll handle string types, but we won't get a numerical
     # difference value for numerical values, only a bool
