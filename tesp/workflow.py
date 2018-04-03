@@ -10,6 +10,7 @@ from os.path import basename
 from os.path import join as pjoin
 from pathlib import Path
 from posixpath import join as ppjoin
+from urllib.parse import urlencode
 
 import luigi
 from eugl.fmask import fmask
@@ -27,7 +28,12 @@ from wagl.singlefile_workflow import DataStandardisation
 from tesp.package import ARD, PATTERN2, package
 
 ERROR_LOGGER = wrap_logger(
-    logging.getLogger("ard-error"), processors=[JSONRenderer(indent=1, sort_keys=True)]
+    logging.getLogger("wagl-error.packaging"),
+    processors=[JSONRenderer(indent=1, sort_keys=True)],
+)
+STATUS_LOGGER = wrap_logger(
+    logging.getLogger("wagl-status.packaging"),
+    processors=[JSONRenderer(indent=1, sort_keys=True)],
 )
 INTERFACE_LOGGER = logging.getLogger("luigi-interface")
 
@@ -195,6 +201,7 @@ class PackageS3(luigi.Task):
     s3_key_prefix = luigi.Parameter()
     s3_bucket_region = luigi.Parameter()
     s3_object_base_tags = luigi.DictParameter(default={}, significant=False)
+    s3_client_args = luigi.DictParameter(default={}, significant=False)
 
     MEDIA_TYPES = {
         "geojson": "application/geo+json",
@@ -211,6 +218,10 @@ class PackageS3(luigi.Task):
         "md": "text/plain",
     }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(args, kwargs)
+        self.s3_client = S3Client(**self.s3_client_args)
+
     def requires(self):
         url_root = "http://{}.s3-{}.amazonaws.com/{}".format(
             self.s3_bucket, self.s3_bucket_region, self.s3_key_prefix
@@ -220,33 +231,46 @@ class PackageS3(luigi.Task):
     def output(self):
         # Assumes that the flag file is at the root of the package
         resolved_checksum = Path(self.input().path).resolve()
+        target_prefix = "s3://{}/{}/{}/".format(
+            self.s3_bucket, self.s3_key_prefix, resolved_checksum.parent.name
+        )
+
+        STATUS_LOGGER.info(
+            task="check-s3-flag", path=target_prefix, flag=resolved_checksum.name
+        )
+
         return S3FlagTarget(
-            f"s3://{self.s3_bucket}/{self.s3_key_prefix}/"
-            + resolved_checksum.parent.name
-            + "/",
-            flag=resolved_checksum.name,
+            path=target_prefix, client=self.s3_client, flag=resolved_checksum.name
         )
 
     def run(self):
-        s3_client = S3Client()
-        http_header_tags = "&".join(
-            [f"{k}={v}" for k, v in self.s3_object_base_tags.items()]
-        )
-
         granule = Path(self.input().path).resolve().parent
         granule_prefix_len = len(granule.parent.as_posix())
+        target_prefix = f"s3://{self.s3_bucket}/{self.s3_key_prefix}"
+
         for path in granule.rglob("*"):
             if path.is_dir():
                 continue
 
-            s3_client.put_multipart(
-                path,
-                f"s3://{self.s3_bucket}/{self.s3_key_prefix}"
-                + path.as_posix()[granule_prefix_len:],  # relative path inc. granule_id
-                headers={
-                    "Content-Type": self._get_content_mediatype(path),
-                    "x-amz-tagging": http_header_tags,
-                },
+            target_path = path.as_posix()[
+                granule_prefix_len:
+            ]  # path including granule_id
+            headers = {
+                "Content-Type": self._get_content_mediatype(path),
+                "x-amz-tagging": urlencode(self.s3_object_base_tags),
+            }
+
+            STATUS_LOGGER.info(
+                task="upload-file",
+                local_path=path,
+                destination_s3_path=target_prefix + target_path,
+                headers=headers,
+            )
+
+            self.s3_client.put_multipart(
+                local_path=path,
+                destination_s3_path=target_prefix + target_path,
+                headers=headers,
             )
 
     @classmethod

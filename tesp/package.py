@@ -446,7 +446,7 @@ def package(
         with open(yaml_fname) as src:
             # TODO harmonise field names for different sensors
             l1_documents = {
-                doc.get("tile_id", doc["label"]): doc for doc in yaml.load_all(src)
+                doc.get("tile_id", doc.get("label")): doc for doc in yaml.load_all(src)
             }
             l1_tags = l1_documents[granule]
     else:
