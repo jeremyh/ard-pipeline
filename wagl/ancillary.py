@@ -4,7 +4,6 @@
 
 import datetime
 import glob
-import logging
 from os.path import basename, splitext
 from os.path import join as pjoin
 from posixpath import join as ppjoin
@@ -31,9 +30,6 @@ from wagl.hdf5 import (
 )
 from wagl.metadata import extract_ancillary_metadata, read_meatadata_tags
 from wagl.satellite_solar_angles import create_vertices
-
-log = logging.getLogger()
-
 
 ECWMF_LEVELS = [
     1,
