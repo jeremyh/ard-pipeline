@@ -47,8 +47,7 @@ from wagl.terrain_shadow_masks import (
 )
 
 LOG = wrap_logger(
-    logging.getLogger("wagl-status"),
-    processors=[JSONRenderer(indent=1, sort_keys=True)],
+    logging.getLogger("status"), processors=[JSONRenderer(indent=1, sort_keys=True)]
 )
 
 
