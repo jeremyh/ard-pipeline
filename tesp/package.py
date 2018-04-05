@@ -67,6 +67,15 @@ def run_command(command, work_dir):
     check_call(" ".join(command), shell=True, cwd=work_dir)
 
 
+def _clean(alias):
+    """A quick fix for cleaning json unfriendly alias strings."""
+    replace = {"-": "_", "[": "", "]": ""}
+    for k, v in replace.items():
+        alias = alias.replace(k, v)
+
+    return alias.lower()
+
+
 def _write_cogtif(dataset, out_fname):
     """Easy wrapper for writing a cogtif, that takes care of datasets
     that are written row by row rather square(ish) blocks.
@@ -137,8 +146,8 @@ def unpack_products(container, granule, h5group, outdir):
             _write_cogtif(dataset, out_fname)
 
             # alias name for ODC metadata doc
-            alias = ALIAS_FMT[product].format(dataset.attrs["alias"])
-            rel_paths[alias.lower()] = {"path": rel_path, "layer": 1}
+            alias = _clean(ALIAS_FMT[product].format(dataset.attrs["alias"]))
+            rel_paths[alias] = {"path": rel_path, "layer": 1}
 
     # retrieve metadata
     scalar_paths = find(h5group, "SCALAR")
@@ -162,7 +171,8 @@ def unpack_supplementary(container, granule, h5group, outdir):
             rel_path = pjoin(basedir, fmt.format(granule_id, dname.replace("-", "_")))
             out_fname = pjoin(outdir, rel_path)
             dset = h5_group[dname]
-            paths[dset.attrs["alias"].lower()] = {"path": rel_path, "layer": 1}
+            alias = _clean(dset.attrs["alias"])
+            paths[alias] = {"path": rel_path, "layer": 1}
             _write_cogtif(dset, out_fname)
 
         return paths
