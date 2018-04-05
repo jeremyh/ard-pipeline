@@ -108,26 +108,23 @@ def html_map(contiguity_fname, html_out_fname, json_out_fname):
 
     # TODO - Add metadata to PopUp
     # with open(metadata, 'r') as stream:
-    #    try:
-    #        yaml_metadata = yaml.load(stream)
-    #    except yaml.YAMLError as exc:
-    #        print(exc)
+    #     try:
+    #         yaml_metadata = yaml.load(stream)
+    #     except yaml.YAMLError as exc:
+    #         print(exc)
     # gpdyaml = gpd.GeoSeries(yaml_metadata)
 
     gpdsr.to_file(json_out_fname, driver="GeoJSON")
     m = folium.Map()
 
     # GeoJson(gpdsr, name='geojson').add_to(m)
-    def style_function(x):
+    def style_function(*args):
         return {"fillColor": None, "color": "#0000ff"}
 
     GeoJson(
         json_out_fname, name="bounds.geojson", style_function=style_function
     ).add_to(m)
     # TODO - add MGRS tile reference to map with layer active = False
-    # style_function = lambda x: {'fillColor': None, 'fillOpacity': 0.1, 'weight': 0.1,
-    #                               'color' : '#ff0000'}
-    # GeoJson('/home/simonaoliver/reference/agdcv2-reference/MGRS_Australia.geojson', name='MGRS_tiles.geojson', style_function=style_function).add_to(m)
 
     m.fit_bounds(GeoJson(gpdsr).get_bounds())
     folium.LatLngPopup().add_to(m)
