@@ -113,7 +113,7 @@ def card4l(
                 tle_path,
             )
 
-            if model == Model.STANDARD or model == model.NBAR:
+            if model == Model.STANDARD or model == Model.NBAR:
                 # DEM
                 log.info("DEM-retriveal")
                 get_dsm(acqs[0], dsm_fname, buffer_distance, root, compression)
