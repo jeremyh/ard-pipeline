@@ -133,7 +133,7 @@ class PQAResult:
         attrs = self.aux_data.copy()
         attrs["crs_wkt"] = self.geobox.crs.ExportToWkt()
         attrs["geotransform"] = self.geobox.transform.to_gdal()
-        dname = DatasetName.pq_fmt.value.format(product=product.value)
+        dname = DatasetName.PQ_FMT.value.format(product=product.value)
         write_h5_image(self.array, dname, out_group, attrs=attrs, **kwargs)
 
     @property
@@ -160,8 +160,8 @@ def _run_pq(
     """
     with h5py.File(out_fname) as fid:
         grp = fid[scene_group]
-        run_pq(level1, grp, land_sea_path, grp, compression, AP.nbar, acq_parser_hint)
-        run_pq(level1, grp, land_sea_path, grp, compression, AP.nbart, acq_parser_hint)
+        run_pq(level1, grp, land_sea_path, grp, compression, AP.NBAR, acq_parser_hint)
+        run_pq(level1, grp, land_sea_path, grp, compression, AP.NBART, acq_parser_hint)
 
 
 def run_pq(
@@ -170,7 +170,7 @@ def run_pq(
     land_sea_path,
     out_group,
     compression="lzf",
-    product=AP.nbar,
+    product=AP.NBAR,
     acq_parser_hint=None,
 ):
     """Runs the PQ workflow and saves the result in the same file as
@@ -183,7 +183,7 @@ def run_pq(
     :param input_group:
         The root HDF5 `Group` object containing the surface
         reflectance data that can be accessible via the enum
-        specifier `constants.DatasetName.reflectance_fmt`.
+        specifier `constants.DatasetName.REFLECTANCE_FMT`.
 
     :param land_sea_path:
         A `str` containing the file path name to the directory
@@ -197,7 +197,7 @@ def run_pq(
         The dataset names will be given by the format string detailed
         by:
 
-        * DatasetName.pq_fmt
+        * DatasetName.PQ_FMT
 
     :param compression:
         The compression filter to use. Default is 'lzf'.
@@ -221,7 +221,7 @@ def run_pq(
     geo_box = acqs[0].gridded_geo_box()
 
     # filter out unwanted acquisitions
-    acqs = [acq for acq in acqs if acq.band_type != BandType.Panchromatic]
+    acqs = [acq for acq in acqs if acq.band_type != BandType.PANCHROMATIC]
 
     platform_id = acqs[0].platform_id
     sensor = acqs[0].sensor_id
@@ -294,7 +294,7 @@ def run_pq(
     temperature = get_landsat_temperature(acqs, pq_const)
 
     # read NBAR data
-    fmt = DatasetName.reflectance_fmt.value
+    fmt = DatasetName.REFLECTANCE_FMT.value
     dname = fmt.format(product=product.value, band_name=spectral_bands[0])
     blue_dataset = input_group[dname]
     dname = fmt.format(product=product.value, band_name=spectral_bands[1])
