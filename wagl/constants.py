@@ -31,9 +31,9 @@ class Model(Enum):
         """
         atmos_var = list(AtmosphericCoefficients)
         fmap = {
-            Model.standard: atmos_var,
-            Model.nbar: atmos_var[0:8],
-            Model.sbt: atmos_var[8:],
+            Model.STANDARD: atmos_var,
+            Model.NBAR: atmos_var[0:8],
+            Model.SBT: atmos_var[8:],
         }
         return fmap.get(self)
 
@@ -43,7 +43,7 @@ class Model(Enum):
         evaluations for a given Model.<option>.
         """
         albs = list(Albedos)
-        amap = {Model.standard: albs, Model.nbar: albs[0:-1], Model.sbt: [albs[-1]]}
+        amap = {Model.STANDARD: albs, Model.NBAR: albs[0:-1], Model.SBT: [albs[-1]]}
         return amap.get(self)
 
     @property
@@ -53,9 +53,9 @@ class Model(Enum):
         """
         products = list(ArdProducts)
         amap = {
-            Model.standard: products,
-            Model.nbar: products[0:-1],
-            Model.sbt: [products[-1]],
+            Model.STANDARD: products,
+            Model.NBAR: products[0:-1],
+            Model.SBT: [products[-1]],
         }
         return amap.get(self)
 
