@@ -288,13 +288,13 @@ def _parser():
     )
     parser.add_argument(
         "--model",
-        default="standard",
-        help=("The type of ARD workflow to invoke, " "eg standard, nbar, sbt."),
+        default="STANDARD",
+        help=("The type of ARD workflow to invoke, " "eg STANDARD, NBAR, SBT."),
     )
     parser.add_argument(
         "--method",
-        default="shear",
-        help=("The interpolation method to invoke, " "eg linear, shear, rbf."),
+        default="SHEAR",
+        help=("The interpolation method to invoke, " "eg LINEAR, SHEAR, RBF."),
     )
     parser.add_argument(
         "--buffer-distance",
