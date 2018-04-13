@@ -77,7 +77,7 @@ def get_dsm(
 
         The dataset name will be as follows:
 
-        * DatasetName.dsm_smoothed
+        * DatasetName.DSM_SMOOTHED
 
     :param compression:
         The compression filter to use. Default is 'lzf'.
@@ -133,7 +133,7 @@ def get_dsm(
         tile_size = acquisition.tile_size
     kwargs = dataset_compression_kwargs(compression=compression, chunks=tile_size)
 
-    group = fid.create_group(GroupName.elevation_group.value)
+    group = fid.create_group(GroupName.ELEVATION_GROUP.value)
 
     param_grp = group.create_group("PARAMETERS")
     param_grp.attrs["left_buffer"] = margins.left
@@ -149,7 +149,7 @@ def get_dsm(
 
     # Smooth the DSM
     dsm_data = filter_dsm(dsm_data)
-    dname = DatasetName.dsm_smoothed.value
+    dname = DatasetName.DSM_SMOOTHED.value
     out_sm_dset = group.create_dataset(dname, data=dsm_data, **kwargs)
     desc = "A subset of a Digital Surface Model smoothed with a gaussian " "kernel."
     attrs["description"] = desc
