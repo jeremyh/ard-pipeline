@@ -26,6 +26,7 @@ setup(
         "eodatasets",
         "checksumdir",
         "eugl",
+        "boto",
     ],
     dependency_links=[
         "git+https://github.com/GeoscienceAustralia/eo-datasets@develop#egg=eodatasets-0.1dev",
