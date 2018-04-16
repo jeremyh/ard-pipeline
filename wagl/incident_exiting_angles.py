@@ -10,7 +10,7 @@ from wagl.__incident_angle import incident_angle
 from wagl.constants import DatasetName, GroupName
 from wagl.data import as_array
 from wagl.geobox import GriddedGeoBox
-from wagl.hdf5 import attach_image_attributes, dataset_compression_kwargs
+from wagl.hdf5 import H5CompressionFilter, attach_image_attributes
 from wagl.tiling import generate_tiles
 
 
@@ -18,7 +18,8 @@ def _incident_exiting_angles(
     satellite_solar_fname,
     slope_aspect_fname,
     out_fname,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
     incident=True,
 ):
     """A private wrapper for dealing with the internal custom workings of the
@@ -30,13 +31,17 @@ def _incident_exiting_angles(
         grp1 = sat_sol[GroupName.SAT_SOL_GROUP.value]
         grp2 = slp_asp[GroupName.SLP_ASP_GROUP.value]
         if incident:
-            incident_angles(grp1, grp2, out_fid, compression)
+            incident_angles(grp1, grp2, out_fid, compression, filter_opts)
         else:
-            exiting_angles(grp1, grp2, out_fid, compression)
+            exiting_angles(grp1, grp2, out_fid, compression, filter_opts)
 
 
 def incident_angles(
-    satellite_solar_group, slope_aspect_group, out_group=None, compression="lzf"
+    satellite_solar_group,
+    slope_aspect_group,
+    out_group=None,
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """Calculates the incident angle and the azimuthal incident angle.
 
@@ -65,13 +70,16 @@ def incident_angles(
         * DatasetName.AZIMUTHAL_INCIDENT
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -99,9 +107,13 @@ def incident_angles(
     if GroupName.INCIDENT_GROUP.value not in fid:
         fid.create_group(GroupName.INCIDENT_GROUP.value)
 
+    if filter_opts is None:
+        filter_opts = {}
+
     grp = fid[GroupName.INCIDENT_GROUP.value]
     tile_size = solar_zenith_dataset.chunks
-    kwargs = dataset_compression_kwargs(compression, chunks=tile_size)
+    filter_opts["chunks"] = tile_size
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     no_data = -999
     kwargs["shape"] = shape
     kwargs["fillvalue"] = no_data
@@ -174,7 +186,11 @@ def incident_angles(
 
 
 def exiting_angles(
-    satellite_solar_group, slope_aspect_group, out_group=None, compression="lzf"
+    satellite_solar_group,
+    slope_aspect_group,
+    out_group=None,
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """Calculates the exiting angle and the azimuthal exiting angle.
 
@@ -203,13 +219,16 @@ def exiting_angles(
         * DatasetName.AZIMUTHAL_EXITING
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -237,9 +256,13 @@ def exiting_angles(
     if GroupName.EXITING_GROUP.value not in fid:
         fid.create_group(GroupName.EXITING_GROUP.value)
 
+    if filter_opts is None:
+        filter_opts = {}
+
     grp = fid[GroupName.EXITING_GROUP.value]
     tile_size = satellite_view_dataset.chunks
-    kwargs = dataset_compression_kwargs(compression, chunks=tile_size)
+    filter_opts["chunks"] = tile_size
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     no_data = -999
     kwargs["shape"] = shape
     kwargs["fillvalue"] = no_data
@@ -316,7 +339,11 @@ def exiting_angles(
 
 
 def _relative_azimuth_slope(
-    incident_angles_fname, exiting_angles_fname, out_fname, compression="lzf"
+    incident_angles_fname,
+    exiting_angles_fname,
+    out_fname,
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -326,11 +353,15 @@ def _relative_azimuth_slope(
     ) as exit_fid, h5py.File(out_fname, "w") as out_fid:
         grp1 = inci_fid[GroupName.INCIDENT_GROUP.value]
         grp2 = exit_fid[GroupName.EXITING_GROUP.value]
-        relative_azimuth_slope(grp1, grp2, out_fid, compression)
+        relative_azimuth_slope(grp1, grp2, out_fid, compression, filter_opts)
 
 
 def relative_azimuth_slope(
-    incident_angles_group, exiting_angles_group, out_group=None, compression="lzf"
+    incident_angles_group,
+    exiting_angles_group,
+    out_group=None,
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """Calculates the relative azimuth angle on the slope surface.
 
@@ -356,13 +387,16 @@ def relative_azimuth_slope(
         * DatasetName.RELATIVE_SLOPE
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -390,9 +424,13 @@ def relative_azimuth_slope(
     if GroupName.REL_SLP_GROUP.value not in fid:
         fid.create_group(GroupName.REL_SLP_GROUP.value)
 
+    if filter_opts is None:
+        filter_opts = {}
+
     grp = fid[GroupName.REL_SLP_GROUP.value]
     tile_size = azimuth_incident_dataset.chunks
-    kwargs = dataset_compression_kwargs(compression, chunks=tile_size)
+    filter_opts["chunks"] = tile_size
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     no_data = -999
     kwargs["shape"] = shape
     kwargs["fillvalue"] = no_data

@@ -48,7 +48,7 @@ from wagl.constants import (
     Model,
 )
 from wagl.dsm import _get_dsm
-from wagl.hdf5 import create_external_link
+from wagl.hdf5 import H5CompressionFilter, create_external_link
 from wagl.incident_exiting_angles import (
     _incident_exiting_angles,
     _relative_azimuth_slope,
@@ -125,7 +125,10 @@ class CalculateLonLatGrids(luigi.Task):
     granule = luigi.Parameter(default=None)
     group = luigi.Parameter()
     acq_parser_hint = luigi.Parameter(default=None)
-    compression = luigi.Parameter(default="lzf", significant=False)
+    compression = luigi.Parameter(default=H5CompressionFilter.LZF, significant=False)
+    filter_opts = luigi.DictParameter(default=None, significant=False)
+    acq_parser_hint = luigi.Parameter(default=None)
+    buffer_distance = luigi.FloatParameter(default=8000, significant=False)
 
     def requires(self):
         # we want to pass the level1 root not the granule root
@@ -143,7 +146,7 @@ class CalculateLonLatGrids(luigi.Task):
         )[0]
 
         with self.output().temporary_path() as out_fname:
-            _create_lon_lat_grids(acq, out_fname, self.compression)
+            _create_lon_lat_grids(acq, out_fname, self.compression, self.filter_opts)
 
 
 @inherits(CalculateLonLatGrids)
@@ -167,7 +170,12 @@ class CalculateSatelliteAndSolarGrids(luigi.Task):
 
         with self.output().temporary_path() as out_fname:
             _calculate_angles(
-                acqs[0], self.input().path, out_fname, self.compression, self.tle_path
+                acqs[0],
+                self.input().path,
+                out_fname,
+                self.compression,
+                self.filter_opts,
+                self.tle_path,
             )
 
 
@@ -188,7 +196,8 @@ class AncillaryData(luigi.Task):
     dem_path = luigi.Parameter(significant=False)
     ecmwf_path = luigi.Parameter(significant=False)
     invariant_height_fname = luigi.Parameter(significant=False)
-    compression = luigi.Parameter(default="lzf", significant=False)
+    compression = luigi.Parameter(default=H5CompressionFilter.LZF, significant=False)
+    filter_opts = luigi.DictParameter(default=None, significant=False)
 
     def requires(self):
         group = acquisitions(self.level1, self.acq_parser_hint).supported_groups[0]
@@ -225,6 +234,7 @@ class AncillaryData(luigi.Task):
                 self.vertices,
                 out_fname,
                 self.compression,
+                self.filter_opts,
             )
 
 
@@ -238,7 +248,8 @@ class WriteTp5(luigi.Task):
     acq_parser_hint = luigi.Parameter(default=None)
     model = luigi.EnumParameter(enum=Model)
     base_dir = luigi.Parameter(default="_atmospherics", significant=False)
-    compression = luigi.Parameter(default="lzf", significant=False)
+    compression = luigi.Parameter(default=H5CompressionFilter.LZF, significant=False)
+    filter_opts = luigi.DictParameter(default=None, significant=False)
 
     def requires(self):
         container = acquisitions(self.level1, self.acq_parser_hint)
@@ -334,6 +345,7 @@ class AtmosphericsCase(luigi.Task):
                 atmospheric_inputs_fname,
                 out_fname,
                 self.compression,
+                self.filter_opts,
             )
 
 
@@ -378,7 +390,9 @@ class CalculateCoefficients(luigi.Task):
 
     def run(self):
         with self.output().temporary_path() as out_fname:
-            _calculate_coefficients(self.input().path, out_fname, self.compression)
+            _calculate_coefficients(
+                self.input().path, out_fname, self.compression, self.filter_opts
+            )
 
 
 @inherits(CalculateLonLatGrids)
@@ -427,6 +441,7 @@ class InterpolateCoefficient(luigi.Task):
                 ancillary_fname,
                 out_fname,
                 self.compression,
+                self.filter_opts,
                 self.method,
             )
 
@@ -517,6 +532,7 @@ class DEMExtraction(luigi.Task):
                 self.buffer_distance,
                 out_fname,
                 self.compression,
+                self.filter_opts,
             )
 
 
@@ -536,7 +552,12 @@ class SlopeAndAspect(luigi.Task):
 
         with self.output().temporary_path() as out_fname:
             _slope_aspect_arrays(
-                acqs[0], dsm_fname, self.buffer_distance, out_fname, self.compression
+                acqs[0],
+                dsm_fname,
+                self.buffer_distance,
+                out_fname,
+                self.compression,
+                self.filter_opts,
             )
 
 
@@ -567,7 +588,11 @@ class IncidentAngles(luigi.Task):
 
         with self.output().temporary_path() as out_fname:
             _incident_exiting_angles(
-                sat_sol_fname, slope_aspect_fname, out_fname, self.compression
+                sat_sol_fname,
+                slope_aspect_fname,
+                out_fname,
+                self.compression,
+                self.filter_opts,
             )
 
 
@@ -595,7 +620,12 @@ class ExitingAngles(luigi.Task):
 
         with self.output().temporary_path() as out_fname:
             _incident_exiting_angles(
-                sat_sol_fname, slope_aspect_fname, out_fname, self.compression, False
+                sat_sol_fname,
+                slope_aspect_fname,
+                out_fname,
+                self.compression,
+                self.filter_opts,
+                False,
             )
 
 
@@ -620,7 +650,11 @@ class RelativeAzimuthSlope(luigi.Task):
 
         with self.output().temporary_path() as out_fname:
             _relative_azimuth_slope(
-                incident_fname, exiting_fname, out_fname, self.compression
+                incident_fname,
+                exiting_fname,
+                out_fname,
+                self.compression,
+                self.filter_opts,
             )
 
 
@@ -646,7 +680,13 @@ class SelfShadow(luigi.Task):
         exiting_fname = self.input()["exiting"].path
 
         with self.output().temporary_path() as out_fname:
-            _self_shadow(incident_fname, exiting_fname, out_fname, self.compression)
+            _self_shadow(
+                incident_fname,
+                exiting_fname,
+                out_fname,
+                self.compression,
+                self.filter_opts,
+            )
 
 
 @inherits(SelfShadow)
@@ -685,6 +725,7 @@ class CalculateCastShadowSun(luigi.Task):
                 sat_sol_fname,
                 out_fname,
                 self.compression,
+                self.filter_opts,
             )
 
 
@@ -724,6 +765,7 @@ class CalculateCastShadowSatellite(luigi.Task):
                 sat_sol_fname,
                 out_fname,
                 self.compression,
+                self.filter_opts,
                 False,
             )
 
@@ -755,6 +797,7 @@ class CalculateShadowMasks(luigi.Task):
                 inputs["sat"].path,
                 out_fname,
                 self.compression,
+                self.filter_opts,
             )
 
 
@@ -820,6 +863,7 @@ class SurfaceReflectance(luigi.Task):
                 self.rori,
                 out_fname,
                 self.compression,
+                self.filter_opts,
             )
 
 
@@ -854,6 +898,7 @@ class SurfaceTemperature(luigi.Task):
                 ancillary_fname,
                 out_fname,
                 self.compression,
+                self.filter_opts,
             )
 
 
@@ -922,6 +967,7 @@ class DataStandardisation(luigi.Task):
                     self.group,
                     self.land_sea_path,
                     self.compression,
+                    self.filter_opts,
                     self.acq_parser_hint,
                 )
 

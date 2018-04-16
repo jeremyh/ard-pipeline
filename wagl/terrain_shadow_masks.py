@@ -15,18 +15,18 @@ import numpy as np
 from wagl.__cast_shadow_mask import cast_shadow_main
 from wagl.constants import DatasetName, GroupName
 from wagl.geobox import GriddedGeoBox
-from wagl.hdf5 import (
-    attach_image_attributes,
-    create_external_link,
-    dataset_compression_kwargs,
-)
+from wagl.hdf5 import H5CompressionFilter, attach_image_attributes, create_external_link
 from wagl.margins import pixel_buffer
 from wagl.satellite_solar_angles import setup_spheroid
 from wagl.tiling import generate_tiles
 
 
 def _self_shadow(
-    incident_angles_fname, exiting_angles_fname, out_fname, compression="lzf"
+    incident_angles_fname,
+    exiting_angles_fname,
+    out_fname,
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -36,11 +36,15 @@ def _self_shadow(
     ) as fid_exiting, h5py.File(out_fname, "w") as fid:
         grp1 = fid_incident[GroupName.INCIDENT_GROUP.value]
         grp2 = fid_exiting[GroupName.EXITING_GROUP.value]
-        self_shadow(grp1, grp2, fid, compression)
+        self_shadow(grp1, grp2, fid, compression, filter_opts)
 
 
 def self_shadow(
-    incident_angles_group, exiting_angles_group, out_group=None, compression="lzf"
+    incident_angles_group,
+    exiting_angles_group,
+    out_group=None,
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """Computes the self shadow mask.
 
@@ -65,13 +69,16 @@ def self_shadow(
         * DatasetName.SELF_SHADOW
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -87,13 +94,19 @@ def self_shadow(
     else:
         fid = out_group
 
+    if filter_opts is None:
+        filter_opts = {}
+    else:
+        filter_opts = filter_opts.copy()
+
     if GroupName.SHADOW_GROUP.value not in fid:
         fid.create_group(GroupName.SHADOW_GROUP.value)
 
     grp = fid[GroupName.SHADOW_GROUP.value]
 
     tile_size = exiting_angle.chunks
-    kwargs = dataset_compression_kwargs(compression, chunks=tile_size)
+    filter_opts["chunks"] = tile_size
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     cols, rows = geobox.get_shape_xy()
     kwargs["shape"] = (rows, cols)
     kwargs["dtype"] = "bool"
@@ -264,7 +277,8 @@ def _calculate_cast_shadow(
     buffer_distance,
     satellite_solar_angles_fname,
     out_fname,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
     solar_source=True,
 ):
     """A private wrapper for dealing with the internal custom workings of the
@@ -276,7 +290,14 @@ def _calculate_cast_shadow(
         grp1 = dsm_fid[GroupName.ELEVATION_GROUP.value]
         grp2 = fid_sat_sol[GroupName.SAT_SOL_GROUP.value]
         calculate_cast_shadow(
-            acquisition, grp1, grp2, buffer_distance, fid, compression, solar_source
+            acquisition,
+            grp1,
+            grp2,
+            buffer_distance,
+            fid,
+            compression,
+            filter_opts,
+            solar_source,
         )
 
 
@@ -286,7 +307,8 @@ def calculate_cast_shadow(
     satellite_solar_group,
     buffer_distance,
     out_group=None,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
     solar_source=True,
 ):
     """This code is an interface to the fortran code
@@ -357,13 +379,16 @@ def calculate_cast_shadow(
         * DatasetName.CAST_SHADOW_FMT
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
 
     :param solar_source:
         A `bool` indicating whether or not the source for the line
@@ -444,9 +469,15 @@ def calculate_cast_shadow(
     if GroupName.SHADOW_GROUP.value not in fid:
         fid.create_group(GroupName.SHADOW_GROUP.value)
 
+    if filter_opts is None:
+        filter_opts = {}
+    else:
+        filter_opts = filter_opts.copy()
+
     grp = fid[GroupName.SHADOW_GROUP.value]
     tile_size = satellite_solar_group[zenith_name].chunks
-    kwargs = dataset_compression_kwargs(compression, chunks=tile_size)
+    filter_opts["chunks"] = tile_size
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     kwargs["dtype"] = "bool"
 
     dname_fmt = DatasetName.CAST_SHADOW_FMT.value
@@ -475,7 +506,8 @@ def _combine_shadow(
     cast_shadow_sun_fname,
     cast_shadow_satellite_fname,
     out_fname,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -488,7 +520,7 @@ def _combine_shadow(
         grp1 = fid_self[GroupName.SHADOW_GROUP.value]
         grp2 = fid_sun[GroupName.SHADOW_GROUP.value]
         grp3 = fid_sat[GroupName.SHADOW_GROUP.value]
-        combine_shadow_masks(grp1, grp2, grp3, fid, compression)
+        combine_shadow_masks(grp1, grp2, grp3, fid, compression, filter_opts)
 
     link_shadow_datasets(
         self_shadow_fname, cast_shadow_sun_fname, cast_shadow_satellite_fname, out_fname
@@ -500,7 +532,8 @@ def combine_shadow_masks(
     cast_shadow_sun_group,
     cast_shadow_satellite_group,
     out_group=None,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """A convienice function for combining the shadow masks into a single
     boolean array.
@@ -536,13 +569,16 @@ def combine_shadow_masks(
         * DatasetName.COMBINED_SHADOW
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -565,9 +601,15 @@ def combine_shadow_masks(
     if GroupName.SHADOW_GROUP.value not in fid:
         fid.create_group(GroupName.SHADOW_GROUP.value)
 
+    if filter_opts is None:
+        filter_opts = {}
+    else:
+        filter_opts = filter_opts.copy()
+
     grp = fid[GroupName.SHADOW_GROUP.value]
     tile_size = cast_sun.chunks
-    kwargs = dataset_compression_kwargs(compression, chunks=tile_size)
+    filter_opts["chunks"] = tile_size
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     cols, rows = geobox.get_shape_xy()
     kwargs["shape"] = (rows, cols)
     kwargs["dtype"] = "bool"

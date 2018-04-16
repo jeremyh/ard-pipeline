@@ -21,6 +21,7 @@ from wagl.constants import (
 )
 from wagl.constants import ArdProducts as AP
 from wagl.dsm import get_dsm
+from wagl.hdf5 import H5CompressionFilter
 from wagl.incident_exiting_angles import (
     exiting_angles,
     incident_angles,
@@ -74,7 +75,8 @@ def card4l(
     ecmwf_path=None,
     rori=0.52,
     buffer_distance=8000,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
     acq_parser_hint=None,
 ):
     """CEOS Analysis Ready Data for Land.
@@ -101,7 +103,7 @@ def card4l(
 
             # longitude and latitude
             log.info("Latitude-Longitude")
-            create_lon_lat_grids(acqs[0], root, compression)
+            create_lon_lat_grids(acqs[0], root, compression, filter_opts)
 
             # satellite and solar angles
             log.info("Satellite-Solar-Angles")
@@ -110,13 +112,16 @@ def card4l(
                 root[GroupName.LON_LAT_GROUP.value],
                 root,
                 compression,
+                filter_opts,
                 tle_path,
             )
 
             if model == Model.STANDARD or model == Model.NBAR:
                 # DEM
                 log.info("DEM-retriveal")
-                get_dsm(acqs[0], dsm_fname, buffer_distance, root, compression)
+                get_dsm(
+                    acqs[0], dsm_fname, buffer_distance, root, compression, filter_opts
+                )
 
                 # slope & aspect
                 log.info("Slope-Aspect")
@@ -126,6 +131,7 @@ def card4l(
                     buffer_distance,
                     root,
                     compression,
+                    filter_opts,
                 )
 
                 # incident angles
@@ -135,6 +141,7 @@ def card4l(
                     root[GroupName.SLP_ASP_GROUP.value],
                     root,
                     compression,
+                    filter_opts,
                 )
 
                 # exiting angles
@@ -144,6 +151,7 @@ def card4l(
                     root[GroupName.SLP_ASP_GROUP.value],
                     root,
                     compression,
+                    filter_opts,
                 )
 
                 # relative azimuth slope
@@ -155,6 +163,7 @@ def card4l(
                     root[exiting_group_name],
                     root,
                     compression,
+                    filter_opts,
                 )
 
                 # self shadow
@@ -164,6 +173,7 @@ def card4l(
                     root[exiting_group_name],
                     root,
                     compression,
+                    filter_opts,
                 )
 
                 # cast shadow solar source direction
@@ -176,6 +186,7 @@ def card4l(
                     buffer_distance,
                     root,
                     compression,
+                    filter_opts,
                 )
 
                 # cast shadow satellite source direction
@@ -187,6 +198,7 @@ def card4l(
                     buffer_distance,
                     root,
                     compression,
+                    filter_opts,
                     False,
                 )
 
@@ -198,6 +210,7 @@ def card4l(
                     root[GroupName.SHADOW_GROUP.value],
                     root,
                     compression,
+                    filter_opts,
                 )
 
         # nbar and sbt ancillary
@@ -230,6 +243,7 @@ def card4l(
             vertices,
             root,
             compression,
+            filter_opts,
         )
 
         # atmospherics
@@ -274,12 +288,13 @@ def card4l(
                     tmpdir,
                     root,
                     compression,
+                    filter_opts,
                 )
 
         # atmospheric coefficients
         log.info("Coefficients")
         results_group = root[GroupName.ATMOSPHERIC_RESULTS_GRP.value]
-        calculate_coefficients(results_group, root, compression)
+        calculate_coefficients(results_group, root, compression, filter_opts)
 
         # interpolate coefficients
         for grp_name in container.supported_groups:
@@ -317,6 +332,7 @@ def card4l(
                         comp_grp,
                         res_group,
                         compression,
+                        filter_opts,
                         method,
                     )
 
@@ -334,7 +350,7 @@ def card4l(
                 if acq.band_type == BandType.THERMAL:
                     log.info("SBT", band_id=acq.band_id)
                     surface_brightness_temperature(
-                        acq, interp_grp, res_group, compression
+                        acq, interp_grp, res_group, compression, filter_opts
                     )
                 else:
                     slp_asp_grp = res_group[GroupName.SLP_ASP_GROUP.value]
@@ -357,6 +373,7 @@ def card4l(
                         rori,
                         res_group,
                         compression,
+                        filter_opts,
                     )
 
             # metadata yaml's
@@ -375,6 +392,7 @@ def card4l(
                     landsea,
                     res_group,
                     compression,
+                    filter_opts,
                     AP.NBAR,
                     acq_parser_hint,
                 )
@@ -384,6 +402,7 @@ def card4l(
                     landsea,
                     res_group,
                     compression,
+                    filter_opts,
                     AP.NBART,
                     acq_parser_hint,
                 )
