@@ -14,6 +14,10 @@ import h5py
 import numpy as np
 import pandas as pd
 
+from .compression import (
+    H5CompressionFilter,
+)
+
 DEFAULT_IMAGE_CLASS = {"CLASS": "IMAGE", "IMAGE_VERSION": "1.2", "DISPLAY_ORIGIN": "UL"}
 
 DEFAULT_TABLE_CLASS = {"CLASS": "TABLE", "VERSION": "0.2"}
@@ -47,67 +51,6 @@ def safeguard_dtype(datatype):
     except TypeError:
         dtype = np.dtype([(bytes(name), val) for name, val in datatype])
     return dtype
-
-
-def dataset_compression_kwargs(
-    compression="lzf", shuffle=True, chunks=True, compression_opts=None
-):
-    """A helper function that aids in setting up the use of different
-    compression filters for HDF5.
-    The default is 'lzf', and other filters include:
-    * 'mafisc' which uses LZMA and shuffle filters for heavy compression
-    * 'bitshuffle' which uses LZ4 and shuffle filters for fast compression.
-
-    :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
-
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
-
-    :param shuffle:
-        A `bool` indicating whether to apply the shuffle filter
-        prior to compression. Can improve compression ratios.
-        If set in conjuction with either 'lz4' or 'mafisc',
-        then `shuffle` will be set to False as shuffle filters
-        will be handled internally by the `bitshuffle` (for 'lz4')
-        and `mafisc` filters.
-        Default is `True`.
-
-    :param chunks:
-        A `tuple` containing the desired chunks sizes for each
-        dimension axis of the dataset to be written to disk.
-        Default is True whereby h5py automatically determines an
-        appropriate chunksize.
-
-    :param compression_opts:
-        Finer grained control over compressio filters.
-        Default is `None`.
-
-    :return:
-        A `dict` of key/value pairs of compression options for use
-        with h5py's 'create_dataset' function.
-    """
-    if compression == "mafisc":
-        compression = 32002
-        shuffle = False
-        compression_opts = (1, 0)
-
-    if compression == "bitshuffle":
-        compression = 32008
-        shuffle = False
-        compression_opts = (0, 2)
-
-    kwargs = {
-        "compression": compression,
-        "shuffle": shuffle,
-        "chunks": chunks,
-        "compression_opts": compression_opts,
-    }
-
-    return kwargs
 
 
 def attach_image_attributes(dataset, attrs=None):
@@ -159,10 +102,9 @@ def create_image_dataset(
     dataset_name,
     shape,
     dtype,
-    compression="lzf",
-    shuffle=True,
-    chunks=(512, 512),
+    compression=H5CompressionFilter.LZF,
     attrs=None,
+    filter_opts=None,
 ):
     """Initialises a HDF5 dataset populated with some basic attributes
     that detail the Image specification.
@@ -180,44 +122,44 @@ def create_image_dataset(
         The shape/dimensions of the dataset to create.
 
     :param compression:
-        The compression algorithm to use. Default is 'lzf'.
-        If 'mafisc' is used, then the `shuffle` filter will be turned
-        off as alternate interal shuffling filter will be used instead.
-
-    :shuffle:
-        A `bool`, default is True, indicating whether or not to use
-        HDF5's internal shuffle filter.
-
-    :chunks:
-        A `tuple` indicating the chunksize to use for each dimension
-        of the dataset.
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
     :attrs:
         A `dict` by which the keys will be the attribute name, and the
         values will be the attribute value.
+
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
+
+    :return:
+        A h5py.Dataset with IMAGE CLASS attributes set.
     """
-    compression_opts = None
-    if compression == "mafisc":
-        compression = 32002
-        shuffle = False
-        compression_opts = (1, 0)
+    if filter_opts is None:
+        filter_opts = {}
 
-    dset = fid.create_dataset(
-        dataset_name,
-        shape=shape,
-        dtype=dtype,
-        compression=compression,
-        chunks=chunks,
-        compression_opts=compression_opts,
-        shuffle=shuffle,
-    )
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
 
-    attach_attributes(dset, attrs)
+    dset = fid.create_dataset(dataset_name, shape=shape, dtype=dtype, **kwargs)
+
+    attach_image_attributes(dset, attrs)
 
     return dset
 
 
-def write_h5_image(data, dset_name, group, attrs=None, **kwargs):
+def write_h5_image(
+    data,
+    dset_name,
+    group,
+    compression=H5CompressionFilter.LZF,
+    attrs=None,
+    filter_opts=None,
+):
     """Writes a `NumPy` array direct to a `h5py.Dataset` to the
     HDF5 IMAGE CLASS standard.
 
@@ -233,17 +175,29 @@ def write_h5_image(data, dset_name, group, attrs=None, **kwargs):
         A h5py `Group` or `File` object from which to write the
         dataset to.
 
+    :param compression:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
+
     :param attrs:
         A `dict` of key, value items to be attached as attributes
         to the `Table` dataset.
 
-    :param kwargs:
-        A `dict` containing any additional keyword arguments which
-        will be passed directly to  `h5py's create_dataset` function.
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
 
     :return:
         None
     """
+    if filter_opts is None:
+        filter_opts = {}
+
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     dset = group.create_dataset(dset_name, data=data, **kwargs)
 
     minv = data.min()
@@ -257,7 +211,13 @@ def write_h5_image(data, dset_name, group, attrs=None, **kwargs):
 
 
 def write_h5_table(
-    data, dset_name, group, compression="lzf", title="Table", attrs=None
+    data,
+    dset_name,
+    group,
+    compression=H5CompressionFilter.LZF,
+    title="Table",
+    attrs=None,
+    filter_opts=None,
 ):
     """Writes a `NumPy` structured array to a HDF5 `compound` type
     dataset.
@@ -275,13 +235,8 @@ def write_h5_table(
         dataset to.
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
-
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
     :param title:
         A `str` containing the title name of the `Table` dataset.
@@ -290,13 +245,32 @@ def write_h5_table(
     :param attrs:
         A `dict` of key, value items to be attached as attributes
         to the `Table` dataset.
+
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
     """
-    kwargs = dataset_compression_kwargs(compression=compression, chunks=True)
+    if filter_opts is None:
+        filter_opts = {}
+
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     dset = group.create_dataset(dset_name, data=data, **kwargs)
     attach_table_attributes(dset, title, attrs)
 
 
-def write_dataframe(df, dset_name, group, compression="lzf", title="Table", attrs=None):
+def write_dataframe(
+    df,
+    dset_name,
+    group,
+    compression=H5CompressionFilter.LZF,
+    title="Table",
+    attrs=None,
+    filter_opts=None,
+):
     """Converts a `pandas.DataFrame` to a HDF5 `Table`, stored
     internall as a compound datatype.
 
@@ -312,13 +286,8 @@ def write_dataframe(df, dset_name, group, compression="lzf", title="Table", attr
         dataset to.
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
-
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
     :param title:
         A `str` containing the title name of the `Table` dataset.
@@ -327,6 +296,14 @@ def write_dataframe(df, dset_name, group, compression="lzf", title="Table", attr
     :param attrs:
         A `dict` of key, value items to be attached as attributes
         to the `Table` dataset.
+
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
     """
     # get the name and datatypes for the indices, and columns
     # check for object types, for now write fixed length strings,
@@ -367,7 +344,10 @@ def write_dataframe(df, dset_name, group, compression="lzf", title="Table", attr
 
     dtype = np.dtype(dtype)
 
-    kwargs = dataset_compression_kwargs(compression=compression, chunks=True)
+    if filter_opts is None:
+        filter_opts = {}
+
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     kwargs["shape"] = (df.shape[0],)
     kwargs["dtype"] = dtype
     dset = group.create_dataset(dset_name, **kwargs)
