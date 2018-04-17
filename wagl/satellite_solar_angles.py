@@ -922,6 +922,8 @@ def calculate_angles(
         fid.create_group(GroupName.SAT_SOL_GROUP.value)
 
     if filter_opts is None:
+        filter_opts = {}
+    else:
         filter_opts = filter_opts.copy()
     filter_opts["chunks"] = acquisition.tile_size
 
