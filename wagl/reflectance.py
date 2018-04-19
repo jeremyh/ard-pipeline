@@ -16,9 +16,9 @@ from wagl.constants import AtmosphericCoefficients as AC
 from wagl.constants import BrdfParameters, DatasetName, GroupName
 from wagl.data import as_array
 from wagl.hdf5 import (
+    H5CompressionFilter,
     attach_image_attributes,
     create_external_link,
-    dataset_compression_kwargs,
     find,
 )
 from wagl.metadata import create_ard_yaml
@@ -40,6 +40,7 @@ def _calculate_reflectance(
     rori,
     out_fname,
     compression,
+    filter_opts,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -80,6 +81,7 @@ def _calculate_reflectance(
             rori,
             fid,
             compression,
+            filter_opts,
         )
 
         create_ard_yaml(acquisitions, grp8, fid)
@@ -97,7 +99,8 @@ def calculate_reflectance(
     ancillary_group,
     rori,
     out_group=None,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """Calculates Lambertian, BRDF corrected and BRDF + terrain
     illumination corrected surface reflectance.
@@ -182,21 +185,23 @@ def calculate_reflectance(
         * nbart (BRDF + terrain illumination corrected reflectance)
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
         `core` driver, or on disk.
     """
-    acq = acquisition
-    geobox = acq.gridded_geo_box()
-    bn = acq.band_name
+    geobox = acquisition.gridded_geo_box()
+    bn = acquisition.band_name
 
     dname_fmt = DatasetName.INTERPOLATION_FMT.value
     fv_dataset = interpolation_group[
@@ -253,9 +258,15 @@ def calculate_reflectance(
     if GroupName.STANDARD_GROUP.value not in fid:
         fid.create_group(GroupName.STANDARD_GROUP.value)
 
+    if filter_opts is None:
+        filter_opts = {}
+    else:
+        filter_opts = filter_opts.copy()
+    filter_opts["chunks"] = acquisition.tile_size
+
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     grp = fid[GroupName.STANDARD_GROUP.value]
-    kwargs = dataset_compression_kwargs(compression, chunks=acq.tile_size)
-    kwargs["shape"] = (acq.lines, acq.samples)
+    kwargs["shape"] = (acquisition.lines, acquisition.samples)
     kwargs["fillvalue"] = NO_DATA_VALUE
     kwargs["dtype"] = "int16"
 
@@ -276,11 +287,11 @@ def calculate_reflectance(
         "geotransform": geobox.transform.to_gdal(),
         "no_data_value": kwargs["fillvalue"],
         "rori_threshold_setting": rori,
-        "platform_id": acq.platform_id,
-        "sensor_id": acq.sensor_id,
-        "band_id": acq.band_id,
+        "platform_id": acquisition.platform_id,
+        "sensor_id": acquisition.sensor_id,
+        "band_id": acquisition.band_id,
         "band_name": bn,
-        "alias": acq.alias,
+        "alias": acquisition.alias,
     }
 
     desc = "Contains the lambertian reflectance data scaled by 10000."
@@ -298,7 +309,7 @@ def calculate_reflectance(
     attach_image_attributes(nbart_dset, attrs)
 
     # process by tile
-    for tile in acq.tiles():
+    for tile in acquisition.tiles():
         # tile indices
         idx = (slice(tile[0][0], tile[0][1]), slice(tile[1][0], tile[1][1]))
 
@@ -308,7 +319,7 @@ def calculate_reflectance(
 
         # Read the data corresponding to the current tile for all dataset
         # Convert the datatype if required and transpose
-        band_data = as_array(acq.radiance_data(**acq_args), **f32_args)
+        band_data = as_array(acquisition.radiance_data(**acq_args), **f32_args)
 
         shadow = as_array(shadow_dataset[idx], np.int8, transpose=True)
         solar_zenith = as_array(solar_zenith_dset[idx], **f32_args)
@@ -348,7 +359,7 @@ def calculate_reflectance(
             brdf_iso,
             brdf_vol,
             brdf_geo,
-            acq.reflectance_adjustment,
+            acquisition.reflectance_adjustment,
             kwargs["fillvalue"],
             band_data,
             shadow,
@@ -383,7 +394,7 @@ def calculate_reflectance(
         nbart_dset[idx] = ref_terrain
 
     # close any still opened files, arrays etc associated with the acquisition
-    acq.close()
+    acquisition.close()
 
     if out_group is None:
         return fid

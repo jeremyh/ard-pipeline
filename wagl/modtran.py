@@ -30,6 +30,7 @@ from wagl.constants import (
 from wagl.constants import AtmosphericCoefficients as AC
 from wagl.hdf5 import (
     VLEN_STRING,
+    H5CompressionFilter,
     create_external_link,
     read_h5_table,
     write_dataframe,
@@ -282,7 +283,8 @@ def _run_modtran(
     npoints,
     atmospheric_inputs_fname,
     out_fname,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -302,6 +304,7 @@ def _run_modtran(
             basedir,
             fid,
             compression,
+            filter_opts,
         )
 
 
@@ -315,7 +318,8 @@ def run_modtran(
     modtran_exe,
     basedir,
     out_group,
-    compression,
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """Run MODTRAN and return the flux and channel results."""
     lonlat = atmospherics_group[POINT_FMT.format(p=point)].attrs["lonlat"]
@@ -368,14 +372,28 @@ def run_modtran(
             dataset_name = DatasetName.UPWARD_RADIATION_CHANNEL.value
             attrs["description"] = "Upward radiation channel output from " "MODTRAN"
             dset_name = ppjoin(group_path, dataset_name)
-            write_dataframe(channel_data[0], dset_name, fid, attrs=attrs)
+            write_dataframe(
+                channel_data[0],
+                dset_name,
+                fid,
+                compression,
+                attrs=attrs,
+                filter_opts=filter_opts,
+            )
 
             # downward radiation
             attrs = base_attrs.copy()
             dataset_name = DatasetName.DOWNWARD_RADIATION_CHANNEL.value
             attrs["description"] = "Downward radiation channel output from " "MODTRAN"
             dset_name = ppjoin(group_path, dataset_name)
-            write_dataframe(channel_data[1], dset_name, fid, attrs=attrs)
+            write_dataframe(
+                channel_data[1],
+                dset_name,
+                fid,
+                compression,
+                attrs=attrs,
+                filter_opts=filter_opts,
+            )
         else:
             acq = [acq for acq in acqs if acq.band_type == BandType.REFLECTIVE][0]
             flux_fname = glob.glob(pjoin(workpath, "*_b.flx"))[0]
@@ -386,7 +404,14 @@ def run_modtran(
             attrs = base_attrs.copy()
             dset_name = ppjoin(group_path, DatasetName.FLUX.value)
             attrs["description"] = "Flux output from MODTRAN"
-            write_dataframe(flux_data, dset_name, fid, attrs=attrs)
+            write_dataframe(
+                flux_data,
+                dset_name,
+                fid,
+                compression,
+                attrs=attrs,
+                filter_opts=filter_opts,
+            )
 
             # output the altitude data
             attrs = base_attrs.copy()
@@ -394,7 +419,14 @@ def run_modtran(
             attrs["altitude_levels"] = altitudes.shape[0]
             attrs["units"] = "km"
             dset_name = ppjoin(group_path, DatasetName.ALTITUDES.value)
-            write_dataframe(altitudes, dset_name, fid, attrs=attrs)
+            write_dataframe(
+                altitudes,
+                dset_name,
+                fid,
+                compression,
+                attrs=attrs,
+                filter_opts=filter_opts,
+            )
 
             # accumulate the solar irradiance
             transmittance = True if albedo == Albedos.ALBEDO_T else False
@@ -407,13 +439,27 @@ def run_modtran(
             dset_name = ppjoin(group_path, DatasetName.SOLAR_IRRADIANCE.value)
             description = "Accumulated solar irradiation for point {} " "and albedo {}."
             attrs["description"] = description.format(point, albedo.value)
-            write_dataframe(accumulated, dset_name, fid, compression, attrs=attrs)
+            write_dataframe(
+                accumulated,
+                dset_name,
+                fid,
+                compression,
+                attrs=attrs,
+                filter_opts=filter_opts,
+            )
 
             attrs = base_attrs.copy()
             dataset_name = DatasetName.CHANNEL.value
             attrs["description"] = "Channel output from MODTRAN"
             dset_name = ppjoin(group_path, dataset_name)
-            write_dataframe(channel_data, dset_name, fid, attrs=attrs)
+            write_dataframe(
+                channel_data,
+                dset_name,
+                fid,
+                compression,
+                attrs=attrs,
+                filter_opts=filter_opts,
+            )
 
     # metadata for a given point
     alb_vals = [alb.value for alb in model.albedos]
@@ -425,7 +471,12 @@ def run_modtran(
         return fid
 
 
-def _calculate_coefficients(atmosheric_results_fname, out_fname, compression):
+def _calculate_coefficients(
+    atmosheric_results_fname,
+    out_fname,
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
+):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
     """
@@ -433,10 +484,15 @@ def _calculate_coefficients(atmosheric_results_fname, out_fname, compression):
         out_fname, "w"
     ) as fid:
         results_group = atmos_fid[GroupName.ATMOSPHERIC_RESULTS_GRP.value]
-        calculate_coefficients(results_group, fid, compression)
+        calculate_coefficients(results_group, fid, compression, filter_opts)
 
 
-def calculate_coefficients(atmospheric_results_group, out_group, compression="lzf"):
+def calculate_coefficients(
+    atmospheric_results_group,
+    out_group,
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
+):
     """Calculate the atmospheric coefficients from the MODTRAN output
     and used in the BRDF and atmospheric correction.
     Coefficients are computed for each band for each each coordinate
@@ -459,13 +515,16 @@ def calculate_coefficients(atmospheric_results_group, out_group, compression="lz
         * DatasetName.SBT_COEFFICIENTS (if Model.STANDARD or Model.SBT)
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -570,14 +629,28 @@ def calculate_coefficients(atmospheric_results_group, out_group, compression="lz
 
     group = fid[GroupName.COEFFICIENTS_GROUP.value]
     if nbar_atmos:
-        write_dataframe(nbar_coefficients, dname, group, compression, attrs=attrs)
+        write_dataframe(
+            nbar_coefficients,
+            dname,
+            group,
+            compression,
+            attrs=attrs,
+            filter_opts=filter_opts,
+        )
 
     description = "Coefficients derived from the THERMAL solar irradiation."
     attrs["description"] = description
     dname = DatasetName.SBT_COEFFICIENTS.value
 
     if sbt_atmos:
-        write_dataframe(sbt_coefficients, dname, group, compression, attrs=attrs)
+        write_dataframe(
+            sbt_coefficients,
+            dname,
+            group,
+            compression,
+            attrs=attrs,
+            filter_opts=filter_opts,
+        )
 
     if out_group is None:
         return fid

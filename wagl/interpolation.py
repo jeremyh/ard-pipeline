@@ -11,8 +11,8 @@ from scipy.interpolate import Rbf
 
 from wagl.constants import DatasetName, GroupName, Method, Model
 from wagl.hdf5 import (
+    H5CompressionFilter,
     create_external_link,
-    dataset_compression_kwargs,
     find,
     read_h5_table,
     write_h5_image,
@@ -379,8 +379,9 @@ def _interpolate(
     coefficients_fname,
     ancillary_fname,
     out_fname,
-    compression,
-    method,
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
+    method=Method.SHEARB,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -393,7 +394,17 @@ def _interpolate(
         grp1 = anc[GroupName.ANCILLARY_GROUP.value]
         grp2 = sat_sol[GroupName.SAT_SOL_GROUP.value]
         grp3 = comp[GroupName.COEFFICIENTS_GROUP.value]
-        interpolate(acq, coefficient, grp1, grp2, grp3, out_fid, compression, method)
+        interpolate(
+            acq,
+            coefficient,
+            grp1,
+            grp2,
+            grp3,
+            out_fid,
+            compression,
+            filter_opts,
+            method,
+        )
 
 
 def interpolate(
@@ -403,7 +414,8 @@ def interpolate(
     satellite_solar_group,
     coefficients_group,
     out_group=None,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
     method=Method.SHEARB,
 ):
     # TODO: more docstrings
@@ -469,13 +481,17 @@ def interpolate(
     if GroupName.INTERP_GROUP.value not in fid:
         fid.create_group(GroupName.INTERP_GROUP.value)
 
+    if filter_opts is None:
+        filter_opts = {}
+    else:
+        filter_opts = filter_opts.copy()
+    filter_opts["chunks"] = acq.tile_size
+
     group = fid[GroupName.INTERP_GROUP.value]
 
     fmt = DatasetName.INTERPOLATION_FMT.value
     dset_name = fmt.format(coefficient=coefficient.value, band_name=acq.band_name)
-    kwargs = dataset_compression_kwargs(compression=compression, chunks=acq.tile_size)
     no_data = -999
-    kwargs["fillvalue"] = no_data
     attrs = {
         "crs_wkt": geobox.crs.ExportToWkt(),
         "geotransform": geobox.transform.to_gdal(),
@@ -494,7 +510,7 @@ def interpolate(
 
     # convert any NaN's to -999 (for float data, NaN would be more ideal ...)
     result[~np.isfinite(result)] = no_data
-    write_h5_image(result, dset_name, group, attrs, **kwargs)
+    write_h5_image(result, dset_name, group, compression, attrs, filter_opts)
 
     if out_group is None:
         return fid

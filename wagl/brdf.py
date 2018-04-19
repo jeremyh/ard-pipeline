@@ -37,7 +37,7 @@ from shapely.geometry import Polygon
 
 from wagl.constants import BrdfParameters
 from wagl.geobox import GriddedGeoBox
-from wagl.hdf5 import dataset_compression_kwargs, write_h5_image
+from wagl.hdf5 import H5CompressionFilter, write_h5_image
 from wagl.metadata import extract_ancillary_metadata
 
 log = logging.getLogger("root." + __name__)
@@ -310,7 +310,14 @@ class BRDFLoader:
 
         return result
 
-    def convert_format(self, dataset_name, group, attrs=None, compression="lzf"):
+    def convert_format(
+        self,
+        dataset_name,
+        group,
+        attrs=None,
+        compression=H5CompressionFilter.LZF,
+        filter_opts=None,
+    ):
         """Convert the HDF file to a HDF5 dataset."""
         if attrs is None:
             attrs = {}
@@ -338,11 +345,12 @@ class BRDFLoader:
         )
 
         # Write the dataset
-        kwargs = dataset_compression_kwargs(compression="lzf", chunks=(1, dims[1]))
         attrs["description"] = "Converted BRDF data from H4 to H5."
         attrs["crs_wkt"] = prj
         attrs["geotransform"] = geobox.transform.to_gdal()
-        write_h5_image(self.data[0], dataset_name, group, attrs, **kwargs)
+        write_h5_image(
+            self.data[0], dataset_name, group, compression, attrs, filter_opts
+        )
 
     def get_mean(self, array):
         """This mechanism will be used to calculate the mean in place in
@@ -454,7 +462,11 @@ def get_brdf_dirs_pre_modis(brdf_root, scene_date):
 
 
 def get_brdf_data(
-    acquisition, brdf_primary_path, brdf_secondary_path, compression="lzf"
+    acquisition,
+    brdf_primary_path,
+    brdf_secondary_path,
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """Calculates the mean BRDF value for the given acquisition,
     for each BRDF parameter ['geo', 'iso', 'vol'] that covers
@@ -473,6 +485,18 @@ def get_brdf_data(
         containing the Jupp-Li backup BRDF data.  To be used for
         pre-MODIS and potentially post-MODIS acquisitions.
 
+    :param compression:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
+
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
+
     :return:
         A `dict` with the keys:
 
@@ -482,6 +506,12 @@ def get_brdf_data(
 
         Values for each BRDF Parameter are accessed via the key named
         `value`.
+
+    :notes:
+        The keywords compression and filter_opts aren't used as we no
+        longer save the BRDF imagery. However, we may need to store
+        tables in future, therefore they can remain until we know
+        for sure they'll never be used.
     """
 
     def find_file(files, brdf_wl, parameter):

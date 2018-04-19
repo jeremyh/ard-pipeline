@@ -21,9 +21,9 @@ from wagl.brdf import get_brdf_data
 from wagl.constants import POINT_FMT, BandType, DatasetName, GroupName
 from wagl.data import get_pixel
 from wagl.hdf5 import (
+    H5CompressionFilter,
     attach_attributes,
     attach_table_attributes,
-    dataset_compression_kwargs,
     read_h5_table,
     write_dataframe,
     write_scalar,
@@ -114,7 +114,8 @@ def _collect_ancillary(
     invariant_fname=None,
     vertices=(3, 3),
     out_fname=None,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -145,7 +146,8 @@ def collect_ancillary(
     invariant_fname=None,
     vertices=(3, 3),
     out_group=None,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """Collects the ancillary required for NBAR and optionally SBT.
     This could be better handled if using the `opendatacube` project
@@ -195,13 +197,16 @@ def collect_ancillary(
         a writeable HDF5 `Group` object.
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -213,6 +218,10 @@ def collect_ancillary(
     else:
         fid = out_group
 
+    if filter_opts is None:
+        filter_opts = {}
+
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     group = fid.create_group(GroupName.ANCILLARY_GROUP.value)
 
     acquisition = container.get_highest_resolution()[0][0]
@@ -226,7 +235,7 @@ def collect_ancillary(
         "atmospheric calculations."
     )
     attrs = {"description": desc, "array_coordinate_offset": 0}
-    kwargs = dataset_compression_kwargs(compression=compression)
+    kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     dset_name = DatasetName.COORDINATOR.value
     coord_dset = group.create_dataset(dset_name, data=coordinator, **kwargs)
     attach_table_attributes(coord_dset, title="Coordinator", attrs=attrs)
@@ -239,10 +248,15 @@ def collect_ancillary(
             invariant_fname,
             out_group=group,
             compression=compression,
+            filter_opts=filter_opts,
         )
 
     collect_nbar_ancillary(
-        container, out_group=group, compression=compression, **nbar_paths
+        container,
+        out_group=group,
+        compression=compression,
+        filter_opts=filter_opts,
+        **nbar_paths,
     )
 
     if out_group is None:
@@ -255,7 +269,8 @@ def collect_sbt_ancillary(
     ancillary_path,
     invariant_fname=None,
     out_group=None,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """Collects the ancillary data required for surface brightness
     temperature.
@@ -280,13 +295,16 @@ def collect_sbt_ancillary(
         a writeable HDF5 `Group` object.
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -340,13 +358,19 @@ def collect_sbt_ancillary(
         rh = ecwmf_relative_humidity(ancillary_path, lonlat, dt)
 
         dname = ppjoin(pnt, DatasetName.GEOPOTENTIAL.value)
-        write_dataframe(gph[0], dname, fid, compression, attrs=gph[1])
+        write_dataframe(
+            gph[0], dname, fid, compression, attrs=gph[1], filter_opts=filter_opts
+        )
 
         dname = ppjoin(pnt, DatasetName.TEMPERATURE.value)
-        write_dataframe(tmp[0], dname, fid, compression, attrs=tmp[1])
+        write_dataframe(
+            tmp[0], dname, fid, compression, attrs=tmp[1], filter_opts=filter_opts
+        )
 
         dname = ppjoin(pnt, DatasetName.RELATIVE_HUMIDITY.value)
-        write_dataframe(rh[0], dname, fid, compression, attrs=rh[1])
+        write_dataframe(
+            rh[0], dname, fid, compression, attrs=rh[1], filter_opts=filter_opts
+        )
 
         # combine the surface and higher pressure layers into a single array
         cols = ["GeoPotential_Height", "Pressure", "Temperature", "Relative_Humidity"]
@@ -379,7 +403,9 @@ def collect_sbt_ancillary(
         df.reset_index(drop=True, inplace=True)
 
         dname = ppjoin(pnt, DatasetName.ATMOSPHERIC_PROFILE.value)
-        write_dataframe(df, dname, fid, compression, attrs=attrs)
+        write_dataframe(
+            df, dname, fid, compression, attrs=attrs, filter_opts=filter_opts
+        )
 
         fid[pnt].attrs["lonlat"] = lonlat
 
@@ -396,7 +422,8 @@ def collect_nbar_ancillary(
     brdf_path=None,
     brdf_premodis_path=None,
     out_group=None,
-    compression="lzf",
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
 ):
     """Collects the ancillary information required to create NBAR.
 
@@ -437,17 +464,26 @@ def collect_nbar_ancillary(
         a writeable HDF5 `Group` object.
 
     :param compression:
-        The compression filter to use. Default is 'lzf'.
-        Options include:
+        The compression filter to use.
+        Default is H5CompressionFilter.LZF
 
-        * 'lzf' (Default)
-        * 'lz4'
-        * 'mafisc'
-        * An integer [1-9] (Deflate/gzip)
+    :filter_opts:
+        A dict of key value pairs available to the given configuration
+        instance of H5CompressionFilter. For example
+        H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
+        available.
+        Default is None, which will use the default settings for the
+        chosen H5CompressionFilter instance.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
         `core` driver, or on disk.
+
+    :notes:
+        The keywords compression and filter_opts aren't used as we no
+        longer save the BRDF imagery. However, we may need to store
+        tables in future, therefore they can remain until we know
+        for sure they'll never be used.
     """
     # Initialise the output files
     if out_group is None:
