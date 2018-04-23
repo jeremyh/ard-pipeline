@@ -83,6 +83,7 @@ class DataStandardisation(luigi.Task):
     filter_opts = luigi.DictParameter(default=None, significant=False)
     acq_parser_hint = luigi.Parameter(default=None)
     buffer_distance = luigi.FloatParameter(default=8000, significant=False)
+    h5_driver = luigi.Parameter(default=None, significant=False)
 
     def output(self):
         fmt = "{label}.wagl.h5"
@@ -122,6 +123,7 @@ class DataStandardisation(luigi.Task):
                 self.buffer_distance,
                 self.compression,
                 self.filter_opts,
+                self.h5_driver,
                 self.acq_parser_hint,
             )
 
@@ -167,6 +169,7 @@ class ARD(luigi.WrapperTask):
                     "compression": self.compression,
                     "filter_opts": self.filter_opts,
                     "buffer_distance": self.buffer_distance,
+                    "h5_driver": self.h5_driver,
                 }
                 yield DataStandardisation(**kwargs)
 
