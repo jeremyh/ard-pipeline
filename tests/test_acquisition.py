@@ -79,13 +79,13 @@ class Landsat5Scene1AcquisitionTest(unittest.TestCase):
             assert isinstance(acq, LandsatAcquisition)
 
     def test_band_type(self):
-        assert self.acqs[0].band_type == BandType.Reflective
-        assert self.acqs[1].band_type == BandType.Reflective
-        assert self.acqs[2].band_type == BandType.Reflective
-        assert self.acqs[3].band_type == BandType.Reflective
-        assert self.acqs[4].band_type == BandType.Reflective
-        assert self.acqs[5].band_type == BandType.Thermal
-        assert self.acqs[6].band_type == BandType.Reflective
+        assert self.acqs[0].band_type == BandType.REFLECTIVE
+        assert self.acqs[1].band_type == BandType.REFLECTIVE
+        assert self.acqs[2].band_type == BandType.REFLECTIVE
+        assert self.acqs[3].band_type == BandType.REFLECTIVE
+        assert self.acqs[4].band_type == BandType.REFLECTIVE
+        assert self.acqs[5].band_type == BandType.THERMAL
+        assert self.acqs[6].band_type == BandType.REFLECTIVE
 
     def test_acquisition_datetime(self):
         for acq in self.acqs:
@@ -154,14 +154,14 @@ class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
             assert isinstance(acq, LandsatAcquisition)
 
     def test_band_type(self):
-        assert self.acqs[0].band_type == BandType.Reflective
-        assert self.acqs[1].band_type == BandType.Reflective
-        assert self.acqs[2].band_type == BandType.Reflective
-        assert self.acqs[3].band_type == BandType.Reflective
-        assert self.acqs[4].band_type == BandType.Reflective
-        assert self.acqs[5].band_type == BandType.Thermal
-        assert self.acqs[6].band_type == BandType.Thermal
-        assert self.acqs[7].band_type == BandType.Reflective
+        assert self.acqs[0].band_type == BandType.REFLECTIVE
+        assert self.acqs[1].band_type == BandType.REFLECTIVE
+        assert self.acqs[2].band_type == BandType.REFLECTIVE
+        assert self.acqs[3].band_type == BandType.REFLECTIVE
+        assert self.acqs[4].band_type == BandType.REFLECTIVE
+        assert self.acqs[5].band_type == BandType.THERMAL
+        assert self.acqs[6].band_type == BandType.THERMAL
+        assert self.acqs[7].band_type == BandType.REFLECTIVE
 
     def test_acquisition_datetime(self):
         for acq in self.acqs:
@@ -234,15 +234,15 @@ class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
             assert isinstance(acq, Landsat8Acquisition)
 
     def test_band_type(self):
-        assert self.acqs[0].band_type == BandType.Reflective
-        assert self.acqs[1].band_type == BandType.Thermal
-        assert self.acqs[2].band_type == BandType.Thermal
-        assert self.acqs[3].band_type == BandType.Reflective
-        assert self.acqs[4].band_type == BandType.Reflective
-        assert self.acqs[5].band_type == BandType.Reflective
-        assert self.acqs[6].band_type == BandType.Reflective
-        assert self.acqs[6].band_type == BandType.Reflective
-        assert self.acqs[6].band_type == BandType.Reflective
+        assert self.acqs[0].band_type == BandType.REFLECTIVE
+        assert self.acqs[1].band_type == BandType.THERMAL
+        assert self.acqs[2].band_type == BandType.THERMAL
+        assert self.acqs[3].band_type == BandType.REFLECTIVE
+        assert self.acqs[4].band_type == BandType.REFLECTIVE
+        assert self.acqs[5].band_type == BandType.REFLECTIVE
+        assert self.acqs[6].band_type == BandType.REFLECTIVE
+        assert self.acqs[6].band_type == BandType.REFLECTIVE
+        assert self.acqs[6].band_type == BandType.REFLECTIVE
 
     def test_acquisition_datetime(self):
         for acq in self.acqs:
