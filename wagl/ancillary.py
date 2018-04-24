@@ -72,6 +72,12 @@ ECWMF_LEVELS = [
 ]
 
 
+class AncillaryError(Exception):
+    """Specific error handle for ancillary retrieval."""
+
+    pass
+
+
 def get_4d_idx(day):
     """A small utility function for indexing into a 4D dataset
     represented as a 3D dataset.
@@ -699,7 +705,11 @@ def get_elevation_data(lonlat, dem_path):
     """
     datafile = pjoin(dem_path, "DEM_one_deg.tif")
     url = urlparse(datafile, scheme="file").geturl()
-    data = get_pixel(datafile, lonlat) * 0.001  # scale to correct units
+
+    try:
+        data = get_pixel(datafile, lonlat) * 0.001  # scale to correct units
+    except IndexError:
+        raise AncillaryError("No Elevation data")
 
     metadata = {"data_source": "Elevation", "url": url}
 
@@ -718,7 +728,11 @@ def get_ozone_data(ozone_path, lonlat, time):
     filename = time.strftime("%b").lower() + ".tif"
     datafile = pjoin(ozone_path, filename)
     url = urlparse(datafile, scheme="file").geturl()
-    data = get_pixel(datafile, lonlat)
+
+    try:
+        data = get_pixel(datafile, lonlat)
+    except IndexError:
+        raise AncillaryError("No Ozone data")
 
     metadata = {"data_source": "Ozone", "url": url, "query_date": time}
 
@@ -772,8 +786,7 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1):
     try:
         data = get_pixel(datafile, geobox.centre_lonlat, band=band)
     except IndexError:
-        msg = f"Invalid water vapour band number: {band}"
-        raise IndexError(msg)
+        raise AncillaryError("No Water Vapour data")
 
     data = data * scale_factor
 
@@ -793,7 +806,11 @@ def ecwmf_elevation(datafile, lonlat):
     Converts to Geo-Potential height in KM.
     2 metres is added to the result before returning.
     """
-    data = get_pixel(datafile, lonlat) / 9.80665 / 1000.0 + 0.002
+    try:
+        data = get_pixel(datafile, lonlat) / 9.80665 / 1000.0 + 0.002
+    except IndexError:
+        raise AncillaryError("No Invariant Geo-Potential data")
+
     url = urlparse(datafile, scheme="file").geturl()
 
     metadata = {"data_source": "ECWMF Invariant Geo-Potential", "url": url}
@@ -836,7 +853,7 @@ def ecwmf_temperature_2metre(input_path, lonlat, time):
             return data, metadata
 
     if data is None:
-        raise OSError("No ECWMF 2 metre Temperature ancillary data found.")
+        raise AncillaryError("No ECWMF 2 metre Temperature data")
 
 
 def ecwmf_dewpoint_temperature(input_path, lonlat, time):
@@ -869,8 +886,7 @@ def ecwmf_dewpoint_temperature(input_path, lonlat, time):
             return data, metadata
 
     if data is None:
-        msg = "No ECWMF 2 metre Dewpoint Temperature ancillary data found."
-        raise OSError(msg)
+        raise AncillaryError("No ECWMF 2 metre Dewpoint Temperature data")
 
 
 def ecwmf_surface_pressure(input_path, lonlat, time):
@@ -904,7 +920,7 @@ def ecwmf_surface_pressure(input_path, lonlat, time):
             return data, metadata
 
     if data is None:
-        raise OSError("No Surface Pressure ancillary data found.")
+        raise AncillaryError("No ECWMF Surface Pressure data")
 
 
 def ecwmf_water_vapour(input_path, lonlat, time):
@@ -937,8 +953,7 @@ def ecwmf_water_vapour(input_path, lonlat, time):
             return data, metadata
 
     if data is None:
-        msg = "No ECWMF Total Column Water Vapour ancillary data found."
-        raise OSError(msg)
+        raise AncillaryError("No ECWMF Total Column Water Vapour data")
 
 
 def ecwmf_temperature(input_path, lonlat, time):
@@ -980,7 +995,7 @@ def ecwmf_temperature(input_path, lonlat, time):
             return df, metadata
 
     if data is None:
-        raise OSError("No Temperature ancillary data found.")
+        raise AncillaryError("No ECWMF Temperature profile data")
 
 
 def ecwmf_geo_potential(input_path, lonlat, time):
@@ -1025,7 +1040,7 @@ def ecwmf_geo_potential(input_path, lonlat, time):
             return df, md
 
     if data is None:
-        raise OSError("No Geo-Potential ancillary data found.")
+        raise AncillaryError("No ECWMF Geo-Potential profile data")
 
 
 def ecwmf_relative_humidity(input_path, lonlat, time):
@@ -1067,4 +1082,4 @@ def ecwmf_relative_humidity(input_path, lonlat, time):
             return df, metadata
 
     if data is None:
-        raise OSError("No Relative Humidity ancillary data found.")
+        raise AncillaryError("No ECWMF Relative Humidity profile data")
