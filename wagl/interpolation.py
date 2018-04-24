@@ -9,7 +9,7 @@ import numexpr
 import numpy as np
 from scipy.interpolate import Rbf
 
-from wagl.constants import DatasetName, GroupName, Method, Model
+from wagl.constants import DatasetName, GroupName, Method, Workflow
 from wagl.hdf5 import (
     H5CompressionFilter,
     create_external_link,
@@ -431,13 +431,13 @@ def interpolate(
     coordinator = read_h5_table(ancillary_group, DatasetName.COORDINATOR.value)
     boxline = read_h5_table(satellite_solar_group, DatasetName.BOXLINE.value)
 
-    if coefficient in Model.NBAR.atmos_coefficients:
+    if coefficient in Workflow.NBAR.atmos_coefficients:
         dataset_name = DatasetName.NBAR_COEFFICIENTS.value
-    elif coefficient in Model.SBT.atmos_coefficients:
+    elif coefficient in Workflow.SBT.atmos_coefficients:
         dataset_name = DatasetName.SBT_COEFFICIENTS.value
     else:
         msg = "Factor name not found in available coefficients: {}"
-        raise ValueError(msg.format(Model.STANDARD.atmos_coefficients))
+        raise ValueError(msg.format(Workflow.STANDARD.atmos_coefficients))
 
     coefficients = read_h5_table(coefficients_group, dataset_name)
 
