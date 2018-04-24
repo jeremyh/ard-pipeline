@@ -51,7 +51,7 @@ wait
 FMT1 = "level1-scenes-{jobid}.txt"
 FMT2 = "wagl-{jobid}.bash"
 DAEMON_FMT = "luigid --background --logdir {}"
-ARD_FMT = "--module wagl.{workflow} ARD --model {model} --vertices '{vertices}' --buffer-distance {distance} --method {method}{pq}"  # pylint: disable=line-too-long
+ARD_FMT = "--module wagl.{workflow_type} ARD --workflow {workflow} --vertices '{vertices}' --buffer-distance {distance} --method {method}{pq}"  # pylint: disable=line-too-long
 TASK_FMT = "--module wagl.multifile_workflow CallTask --task {task}"
 
 
@@ -175,7 +175,7 @@ def _submit_multiple(
 def run(
     level1,
     vertices="(5, 5)",
-    model="standard",
+    workflow="standard",
     method="linear",
     pixel_quality=False,
     outdir=None,
@@ -219,13 +219,13 @@ def run(
 
     pq = " --pixel-quality" if pixel_quality else ""
 
-    workflow = "singlefile_workflow" if singlefile else "multifile_workflow"
+    workflow_type = "singlefile_workflow" if singlefile else "multifile_workflow"
 
     # luigi task workflow options
     if task is None:
         options = ARD_FMT.format(
+            workflow_type=workflow_type,
             workflow=workflow,
-            model=model,
             pq=pq,
             vertices=vertices,
             method=method,
@@ -287,7 +287,7 @@ def _parser():
         ),
     )
     parser.add_argument(
-        "--model",
+        "--workflow",
         default="STANDARD",
         help=("The type of ARD workflow to invoke, " "eg STANDARD, NBAR, SBT."),
     )
@@ -365,7 +365,7 @@ def main():
     run(
         args.level1_list,
         args.vertices,
-        args.model,
+        args.workflow,
         args.method,
         args.pixel_quality,
         args.outdir,

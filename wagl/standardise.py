@@ -17,7 +17,7 @@ from wagl.constants import (
     POINT_FMT,
     BandType,
     GroupName,
-    Model,
+    Workflow,
 )
 from wagl.constants import ArdProducts as AP
 from wagl.dsm import get_dsm
@@ -56,7 +56,7 @@ LOG = wrap_logger(
 def card4l(
     level1,
     granule,
-    model,
+    workflow,
     vertices,
     method,
     pixel_quality,
@@ -91,9 +91,9 @@ def card4l(
     :param granule:
         A string containing the granule id to process.
 
-    :param model:
-        An enum from wagl.constants.Model representing which
-        workflow model to run.
+    :param workflow:
+        An enum from wagl.constants.Workflow representing which
+        workflow workflow to run.
 
     :param vertices:
         An integer 2-tuple indicating the number of rows and columns
@@ -144,7 +144,7 @@ def card4l(
 
     :param dsm_path:
         A string containing the full file pathname to the directory
-        containing the Digital Surface Model for use in terrain
+        containing the Digital Surface Workflow for use in terrain
         illumination correction.
 
     :param invariant_fname:
@@ -234,7 +234,7 @@ def card4l(
                 tle_path,
             )
 
-            if model == Model.STANDARD or model == Model.NBAR:
+            if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
                 # DEM
                 log.info("DEM-retriveal")
                 get_dsm(
@@ -376,7 +376,7 @@ def card4l(
         # TODO: supported acqs in different groups pointing to different response funcs
         # tp5 files
         tp5_data, _ = format_tp5(
-            acqs, ancillary_group, sat_sol_grp, lon_lat_grp, model, root
+            acqs, ancillary_group, sat_sol_grp, lon_lat_grp, workflow, root
         )
 
         # atmospheric inputs group
@@ -398,7 +398,7 @@ def card4l(
                 run_modtran(
                     acqs,
                     inputs_grp,
-                    model,
+                    workflow,
                     nvertices,
                     point,
                     [albedo],
@@ -430,8 +430,8 @@ def card4l(
             sat_sol_grp = res_group[GroupName.SAT_SOL_GROUP.value]
             comp_grp = root[GroupName.COEFFICIENTS_GROUP.value]
 
-            for coefficient in model.atmos_coefficients:
-                if coefficient in Model.NBAR.atmos_coefficients:
+            for coefficient in workflow.atmos_coefficients:
+                if coefficient in Workflow.NBAR.atmos_coefficients:
                     band_acqs = nbar_acqs
                 else:
                     band_acqs = sbt_acqs
@@ -456,10 +456,10 @@ def card4l(
 
             # standardised products
             band_acqs = []
-            if model == Model.STANDARD or model == model.NBAR:
+            if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
                 band_acqs.extend(nbar_acqs)
 
-            if model == Model.STANDARD or model == model.SBT:
+            if workflow == Workflow.STANDARD or workflow == Workflow.SBT:
                 band_acqs.extend(sbt_acqs)
 
             for acq in band_acqs:
@@ -495,14 +495,14 @@ def card4l(
                     )
 
             # metadata yaml's
-            if model == Model.STANDARD or model == Model.NBAR:
+            if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
                 create_ard_yaml(band_acqs, ancillary_group, res_group)
 
-            if model == Model.STANDARD or model == Model.SBT:
+            if workflow == Workflow.STANDARD or workflow == Workflow.SBT:
                 create_ard_yaml(band_acqs, ancillary_group, res_group, True)
 
             # pixel quality
-            sbt_only = model == Model.SBT
+            sbt_only = workflow == Workflow.SBT
             if pixel_quality and can_pq(level1, acq_parser_hint) and not sbt_only:
                 run_pq(
                     level1,

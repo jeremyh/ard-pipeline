@@ -45,7 +45,7 @@ from wagl.constants import (
     AtmosphericCoefficients,
     BandType,
     Method,
-    Model,
+    Workflow,
 )
 from wagl.dsm import _get_dsm
 from wagl.hdf5 import H5CompressionFilter, create_external_link
@@ -188,7 +188,7 @@ class AncillaryData(luigi.Task):
     work_root = luigi.Parameter(significant=False)
     granule = luigi.Parameter(default=None)
     vertices = luigi.TupleParameter()
-    model = luigi.EnumParameter(enum=Model)
+    workflow = luigi.EnumParameter(enum=Workflow)
     acq_parser_hint = luigi.Parameter(default=None)
     aerosol = luigi.DictParameter({"user": 0.05}, significant=False)
     brdf_path = luigi.Parameter(significant=False)
@@ -225,7 +225,7 @@ class AncillaryData(luigi.Task):
             "brdf_premodis_path": self.brdf_premodis_path,
         }
 
-        if self.model == Model.STANDARD or self.model == Model.SBT:
+        if self.workflow == Workflow.STANDARD or self.workflow == Workflow.SBT:
             sbt_path = self.ecmwf_path
 
         with self.output().temporary_path() as out_fname:
@@ -250,7 +250,7 @@ class WriteTp5(luigi.Task):
     granule = luigi.Parameter(default=None)
     vertices = luigi.TupleParameter()
     acq_parser_hint = luigi.Parameter(default=None)
-    model = luigi.EnumParameter(enum=Model)
+    workflow = luigi.EnumParameter(enum=Workflow)
     base_dir = luigi.Parameter(default="_atmospherics", significant=False)
     compression = luigi.EnumParameter(
         enum=H5CompressionFilter, default=H5CompressionFilter.LZF, significant=False
@@ -262,7 +262,7 @@ class WriteTp5(luigi.Task):
         tasks = {}
 
         tasks["ancillary"] = AncillaryData(
-            self.level1, self.work_root, self.granule, self.vertices, self.model
+            self.level1, self.work_root, self.granule, self.vertices, self.workflow
         )
 
         for group in container.supported_groups:
@@ -298,7 +298,7 @@ class WriteTp5(luigi.Task):
                 lon_lat_fname,
                 ancillary_fname,
                 out_fname,
-                self.model,
+                self.workflow,
             )
 
             # keep this as an indented block, that way the target will remain
@@ -346,7 +346,7 @@ class AtmosphericsCase(luigi.Task):
                 base_dir,
                 self.point,
                 albedos,
-                self.model,
+                self.workflow,
                 nvertices,
                 atmospheric_inputs_fname,
                 out_fname,
@@ -359,19 +359,19 @@ class AtmosphericsCase(luigi.Task):
 class Atmospherics(luigi.Task):
     """Kicks off MODTRAN calculations for all points and albedos."""
 
-    model = luigi.EnumParameter(enum=Model)
+    workflow = luigi.EnumParameter(enum=Workflow)
     separate = luigi.BoolParameter()
 
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.vertices]
         for point in range(self.vertices[0] * self.vertices[1]):
-            kwargs = {"point": point, "model": self.model}
+            kwargs = {"point": point, "workflow": self.workflow}
             if self.separate:
-                for albedo in self.model.albedos:
+                for albedo in self.workflow.albedos:
                     kwargs["albedos"] = [albedo.value]
                     yield AtmosphericsCase(*args, **kwargs)
             else:
-                kwargs["albedos"] = [a.value for a in self.model.albedos]
+                kwargs["albedos"] = [a.value for a in self.workflow.albedos]
                 yield AtmosphericsCase(*args, **kwargs)
 
     def output(self):
@@ -381,13 +381,13 @@ class Atmospherics(luigi.Task):
     def run(self):
         nvertices = self.vertices[0] * self.vertices[1]
         with self.output().temporary_path() as out_fname:
-            link_atmospheric_results(self.input(), out_fname, nvertices, self.model)
+            link_atmospheric_results(self.input(), out_fname, nvertices, self.workflow)
 
 
 @requires(Atmospherics)
 class CalculateCoefficients(luigi.Task):
     """Calculate the atmospheric coefficients needed by BRDF and atmospheric
-    correction model.
+    correction workflow.
     """
 
     def output(self):
@@ -411,15 +411,15 @@ class InterpolateCoefficient(luigi.Task):
     band_name = luigi.Parameter()
     coefficient = luigi.EnumParameter(enum=AtmosphericCoefficients)
     base_dir = luigi.Parameter(default="_interpolation", significant=False)
-    model = luigi.EnumParameter(enum=Model)
+    workflow = luigi.EnumParameter(enum=Workflow)
     method = luigi.EnumParameter(enum=Method, default=Method.SHEAR)
 
     def requires(self):
         args = [self.level1, self.work_root, self.granule, self.vertices]
         return {
-            "comp": CalculateCoefficients(*args, model=self.model),
+            "comp": CalculateCoefficients(*args, workflow=self.workflow),
             "satsol": self.clone(CalculateSatelliteAndSolarGrids),
-            "ancillary": AncillaryData(*args, model=self.model),
+            "ancillary": AncillaryData(*args, workflow=self.workflow),
         }
 
     def output(self):
@@ -460,7 +460,7 @@ class InterpolateCoefficients(luigi.Task):
     """
 
     vertices = luigi.TupleParameter()
-    model = luigi.EnumParameter(enum=Model)
+    workflow = luigi.EnumParameter(enum=Workflow)
     method = luigi.EnumParameter(enum=Method, default=Method.SHEAR)
 
     def requires(self):
@@ -472,8 +472,8 @@ class InterpolateCoefficients(luigi.Task):
         sbt_acqs = [a for a in acqs if a.band_type == BandType.THERMAL]
 
         tasks = {}
-        for coefficient in self.model.atmos_coefficients:
-            if coefficient in Model.NBAR.atmos_coefficients:
+        for coefficient in self.workflow.atmos_coefficients:
+            if coefficient in Workflow.NBAR.atmos_coefficients:
                 band_acqs = nbar_acqs
             else:
                 band_acqs = sbt_acqs
@@ -487,7 +487,7 @@ class InterpolateCoefficients(luigi.Task):
                     "group": self.group,
                     "band_name": acq.band_name,
                     "coefficient": coefficient,
-                    "model": self.model,
+                    "workflow": self.workflow,
                     "vertices": self.vertices,
                     "method": self.method,
                 }
@@ -925,11 +925,11 @@ class DataStandardisation(luigi.Task):
         acqs = container.get_acquisitions(group=self.group, granule=self.granule)
 
         # NBAR acquisitions
-        if self.model == Model.STANDARD or self.model == Model.NBAR:
+        if self.workflow == Workflow.STANDARD or self.workflow == Workflow.NBAR:
             band_acqs.extend([a for a in acqs if a.band_type == BandType.REFLECTIVE])
 
         # SBT acquisitions
-        if self.model == Model.STANDARD or self.model == Model.SBT:
+        if self.workflow == Workflow.STANDARD or self.workflow == Workflow.SBT:
             band_acqs.extend([a for a in acqs if a.band_type == BandType.THERMAL])
 
         tasks = []
@@ -940,7 +940,7 @@ class DataStandardisation(luigi.Task):
                 "granule": self.granule,
                 "group": self.group,
                 "band_name": acq.band_name,
-                "model": self.model,
+                "workflow": self.workflow,
                 "vertices": self.vertices,
                 "method": self.method,
             }
@@ -961,7 +961,7 @@ class DataStandardisation(luigi.Task):
         with self.output().temporary_path() as out_fname:
             fnames = [target.path for target in self.input()]
             link_standard_data(fnames, out_fname)
-            sbt_only = self.model == Model.SBT
+            sbt_only = self.workflow == Workflow.SBT
             if (
                 self.pixel_quality
                 and can_pq(self.level1, self.acq_parser_hint)
@@ -985,7 +985,7 @@ class LinkwaglOutputs(luigi.Task):
     work_root = luigi.Parameter()
     granule = luigi.Parameter(default=None)
     acq_parser_hint = luigi.Parameter(default=None)
-    model = luigi.EnumParameter(enum=Model)
+    workflow = luigi.EnumParameter(enum=Workflow)
     vertices = luigi.TupleParameter(default=(5, 5))
     pixel_quality = luigi.BoolParameter()
     method = luigi.EnumParameter(enum=Method, default=Method.SHEAR)
@@ -1001,7 +1001,7 @@ class LinkwaglOutputs(luigi.Task):
                 "work_root": self.work_root,
                 "granule": self.granule,
                 "group": group,
-                "model": self.model,
+                "workflow": self.workflow,
                 "vertices": self.vertices,
                 "pixel_quality": self.pixel_quality,
                 "method": self.method,
@@ -1042,7 +1042,7 @@ class ARD(luigi.WrapperTask):
 
     level1_list = luigi.Parameter()
     outdir = luigi.Parameter()
-    model = luigi.EnumParameter(enum=Model)
+    workflow = luigi.EnumParameter(enum=Workflow)
     vertices = luigi.TupleParameter(default=(5, 5))
     pixel_quality = luigi.BoolParameter()
     method = luigi.EnumParameter(enum=Method, default=Method.SHEAR)
@@ -1064,7 +1064,7 @@ class ARD(luigi.WrapperTask):
                     "level1": level1,
                     "work_root": work_root,
                     "granule": granule,
-                    "model": self.model,
+                    "workflow": self.workflow,
                     "vertices": self.vertices,
                     "pixel_quality": self.pixel_quality,
                     "method": self.method,
