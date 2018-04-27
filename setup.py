@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="eugl",
-    version="0.0.1",
+    version="0.0.2",
     description="Modules that deal with sensor and data quality characterisation.",
     packages=["eugl"],
     install_requires=[
