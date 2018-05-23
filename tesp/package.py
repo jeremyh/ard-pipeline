@@ -26,6 +26,7 @@ from yaml.representer import Representer
 
 import tesp
 from tesp.checksum import checksum
+from tesp.constants import ProductPackage
 from tesp.contrast import quicklook
 from tesp.html_geojson import html_map
 from tesp.yaml_merge import merge_metadata
@@ -44,7 +45,6 @@ yaml.add_representer(np.float32, Representer.represent_float)
 yaml.add_representer(np.float64, Representer.represent_float)
 yaml.add_representer(np.ndarray, Representer.represent_list)
 
-PRODUCTS = ["LAMBERTIAN", "NBAR", "NBART", "SBT"]
 ALIAS_FMT = {
     "LAMBERTIAN": "lambertian_{}",
     "NBAR": "nbar_{}",
@@ -114,7 +114,7 @@ def _write_cogtif(dataset, out_fname):
     )
 
 
-def unpack_products(container, granule, h5group, outdir):
+def unpack_products(product_list, container, granule, h5group, outdir):
     """Unpack and package the NBAR and NBART products."""
     # listing of all datasets of IMAGE CLASS type
     img_paths = find(h5group, "IMAGE")
@@ -123,7 +123,7 @@ def unpack_products(container, granule, h5group, outdir):
     rel_paths = {}
 
     # TODO pass products through from the scheduler rather than hard code
-    for product in PRODUCTS:
+    for product in product_list:
         for pathname in [p for p in img_paths if f"/{product}/" in p]:
             dataset = h5group[pathname]
 
@@ -230,7 +230,7 @@ def unpack_supplementary(container, granule, h5group, outdir):
     return rel_paths
 
 
-def create_contiguity(container, granule, outdir):
+def create_contiguity(product_list, container, granule, outdir):
     """Create the contiguity (all pixels valid) dataset."""
     # quick decision to use the mode resolution to form contiguity
     # this rule is expected to change once more people get involved
@@ -242,7 +242,7 @@ def create_contiguity(container, granule, outdir):
     rel_paths = {}
 
     with tempfile.TemporaryDirectory(dir=outdir, prefix="contiguity-") as tmpdir:
-        for product in PRODUCTS:
+        for product in product_list:
             search_path = pjoin(outdir, product)
             fnames = [str(f) for f in Path(search_path).glob("*.TIF")]
 
@@ -293,7 +293,7 @@ def create_html_map(outdir):
     html_map(contiguity_fname, html_fname, json_fname)
 
 
-def create_quicklook(container, outdir):
+def create_quicklook(product_list, container, outdir):
     """Create the quicklook and thumbnail images."""
     acq = container.get_acquisitions(None, None, False)[0]
 
@@ -312,12 +312,17 @@ def create_quicklook(container, outdir):
     wcard = band_wcards[acq.platform_id]
 
     with tempfile.TemporaryDirectory(dir=outdir, prefix="quicklook-") as tmpdir:
-        for product in PRODUCTS:
+        for product in product_list:
             if product == "SBT":
                 # no sbt quicklook for the time being
                 continue
+
             out_path = Path(pjoin(outdir, product))
             fnames = [str(f) for f in out_path.glob(wcard)]
+
+            # quick work around for products that aren't being packaged
+            if not fnames:
+                continue
 
             # output filenames
             match = PATTERN1.match(fnames[0]).groupdict()
@@ -408,7 +413,8 @@ def package(
     fmask_fname,
     yamls_path,
     outdir,
-    granule=None,
+    granule,
+    products=ProductPackage.all(),
     acq_parser_hint=None,
 ):
     """Package an L2 product.
@@ -432,6 +438,13 @@ def package(
     :param outdir:
         A string containing the full file pathname to the directory
         that will contain the packaged Level-2 datasets.
+
+    :param granule:
+        The identifier for the granule
+
+    :param products:
+        A list of imagery products to include in the package.
+        Defaults to all products.
 
     :param acq_parser_hint:
         A string that hints at which acquisition parser should be used.
@@ -466,18 +479,18 @@ def package(
 
         # unpack the standardised products produced by wagl
         wagl_tags, img_paths = unpack_products(
-            container, granule, fid[granule], out_path
+            products, container, granule, fid[granule], out_path
         )
 
         # unpack supplementary datasets produced by wagl
         supp_paths = unpack_supplementary(container, granule, fid[granule], out_path)
 
-        # add in supp paths
+        # add in supplementary paths
         for key in supp_paths:
             img_paths[key] = supp_paths[key]
 
         # file based globbing, so can't have any other tifs on disk
-        qa_paths = create_contiguity(container, granule, out_path)
+        qa_paths = create_contiguity(products, container, granule, out_path)
 
         # add in qa paths
         for key in qa_paths:
@@ -490,7 +503,7 @@ def package(
 
         # map, quicklook/thumbnail, readme, checksum
         create_html_map(out_path)
-        create_quicklook(container, out_path)
+        create_quicklook(products, container, out_path)
         create_readme(out_path)
 
         # merge all the yaml documents
