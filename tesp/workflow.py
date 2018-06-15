@@ -73,7 +73,7 @@ class RunFmask(luigi.Task):
     level1 = luigi.Parameter()
     granule = luigi.Parameter()
     workdir = luigi.Parameter()
-    acq_parser_hint = luigi.Parameter(default=None)
+    acq_parser_hint = luigi.OptionalParameter(default="")
 
     def requires(self):
         # for the time being have fmask require wagl,
@@ -99,7 +99,7 @@ class Fmask(luigi.WrapperTask):
 
     level1 = luigi.Parameter()
     workdir = luigi.Parameter()
-    acq_parser_hint = luigi.Parameter(default=None)
+    acq_parser_hint = luigi.OptionalParameter(default="")
 
     def requires(self):
         # issues task per granule
@@ -126,7 +126,7 @@ class Package(luigi.Task):
     pkgdir = luigi.Parameter()
     yamls_dir = luigi.Parameter()
     cleanup = luigi.BoolParameter()
-    acq_parser_hint = luigi.Parameter(default=None)
+    acq_parser_hint = luigi.OptionalParameter(default="")
     products = luigi.ListParameter(default=ProductPackage.default())
 
     def requires(self):
@@ -176,7 +176,7 @@ class ARDP(luigi.WrapperTask):
     level1_list = luigi.Parameter()
     workdir = luigi.Parameter()
     pkgdir = luigi.Parameter()
-    acq_parser_hint = luigi.Parameter(default=None)
+    acq_parser_hint = luigi.OptionalParameter(default="")
 
     def requires(self):
         with open(self.level1_list) as src:
