@@ -123,7 +123,6 @@ class Package(luigi.Task):
     workdir = luigi.Parameter()
     granule = luigi.Parameter(default=None)
     pkgdir = luigi.Parameter()
-    url_root = luigi.Parameter()
     yamls_dir = luigi.Parameter()
     cleanup = luigi.BoolParameter()
     acq_parser_hint = luigi.Parameter(default=None)
@@ -152,7 +151,6 @@ class Package(luigi.Task):
             inputs["fmask"].path,
             self.yamls_dir,
             self.pkgdir,
-            self.url_root,
             self.granule,
             self.acq_parser_hint,
         )
@@ -169,7 +167,6 @@ class ARDP(luigi.WrapperTask):
     level1_list = luigi.Parameter()
     workdir = luigi.Parameter()
     pkgdir = luigi.Parameter()
-    url_root = luigi.Parameter()
     acq_parser_hint = luigi.Parameter(default=None)
 
     def requires(self):
@@ -184,21 +181,18 @@ class ARDP(luigi.WrapperTask):
                 acq = container.get_acquisitions(None, granule, False)[0]
                 ymd = acq.acquisition_datetime.strftime("%Y-%m-%d")
                 pkgdir = pjoin(self.pkgdir, ymd)
-                url_root = pjoin(self.url_root, ymd)
-                yield Package(level1, work_dir, granule, pkgdir, url_root)
+                yield Package(level1, work_dir, granule, pkgdir)
 
 
 @inherits(Package)
 class PackageS3(luigi.Task):
     """Uploads the packaged data to an s3_bucket and prefix after running the
     Package task successfully.
-    s3_bucket and s3_prefix_key are used for the destination path,
-    s3_bucket_region is used to resolve s3_root for the S3-ARD.yml.
+    s3_bucket and s3_key_prefix are used for the destination path,.
     """
 
     s3_bucket = luigi.Parameter()
     s3_key_prefix = luigi.Parameter()
-    s3_bucket_region = luigi.Parameter()
     s3_object_base_tags = luigi.DictParameter(default={}, significant=False)
     s3_client_args = luigi.DictParameter(default={}, significant=False)
 
@@ -253,10 +247,7 @@ class PackageS3(luigi.Task):
         return boto.s3.connection.S3Connection(**s3_connection_args)
 
     def requires(self):
-        url_root = "http://{}.s3-{}.amazonaws.com/{}".format(
-            self.s3_bucket, self.s3_bucket_region, self.s3_key_prefix
-        )
-        return Package(self.level1, self.workdir, self.granule, self.pkgdir, url_root)
+        return Package(self.level1, self.workdir, self.granule, self.pkgdir)
 
     def output(self):
         # Assumes that the flag file is at the root of the package
@@ -323,7 +314,6 @@ class ARDPS3(luigi.WrapperTask):
 
     s3_bucket = luigi.Parameter()
     s3_key_prefix = luigi.Parameter()
-    s3_bucket_region = luigi.Parameter()
 
     def requires(self):
         with open(self.level1_list) as src:
@@ -344,7 +334,6 @@ class ARDPS3(luigi.WrapperTask):
                     pkgdir,
                     s3_bucket=self.s3_bucket,
                     s3_key_prefix=ppjoin(self.s3_key_prefix, ymd),
-                    s3_bucket_region=self.s3_bucket_region,
                 )
 
 
