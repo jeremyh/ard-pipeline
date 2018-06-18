@@ -136,8 +136,6 @@ def _submit_multiple(
     is_flag=True,
     help=("Test job execution (Don't submit the job to the " "PBS queue)."),
 )
-
-
 # pylint: disable=too-many-arguments
 def main(
     level1_list,

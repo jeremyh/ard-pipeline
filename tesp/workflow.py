@@ -26,6 +26,7 @@ from structlog.processors import JSONRenderer
 from wagl.acquisition import acquisitions
 from wagl.singlefile_workflow import DataStandardisation
 
+from tesp.constants import ProductPackage
 from tesp.package import ARD, PATTERN2, package
 
 ERROR_LOGGER = wrap_logger(
@@ -126,8 +127,12 @@ class Package(luigi.Task):
     yamls_dir = luigi.Parameter()
     cleanup = luigi.BoolParameter()
     acq_parser_hint = luigi.Parameter(default=None)
+    products = luigi.ListParameter(default=ProductPackage.default())
 
     def requires(self):
+        # Ensure configuration values are valid
+        self._validate_cfg()
+
         tasks = {
             "wagl": DataStandardisation(self.level1, self.workdir, self.granule),
             "fmask": RunFmask(self.level1, self.granule, self.workdir),
@@ -152,11 +157,15 @@ class Package(luigi.Task):
             self.yamls_dir,
             self.pkgdir,
             self.granule,
+            self.products,
             self.acq_parser_hint,
         )
 
         if self.cleanup:
             shutil.rmtree(self.workdir)
+
+    def _validate_cfg(self):
+        assert ProductPackage.validate(self.products)
 
 
 class ARDP(luigi.WrapperTask):
