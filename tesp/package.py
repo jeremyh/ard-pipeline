@@ -301,15 +301,15 @@ def create_quicklook(product_list, container, outdir):
     # this wildcard mechanism needs to change if quicklooks are to
     # persist
     band_wcards = {
-        "LANDSAT_5": "L*_B[3,2,1].TIF",
-        "LANDSAT_7": "L*_B[3,2,1].TIF",
-        "LANDSAT_8": "L*_B[4,3,2].TIF",
-        "SENTINEL_2A": "*_B0[4,3,2].TIF",
-        "SENTINEL_2B": "*_B0[4,3,2].TIF",
+        "LANDSAT_5": [f"L*_B{i}.TIF" for i in [3, 2, 1]],
+        "LANDSAT_7": [f"L*_B{i}.TIF" for i in [3, 2, 1]],
+        "LANDSAT_8": [f"L*_B{i}.TIF" for i in [4, 3, 2]],
+        "SENTINEL_2A": [f"*_B0{i}.TIF" for i in [4, 3, 2]],
+        "SENTINEL_2B": [f"*_B0{i}.TIF" for i in [4, 3, 2]],
     }
 
-    # appropriate wildcard
-    wcard = band_wcards[acq.platform_id]
+    # appropriate wildcards
+    wcards = band_wcards[acq.platform_id]
 
     with tempfile.TemporaryDirectory(dir=outdir, prefix="quicklook-") as tmpdir:
         for product in product_list:
@@ -318,7 +318,9 @@ def create_quicklook(product_list, container, outdir):
                 continue
 
             out_path = Path(pjoin(outdir, product))
-            fnames = [str(f) for f in out_path.glob(wcard)]
+            fnames = []
+            for wcard in wcards:
+                fnames.extend([str(f) for f in out_path.glob(wcard)])
 
             # quick work around for products that aren't being packaged
             if not fnames:
