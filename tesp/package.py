@@ -28,6 +28,7 @@ import tesp
 from tesp.checksum import checksum
 from tesp.constants import ProductPackage
 from tesp.contrast import quicklook
+from tesp.ga_metadata import extract_level1_metadata
 from tesp.html_geojson import html_map
 from tesp.yaml_merge import merge_metadata
 
@@ -409,6 +410,35 @@ def create_checksum(outdir):
     checksum(out_fname)
 
 
+def get_level1_tags(container, granule=None, yamls_path=None, l1_path=None):
+    if yamls_path:
+        # TODO define a consistent file structure where yaml metadata exists
+        yaml_fname = pjoin(
+            yamls_path, basename(dirname(l1_path)), f"{container.label}.yaml"
+        )
+
+        # quick workaround if no source yaml
+        if not exists(yaml_fname):
+            raise OSError(f"yaml file not found: {yaml_fname}")
+
+        with open(yaml_fname) as src:
+            # TODO harmonise field names for different sensors
+            l1_documents = {
+                doc.get("tile_id", doc.get("label")): doc for doc in yaml.load_all(src)
+            }
+            l1_tags = l1_documents[granule]
+    else:
+        acq = container.get_acquisitions()[0]
+        docs = extract_level1_metadata(acq, l1_path)
+        if granule:
+            l1_tags = [
+                doc for doc in docs if doc.get("tile_id", doc.get("label")) == granule
+            ][0]
+        else:
+            l1_tags = docs
+    return l1_tags
+
+
 def package(
     l1_path,
     wagl_fname,
@@ -455,22 +485,7 @@ def package(
         None; The packages will be written to disk directly.
     """
     container = acquisitions(l1_path, acq_parser_hint)
-
-    # TODO define a consistent file structure where yaml metadata exists
-    yaml_fname = pjoin(
-        yamls_path, basename(dirname(l1_path)), f"{container.label}.yaml"
-    )
-
-    # quick workaround if no source yaml
-    if exists(yaml_fname):
-        with open(yaml_fname) as src:
-            # TODO harmonise field names for different sensors
-            l1_documents = {
-                doc.get("tile_id", doc.get("label")): doc for doc in yaml.load_all(src)
-            }
-            l1_tags = l1_documents[granule]
-    else:
-        raise OSError(f"yaml file not found: {yaml_fname}")
+    l1_tags = get_level1_tags(container, granule, yamls_path, l1_path)
 
     with h5py.File(wagl_fname, "r") as fid:
         grn_id = re.sub(PATTERN2, ARD, granule)

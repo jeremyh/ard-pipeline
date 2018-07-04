@@ -18,6 +18,7 @@ setup(
         "h5py",
         "luigi",
         "numpy",
+        "pathlib",
         "pyyaml",
         "rasterio",
         "scikit-image",
