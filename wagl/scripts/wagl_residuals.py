@@ -6,6 +6,7 @@ reference file, with the equivalent dataset from a test file.
 
 
 import argparse
+import json
 from functools import partial
 from posixpath import basename as pbasename
 from posixpath import join as ppjoin
@@ -631,7 +632,21 @@ def _parser():
         help=("The filename of the file to contain the " "results."),
     )
     parser.add_argument(
-        "--compression", default="lzf", help="The comression filter to use."
+        "--compression",
+        default="LZF",
+        choices=list(H5CompressionFilter),
+        type=lambda compression: H5CompressionFilter[compression],
+        help="The comression filter to use.",
+    )
+    parser.add_argument(
+        "--filter-opts",
+        default=None,
+        type=json.loads,
+        help=(
+            "A JSON styled dict of key value pairs "
+            "detailing filter options for the given "
+            "compression filter."
+        ),
     )
     parser.add_argument(
         "--save-inputs",
