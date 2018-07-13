@@ -29,6 +29,9 @@ LANDSAT_8_BANDS = [
     ("QUALITY", "quality"),
 ]
 
+TIRS_ONLY = [("10", "lwir1"), ("11", "lwir2"), ("QUALITY", "quality")]
+
+
 LANDSAT_BANDS = [
     ("1", "blue"),
     ("2", "green"),
@@ -100,14 +103,17 @@ def get_coords(geo_ref_points, spatial_ref):
     return {key: transform(p) for key, p in geo_ref_points.items()}
 
 
-def satellite_ref(sat, file_name):
+def satellite_ref(sat, instrument, file_name):
     """To load the band_names for referencing either LANDSAT8 or LANDSAT7 or LANDSAT5 bands
     Landsat7 and Landsat5 have same band names.
     """
-    name = (Path(file_name)).stem
+    name = file_name.stem
     name_len = name.split("_")
     if sat == "LANDSAT_8":
-        sat_img = LANDSAT_8_BANDS
+        if instrument == "TIRS":
+            sat_img = TIRS_ONLY
+        else:
+            sat_img = images1
     elif len(name_len) > 7:
         sat_img = LANDSAT_BANDS
     else:
@@ -119,7 +125,7 @@ def get_mtl_content(path):
     """Path is pointing to the folder , where the USGS Landsat scene list in MTL format is downloaded
     from Earth Explorer or GloVis.
     """
-    with open(path) as fp:
+    with path.open("r") as fp:
         mtl_tree = _parse_group(fp)["L1_METADATA_FILE"]
 
     return mtl_tree, path
@@ -144,15 +150,16 @@ def prepare_dataset(path):
 
         geo_ref_points = get_geo_ref_points(info_pm)
         satellite = info_pm["SPACECRAFT_ID"]
+        instrument = info_pm["SENSOR_ID"]
 
-        images = satellite_ref(satellite, fileinfo)
+        images = satellite_ref(satellite, instrument, fileinfo)
         return {
-            "id": str(uuid.uuid5(uuid.NAMESPACE_URL, path)),
+            "id": str(uuid.uuid5(uuid.NAMESPACE_URL, path.as_posix())),
             "processing_level": level,
             "product_type": "LS_USGS_L1C1",
             "label": info["METADATA_FILE_INFO"]["LANDSAT_SCENE_ID"],
             "platform": {"code": satellite},
-            "instrument": {"name": info_pm["SENSOR_ID"]},
+            "instrument": {"name": instrument},
             "extent": {
                 "from_dt": sensing_time,
                 "to_dt": sensing_time,
@@ -235,10 +242,9 @@ def main(output, datasets, checksum, date):
             ds_path = Path(ds)
             if ds_path.suffix in ("MTL.txt"):
                 mtl_path = str(ds_path)
-                ds_path = os.path.dirname(str(ds_path))
 
-                logging.info("Processing %s", ds_path)
-                output_yaml = pjoin(output, f"{os.path.basename(ds_path)}.yaml")
+                logging.info("Processing %s", ds_path.parent.as_posix())
+                output_yaml = pjoin(output, f"{ds_path.parent.name}.yaml")
                 logging.info("Output %s", output_yaml)
                 if os.path.exists(output_yaml):
                     logging.info("Output already exists %s", output_yaml)
@@ -259,7 +265,7 @@ def main(output, datasets, checksum, date):
                         else:
                             logging.info("Dataset preparation already done...SKIPPING")
                             continue
-                docs = absolutify_paths(prepare_dataset(mtl_path), ds_path)
+                docs = absolutify_paths(prepare_dataset(mtl_path), ds_path.parent)
                 with open(output_yaml, "w") as stream:
                     yaml.dump(docs, stream)
 
