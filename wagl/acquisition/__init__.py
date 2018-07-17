@@ -12,9 +12,10 @@ import datetime
 import json
 import os
 import re
+import tarfile
 import zipfile
 from collections import OrderedDict
-from os.path import basename, dirname, isdir, splitext
+from os.path import basename, dirname, isdir, isfile, splitext
 from os.path import join as pjoin
 from xml.etree import ElementTree
 
@@ -116,18 +117,26 @@ def acquisitions_via_mtl(pathname):
     for in the directory and its children.
     Returns an instance of `AcquisitionsContainer`.
     """
+    tarball = None
     if isdir(pathname):
         filename = find_in(pathname, "MTL")
+    elif isfile(pathname) and tarfile.is_tarfile(pathname):
+        tarball = tarfile.open(pathname, "r")
+        filename = [n for n in tarball.getnames() if "MTL" in n][0]
     else:
         filename = pathname
 
     if filename is None:
         raise OSError("Cannot find MTL file in %s" % pathname)
 
-    # set path
-    dir_name = os.path.dirname(os.path.abspath(filename))
+    if tarball is None:
+        data = load_mtl(filename)
+        prefix_name = os.path.dirname(os.path.abspath(filename))
+    else:
+        prefix_name = f"tar:{pathname}!"
+        with tarball.extractfile(filename) as fmem:
+            data = load_mtl(fmem)
 
-    data = load_mtl(filename)
     bandfiles = [
         k for k in data["PRODUCT_METADATA"].keys() if "band" in k and "file_name" in k
     ]
@@ -187,7 +196,7 @@ def acquisitions_via_mtl(pathname):
 
         # band id name, band filename, band full file pathname
         band_fname = prod_md.get(f"{band}_file_name", prod_md[f"file_name_{band}"])
-        fname = pjoin(dir_name, band_fname)
+        fname = pjoin(prefix_name, band_fname)
 
         min_rad = rad_md.get(f"lmin_{band}", rad_md[f"radiance_minimum_{band}"])
         max_rad = rad_md.get(f"lmax_{band}", rad_md[f"radiance_maximum_{band}"])
@@ -216,6 +225,10 @@ def acquisitions_via_mtl(pathname):
 
     # resolution groups dict
     res_groups = create_resolution_groups(acqs)
+
+    # close if dealing with a tarball
+    if tarball is not None:
+        tarball.close()
 
     return AcquisitionsContainer(
         label=basename(pathname), granules={granule_id: res_groups}
@@ -460,7 +473,9 @@ def acquisitions_via_safe(pathname):
         granule_root = ElementTree.XML(granule_xml)
 
         # handling different metadata versions for image paths
-        img_data_path = "".join(["zip:", pathname, "!", archive.namelist()[0]])
+        # files retrieved from archive.namelist are not prepended with a '/'
+        # Rasterio 1.0b1 requires archive paths start with a /
+        img_data_path = "".join(["zip:", pathname, "!/", archive.namelist()[0]])
         if basename(images[0]) == images[0]:
             img_data_path = "".join(
                 [img_data_path, pjoin("GRANULE", granule_id, "IMG_DATA")]
