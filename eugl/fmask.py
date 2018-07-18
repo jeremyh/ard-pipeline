@@ -27,17 +27,17 @@ os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
 def run_command(command, work_dir):
     """A simple utility to execute a subprocess command."""
-    check_call(" ".join(command), shell=True, cwd=work_dir)
+    check_call(" ".join(command), shell=True, cwd=str(work_dir))
 
 
 def _fmask_landsat(acquisition, out_fname, work_dir):
     """Fmask algorithm for Landsat."""
-    acquisition_path = acquisition.pathname
-    if ".tar" in acquisition_path:
-        tmp_dir = pjoin(work_dir, "fmask_imagery")
-        if not os.path.isdir(tmp_dir):
-            os.mkdir(tmp_dir)
-        cmd = ["tar", "zxvf", acquisition_path]
+    acquisition_path = Path(acquisition.pathname)
+    if ".tar" in str(acquisition_path):
+        tmp_dir = Path(work_dir) / "fmask_imagery"
+        if not tmp_dir.is_dir():
+            tmp_dir.mkdir()
+        cmd = ["tar", "zxvf", str(acquisition_path)]
         run_command(cmd, tmp_dir)
 
         acquisition_path = tmp_dir
@@ -63,6 +63,16 @@ def _fmask_landsat(acquisition, out_fname, work_dir):
     mask_fname = pjoin(work_dir, "saturation-mask.img")
     toa_fname = pjoin(work_dir, "toa-reflectance.img")
 
+    reflective_bands = [
+        str(path)
+        for path in acquisition_path.rglob(reflective_wcards[acquisition.platform_id])
+    ]
+
+    thermal_bands = [
+        str(path)
+        for path in acquisition_path.rglob(thermal_wcards[acquisition.platform_id])
+    ]
+
     # reflective image stack
     cmd = [
         "gdal_merge.py",
@@ -73,7 +83,7 @@ def _fmask_landsat(acquisition, out_fname, work_dir):
         "COMPRESSED=YES",
         "-o",
         ref_fname,
-        reflective_wcards[acquisition.platform_id],
+        *reflective_bands,
     ]
     run_command(cmd, acquisition_path)
 
@@ -87,12 +97,12 @@ def _fmask_landsat(acquisition, out_fname, work_dir):
         "COMPRESSED=YES",
         "-o",
         thm_fname,
-        thermal_wcards[acquisition.platform_id],
+        *thermal_bands,
     ]
     run_command(cmd, acquisition_path)
 
     # copy the mtl to the work space
-    mtl_fname = str(list(Path(acquisition_path).glob("*_MTL.txt"))[0])
+    mtl_fname = str(list(acquisition_path.rglob("*_MTL.txt"))[0])
 
     # angles
     cmd = [
