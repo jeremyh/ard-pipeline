@@ -240,6 +240,7 @@ def parse_gqa(task, output_yaml, reference_images, band_id, sat_id, work_dir):
         granule=granule,
         ref_source=_gls_version(first_ref),
         ref_date=ref_date,
+        gverify_version=task.gverify_binary.split("_")[-1],
     )
 
     rh = pd.read_csv(
