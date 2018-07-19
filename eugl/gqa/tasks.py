@@ -337,10 +337,10 @@ def calculate_gqa(task, df, tr, resolution):
         return {"mean": mean, "stddev": stddev}
 
     original = calculate_stats(subset)
-    current = dict(original)
+    current = dict(**original)  # create a copy
 
     # Compute new values to refine the selection
-    for i in range(iterations):
+    for _ in range(iterations):
         # Look for any residuals
         subset = subset[
             (
