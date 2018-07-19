@@ -252,13 +252,15 @@ class Acquisition:
 
     def _open(self):
         """A private method for opening the dataset and
-        retrieving the dimensional information.
+        retrieving dataset metadata.
         """
         with rasterio.open(self.uri) as ds:
             self._samples = ds.width
             self._lines = ds.height
             self._tile_size = ds.block_shapes[0]
             self._resolution = ds.res
+            self._gridded_geo_box = GriddedGeoBox.from_dataset(ds)
+            self._no_data_val = ds.nodatavals[0]
 
     @property
     def pathname(self):
@@ -325,6 +327,13 @@ class Acquisition:
         return self._resolution
 
     @property
+    def no_data(self):
+        """Return the no_data value for this acquisition.
+        Assumes that the acquisition is a single band file.
+        """
+        return self._no_data_val
+
+    @property
     def gps_file(self):
         """Does the acquisition have an associated GPS file?."""
         return self._gps_file
@@ -382,8 +391,7 @@ class Acquisition:
 
     def gridded_geo_box(self):
         """Return the `GriddedGeoBox` for this acquisition."""
-        with rasterio.open(self.uri) as src:
-            return GriddedGeoBox.from_dataset(src)
+        return self._gridded_geo_box
 
     def decimal_hour(self):
         """The time in decimal."""
@@ -397,15 +405,6 @@ class Acquisition:
     def julian_day(self):
         """Return the Juilan Day of the acquisition_datetime."""
         return int(self.acquisition_datetime.strftime("%j"))
-
-    @property
-    def no_data(self):
-        """Return the no_data value for this acquisition.
-        Assumes that the acquisition is a single band file.
-        """
-        with rasterio.open(self.uri) as ds:
-            nodata_list = ds.nodatavals
-            return nodata_list[0]
 
     def spectral_response(self, as_list=False):
         """Reads the spectral response for the sensor."""
