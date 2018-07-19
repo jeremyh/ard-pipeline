@@ -37,7 +37,7 @@ from pkg_resources import resource_filename
 from rasterio.warp import Resampling
 from shapely.geometry import Polygon, shape
 from wagl.acquisition import acquisitions
-from wagl.constants import BandType
+from wagl.constants import ATMOSPHERIC_INPUTS_GRP, BandType
 from wagl.data import write_img
 from wagl.geobox import GriddedGeoBox
 from wagl.singlefile_workflow import DataStandardisation
@@ -485,7 +485,9 @@ def build_vrt(reference_images, out_file, work_dir):
 
 
 def acquisition_timestamp(h5_file, granule):
-    result = h5_file[f"{granule}/ATMOSPHERIC-INPUTS"].attrs["acquisition-datetime"]
+    result = h5_file[f"{granule}/{ATMOSPHERIC_INPUTS_GRP}"].attrs[
+        "acquisition-datetime"
+    ]
     return parse_timestamp(result)
 
 
