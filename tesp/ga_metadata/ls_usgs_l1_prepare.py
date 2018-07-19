@@ -130,7 +130,7 @@ def get_mtl_content(acquisition_path):
     """Path is pointing to the folder , where the USGS Landsat scene list in MTL format is downloaded
     from Earth Explorer or GloVis.
     """
-    if ".tar" in str(acquisition_path):
+    if tarfile.is_tarfile(acquisition_path):
         with tarfile.open(str(acquisition_path), "r") as tp:
             try:
                 internal_file = next(
