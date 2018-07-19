@@ -12,6 +12,7 @@ from subprocess import check_call
 
 import h5py
 import numpy as np
+import rasterio
 import yaml
 from eugl.contiguity import contiguity
 from eugl.fmask import fmask_cogtif
