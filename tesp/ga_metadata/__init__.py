@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from wagl.acquisition import find_in
 from wagl.acquisition.landsat import LandsatAcquisition
 from wagl.acquisition.sentinel import (
     Sentinel2Acquisition,
@@ -19,8 +18,7 @@ def extract_level1_metadata(acq, acquisition_path):
     elif isinstance(acq, Sentinel2Acquisition):
         return sentinel_2_zip_prepare(Path(acq.pathname))
     elif isinstance(acq, LandsatAcquisition):
-        mtl_file = find_in(acquisition_path, "MTL")
-        return landsat_prepare(Path(mtl_file))
+        return landsat_prepare(Path(acquisition_path))
 
     raise NotImplementedError(
         "No level-1 YAML generation defined for target acquisition "
