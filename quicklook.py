@@ -1,18 +1,17 @@
-"""
-Execution method for quicklook creation
+"""Execution method for quicklook creation.
 
 example usage:
     quicklook.py red.tif green.tif blue.tif --output quicklook.tif --scale 0 3500 0 255
     --output /tmp/
 """
-from __future__ import absolute_import
-import os
 import logging
-import rasterio
-import numpy as np
-from skimage import exposure, img_as_float
-import click
+import os
 from pathlib import Path
+
+import click
+import numpy as np
+import rasterio
+from skimage import exposure, img_as_float
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
@@ -27,7 +26,7 @@ def make_quicklook(datasets, src_min, src_max, null, output):
     b_rescale = exposure.rescale_intensity(b, in_range=(src_min, src_max))
 
     rgb_stack = np.dstack((r_rescale, g_rescale, b_rescale))
-    img = img_as_float(rgb_stack)
+    img_as_float(rgb_stack)
 
     with rasterio.open(
         output,
@@ -56,12 +55,11 @@ def make_quicklook(datasets, src_min, src_max, null, output):
     nargs=-1,
 )
 @click.argument(
-    "scale", help="<src min> <src max> <dst min> <dst max>", nargs=4, type - float
+    "scale", help="<src min> <src max> <dst min> <dst max>", nargs=4, type=float
 )
 def main(output, datasets):
-    """
-    For input colour bands generate full resolution quicklook
-    output in 8/24 bit colour and write to the destination path specified by 'output'
+    """For input colour bands generate full resolution quicklook
+    output in 8/24 bit colour and write to the destination path specified by 'output'.
     """
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
@@ -72,7 +70,7 @@ def main(output, datasets):
         os.path.commonprefix(datasets)
         stem = Path(path).stem
         out = os.path.join(output, stem)
-        quicklook = out + ".QUICKLOOK.img"
+        out + ".QUICKLOOK.img"
         logging.info("Create quicklook " + contiguity)
         do_contiguity(path, contiguity)
 

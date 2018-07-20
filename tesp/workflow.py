@@ -11,6 +11,7 @@ from os.path import join as pjoin
 
 import luigi
 from eugl.fmask import fmask
+from eugl.gqa import GQATask
 from luigi.local_target import LocalFileSystem
 from structlog import wrap_logger
 from structlog.processors import JSONRenderer
@@ -99,13 +100,6 @@ class Fmask(luigi.WrapperTask):
             yield RunFmask(self.level1, granule, self.workdir)
 
 
-# TODO: GQA implementation
-# class Gqa(luigi.Task):
-
-#     level1 = luigi.Parameter()
-#     outdir = luigi.Parameter()
-
-
 class Package(luigi.Task):
     """Creates the final packaged product once wagl, Fmask
     and gqa have executed successfully.
@@ -127,9 +121,8 @@ class Package(luigi.Task):
         tasks = {
             "wagl": DataStandardisation(self.level1, self.workdir, self.granule),
             "fmask": RunFmask(self.level1, self.granule, self.workdir),
+            "gqa": GQATask(self.level1, self.granule, self.workdir),
         }
-        # TODO: GQA implementation
-        # 'gqa': Gqa()}
 
         return tasks
 
@@ -145,6 +138,7 @@ class Package(luigi.Task):
             self.level1,
             inputs["wagl"].path,
             inputs["fmask"].path,
+            inputs["gqa"].path,
             self.yamls_dir,
             self.pkgdir,
             self.granule,
@@ -168,20 +162,27 @@ class ARDP(luigi.WrapperTask):
     workdir = luigi.Parameter()
     pkgdir = luigi.Parameter()
     acq_parser_hint = luigi.OptionalParameter(default="")
+    s2_aoi = luigi.Parameter()
 
     def requires(self):
         with open(self.level1_list) as src:
             level1_list = [level1.strip() for level1 in src.readlines()]
 
+        with open(self.s2_aoi) as csv:
+            tile_ids = ["T" + tile.strip() for tile in csv]
+
         for level1 in level1_list:
             work_root = pjoin(self.workdir, f"{basename(level1)}.ARD")
             container = acquisitions(level1, self.acq_parser_hint)
             for granule in container.granules:
-                work_dir = container.get_root(work_root, granule=granule)
-                acq = container.get_acquisitions(None, granule, False)[0]
-                ymd = acq.acquisition_datetime.strftime("%Y-%m-%d")
-                pkgdir = pjoin(self.pkgdir, ymd)
-                yield Package(level1, work_dir, granule, pkgdir)
+                tile_id = granule.split("_")[-2]
+
+                if tile_id in tile_ids:
+                    work_dir = container.get_root(work_root, granule=granule)
+                    acq = container.get_acquisitions(None, granule, False)[0]
+                    ymd = acq.acquisition_datetime.strftime("%Y-%m-%d")
+                    pkgdir = pjoin(self.pkgdir, ymd)
+                    yield Package(level1, work_dir, granule, pkgdir)
 
 
 if __name__ == "__main__":

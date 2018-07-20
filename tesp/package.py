@@ -461,6 +461,7 @@ def package(
     l1_path,
     wagl_fname,
     fmask_fname,
+    gqa_fname,
     yamls_path,
     outdir,
     granule,
@@ -480,6 +481,9 @@ def package(
     :param fmask_fname:
         A string containing the full file pathname to the fmask
         dataset.
+
+    :param gqa_fname:
+        A string containing the full file pathname to the GQA yaml.
 
     :param yamls_path:
         A string containing the full file pathname to the yaml
@@ -545,9 +549,13 @@ def package(
         create_readme(out_path)
 
         # merge all the yaml documents
-        # TODO include gqa yaml, and fmask yaml (if we go ahead and create one)
+        # TODO include fmask yaml (if we go ahead and create one)
+        # TODO put eugl, fmask, tesp in the software_versions section
         # relative paths yaml doc
-        tags = merge_metadata(l1_tags, wagl_tags, granule, img_paths)
+        with open(gqa_fname) as fl:
+            gqa_tags = yaml.load(fl)
+
+        tags = merge_metadata(l1_tags, wagl_tags, gqa_tags, granule, img_paths)
 
         with open(pjoin(out_path, "ARD-METADATA.yaml"), "w") as src:
             yaml.dump(tags, src, default_flow_style=False, indent=4)

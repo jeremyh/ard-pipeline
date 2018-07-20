@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="tesp",
-    version="0.0.4",
+    version="0.0.5",
     description=(
         "A temporary solution to get packaging underway. "
         "Code will eventually be ported eo-datasets."
