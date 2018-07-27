@@ -21,7 +21,6 @@ from datetime import datetime, timezone
 from os.path import abspath, basename, dirname, exists, isdir, splitext
 from os.path import join as pjoin
 from pathlib import Path
-from subprocess import CalledProcessError
 
 import fiona
 import h5py
@@ -42,7 +41,7 @@ from wagl.data import write_img
 from wagl.geobox import GriddedGeoBox
 from wagl.singlefile_workflow import DataStandardisation
 
-from eugl.fmask import run_command
+from eugl.fmask import CommandError, run_command
 from eugl.gqa.geometric_utils import (
     BAND_MAP,
     OLD_BAND_MAP,
@@ -193,7 +192,7 @@ class GQATask(luigi.Task):
             _LOG.debug("finished gverify on %s", self.granule)
             parse_gqa(self, temp_yaml, references, band_id, sat_id, temp_directory)
 
-        except (ValueError, FileNotFoundError, CalledProcessError) as ve:
+        except (ValueError, FileNotFoundError, CommandError) as ve:
             # failed because GQA cannot be calculated
             _write_failure_yaml(temp_yaml, self.granule, str(ve))
             with open(pjoin(temp_directory, "gverify.log"), "w") as src:
