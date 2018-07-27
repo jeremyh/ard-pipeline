@@ -3,14 +3,17 @@ snow/ice classification) code supporting Sentinel-2 Level 1 C SAFE format zip ar
 Australian Copernicus Data Hub - http://www.copernicus.gov.au/ - for direct (zip) read access
 by datacube.
 """
+import logging
 import os
+import subprocess
 import tempfile
 from os.path import dirname
 from os.path import join as pjoin
 from pathlib import Path
-from subprocess import check_call
 
 from wagl.acquisition import acquisitions
+
+_LOG = logging.getLogger(__name__)
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
@@ -27,7 +30,24 @@ os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
 def run_command(command, work_dir):
     """A simple utility to execute a subprocess command."""
-    check_call(" ".join(command), shell=True, cwd=str(work_dir))
+    _proc = subprocess.Popen(
+        " ".join(command),
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        shell=True,
+        cwd=str(work_dir),
+    )
+    _proc.wait()
+
+    stderr, stdout = _proc.communicate()
+    if _proc.returncode != 0:
+        _LOG.error(stderr.decode("utf-8"))
+        _LOG.info(stdout.decode("utf-8"))
+        raise subprocess.CalledProcessError(
+            '"{}" failed with return code: {}'.format(command, str(_proc.returncode))
+        )
+    else:
+        _LOG.debug(stdout.decode("utf-8"))
 
 
 def _fmask_landsat(acquisition, out_fname, work_dir):

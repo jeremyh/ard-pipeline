@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+#
+# Functions in this file represent work to be refactored.
+
 import datetime
 import logging
 import math
