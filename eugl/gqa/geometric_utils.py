@@ -60,7 +60,13 @@ def _write_gqa_yaml(out_fname, data):
 
 
 def _write_failure_yaml(
-    out_fname, granule, msg, ref_source=None, ref_source_path=None, ref_date=None
+    out_fname,
+    granule,
+    msg,
+    ref_source=None,
+    ref_source_path=None,
+    ref_date=None,
+    gverify_version=None,
 ):
     """We'll cater for future tasks by passing through reference image details,
     if we decide to write a yaml for when a gverify execution fails
@@ -78,6 +84,7 @@ def _write_failure_yaml(
     data["ref_date"] = ref_date
     data["final_gcp_count"] = 0
     data["residual"] = _populate_nan_residuals()
+    data["gverify_version"] = gverify_version
     _write_gqa_yaml(out_fname, data)
 
 
