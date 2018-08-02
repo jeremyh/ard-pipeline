@@ -789,6 +789,7 @@ def _calculate_angles(
     compression=H5CompressionFilter.LZF,
     filter_opts=None,
     tle_path=None,
+    trackpoints=12,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -796,7 +797,13 @@ def _calculate_angles(
     with h5py.File(lon_lat_fname, "r") as lon_lat_fid, h5py.File(out_fname, "w") as fid:
         lon_lat_grp = lon_lat_fid[GroupName.LON_LAT_GROUP.value]
         calculate_angles(
-            acquisition, lon_lat_grp, fid, compression, filter_opts, tle_path
+            acquisition,
+            lon_lat_grp,
+            fid,
+            compression,
+            filter_opts,
+            tle_path,
+            trackpoints,
         )
 
 
@@ -807,6 +814,7 @@ def calculate_angles(
     compression=H5CompressionFilter.LZF,
     filter_opts=None,
     tle_path=None,
+    trackpoints=12,
 ):
     """Calculate the satellite view, satellite azimuth, solar zenith,
     solar azimuth, and relative aziumth angle grids, as well as the
@@ -844,6 +852,10 @@ def calculate_angles(
         * DatasetName.ORBITAL_ELEMENTS
         * DatasetName.SATELLITE_MODEL
         * DatasetName.SATELLITE_TRACK
+
+    :param trackpoints:
+        Number of trackpoints to use when calculating solar angles
+        Default is 12
 
     :param compression:
         The compression filter to use.
@@ -910,7 +922,11 @@ def calculate_angles(
     smodel = setup_smodel(centre_xy[0], centre_xy[1], spheroid[0], orbital_elements[0])
 
     # Get the times and satellite track information
-    track = setup_times(min_lat, max_lat, spheroid[0], orbital_elements[0], smodel[0])
+    track = setup_times(
+        min_lat, max_lat, spheroid[0], orbital_elements[0], smodel[0], trackpoints
+    )
+    print("TRACK")
+    print(track)
 
     # Initialise the output files
     if out_group is None:
@@ -1053,7 +1069,7 @@ def calculate_angles(
                 orbital_elements[0],
                 acquisition.decimal_hour(),
                 century,
-                12,
+                trackpoints,
                 smodel[0],
                 track[0],
                 view[i],
