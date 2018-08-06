@@ -139,9 +139,19 @@ def interpolate_block(
 
 
 def interpolate_grid(
-    depth=0, origin=DEFAULT_ORIGIN, shape=DEFAULT_SHAPE, eval_func=None, grid=None
+    grid, eval_func, depth=0, origin=DEFAULT_ORIGIN, shape=DEFAULT_SHAPE
 ):
-    """Interpolate a data grid.
+    """Entry function for recursive inplace grid interpolation.
+
+    :param grid:
+        Grid array.
+    :type grid:
+        :py:class:`numpy.array`.
+
+    :param eval_func:
+        Evaluator function.
+    :type eval_func:
+        callable; accepts grid indices i, j and returns a scalar value.
 
     :param depth:
         Recursive bisection depth.
@@ -157,32 +167,60 @@ def interpolate_grid(
         Block shape.
     :type shape:
         :py:class:`tuple` of length 2 ``(nrows, ncols)``.
+    """
+    # bilinear requires a 2 by 2 grid at a minimum; depth can be derived by bit length
+    max_depth = min(shape[0].bit_length(), shape[1].bit_length()) - 2
+    if max_depth < 0:
+        raise ValueError("Unable to interpolate grid of %s", str(shape))
+    elif max_depth < depth:
+        _LOG.warning(
+            "Requested depth of %s but maximum interpolated depth is %s; using %s"
+            " for shape %s",
+            depth,
+            max_depth,
+            max_depth,
+            str(shape),
+        )
+        depth = max_depth
+    return __interpolate_grid_inner(grid, eval_func, depth, origin, shape)
 
-    :param eval_func:
-        Evaluator function.
-    :type eval_func:
-        callable; accepts grid indices i, j and returns a scalar value.
+
+def __interpolate_grid_inner(grid, eval_func, depth, origin, shape):
+    """Recursive calls to interpolate a gridded dataset
+    Interpolation is performed inplace to the provided grid.
 
     :param grid:
         Grid array.
     :type grid:
         :py:class:`numpy.array`.
 
-    :todo:
-        Move arguments ``eval_func`` and ``grid`` to positions 1 and 2, and remove
-        defaults (and the check that they are not ``None`` at the top of the function
-        body).
-    """
-    assert eval_func is not None
-    assert grid is not None
+    :param eval_func:
+        Evaluator function.
+    :type eval_func:
+        callable; accepts grid indices i, j and returns a scalar value.
 
+    :param depth:
+        Recursive bisection depth.
+    :type depth:
+        :py:class:`int`
+
+    :param origin:
+        Block origin,
+    :type origin:
+        :py:class:`tuple` of length 2.
+
+    :param shape:
+        Block shape.
+    :type shape:
+        :py:class:`tuple` of length 2 ``(nrows, ncols)``.
+    """
     if depth == 0:
         interpolate_block(origin, shape, eval_func, grid)
     else:
         blocks = subdivide(origin, shape)
         for kUL, _, _, kLR in blocks.values():
             block_shape = (kLR[0] - kUL[0] + 1, kLR[1] - kUL[1] + 1)
-            interpolate_grid(depth - 1, kUL, block_shape, eval_func, grid)
+            __interpolate_grid_inner(depth - 1, kUL, block_shape, eval_func, grid)
 
 
 def fortran_bilinear_interpolate(
