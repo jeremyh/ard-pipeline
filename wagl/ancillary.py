@@ -28,7 +28,7 @@ from wagl.hdf5 import (
     write_dataframe,
     write_scalar,
 )
-from wagl.metadata import extract_ancillary_metadata, read_meatadata_tags
+from wagl.metadata import extract_ancillary_metadata, read_metadata_tags
 from wagl.satellite_solar_angles import create_vertices
 
 ECWMF_LEVELS = [
@@ -989,7 +989,7 @@ def ecwmf_temperature(input_path, lonlat, time):
                 metadata[key] = md[key]
 
             # internal file metadata (and reverse the ordering)
-            df = read_meatadata_tags(f, bands).iloc[::-1]
+            df = read_metadata_tags(f, bands).iloc[::-1]
             df.insert(0, "Temperature", data)
 
             return df, metadata
@@ -1033,7 +1033,7 @@ def ecwmf_geo_potential(input_path, lonlat, time):
                 metadata[key] = md[key]
 
             # internal file metadata (and reverse the ordering)
-            df = read_meatadata_tags(f, bands).iloc[::-1]
+            df = read_metadata_tags(f, bands).iloc[::-1]
             df.insert(0, "GeoPotential", data)
             df.insert(1, "GeoPotential_Height", scaled_data)
 
@@ -1076,7 +1076,7 @@ def ecwmf_relative_humidity(input_path, lonlat, time):
                 metadata[key] = md[key]
 
             # internal file metadata (and reverse the ordering)
-            df = read_meatadata_tags(f, bands).iloc[::-1]
+            df = read_metadata_tags(f, bands).iloc[::-1]
             df.insert(0, "Relative_Humidity", data)
 
             return df, metadata

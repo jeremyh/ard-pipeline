@@ -644,7 +644,7 @@ def setup_smodel(centre_lon, centre_lat, spheroid, orbital_elements):
     ]
     dtype = np.dtype([(col, "float64") for col in columns])
     smodel_dset = np.zeros(1, dtype=dtype)
-    smodel_dset[0] = smodel
+    smodel_dset.data = smodel
 
     return smodel, smodel_dset
 
