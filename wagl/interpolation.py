@@ -2,6 +2,7 @@
 
 """Various interpolation methods."""
 
+import logging
 import math
 
 import h5py
@@ -20,6 +21,8 @@ from wagl.hdf5 import (
 
 DEFAULT_ORIGIN = (0, 0)
 DEFAULT_SHAPE = (8, 8)
+
+_LOG = logging.getLogger(__name__)
 
 
 def bilinear(shape, fUL, fUR, fLR, fLL, dtype=np.float64):
@@ -221,7 +224,7 @@ def __interpolate_grid_inner(grid, eval_func, depth, origin, shape):
         blocks = subdivide(origin, shape)
         for kUL, _, _, kLR in blocks.values():
             block_shape = (kLR[0] - kUL[0] + 1, kLR[1] - kUL[1] + 1)
-            __interpolate_grid_inner(depth - 1, kUL, block_shape, eval_func, grid)
+            __interpolate_grid_inner(grid, eval_func, depth - 1, kUL, block_shape)
 
 
 def fortran_bilinear_interpolate(
