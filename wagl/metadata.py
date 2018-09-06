@@ -3,7 +3,6 @@
 """Various metadata extraction and creation, and writing tools."""
 
 import os
-import pwd
 import socket
 import uuid
 from datetime import datetime as dtime
@@ -56,7 +55,7 @@ def extract_ancillary_metadata(fname):
     res["ctime"] = _get_utc_datetime(fstat.st_ctime)
     res["mtime"] = _get_utc_datetime(fstat.st_mtime)
     res["atime"] = _get_utc_datetime(fstat.st_atime)
-    res["owner"] = pwd.getpwuid(fstat.st_uid).pw_gecos
+    res["owner_id"] = str(fstat.st_uid)
     return res
 
 
