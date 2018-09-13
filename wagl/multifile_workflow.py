@@ -21,7 +21,6 @@ Workflow settings can be configured in `luigi.cfg` file.
 # pylint: disable=too-many-locals
 # pylint: disable=protected-access
 
-import logging
 import os
 import traceback
 from os.path import basename, dirname, splitext
@@ -32,8 +31,6 @@ import h5py
 import luigi
 from luigi.local_target import LocalFileSystem
 from luigi.util import inherits, requires
-from structlog import wrap_logger
-from structlog.processors import JSONRenderer
 
 from wagl.acquisition import acquisitions
 from wagl.ancillary import _collect_ancillary
@@ -54,6 +51,7 @@ from wagl.incident_exiting_angles import (
     _relative_azimuth_slope,
 )
 from wagl.interpolation import _interpolate, link_interpolated_data
+from wagl.logging import ERROR_LOGGER
 from wagl.longitude_latitude_arrays import _create_lon_lat_grids
 from wagl.modtran import (
     _calculate_coefficients,
@@ -71,10 +69,6 @@ from wagl.terrain_shadow_masks import (
     _calculate_cast_shadow,
     _combine_shadow,
     _self_shadow,
-)
-
-ERROR_LOGGER = wrap_logger(
-    logging.getLogger("errors"), processors=[JSONRenderer(indent=1, sort_keys=True)]
 )
 
 

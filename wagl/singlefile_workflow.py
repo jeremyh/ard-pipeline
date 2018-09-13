@@ -21,25 +21,18 @@ Workflow settings can be configured in `luigi.cfg` file.
 # pylint: disable=too-many-locals
 # pylint: disable=protected-access
 
-import logging
 import traceback
 from os.path import basename
 from os.path import join as pjoin
 
 import luigi
 from luigi.util import inherits
-from structlog import wrap_logger
-from structlog.processors import JSONRenderer
 
 from wagl.acquisition import acquisitions
 from wagl.constants import Method, Workflow
 from wagl.hdf5 import H5CompressionFilter
+from wagl.logger import ERROR_LOGGER
 from wagl.standardise import card4l
-
-ERROR_LOGGER = wrap_logger(
-    logging.getLogger("errors"), processors=[JSONRenderer(indent=1, sort_keys=True)]
-)
-INTERFACE_LOGGER = logging.getLogger("luigi-interface")
 
 
 @luigi.Task.event_handler(luigi.Event.FAILURE)
