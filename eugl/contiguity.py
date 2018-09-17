@@ -69,7 +69,3 @@ def main(output, datasets):
         contiguity = out + ".CONTIGUITY.TIF"
         logging.info("Create contiguity image " + contiguity)
         contiguity(path, contiguity)
-
-
-if __name__ == "__main__":
-    main()
