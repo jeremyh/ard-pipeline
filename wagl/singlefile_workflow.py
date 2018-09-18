@@ -31,7 +31,7 @@ from luigi.util import inherits
 from wagl.acquisition import acquisitions
 from wagl.constants import Method, Workflow
 from wagl.hdf5 import H5CompressionFilter
-from wagl.logger import ERROR_LOGGER
+from wagl.logging import ERROR_LOGGER
 from wagl.standardise import card4l
 
 
