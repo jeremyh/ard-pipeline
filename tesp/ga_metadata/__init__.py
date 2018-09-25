@@ -1,11 +1,5 @@
 from pathlib import Path
 
-from wagl.acquisition.landsat import LandsatAcquisition
-from wagl.acquisition.sentinel import (
-    Sentinel2Acquisition,
-    _Sentinel2SinergiseAcquisition,
-)
-
 from .ls_usgs_l1_prepare import prepare_dataset as landsat_prepare
 from .s2_l1c_aws_pds_prepare import prepare_dataset as sentinel_2_aws_pds_prepare
 from .s2_prepare_cophub_zip import prepare_dataset as sentinel_2_zip_prepare
@@ -13,6 +7,12 @@ from .s2_prepare_cophub_zip import prepare_dataset as sentinel_2_zip_prepare
 
 def extract_level1_metadata(acq, acquisition_path):
     """Factory method for selecting a level1 metadata script."""
+    from wagl.acquisition.landsat import LandsatAcquisition
+    from wagl.acquisition.sentinel import (
+        Sentinel2Acquisition,
+        _Sentinel2SinergiseAcquisition,
+    )
+
     if isinstance(acq, _Sentinel2SinergiseAcquisition):
         return sentinel_2_aws_pds_prepare(Path(acq.granule_xml))
     elif isinstance(acq, Sentinel2Acquisition):
