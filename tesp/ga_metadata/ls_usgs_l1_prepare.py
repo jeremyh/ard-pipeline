@@ -14,7 +14,10 @@ import yaml
 from click_datetime import Datetime
 from osgeo import osr
 
+from tesp.ga_metadata import serialise
+
 try:
+    from typing import Dict, Iterable, List, Optional, Tuple, Union
     from urllib.parse import urljoin, urlparse
     from urllib.request import urlopen
 except ImportError:
@@ -77,7 +80,8 @@ def find_in(path, s, suffix="txt"):
     file with `s` in its name. Returns the path of the file or `None`.
     """
 
-    def matches(p: Path):
+    def matches(p):
+        # type: (Path) -> bool
         return s in p.name and p.name.endswith(suffix)
 
     if path.is_file():
@@ -194,12 +198,12 @@ def get_mtl_content(acquisition_path):
 
 def prepare_dataset(path):
     # type: (Path) -> Optional[Dict]
-    info, filename = get_mtl_content(path)
+    mtl_doc, mtl_filename = get_mtl_content(path)
 
-    if not info:
+    if not mtl_doc:
         return None
 
-    info_pm = info["PRODUCT_METADATA"]
+    info_pm = mtl_doc["PRODUCT_METADATA"]
     level = info_pm["DATA_TYPE"]
 
     data_format = info_pm["OUTPUT_FORMAT"]
@@ -208,7 +212,7 @@ def prepare_dataset(path):
 
     sensing_time = info_pm["DATE_ACQUIRED"] + " " + info_pm["SCENE_CENTER_TIME"]
 
-    cs_code = 32600 + info["PROJECTION_PARAMETERS"]["UTM_ZONE"]
+    cs_code = 32600 + mtl_doc["PROJECTION_PARAMETERS"]["UTM_ZONE"]
     spatial_ref = osr.SpatialReference()
     spatial_ref.ImportFromEPSG(cs_code)
 
@@ -216,13 +220,13 @@ def prepare_dataset(path):
     satellite = info_pm["SPACECRAFT_ID"]
     instrument = info_pm["SENSOR_ID"]
 
-    images = get_satellite_band_names(satellite, instrument, filename)
+    images = get_satellite_band_names(satellite, instrument, mtl_filename)
     return {
         "id": str(uuid.uuid5(uuid.NAMESPACE_URL, path.as_posix())),
         "processing_level": level,
         "product_type": "LS_USGS_L1C1",
         # 'creation_dt': ct_time,
-        "label": info["METADATA_FILE_INFO"]["LANDSAT_SCENE_ID"],
+        "label": mtl_doc["METADATA_FILE_INFO"]["LANDSAT_SCENE_ID"],
         "platform": {"code": satellite},
         "instrument": {"name": instrument},
         "extent": {
@@ -247,19 +251,23 @@ def prepare_dataset(path):
                 for image in images
             }
         },
-        "other_metadata": info,
+        "other_metadata": mtl_doc,
         "lineage": {"source_datasets": {}},
     }
 
 
 def absolutify_paths(doc, ds_path):
     # type: (Dict, Path) -> Dict
-    if ds_path.suffix != ".gz":
-        for band in doc["image"]["bands"].values():
-            band["path"] = str(ds_path.absolute() / band["path"])
-    else:
+
+    ds_path = ds_path.absolute()
+    if ".tar" in ds_path.suffixes:
         for band in doc["image"]["bands"].values():
             band["path"] = "tar:{}!{}".format(ds_path, band["path"])
+    elif ds_path.suffix == ".txt":
+        for band in doc["image"]["bands"].values():
+            band["path"] = str(ds_path.parent.absolute() / band["path"])
+    else:
+        raise NotImplementedError(f"Unexpected dataset path structure {ds_path}")
     return doc
 
 
@@ -282,6 +290,19 @@ def find_gz_mtl(ds_path, output_folder):
         tar_gz.extractall(output_folder, members)
 
     return output_folder / members[0].name
+
+
+def yaml_checkums_correctly(output_yaml, data_path):
+    with output_yaml.open() as yaml_f:
+        logging.info("Running checksum comparison")
+        # It can match any dataset in the yaml.
+        for doc in yaml.safe_load_all(yaml_f):
+            yaml_sha1 = doc["checksum_sha1"]
+            checksum_sha1 = hashlib.sha1(data_path.open("rb").read()).hexdigest()
+            if checksum_sha1 == yaml_sha1:
+                return True
+
+    return False
 
 
 @click.command(
@@ -335,38 +356,31 @@ def main(output, datasets, check_checksum, date):
             )
             continue
 
-        if ds_path.suffix in (".gz", ".txt"):
-            if ds_path.suffix == ".txt":
-                mtl_path = ds_path
-                ds_path = ds_path.parent
-            else:
-                mtl_path = find_gz_mtl(ds_path, output)
-                if not mtl_path:
-                    raise RuntimeError("No MTL file within %s" % ds_path)
+        if ds_path.suffix == ".txt":
+            mtl_path = ds_path
+        elif ".tar" in ds_path.suffixes:
+            mtl_path = find_gz_mtl(ds_path, output)
+            if not mtl_path:
+                raise RuntimeError("No MTL file within tarball %s" % ds_path)
+        else:
+            logging.warning("Unreadable dataset %s", ds_path)
+            continue
 
-            logging.info("Processing %s", ds_path.parent.as_posix())
-            output_yaml = output / f"{ds_path.parent.name}.yaml"
+        logging.info("Processing %s", ds_path)
+        output_yaml = output / f"{_dataset_name(ds_path)}.yaml"
 
-            logging.info("Output %s", output_yaml)
-            if output_yaml.exists():
-                if not check_checksum:
-                    logging.info("Dataset preparation already done...SKIPPING")
-                    continue
+        logging.info("Output %s", output_yaml)
+        if output_yaml.exists():
+            logging.info("Output already exists %s", output_yaml)
+            if check_checksum and yaml_checkums_correctly(output_yaml, ds_path):
+                logging.info("Dataset preparation already done...SKIPPING")
+                continue
 
-                logging.info("Output already exists %s", output_yaml)
-                with output_yaml.open() as yaml_f:
-                    logging.info("Running checksum comparison")
-                    for doc in yaml.load_all(yaml_f):
-                        yaml_sha1 = doc["checksum_sha1"]
-                        checksum_sha1 = hashlib.sha1(open(ds, "rb").read()).hexdigest()
-                        if checksum_sha1 == yaml_sha1:
-                            logging.info("Dataset preparation already done...SKIPPING")
-                            continue
-
-            docs = absolutify_paths(prepare_dataset(mtl_path), ds_path.parent)
-            if docs:
-                with open(output_yaml, "w") as stream:
-                    yaml.safe_dump(docs, stream)
+        doc = prepare_dataset(mtl_path)
+        if not doc:
+            raise ValueError("No doc?")
+        doc = absolutify_paths(doc, ds_path)
+        serialise.dump_yaml(output_yaml, doc)
 
     # delete intermediate MTL files for archive datasets in output folder
     output_mtls = list(output.rglob("*MTL.txt"))
@@ -375,6 +389,21 @@ def main(output, datasets, check_checksum, date):
             mtl_path.unlink()
         except OSError:
             pass
+
+
+def _dataset_name(ds_path):
+    # type: (Path) -> str
+    """>>> _dataset_name(Path("example/LE07_L1GT_104078_20131209_20161119_01_T1.tar.gz"))
+    "LE07_L1GT_104078_20131209_20161119_01_T1"
+    >>> _dataset_name(Path("example/LE07_L1GT_104078_20131209_20161119_01_T2/SOME_TEST_MTL.txt"))
+    "LE07_L1GT_104078_20131209_20161119_01_T2".
+    """
+    if ".tar" in ds_path.suffixes:
+        return ds_path.name.split(".")[0]
+    elif ds_path.name.lower().endswith("_mtl.txt"):
+        return ds_path.parent.name
+    else:
+        raise NotImplementedError(f"Unexpected path pattern {ds_path}")
 
 
 if __name__ == "__main__":
