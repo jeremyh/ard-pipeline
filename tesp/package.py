@@ -29,8 +29,8 @@ import tesp
 from tesp.checksum import checksum
 from tesp.constants import ProductPackage
 from tesp.contrast import quicklook
-from tesp.ga_metadata import extract_level1_metadata
 from tesp.html_geojson import html_map
+from tesp.prepare import extract_level1_metadata
 from tesp.yaml_merge import merge_metadata
 
 yaml.add_representer(np.int8, Representer.represent_int)

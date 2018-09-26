@@ -14,7 +14,7 @@ import yaml
 from click_datetime import Datetime
 from osgeo import osr
 
-from tesp.ga_metadata import serialise
+from tesp.prepare import serialise
 
 try:
     from typing import Dict, Iterable, List, Optional, Tuple, Union
