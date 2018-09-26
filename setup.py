@@ -35,6 +35,7 @@ setup(
     extras_require=dict(
         test=[
             "pytest",
+            "deepdiff",
         ],
     ),
     dependency_links=[
