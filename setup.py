@@ -32,6 +32,11 @@ setup(
         "checksumdir",
         "eugl",
     ],
+    extras_require=dict(
+        test=[
+            "pytest",
+        ],
+    ),
     dependency_links=[
         "git+https://github.com/GeoscienceAustralia/eo-datasets@develop#egg=eodatasets-0.1dev",
         "git+https://github.com/OpenDataCubePipelines/eugl.git#egg=eugl-0.0.2",
