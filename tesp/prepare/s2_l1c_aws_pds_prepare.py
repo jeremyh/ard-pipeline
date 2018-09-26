@@ -263,7 +263,6 @@ def prepare_dataset(path):
 
     # Use the filename without extension
     images = [img_name for img_name in _img_ids if img_name in _imgs_in_directory]
-    root.find("./*/TILE_ID").text
 
     documents = []
 
@@ -321,6 +320,7 @@ def prepare_dataset(path):
             "id": str(persisted_uuid),
             "processing_level": "Level-1C",
             "product_type": "level1",
+            "creation_dt": root.findall("./*/Processing_Info/UTC_DATE_TIME")[0].text,
             "datatake_id": datatake_id,
             "datatake_type": datatake_type,
             "datatake_sensing_start": datatake_sensing_start,

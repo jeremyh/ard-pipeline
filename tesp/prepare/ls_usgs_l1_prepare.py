@@ -17,9 +17,8 @@ from osgeo import osr
 from tesp.prepare import serialise
 
 try:
-    from typing import Dict, Iterable, List, Optional, Tuple, Union
-    from urllib.parse import urljoin, urlparse
-    from urllib.request import urlopen
+    # flake8 doesn't recognise type hints as usage
+    from typing import Dict, Iterable, List, Optional, Tuple, Union  # noqa: F401
 except ImportError:
     pass
 

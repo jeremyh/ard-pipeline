@@ -1,5 +1,9 @@
 import collections
 
+# flake8 doesn't recognise type hints as usage
+from pathlib import Path  # noqa: F401
+from typing import Dict  # noqa: F401
+
 import yaml
 
 

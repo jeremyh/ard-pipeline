@@ -7,6 +7,8 @@ from .s2_prepare_cophub_zip import prepare_dataset as sentinel_2_zip_prepare
 
 def extract_level1_metadata(acq, acquisition_path):
     """Factory method for selecting a level1 metadata script."""
+    # Optional (not installed yet on Travis)
+    # pytest: disable=import-error
     from wagl.acquisition.landsat import LandsatAcquisition
     from wagl.acquisition.sentinel import (
         Sentinel2Acquisition,
