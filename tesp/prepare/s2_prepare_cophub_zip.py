@@ -24,11 +24,10 @@ import shapely.affinity
 import shapely.geometry
 import shapely.ops
 import yaml
-from click_datetime import Datetime
 from osgeo import osr
 from rasterio.errors import RasterioIOError
 
-# from dateutil import parser
+from tesp.prepare import serialise
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
@@ -460,8 +459,8 @@ def archive_yaml(yaml_path, output):
     "datasets", type=click.Path(exists=True, readable=True, writable=False), nargs=-1
 )
 @click.option(
-    "--date",
-    type=Datetime(format="%d/%m/%Y"),
+    "--newer-than",
+    type=serialise.ClickDatetime(),
     default=datetime.now(),
     help="Enter file creation start date for data preparation",
 )
