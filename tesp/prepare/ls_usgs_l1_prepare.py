@@ -6,7 +6,7 @@ import os
 import re
 import tarfile
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import click
@@ -325,8 +325,8 @@ def yaml_checkums_correctly(output_yaml, data_path):
 @click.option(
     "--date",
     type=Datetime(format="%d/%m/%Y"),
-    default=datetime.now(),
-    help="Enter file creation start date for data preparation",
+    default=datetime.now() - timedelta(days=1),
+    help="Only prepare files newer than this date (default: 1 day ago)",
 )
 @click.option(
     "--checksum/--no-checksum",
@@ -349,9 +349,9 @@ def main(output, datasets, check_checksum, date):
         create_date = datetime.utcfromtimestamp(ctime)
         if create_date <= date:
             logging.info(
-                "Dataset creation time %s is older than start date %s ...SKIPPING",
-                create_date,
-                date,
+                "Creation time {} older than start date {:%Y-%m-%d %H:%M} ...SKIPPING {}".format(
+                    date - create_date, date, ds_path.name
+                )
             )
             continue
 
