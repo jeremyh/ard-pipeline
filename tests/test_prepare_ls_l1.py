@@ -42,12 +42,8 @@ def test_prepare_l1_tarball(tmpdir):
             doc,
             {
                 "id": "<<Always Different>> This field is ignored below",
-                "processing_level": "L1GT",
                 "product_type": "level1",
-                "label": "LE71040782013343ASA00",
-                "platform": {"code": "LANDSAT_7"},
                 "format": {"name": "GeoTIFF"},
-                "instrument": {"name": "ETM"},
                 "extent": {
                     "center_dt": "2013-12-09 01:10:46.6908469Z",
                     "coord": {
@@ -56,8 +52,6 @@ def test_prepare_l1_tarball(tmpdir):
                         "ul": {"lat": -25.03371801797915, "lon": 129.22402339672468},
                         "ur": {"lat": -25.01021635833341, "lon": 131.65247288941694},
                     },
-                    "from_dt": "2013-12-09 01:10:46.6908469Z",
-                    "to_dt": "2013-12-09 01:10:46.6908469Z",
                 },
                 "grid_spatial": {
                     "projection": {
