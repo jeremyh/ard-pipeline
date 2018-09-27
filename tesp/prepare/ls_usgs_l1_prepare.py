@@ -316,7 +316,8 @@ def yaml_checkums_correctly(output_yaml, data_path):
 @click.option(
     "--output",
     help="Write output into this directory",
-    type=click.Path(exists=False, writable=True, dir_okay=True),
+    required=True,
+    type=click.Path(exists=True, writable=True, dir_okay=True, file_okay=False),
 )
 @click.argument(
     "datasets", type=click.Path(exists=True, readable=True, writable=False), nargs=-1
