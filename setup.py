@@ -2,13 +2,12 @@
 
 from setuptools import find_packages, setup
 
-# There is a bug in the 2.7.6 release of luigi in the luigi.contrib.s3 module
-# Using an unreleased version until it is packaged and released
-
+import versioneer
 
 setup(
     name="tesp",
-    version="0.0.5",
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description=(
         "A temporary solution to get packaging underway. "
         "Code will eventually be ported eo-datasets."
@@ -21,7 +20,7 @@ setup(
         "folium",
         "geopandas",
         "h5py",
-        "luigi",
+        "luigi>2.7.6",
         "numpy",
         "pathlib",
         "pyyaml",
@@ -29,9 +28,10 @@ setup(
         "scikit-image",
         "shapely",
         "structlog",
-        "eodatasets",
         "checksumdir",
+        "eodatasets",
         "eugl",
+        "wagl",
     ],
     extras_require=dict(
         test=[
@@ -43,10 +43,10 @@ setup(
         ],
     ),
     dependency_links=[
-        "git+https://github.com/GeoscienceAustralia/eo-datasets@develop#egg=eodatasets-0.1dev",
-        "git+https://github.com/OpenDataCubePipelines/eugl.git#egg=eugl-0.0.2",
-        "git+https://github.com/spotify/luigi.git@f9a99dce22e2887406c6d156d5d669660547d257#egg=luigi-2.7.7",
+        "git+https://github.com/GeoscienceAustralia/eo-datasets.git@develop#egg=eodatasets",
+        "git+https://github.com/GeoscienceAustralia/wagl@master#egg=wagl",
+        "git+https://github.com/OpenDataCubePipelines/eugl.git@master#egg=eugl",
     ],
-    scripts=["bin/s2package", "bin/ard_pbs", "bin/search_s2", "bin/s2_incremental"],
+    scripts=["bin/s2package", "bin/ard_pbs", "bin/search_s2", "bin/s2-nci-processing"],
     include_package_data=True,
 )
