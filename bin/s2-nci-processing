@@ -155,7 +155,7 @@ def _level1_dataset_path_iter(root_directory: Path, *find_options, subprocess_de
         root_directory, "-maxdepth", str(subprocess_depth), *find_options
     )
     # Handle seperate subprocess calls
-    search_dirs = _get_dirs_at_depth(root, subprocess_depth)
+    search_dirs = _get_dirs_at_depth(root_directory, subprocess_depth)
     for d in search_dirs:
         yield from _run_find(root_directory / d, *find_options)
 
@@ -295,7 +295,7 @@ def process_level2(
     )
 
     logging.basicConfig(
-        format="%(asctime)s %(levelname)s {%(pathname)s:%(lineno)s} %(message)s",
+        format="%(asctime)s %(levelname)s (%(pathname)s:%(lineno)s) %(message)s",
         level=logging.INFO,
     )
 
