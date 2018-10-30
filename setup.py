@@ -8,6 +8,7 @@ setup(
     name="tesp",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
+    url="https://github.com/OpenDataCubePipelines/tesp",
     description=(
         "A temporary solution to get packaging underway. "
         "Code will eventually be ported eo-datasets."
