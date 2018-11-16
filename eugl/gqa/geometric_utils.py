@@ -446,7 +446,7 @@ def get_reference_data(acquisition, base_reference_dir):
     df = pd.DataFrame(columns=["ref_fname", "date"])
 
     ptrn = (
-        r"(?P<sat>[A-Z, 0-9]{3})(?P<pr>[0-9]{6})(?P<date>[0-9]{7})"
+        "(?P<sat>[A-Z, 0-9]{3})(?P<pr>[0-9]{6})(?P<date>[0-9]{7})"
         r"(?P<stuff>\w+?_)(?P<band>\w+)"
     )
     match = re.match(ptrn, ref_imgs[0])
