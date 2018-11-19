@@ -77,6 +77,7 @@ class DataStandardisation(luigi.Task):
     acq_parser_hint = luigi.OptionalParameter(default="")
     buffer_distance = luigi.FloatParameter(default=8000, significant=False)
     h5_driver = luigi.OptionalParameter(default="", significant=False)
+    normalized_solar_zenith = luigi.OptionalParameter(default=45.0, significant=False)
 
     def output(self):
         fmt = "{label}.wagl.h5"
@@ -118,6 +119,7 @@ class DataStandardisation(luigi.Task):
                 self.filter_opts,
                 self.h5_driver,
                 self.acq_parser_hint,
+                self.normalized_solar_zenith,
             )
 
 

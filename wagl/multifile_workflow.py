@@ -195,6 +195,7 @@ class AncillaryData(luigi.Task):
         enum=H5CompressionFilter, default=H5CompressionFilter.LZF, significant=False
     )
     filter_opts = luigi.DictParameter(default=None, significant=False)
+    normalized_solar_zenith = luigi.OptionalParameter(default=45.0, significant=False)
 
     def requires(self):
         group = acquisitions(self.level1, self.acq_parser_hint).supported_groups[0]
@@ -863,6 +864,7 @@ class SurfaceReflectance(luigi.Task):
                 out_fname,
                 self.compression,
                 self.filter_opts,
+                self.normalized_solar_zenith,
             )
 
 
@@ -896,6 +898,7 @@ class SurfaceTemperature(luigi.Task):
                 interpolation_fname,
                 ancillary_fname,
                 out_fname,
+                self.normalized_solar_zenith,
                 self.compression,
                 self.filter_opts,
             )

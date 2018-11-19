@@ -41,6 +41,7 @@ def _calculate_reflectance(
     out_fname,
     compression,
     filter_opts,
+    normalized_solar_zenith,
 ):
     """A private wrapper for dealing with the internal custom workings of the
     NBAR workflow.
@@ -82,9 +83,10 @@ def _calculate_reflectance(
             fid,
             compression,
             filter_opts,
+            normalized_solar_zenith,
         )
 
-        create_ard_yaml(acquisitions, grp8, fid)
+        create_ard_yaml(acquisitions, grp8, fid, normalized_solar_zenith)
 
 
 def calculate_reflectance(
@@ -101,6 +103,7 @@ def calculate_reflectance(
     out_group=None,
     compression=H5CompressionFilter.LZF,
     filter_opts=None,
+    normalized_solar_zenith=45.0,
 ):
     """Calculates Lambertian, BRDF corrected and BRDF + terrain
     illumination corrected surface reflectance.
@@ -386,6 +389,7 @@ def calculate_reflectance(
             ref_lm.transpose(),
             ref_brdf.transpose(),
             ref_terrain.transpose(),
+            normalized_solar_zenith,
         )
 
         # Write the current tile to disk
