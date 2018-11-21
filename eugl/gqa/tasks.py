@@ -37,7 +37,6 @@ from structlog.processors import JSONRenderer
 from wagl.acquisition import acquisitions
 from wagl.constants import BandType
 from wagl.data import write_img
-from wagl.logging import ERROR_LOGGER
 from wagl.singlefile_workflow import DataStandardisation
 
 from eugl.acquisition_info import acquisition_info
@@ -55,6 +54,10 @@ from eugl.gqa.geometric_utils import (
     reproject,
 )
 from eugl.metadata import get_gqa_metadata
+
+ERROR_LOGGER = wrap_logger(
+    logging.getLogger("errors"), processors=[JSONRenderer(indent=1, sort_keys=True)]
+)
 
 write_yaml = partial(yaml.safe_dump, default_flow_style=False, indent=4)
 
