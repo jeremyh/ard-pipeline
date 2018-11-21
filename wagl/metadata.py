@@ -32,6 +32,7 @@ yaml.add_representer(float, Representer.represent_float)
 yaml.add_representer(np.float32, Representer.represent_float)
 yaml.add_representer(np.float64, Representer.represent_float)
 yaml.add_representer(np.ndarray, Representer.represent_list)
+yaml.add_representer(bool, Representer.represent_bool)
 
 
 def extract_ancillary_metadata(fname):
@@ -251,7 +252,7 @@ def create_ard_yaml(
             "repo_url": "https://github.com/GeoscienceAustralia/wagl.git",
         },  # pylint: disable=line-too-long
         "modtran": {
-            "version": "5.2.1",
+            "version": "6.0.1",
             "repo_url": "http://www.ontar.com/software/productdetails.aspx?item=modtran",
         },  # pylint: disable=line-too-long
     }

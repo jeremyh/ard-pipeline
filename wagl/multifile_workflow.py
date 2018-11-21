@@ -3,7 +3,7 @@
 ---------------------------------------------.
 
 This workflow is geared around a Multiple Independent File workflow, thus
-allowing a form a parallelism. HDF5 Linking via a post task then allows
+allowing a form of parallelism. HDF5 Linking via a post task then allows
 the workflow to appear as if the IO is through a single file.
 
 The multifile workflow approach does allow more freedom of control in
@@ -21,6 +21,8 @@ Workflow settings can be configured in `luigi.cfg` file.
 # pylint: disable=too-many-locals
 # pylint: disable=protected-access
 
+import json
+import logging
 import os
 import traceback
 from os.path import basename, dirname, splitext
@@ -31,6 +33,8 @@ import h5py
 import luigi
 from luigi.local_target import LocalFileSystem
 from luigi.util import inherits, requires
+from structlog import wrap_logger
+from structlog.processors import JSONRenderer
 
 from wagl.acquisition import acquisitions
 from wagl.ancillary import _collect_ancillary
@@ -51,11 +55,11 @@ from wagl.incident_exiting_angles import (
     _relative_azimuth_slope,
 )
 from wagl.interpolation import _interpolate, link_interpolated_data
-from wagl.logging import ERROR_LOGGER
 from wagl.longitude_latitude_arrays import _create_lon_lat_grids
 from wagl.modtran import (
+    JsonEncoder,
     _calculate_coefficients,
-    _format_tp5,
+    _format_json,
     _run_modtran,
     link_atmospheric_results,
     prepare_modtran,
@@ -69,6 +73,10 @@ from wagl.terrain_shadow_masks import (
     _calculate_cast_shadow,
     _combine_shadow,
     _self_shadow,
+)
+
+ERROR_LOGGER = wrap_logger(
+    logging.getLogger("errors"), processors=[JSONRenderer(indent=1, sort_keys=True)]
 )
 
 
@@ -236,8 +244,8 @@ class AncillaryData(luigi.Task):
             )
 
 
-class WriteTp5(luigi.Task):
-    """Output the `tp5` formatted files."""
+class WriteJson(luigi.Task):
+    """Output the `json` formatted files."""
 
     level1 = luigi.Parameter()
     work_root = luigi.Parameter(significant=False)
@@ -278,7 +286,7 @@ class WriteTp5(luigi.Task):
         acqs, group = container.get_highest_resolution(granule=self.granule)
 
         # output filename format
-        output_fmt = pjoin(POINT_FMT, ALBEDO_FMT, "".join([POINT_ALBEDO_FMT, ".tp5"]))
+        json_fmt = pjoin(POINT_FMT, ALBEDO_FMT, "".join([POINT_ALBEDO_FMT, ".json"]))
 
         # input filenames
         ancillary_fname = self.input()["ancillary"].path
@@ -286,7 +294,7 @@ class WriteTp5(luigi.Task):
         lon_lat_fname = self.input()[group]["lon_lat"].path
 
         with self.output().temporary_path() as out_fname:
-            tp5_data = _format_tp5(
+            json_data = _format_json(
                 acqs,
                 sat_sol_fname,
                 lon_lat_fname,
@@ -297,15 +305,55 @@ class WriteTp5(luigi.Task):
 
             # keep this as an indented block, that way the target will remain
             # atomic and be moved upon closing
-            for key in tp5_data:
+            for key in json_data:
                 point, albedo = key
-                tp5_fname = output_fmt.format(p=point, a=albedo.value)
-                target = pjoin(dirname(out_fname), self.base_dir, tp5_fname)
+
+                json_fname = json_fmt.format(p=point, a=albedo.value)
+
+                target = pjoin(dirname(out_fname), self.base_dir, json_fname)
+
+                workdir = pjoin(
+                    dirname(out_fname),
+                    self.base_dir,
+                    POINT_FMT.format(p=point),
+                    ALBEDO_FMT.format(a=albedo.value),
+                )
+
                 with luigi.LocalTarget(target).open("w") as src:
-                    src.writelines(tp5_data[key])
+                    json_dict = json_data[key]
+
+                    if albedo == Albedos.ALBEDO_TH:
+                        json_dict["MODTRAN"][0]["MODTRANINPUT"]["SPECTRAL"][
+                            "FILTNM"
+                        ] = "{}/{}".format(
+                            workdir,
+                            json_dict["MODTRAN"][0]["MODTRANINPUT"]["SPECTRAL"][
+                                "FILTNM"
+                            ],
+                        )
+                        json_dict["MODTRAN"][1]["MODTRANINPUT"]["SPECTRAL"][
+                            "FILTNM"
+                        ] = "{}/{}".format(
+                            workdir,
+                            json_dict["MODTRAN"][1]["MODTRANINPUT"]["SPECTRAL"][
+                                "FILTNM"
+                            ],
+                        )
+
+                    else:
+                        json_dict["MODTRAN"][0]["MODTRANINPUT"]["SPECTRAL"][
+                            "FILTNM"
+                        ] = "{}/{}".format(
+                            workdir,
+                            json_dict["MODTRAN"][0]["MODTRANINPUT"]["SPECTRAL"][
+                                "FILTNM"
+                            ],
+                        )
+
+                    json.dump(json_dict, src, cls=JsonEncoder, indent=4)
 
 
-@requires(WriteTp5)
+@requires(WriteJson)
 class AtmosphericsCase(luigi.Task):
     """Run MODTRAN for a specific point (vertex) and albedo.
     This task is parameterised this wat to allow parallel instances
@@ -330,7 +378,7 @@ class AtmosphericsCase(luigi.Task):
         base_dir = pjoin(self.work_root, self.base_dir)
         albedos = [Albedos(a) for a in self.albedos]
 
-        prepare_modtran(acqs, self.point, albedos, base_dir, self.modtran_exe)
+        prepare_modtran(acqs, self.point, albedos, base_dir)
 
         with self.output().temporary_path() as out_fname:
             nvertices = self.vertices[0] * self.vertices[1]
@@ -349,7 +397,7 @@ class AtmosphericsCase(luigi.Task):
             )
 
 
-@inherits(WriteTp5)
+@inherits(WriteJson)
 class Atmospherics(luigi.Task):
     """Kicks off MODTRAN calculations for all points and albedos."""
 
