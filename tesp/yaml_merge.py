@@ -11,6 +11,8 @@ import os
 import re
 import uuid
 
+import numpy as np
+
 from tesp.version import REPO_URL as tesp_repo_url
 from tesp.version import get_version as tesp_version
 
@@ -40,7 +42,9 @@ def provider_reference_info(granule, wagl_tags):
     return provider_info
 
 
-def merge_metadata(level1_tags, wagl_tags, granule, image_paths, **antecedent_tags):
+def merge_metadata(
+    level1_tags, wagl_tags, granule, image_paths, platform, **antecedent_tags
+):
     """Combine the metadata from input sources and output
     into a single ARD metadata yaml.
     """
@@ -58,6 +62,25 @@ def merge_metadata(level1_tags, wagl_tags, granule, image_paths, **antecedent_ta
 
     software_versions["tesp"] = {"repo_url": tesp_repo_url, "version": tesp_version()}
 
+    # for Landsat, from_dt and to_dt in ARD-METADATA is populated from max and min timedelta values
+    if platform == "LANDSAT":
+        center_dt = np.datetime64(level1_tags["extent"].pop("center_dt"))
+        from_dt = center_dt + np.timedelta64(
+            int(float(wagl_tags.pop("timedelta_min")) * 1000000), "us"
+        )
+        to_dt = center_dt + np.timedelta64(
+            int(float(wagl_tags.pop("timedelta_max")) * 1000000), "us"
+        )
+
+        level1_tags_extent = {
+            "center_dt": f"{center_dt}Z",
+            "coord": level1_tags["extent"].pop("coord"),
+            "from_dt": f"{from_dt}Z",
+            "to_dt": f"{to_dt}Z",
+        }
+    else:
+        level1_tags_extent = level1_tags["extent"]
+
     # TODO: extend yaml document to include fmask and gqa yamls
     merged_yaml = {
         "algorithm_information": wagl_tags["algorithm_information"],
@@ -69,7 +92,7 @@ def merge_metadata(level1_tags, wagl_tags, granule, image_paths, **antecedent_ta
         "instrument": {"name": wagl_tags["source_datasets"]["sensor_id"]},
         "format": {"name": "GeoTIFF"},
         "tile_id": granule,
-        "extent": level1_tags["extent"],
+        "extent": level1_tags_extent,
         "grid_spatial": level1_tags["grid_spatial"],
         "image": {"bands": image_paths},
         "lineage": {
