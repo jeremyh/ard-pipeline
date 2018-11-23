@@ -306,7 +306,7 @@ def fmask_cogtif(fname, out_fname, platform):
                 "blockysize": 512,
             }
 
-            config_options = {"GDAL_TIFF_OVR_BLOCKSIZE": blockxsize}
+            config_options = {"GDAL_TIFF_OVR_BLOCKSIZE": options["blockxsize"]}
         else:
             options = {"compress": "deflate", "zlevel": 4}
 
