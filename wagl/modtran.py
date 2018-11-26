@@ -42,7 +42,7 @@ from wagl.hdf5 import (
 
 class JsonEncoder(json.JSONEncoder):
     """A wrapper class to address the issue of json encoding error
-    This class handles  the json serializing error for numpy
+    This class handles the json serializing error for numpy
     datatype: 'float32' and numpy arrays.
     """
 
@@ -403,9 +403,8 @@ def run_modtran(
         else:
             acq = [acq for acq in acqs if acq.band_type == BandType.REFLECTIVE][0]
 
-            channel_data = read_modtran_channel(
-                chn_fname, tp6_fname, acq, albedo
-            )  # needs changing to read json
+            # Will require updating to handle JSON output from modtran
+            channel_data = read_modtran_channel(chn_fname, tp6_fname, acq, albedo)
 
             attrs = base_attrs.copy()
             dataset_name = DatasetName.CHANNEL.value
@@ -537,6 +536,7 @@ def calculate_coefficients(
                 grp_path.format(a=Albedos.ALBEDO_0.value),
                 DatasetName.SOLAR_ZENITH_CHANNEL.value,
             )
+
             channel_solar_angle = read_h5_table(res, channel_solar_angle_path)
 
         if sbt_atmos:
@@ -725,15 +725,15 @@ def read_spectral_response(fname, as_list=False, spectral_range=None):
         function.
     """
     if isinstance(fname, str):
-        with open(fname) as src:
+        with open(fname, "rb") as src:
             lines = src.readlines()
     else:
         lines = fname.readlines()
 
+    lines = [line.strip().decode("utf-8") for line in lines]
+
     if as_list:
         return lines
-
-    lines = [line.strip().decode("utf-8") for line in lines]
 
     # find the starting locations of each band description label
     ids = []
@@ -802,18 +802,17 @@ def _get_solar_angles(tp6_fname):
             cnt += 1
             if fnmatch.fnmatch(
                 line,
-                "*SINGLE SCATTER SOLAR PATH GEOMETRY TABLE FOR MULTIPLE SCATTERING*",
+                "*SINGLE SCATTER SOLAR PATH GEOMETRY " "TABLE FOR MULTIPLE SCATTERING*",
             ):
                 break
         else:
             raise ValueError(
-                "Not able to locate solar zenith angles in tp6 file:%s" % tp6_fname
+                ("Not able to locate solar zenith angles " "in tp6 file:%s") % tp6_fname
             )
 
         # TODO dynamically configure the number of atmospheric layers
-        solar_zenith_raw = lines[
-            cnt + 4 : cnt + 40
-        ]  # this constant is (40-4 = num of atmospheric layer)
+        # this constant is (40-4 = num of atmospheric layer)
+        solar_zenith_raw = lines[cnt + 4 : cnt + 40]
 
     # Reader will throw an error if zenith is not found
     data = np.vstack([ln.rstrip().split() for ln in solar_zenith_raw]).T

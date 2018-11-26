@@ -22,7 +22,6 @@ Workflow settings can be configured in `luigi.cfg` file.
 # pylint: disable=protected-access
 
 import json
-import logging
 import os
 import traceback
 from os.path import basename, dirname, splitext
@@ -33,8 +32,6 @@ import h5py
 import luigi
 from luigi.local_target import LocalFileSystem
 from luigi.util import inherits, requires
-from structlog import wrap_logger
-from structlog.processors import JSONRenderer
 
 from wagl.acquisition import acquisitions
 from wagl.ancillary import _collect_ancillary
@@ -55,6 +52,7 @@ from wagl.incident_exiting_angles import (
     _relative_azimuth_slope,
 )
 from wagl.interpolation import _interpolate, link_interpolated_data
+from wagl.logging import ERROR_LOGGER
 from wagl.longitude_latitude_arrays import _create_lon_lat_grids
 from wagl.modtran import (
     JsonEncoder,
@@ -73,10 +71,6 @@ from wagl.terrain_shadow_masks import (
     _calculate_cast_shadow,
     _combine_shadow,
     _self_shadow,
-)
-
-ERROR_LOGGER = wrap_logger(
-    logging.getLogger("errors"), processors=[JSONRenderer(indent=1, sort_keys=True)]
 )
 
 
@@ -320,37 +314,13 @@ class WriteJson(luigi.Task):
                 )
 
                 with luigi.LocalTarget(target).open("w") as src:
-                    json_dict = json_data[key]
-
-                    if albedo == Albedos.ALBEDO_TH:
-                        json_dict["MODTRAN"][0]["MODTRANINPUT"]["SPECTRAL"][
-                            "FILTNM"
-                        ] = "{}/{}".format(
-                            workdir,
-                            json_dict["MODTRAN"][0]["MODTRANINPUT"]["SPECTRAL"][
-                                "FILTNM"
-                            ],
-                        )
-                        json_dict["MODTRAN"][1]["MODTRANINPUT"]["SPECTRAL"][
-                            "FILTNM"
-                        ] = "{}/{}".format(
-                            workdir,
-                            json_dict["MODTRAN"][1]["MODTRANINPUT"]["SPECTRAL"][
-                                "FILTNM"
-                            ],
+                    # Thermal processing has two input configurations
+                    for modtran_input in json_data[key]["MODTRAN"]:
+                        modtran_input["MODTRANINPUT"]["SPECTRAL"]["FILTNM"] = pjoin(
+                            workdir, modtran_input["MODTRANINPUT"]["SPECTRAL"]["FILTNM"]
                         )
 
-                    else:
-                        json_dict["MODTRAN"][0]["MODTRANINPUT"]["SPECTRAL"][
-                            "FILTNM"
-                        ] = "{}/{}".format(
-                            workdir,
-                            json_dict["MODTRAN"][0]["MODTRANINPUT"]["SPECTRAL"][
-                                "FILTNM"
-                            ],
-                        )
-
-                    json.dump(json_dict, src, cls=JsonEncoder, indent=4)
+                    json.dump(json_data[key], src, cls=JsonEncoder, indent=4)
 
 
 @requires(WriteJson)
