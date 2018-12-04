@@ -144,7 +144,7 @@ def acquisitions_via_mtl(pathname):
     # create an acquisition object for each band and attach
     # some appropriate metadata/attributes
 
-    # shortcuts to the requried levels
+    # shortcuts to the required levels
     prod_md = data["PRODUCT_METADATA"]
     rad_md = data["MIN_MAX_RADIANCE"]
     quant_md = data["MIN_MAX_PIXEL_VALUE"]
@@ -470,7 +470,7 @@ def acquisitions_via_safe(pathname):
         # handling different metadata versions for image paths
         # files retrieved from archive.namelist are not prepended with a '/'
         # Rasterio 1.0b1 requires archive paths start with a /
-        img_data_path = "".join(["zip:", pathname, "!/", archive.namelist()[0]])
+        img_data_path = "".join(["zip://", pathname, "!/", archive.namelist()[0]])
         if basename(images[0]) == images[0]:
             img_data_path = "".join(
                 [img_data_path, pjoin("GRANULE", granule_id, "IMG_DATA")]

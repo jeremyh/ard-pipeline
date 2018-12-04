@@ -107,14 +107,16 @@ def slope_aspect_arrays(
     ncol = cols + 2
     nrow = rows + 2
 
-    # TODO: check that the index is correct
-    # Define the index to read the DEM subset
-    ystart, ystop = (margins.top - 1, -(margins.bottom - 1))
-    xstart, xstop = (margins.left - 1, -(margins.right - 1))
-    idx = (slice(ystart, ystop), slice(xstart, xstop))
-
     # elevation dataset
     elevation = dsm_group[DatasetName.DSM_SMOOTHED.value]
+    ele_rows, ele_cols = elevation.shape
+
+    # TODO: check that the index is correct
+    # Define the index to read the DEM subset
+    ystart, ystop = (margins.top - 1, ele_rows - (margins.bottom - 1))
+    xstart, xstop = (margins.left - 1, ele_cols - (margins.right - 1))
+    idx = (slice(ystart, ystop), slice(xstart, xstop))
+
     subset = as_array(elevation[idx], dtype=np.float32, transpose=True)
 
     # Define an array of latitudes

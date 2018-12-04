@@ -18,7 +18,7 @@ install_requires = [
     "pyproj>1.9.5",
     "scikit-image>=0.8.2",
     "GDAL>=1.9.2",
-    "rasterio>0.9",  # Hack to get the alpha release
+    "rasterio>1,!=1.0.3.post1,!=1.0.3",  # issue with /vsizip/ reader
     "fiona>=1.7.0",
     "shapely>=1.5.13",
     "h5py>=2.5.0",
@@ -60,8 +60,9 @@ setup(
     url="https://github.com/GeoscienceAustralia/wagl",
     license="CC0 1.0 Universal",
     author="The wagl authors",
+    author_email="earth.observation@ga.gov.au",
     maintainer="wagl developers",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=("tests",)),
     scripts=[
         "utils/test_satellite_solar_angles",
         "utils/test_dsm",

@@ -163,8 +163,8 @@ class AcquisitionsContainer:
         for group in self.groups:
             acqs = self.get_acquisitions(group, granule)
             if acqs:
-                break
-        return acqs, group
+                return acqs, group
+        raise ValueError("no supported acquisition found")
 
     def get_mode_resolution(self, granule=None):
         """Retrieve the resolution group name that contains the mode

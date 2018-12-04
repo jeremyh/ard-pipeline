@@ -49,7 +49,7 @@ def _parser():
     )
     parser.add_argument(
         "--reference_fname",
-        requried=True,
+        required=True,
         help=(
             "The filename containing the reference datasets "
             "to be used as a baseline."
@@ -57,7 +57,7 @@ def _parser():
     )
     parser.add_argument(
         "--test_fname",
-        require=True,
+        required=True,
         help=(
             "The filename containing the test datasets "
             "to be used in comparing against the "

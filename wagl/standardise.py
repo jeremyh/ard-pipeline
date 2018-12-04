@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 
-import logging
 import tempfile
 from os.path import join as pjoin
 from posixpath import join as ppjoin
 
 import h5py
-from structlog import wrap_logger
-from structlog.processors import JSONRenderer
 
 from wagl.acquisition import acquisitions
 from wagl.ancillary import collect_ancillary
@@ -28,6 +25,7 @@ from wagl.incident_exiting_angles import (
     relative_azimuth_slope,
 )
 from wagl.interpolation import interpolate
+from wagl.logging import STATUS_LOGGER
 from wagl.longitude_latitude_arrays import create_lon_lat_grids
 from wagl.metadata import create_ard_yaml
 from wagl.modtran import (
@@ -45,10 +43,6 @@ from wagl.terrain_shadow_masks import (
     calculate_cast_shadow,
     combine_shadow_masks,
     self_shadow,
-)
-
-LOG = wrap_logger(
-    logging.getLogger("status"), processors=[JSONRenderer(indent=1, sort_keys=True)]
 )
 
 
@@ -211,7 +205,7 @@ def card4l(
         fid.attrs["level1_uri"] = level1
 
         for grp_name in container.supported_groups:
-            log = LOG.bind(
+            log = STATUS_LOGGER.bind(
                 level1=container.label, granule=granule, granule_group=grp_name
             )
 
@@ -332,7 +326,9 @@ def card4l(
                 )
 
         # nbar and sbt ancillary
-        log = LOG.bind(level1=container.label, granule=granule, granule_group=None)
+        log = STATUS_LOGGER.bind(
+            level1=container.label, granule=granule, granule_group=None
+        )
 
         # granule root group
         root = fid[granule]
@@ -416,7 +412,7 @@ def card4l(
 
         # interpolate coefficients
         for grp_name in container.supported_groups:
-            log = LOG.bind(
+            log = STATUS_LOGGER.bind(
                 level1=container.label, granule=granule, granule_group=grp_name
             )
             log.info("Interpolation")
