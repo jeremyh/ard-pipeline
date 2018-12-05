@@ -29,6 +29,8 @@ STATUS_LOGGER = wrap_logger(
 )
 INTERFACE_LOGGER = logging.getLogger("luigi-interface")
 
+QA_PRODUCTS = ["gqa", "fmask"]
+
 
 @luigi.Task.event_handler(luigi.Event.FAILURE)
 def on_failure(task, exception):
@@ -113,6 +115,7 @@ class Package(luigi.Task):
     cleanup = luigi.BoolParameter()
     acq_parser_hint = luigi.OptionalParameter(default="")
     products = luigi.ListParameter(default=ProductPackage.default())
+    qa_products = luigi.ListParameter(default=QA_PRODUCTS)
 
     def requires(self):
         # Ensure configuration values are valid
@@ -126,6 +129,12 @@ class Package(luigi.Task):
             ),
         }
 
+        # Need to improve pluggability across tesp/eugl/wagl
+        # and adopt patterns that facilitate reuse
+        for key in list(tasks.keys()):
+            if key != "wagl" and key not in self.qa_products:
+                del tasks[key]
+
         return tasks
 
     def output(self):
@@ -135,12 +144,14 @@ class Package(luigi.Task):
         return luigi.LocalTarget(out_fname)
 
     def run(self):
-        inputs = self.input()
+        # Extract the file path for each dependent task configured
+        antecedent_paths = {}
+        for key, value in self.input().items():
+            antecedent_paths[key] = value.path
+
         package(
             self.level1,
-            inputs["wagl"].path,
-            inputs["fmask"].path,
-            inputs["gqa"].path,
+            antecedent_paths,
             self.yamls_dir,
             self.pkgdir,
             self.granule,
@@ -153,6 +164,8 @@ class Package(luigi.Task):
 
     def _validate_cfg(self):
         assert ProductPackage.validate_products(self.products)
+        # Check that tesp is aware of requested qa products
+        assert not set(self.qa_products).difference(set(QA_PRODUCTS))
 
 
 class ARDP(luigi.WrapperTask):

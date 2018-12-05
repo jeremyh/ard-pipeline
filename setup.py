@@ -13,7 +13,7 @@ setup(
         "A temporary solution to get packaging underway. "
         "Code will eventually be ported eo-datasets."
     ),
-    packages=find_packages(),
+    packages=find_packages(exclude=("tests",)),
     install_requires=[
         "click",
         "click_datetime",
