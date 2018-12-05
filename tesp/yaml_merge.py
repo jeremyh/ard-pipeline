@@ -59,7 +59,6 @@ def merge_metadata(level1_tags, wagl_tags, granule, image_paths, **antecedent_ta
     software_versions["tesp"] = {"repo_url": tesp_repo_url, "version": tesp_version()}
 
     # TODO: extend yaml document to include fmask and gqa yamls
-    # Merge tags from each input and create a UUID
     merged_yaml = {
         "algorithm_information": wagl_tags["algorithm_information"],
         "system_information": wagl_tags["system_information"],
