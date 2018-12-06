@@ -9,6 +9,7 @@ import fnmatch
 import glob
 import json
 import os
+import shutil
 import subprocess
 from os.path import exists
 from os.path import join as pjoin
@@ -74,12 +75,10 @@ def prepare_modtran(acquisitions, coordinate, albedos, basedir):
         if not exists(modtran_work):
             os.makedirs(modtran_work)
 
-        out_fname = pjoin(modtran_work, acq.spectral_filter_file)
+        out_fname = pjoin(modtran_work, acq.spectral_filter_name)
 
-        response = acq.spectral_response(as_list=True)
-
-        with open(out_fname, "wb") as src:
-            src.writelines(response)
+        # Copy the spectral response filter file to the modtran workdir
+        shutil.copy(acq.spectral_filter_filepath, out_fname)
 
 
 def _format_json(
@@ -196,7 +195,7 @@ def format_json(
                     "elevation": elevation,
                     "sat_view": view_corrected[p],
                     "albedo": float(alb.value),
-                    "filter_function": acqs[0].spectral_filter_file,
+                    "filter_function": acqs[0].spectral_filter_name,
                     "binary": False,
                 }
 
@@ -243,7 +242,7 @@ def format_json(
                 "sat_height": acquisitions[0].altitude / 1000.0,
                 "gpheight": elevation,
                 "sat_view": view_corrected[p],
-                "filter_function": acqs[0].spectral_filter_file,
+                "filter_function": acqs[0].spectral_filter_name,
                 "binary": False,
             }
 
@@ -702,18 +701,13 @@ def coefficients(
     return nbar, sbt
 
 
-def read_spectral_response(fname, as_list=False, spectral_range=None):
+def read_spectral_response(fname, spectral_range=None):
     """Read the spectral response function text file used during
     MODTRAN processing.
 
     :param fname:
         A `str` containing the full file path name, or an opened
         `file` buffer.
-
-    :param as_list:
-        A `bool` indicating whether or not to return the spectral
-        response data as a list instead of a `pd.DataFrame`.
-        Default is `False` which returns a `pd.DataFrame`.
 
     :param spectral_range:
         A `list` or `generator` of the [start, stop, step] for the
@@ -725,15 +719,12 @@ def read_spectral_response(fname, as_list=False, spectral_range=None):
         function.
     """
     if isinstance(fname, str):
-        with open(fname, "rb") as src:
+        with open(fname) as src:
             lines = src.readlines()
     else:
         lines = fname.readlines()
 
-    lines = [line.strip().decode("utf-8") for line in lines]
-
-    if as_list:
-        return lines
+    lines = [line.strip() for line in lines]
 
     # find the starting locations of each band description label
     ids = []

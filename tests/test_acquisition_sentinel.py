@@ -74,8 +74,8 @@ class Sentinel2AScene1AcquisitionTest(unittest.TestCase):
     def test_lines(self):
         assert self.acq.lines == 109
 
-    def test_spectral_filter_file_vsir(self):
-        assert self.acq.spectral_filter_file == "sentinel2a_all.flt"
+    def test_spectral_filter_cfg(self):
+        assert self.acq.spectral_filter_name == "sentinel2a_all.flt"
 
     def test_read(self):
         assert self.acq.data()[70, 30] == 1216
@@ -112,8 +112,8 @@ class Sentinel2BScene1AcquisitionTest(unittest.TestCase):
     def test_lines(self):
         assert self.acq.lines == 109
 
-    def test_spectral_filter_file_vsir(self):
-        assert self.acq.spectral_filter_file == "sentinel2b_all.flt"
+    def test_spectral_filter_cfg(self):
+        assert self.acq.spectral_filter_name == "sentinel2b_all.flt"
 
     def test_read(self):
         assert self.acq.data()[100, 100] == 1029
