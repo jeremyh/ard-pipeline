@@ -479,11 +479,7 @@ def get_brdf_dirs_pre_modis(brdf_root, scene_date):
 
 
 def get_brdf_data(
-    acquisition,
-    brdf_primary_path,
-    brdf_secondary_path,
-    compression=H5CompressionFilter.LZF,
-    filter_opts=None,
+    acquisition, brdf, compression=H5CompressionFilter.LZF, filter_opts=None
 ):
     """Calculates the mean BRDF value for the given acquisition,
     for each BRDF parameter ['geo', 'iso', 'vol'] that covers
@@ -493,14 +489,18 @@ def get_brdf_data(
         An instance of an acquisitions object.
 
     :param brdf_primary_path:
-        A string containing the full file system path to your directory
-        containing the source BRDF files.  The BRDF directories are
-        assumed to be yyyy.mm.dd naming convention.
+        A `dict` defined as either of the following:
 
-    :param brdf_secondary_path:
-        A string containing the full file system path to your directory
-        containing the Jupp-Li backup BRDF data.  To be used for
-        pre-MODIS and potentially post-MODIS acquisitions.
+        * {'user': {<band-alias>: {'iso': <value>, 'vol': <value>, 'geo': <value>}, ...}}
+        * {'brdf_path': <path-to-BRDF>, 'brdf_premodis_path': <path-to-average-BRDF>}
+
+        Here <path-to-BRDF> is a string containing the full file system
+        path to your directory containing the source BRDF files
+        The BRDF directories are assumed to be yyyy.mm.dd naming convention.
+
+        And <path-to-average-BRDF> is a string containing the full file system
+        path to your directory containing the Jupp-Li backup BRDF data.
+        To be used for pre-MODIS and potentially post-MODIS acquisitions.
 
     :param compression:
         The compression filter to use.
@@ -530,6 +530,19 @@ def get_brdf_data(
         tables in future, therefore they can remain until we know
         for sure they'll never be used.
     """
+    if "user" in brdf:
+        # user-specified override
+        return {
+            param: dict(
+                data_source="BRDF",
+                source="user",
+                value=brdf["user"][acquisition.alias][param.value.lower()],
+            )
+            for param in BrdfParameters
+        }
+
+    brdf_primary_path = brdf["brdf_path"]
+    brdf_secondary_path = brdf["brdf_premodis_path"]
 
     def find_file(files, brdf_wl, parameter):
         """Find file with a specific name."""

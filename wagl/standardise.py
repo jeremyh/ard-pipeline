@@ -60,8 +60,7 @@ def card4l(
     landsea,
     tle_path,
     aerosol,
-    brdf_path,
-    brdf_premodis_path,
+    brdf,
     ozone_path,
     water_vapour,
     dem_path,
@@ -118,15 +117,11 @@ def card4l(
         A string containing the full file pathname to the HDF5 file
         containing the aerosol data.
 
-    :param brdf_path:
-        A string containing the full file pathname to the directory
-        containing the BRDF data.
-
-    :param brdf_premodis_path:
-        A string containing the full file pathname to the directory
-        containing the decadal averaged BRDF data used for acquisitions
-        prior to TERRA/AQUA satellite operations, or for near real time
-        applications.
+    :param brdf:
+        A dict containing either user-supplied BRDF values, or the
+        full file pathname to the directory containing the BRDF data
+        and the decadal averaged BRDF data used for acquisitions
+        prior to TERRA/AQUA satellite operations.
 
     :param ozone_path:
         A string containing the full file pathname to the directory
@@ -352,8 +347,7 @@ def card4l(
             "water_vapour_dict": water_vapour,
             "ozone_path": ozone_path,
             "dem_path": dem_path,
-            "brdf_path": brdf_path,
-            "brdf_premodis_path": brdf_premodis_path,
+            "brdf_dict": brdf,
         }
         collect_ancillary(
             grn_con,
