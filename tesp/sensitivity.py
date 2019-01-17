@@ -2,6 +2,7 @@ import csv
 import os
 import re
 import shutil
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from os.path import basename, exists
 from os.path import join as pjoin
 
@@ -9,113 +10,96 @@ import h5py
 import luigi
 import numpy as np
 import rasterio
-from wagl.acquisition import acquisitions
-from wagl.constants import ArdProducts, DatasetName, GroupName
+import yaml
+from wagl.acquisition import preliminary_acquisitions_data
+from wagl.constants import GroupName
 from wagl.singlefile_workflow import DataStandardisation
 
 from tesp.package import ARD, PATTERN2
 from tesp.workflow import RunFmask
 
 
-def aerosol_summary(l2_path, fmask_path, granule, aerosol):
-    with rasterio.open(fmask_path) as mask_file:
-        fmask = mask_file.read(1)
+class ExperimentList(luigi.WrapperTask):
+    """A helper task that issues `Experiment` tasks for each Level-1
+    dataset listed in the `level1_list` parameter and each experiment specified.
+    """
 
-    valid_pixels = fmask == 1
+    level1_list = luigi.Parameter()
+    workdir = luigi.Parameter()
+    pkgdir = luigi.Parameter()
+    experiment_list_yaml = luigi.Parameter()
+    tags = luigi.ListParameter(default=[])
+    cleanup = luigi.BoolParameter()
+    acq_parser_hint = luigi.OptionalParameter(default="")
 
-    def mask_invalid(img):
-        return np.where(img != -999, img, np.nan)
+    def requires(self):
+        with open(self.level1_list) as src:
+            level1_list = [level1.strip() for level1 in src.readlines()]
 
-    yield [
-        "product",
-        "date",
-        "granule",
-        "band",
-        "aerosol",
-        "mean",
-        "std",
-        "valid_pixels",
-    ]
+        with open(self.experiment_list_yaml) as fl:
+            experiments = yaml.load(fl)
 
-    with h5py.File(l2_path) as h5:
+        def worker(level1):
+            for granule in preliminary_acquisitions_data(level1, self.acq_parser_hint):
+                for tag, settings in experiments.items():
+                    if not self.tags or tag in self.tags:
+                        work_root = pjoin(self.workdir, f"{basename(level1)}.{tag}")
+                        work_dir = pjoin(work_root, granule["id"])
 
-        def get(*keys):
-            return h5["/".join([granule, *keys])]
+                        yield Experiment(
+                            level1,
+                            work_dir,
+                            granule["id"],
+                            self.pkgdir,
+                            tag,
+                            settings,
+                            self.cleanup,
+                        )
 
-        def band_dataset(product, band):
-            for res_group in ["RES-GROUP-2", "RES-GROUP-1", "RES-GROUP-0"]:
-                try:
-                    return get(
-                        res_group,
-                        GroupName.STANDARD_GROUP.value,
-                        DatasetName.REFLECTANCE_FMT.value.format(
-                            product=product, band_name=band
-                        ),
-                    )
-                except KeyError:
-                    pass
+        executor = ThreadPoolExecutor()
+        futures = [executor.submit(worker, level1) for level1 in level1_list]
 
-            raise KeyError(f"could not find {product} {band} in {granule}")
-
-        assert (
-            abs(
-                aerosol
-                - get(GroupName.ANCILLARY_GROUP.value, DatasetName.AEROSOL.value)[...]
-            )
-            < 0.00001
-        )
-
-        date = get(GroupName.ATMOSPHERIC_INPUTS_GRP.value).attrs[
-            "acquisition-datetime"
-        ][: len("2000-01-01")]
-
-        def process_band(product, band):
-            try:
-                ds = band_dataset(product, band)
-                band_name = ds.attrs["alias"]
-                data = np.where(valid_pixels, mask_invalid(ds[:]), np.nan)
-
-                yield [
-                    product,
-                    date,
-                    granule,
-                    band_name,
-                    aerosol,
-                    np.nanmean(data),
-                    np.nanstd(data),
-                    np.sum(valid_pixels),
-                ]
-            except KeyError:
-                pass
-
-        for product in [p.value for p in ArdProducts]:
-            for band in [f"BAND-{b}" for b in range(1, 8)]:
-                yield from process_band(product, band)
+        for future in as_completed(futures):
+            for exp in future.result():
+                yield exp
 
 
-class Aerosol(luigi.Task):
-    """Sensitivity analysis for aerosol."""
+# NOTE we probably need one more level here that creates the temporal mean image
+
+
+class Experiment(luigi.Task):
+    """Sensitivity analysis experiment."""
 
     level1 = luigi.Parameter()
     workdir = luigi.Parameter()
     granule = luigi.OptionalParameter(default="")
     pkgdir = luigi.Parameter()
-    aerosol = luigi.FloatParameter(default=0.05)
+    tag = luigi.Parameter()
+    settings = luigi.DictParameter()
     cleanup = luigi.BoolParameter()
 
     def _output_folder(self):
         granule = re.sub(PATTERN2, ARD, self.granule)
-        return pjoin(self.pkgdir, granule)
+        return pjoin(self.pkgdir, self.tag, granule)
 
     def _output_filename(self):
-        return pjoin(self._output_folder(), f"summary_{self.aerosol}.csv")
+        return pjoin(self._output_folder(), "summary.csv")
 
     def requires(self):
+        settings = {}
+        for key, value in self.settings.items():
+            if key == "normalized_solar_zenith":
+                settings[key] = value
+            else:
+                settings[key] = {"user": value}
+
         tasks = {
             "wagl": DataStandardisation(
-                self.level1, self.workdir, self.granule, aerosol={"user": self.aerosol}
+                self.level1, self.workdir, self.granule, **settings
             ),
-            "fmask": RunFmask(self.level1, self.granule, self.workdir),
+            "fmask": RunFmask(
+                self.level1, self.granule, self.workdir, upstream_settings=settings
+            ),
         }
 
         return tasks
@@ -133,8 +117,12 @@ class Aerosol(luigi.Task):
         with open(self._output_filename(), "w+") as csv_file:
             writer = csv.writer(csv_file)
 
-            for entry in aerosol_summary(
-                inputs["wagl"].path, inputs["fmask"].path, self.granule, self.aerosol
+            for entry in experiment_summary(
+                inputs["wagl"].path,
+                inputs["fmask"].path,
+                self.granule,
+                self.tag,
+                self.settings,
             ):
                 writer.writerow(entry)
 
@@ -142,38 +130,53 @@ class Aerosol(luigi.Task):
             shutil.rmtree(self.workdir)
 
 
-class Aerosols(luigi.WrapperTask):
-    """A helper Task that issues Aerosol Tasks for each Level-1
-    dataset listed in the `level1_list` parameter.
-    """
+def experiment_summary(l2_path, fmask_path, granule, tag, settings):
+    with rasterio.open(fmask_path) as mask_file:
+        fmask = mask_file.read(1)
 
-    level1_list = luigi.Parameter()
-    workdir = luigi.Parameter()
-    pkgdir = luigi.Parameter()
-    aerosols = luigi.ListParameter()
-    cleanup = luigi.BoolParameter()
-    acq_parser_hint = luigi.OptionalParameter(default="")
+    valid_pixels = fmask == 1
 
-    def requires(self):
-        with open(self.level1_list) as src:
-            level1_list = [level1.strip() for level1 in src.readlines()]
+    def mask_invalid(img):
+        return np.where(img != -999, img, np.nan)
 
-        for level1 in level1_list:
-            container = acquisitions(level1, self.acq_parser_hint)
+    yield [
+        "product",
+        "date",
+        "granule",
+        "band",
+        "experiment",
+        "mean",
+        "std",
+        "valid_pixels",
+    ]
 
-            for aerosol in self.aerosols:
-                work_root = pjoin(
-                    self.workdir, f"{basename(level1)}.AERO{str(aerosol)}"
-                )
+    with h5py.File(l2_path) as h5:
+        dataset = h5[granule]
+        date = dataset[GroupName.ATMOSPHERIC_INPUTS_GRP.value].attrs[
+            "acquisition-datetime"
+        ][: len("2000-01-01")]
 
-                for granule in container.granules:
-                    work_dir = container.get_root(work_root, granule=granule)
+        def process(group):
+            for product in group:
+                for band in group[product]:
+                    ds = group[product][band]
 
-                    yield Aerosol(
-                        level1,
-                        work_dir,
+                    band_name = ds.attrs["alias"]
+                    data = np.where(valid_pixels, mask_invalid(ds[:]), np.nan)
+
+                    yield [
+                        product,
+                        date,
                         granule,
-                        self.pkgdir,
-                        float(aerosol),
-                        self.cleanup,
-                    )
+                        band_name,
+                        tag,
+                        np.nanmean(data),
+                        np.nanstd(data),
+                        np.sum(valid_pixels),
+                    ]
+
+        for res_group in dataset:
+            if res_group.startswith("RES-GROUP"):
+                yield from process(
+                    dataset[res_group][GroupName.STANDARD_GROUP.value]["REFLECTANCE"]
+                )
