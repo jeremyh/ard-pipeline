@@ -10,13 +10,13 @@ from pathlib import Path
 from posixpath import join as ppjoin
 from subprocess import check_call
 
-import fmask
 import h5py
 import numpy as np
 import rasterio
 import yaml
 from eugl.contiguity import contiguity
 from eugl.fmask import fmask_cogtif
+from eugl.metadata import get_fmask_metadata
 from pkg_resources import resource_stream
 from rasterio.enums import Resampling
 from wagl.acquisition import acquisitions
@@ -549,14 +549,7 @@ def package(
             rel_path = pjoin(QA, f"{grn_id}_FMASK.TIF")
             fmask_location = pjoin(out_path, rel_path)
             fmask_cogtif(antecedents["fmask"], fmask_location)
-
-            # Should move the metadata definition to eugl
-            antecedent_metadata["fmask"] = {
-                "software_versions": {
-                    "repo_url": "https://bitbucket.org/chchrsc/python-fmask",
-                    "version": fmask.__version__,
-                }
-            }
+            antecedent_metadata["fmask"] = get_fmask_metadata()
 
             with rasterio.open(fmask_location) as ds:
                 img_paths["fmask"] = get_img_dataset_info(ds, rel_path)
