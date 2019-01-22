@@ -280,15 +280,7 @@ def write_img(
                     levels = [2, 4, 8, 16, 32]
                 outds.build_overviews(levels, resampling)
 
-        cmd = [
-            "gdal_translate",
-            "-co",
-            "TILED=YES",
-            "-co",
-            "COPY_SRC_OVERVIEWS=YES",
-            "-co",
-            "{}={}".format("PREDICTOR", predictor[dtype]),
-        ]
+        cmd = ["gdal_translate", "-co", "{}={}".format("PREDICTOR", predictor[dtype])]
 
         for key, value in options.items():
             cmd.extend(["-co", f"{key}={value}"])
