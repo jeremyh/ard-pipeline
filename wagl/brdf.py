@@ -488,7 +488,7 @@ def get_brdf_data(
     :param acquisition:
         An instance of an acquisitions object.
 
-    :param brdf_primary_path:
+    :param brdf:
         A `dict` defined as either of the following:
 
         * {'user': {<band-alias>: {'iso': <value>, 'vol': <value>, 'geo': <value>}, ...}}
