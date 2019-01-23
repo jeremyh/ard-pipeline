@@ -615,8 +615,6 @@ def package(
 
         # merge all the yaml documents
         # TODO include fmask yaml (if we go ahead and create one)
-        # TODO put eugl, fmask, tesp in the software_versions section
-        # relative paths yaml doc
         if "gqa" in antecedents:
             with open(antecedents["gqa"]) as fl:
                 antecedent_metadata["gqa"] = yaml.load(fl)
