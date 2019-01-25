@@ -614,7 +614,6 @@ def package(
         create_readme(out_path)
 
         # merge all the yaml documents
-        # TODO include fmask yaml (if we go ahead and create one)
         if "gqa" in antecedents:
             with open(antecedents["gqa"]) as fl:
                 antecedent_metadata["gqa"] = yaml.load(fl)
