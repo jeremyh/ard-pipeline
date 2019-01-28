@@ -1,85 +1,78 @@
-from unittest import TestClass
 from collections import namedtuple
+from unittest import TestCase
 
-import numpy
-from tesp.package import get_cogtif_options
 from deepdiff import DeepDiff
 
-TestAcquisition = namedtuple('TestAcquisiton', ['data'])
-TestDataset = namedtuple('TestDataset', ['shape', 'chunks'])
+from tesp.package import get_cogtif_options
 
-class TestCogtifOptions(TestClass):
+TempAcquisition = namedtuple("TempAcquisition", ["data"])
+TempDataset = namedtuple("TempDataset", ["shape", "chunks"])
 
+
+class TestCogtifOptions(TestCase):
     @classmethod
     def create_acq(cls, shape, chunks):
-        return TestAcquistion(
-            TestDataset(
-                shape=shape,
-                chunks=chunks
-            )
-        )
+        return TempAcquisition(TempDataset(shape=shape, chunks=chunks))
 
     def test_cogtif_low_res(self):
-        low_res = self.create_acq((80, 80), (0,0))
+        low_res = self.create_acq((80, 80), (0, 0))
         expected = {
-            'options': {
-                'compress': 'deflate',
-                'zlevel': 4,
-                'copy_src_overviews': 'yes'
+            "options": {
+                "compress": "deflate",
+                "zlevel": 4,
+                "copy_src_overviews": "yes",
             },
-            'config_options': {}
+            "config_options": {},
         }
 
         results = get_cogtif_options(low_res)
-        self.assertEqual(DeepDiff(results, expected), {})
+        assert DeepDiff(results, expected) == {}
 
     def test_cogtif_boundary_res(self):
-        low_res = self.create_acq((1024, 512), (0,0))
+        low_res = self.create_acq((1024, 512), (512, 512))
         expected = {
-            'options': {
-                'compress': 'deflate',
-                'zlevel': 4,
-                'copy_src_overviews': 'yes'
-                'blockysize': 80,
-                'blockxsize': 256
+            "options": {
+                "compress": "deflate",
+                "zlevel": 4,
+                "copy_src_overviews": "yes",
+                "blockysize": 512,
+                "blockxsize": 256,
             },
-            'config_options': {}
+            "config_options": {},
         }
 
         results = get_cogtif_options(low_res)
-        self.assertEqual(DeepDiff(results, expected), {})
+        assert DeepDiff(results, expected) == {}
 
-    def test_cogtif_boundary_res(self):
+    def test_cogtif_single_tile(self):
         low_res = self.create_acq((1024, 1024), (1024, 1024))
         expected = {
-            'options': {
-                'compress': 'deflate',
-                'zlevel': 4,
-                'copy_src_overviews': 'yes'
-                'blockysize': 512,
-                'blockxsize': 512,
+            "options": {
+                "compress": "deflate",
+                "zlevel": 4,
+                "copy_src_overviews": "yes",
+                "blockysize": 512,
+                "blockxsize": 512,
+                "tiled": "yes",
             },
-            'config_options': {
-                'GDAL_TIFF_OVER_BLOCKSIZE': 512
-            }
+            "config_options": {"GDAL_TIFF_OVR_BLOCKSIZE": 512},
         }
 
         results = get_cogtif_options(low_res)
-        self.assertEqual(DeepDiff(results, expected), {})
+        assert DeepDiff(results, expected) == {}
 
     def test_cogtif_tiled_res(self):
         low_res = self.create_acq((2048, 2048), (1024, 1024))
         expected = {
-            'options': {
-                'compress': 'deflate',
-                'zlevel': 4,
-                'copy_src_overviews': 'yes'
-                'blockysize': 1024,
-                'blockxsize': 1024,
+            "options": {
+                "compress": "deflate",
+                "zlevel": 4,
+                "copy_src_overviews": "yes",
+                "blockysize": 1024,
+                "blockxsize": 1024,
             },
-            'config_options': {}
+            "config_options": {},
         }
 
         results = get_cogtif_options(low_res)
-        self.assertEqual(DeepDiff(results, expected), {})
-
+        assert DeepDiff(results, expected) == {}
