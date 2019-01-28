@@ -602,7 +602,7 @@ def package(
         if "fmask" in antecedents:
             rel_path = pjoin(QA, f"{grn_id}_FMASK.TIF")
             fmask_location = pjoin(out_path, rel_path)
-            fmask_cogtif(antecedents["fmask"], fmask_location)
+            fmask_cogtif(antecedents["fmask"], fmask_location, platform)
             antecedent_metadata["fmask"] = get_fmask_metadata()
 
             with rasterio.open(fmask_location) as ds:
