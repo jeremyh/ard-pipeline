@@ -61,7 +61,6 @@ def main(output, datasets, platform):
         write_img(
             contiguity_data,
             contiguity_img,
-            cogtif=False,
             geobox=geobox,
             options={"compress": "deflate", "zlevel": 4},
             config_options={},
