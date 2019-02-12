@@ -24,6 +24,7 @@ DEFAULT_TABLE_CLASS = {"CLASS": "TABLE", "VERSION": "0.2"}
 
 DEFAULT_SCALAR_CLASS = {"CLASS": "SCALAR", "VERSION": "0.1"}
 
+
 VLEN_STRING = h5py.special_dtype(vlen=str)
 
 

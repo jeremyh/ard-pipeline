@@ -24,6 +24,7 @@ def _surface_brightness_temperature(
     bilinear_fname,
     ancillary_fname,
     out_fname,
+    normalized_solar_zenith,
     compression=H5CompressionFilter.LZF,
     filter_opts=None,
 ):
@@ -37,7 +38,7 @@ def _surface_brightness_temperature(
         surface_brightness_temperature(acquisition, grp1, fid, compression, filter_opts)
 
         grp2 = fid_anc[GroupName.ANCILLARY_GROUP.value]
-        create_ard_yaml(acquisitions, grp2, fid, True)
+        create_ard_yaml(acquisitions, grp2, fid, normalized_solar_zenith, True)
 
 
 def surface_brightness_temperature(

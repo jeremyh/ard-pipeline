@@ -4,7 +4,7 @@ from os.path import join as pjoin
 
 import numpy as np
 import rasterio
-from pkg_resources import resource_stream
+from pkg_resources import resource_filename
 
 from ..constants import BandType
 from ..geobox import GriddedGeoBox
@@ -406,13 +406,18 @@ class Acquisition:
         """Return the Juilan Day of the acquisition_datetime."""
         return int(self.acquisition_datetime.strftime("%j"))
 
+    @property
+    def spectral_filter_filepath(self):
+        """Returns the filepath to the spectral filter file."""
+        return resource_filename(
+            "wagl", "spectral_response/" + self.spectral_filter_name
+        )
+
     def spectral_response(self, as_list=False):
         """Reads the spectral response for the sensor."""
-        fname = "../spectral_response/%s" % self.spectral_filter_file
         spectral_range = range(*self.spectral_range)
-        with resource_stream(__name__, fname) as src:
-            df = read_spectral_response(src, as_list, spectral_range)
-        return df
+        with open(self.spectral_filter_filepath) as fd:
+            return read_spectral_response(fd, spectral_range)
 
     def close(self):
         """A simple additional utility for acquisitions that need

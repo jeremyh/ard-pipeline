@@ -124,11 +124,11 @@ class Landsat5Scene1AcquisitionTest(unittest.TestCase):
     def test_read(self):
         assert self.acqs[0].data()[70, 30] == 65
 
-    def test_spectral_filter_file_vsir(self):
-        assert self.acqs[0].spectral_filter_file == "landsat5_vsir.flt"
+    def test_spectral_filter_cfg_vsir(self):
+        assert self.acqs[0].spectral_filter_name == "landsat5_vsir.flt"
 
-    def test_spectral_filter_file_thermal(self):
-        assert self.acqs[5].spectral_filter_file == "landsat5_thermal.flt"
+    def test_spectral_filter_cfg_thermal(self):
+        assert self.acqs[5].spectral_filter_name == "landsat5_thermal.flt"
 
     def test_temperature(self):
         result = temperature_at_sensor(self.acqs[5], window=((40, 41), (40, 41)))
@@ -200,11 +200,11 @@ class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
     def test_read(self):
         assert self.acqs[0].data()[70, 30] == 61
 
-    def test_spectral_filter_file_vsir(self):
-        assert self.acqs[0].spectral_filter_file == "landsat7_vsir.flt"
+    def test_spectral_filter_cfg_vsir(self):
+        assert self.acqs[0].spectral_filter_name == "landsat7_vsir.flt"
 
-    def test_spectral_filter_file_thermal(self):
-        assert self.acqs[5].spectral_filter_file == "landsat7_thermal.flt"
+    def test_spectral_filter_cfg_thermal(self):
+        assert self.acqs[5].spectral_filter_name == "landsat7_thermal.flt"
 
     def test_temperature61(self):
         result = temperature_at_sensor(self.acqs[5], window=((41, 42), (41, 42)))
@@ -281,11 +281,11 @@ class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
     def test_read(self):
         assert self.acqs[0].data()[70, 30] == 11003
 
-    def test_spectral_filter_file_vsir(self):
-        assert self.acqs[0].spectral_filter_file == "landsat8_vsir.flt"
+    def test_spectral_filter_cfg_vsir(self):
+        assert self.acqs[0].spectral_filter_name == "landsat8_vsir.flt"
 
-    def test_spectral_filter_file_thermal(self):
-        assert self.acqs[1].spectral_filter_file == "landsat8_thermal.flt"
+    def test_spectral_filter_cfg_thermal(self):
+        assert self.acqs[1].spectral_filter_name == "landsat8_thermal.flt"
 
     def test_temperature10(self):
         result = temperature_at_sensor(self.acqs[1], window=((41, 42), (41, 42)))
