@@ -497,8 +497,6 @@ def create_quicklook(product_list, container, outdir):
     gdal_settings = get_cogtif_options(
         acq.data(), overviews=True, blockxsize=tilexsize, blockysize=tileysize
     )
-    gdal_settings["options"]["COMPRESS"] = "JPEG"
-    gdal_settings["options"]["PHOTOMETRIC"] = "YCBCR"
 
     # are quicklooks still needed?
     # this wildcard mechanism needs to change if quicklooks are to
@@ -561,12 +559,17 @@ def create_quicklook(product_list, container, outdir):
 
         # create the cogtif
         cmd = ["gdal_translate"]
+        options_whitelist = ["blockxsize", "blockysize", "tiled", "copy_src_overviews"]
         for key, value in gdal_settings["options"].items():
-            cmd.extend(["-co" "{}={}".format(key, value)])
+            if key in options_whitelist:
+                cmd.extend(["-co", f"{key}={value}"])
 
+        config_options_whitelist = ["GDAL_TIFF_OVR_BLOCKSIZE"]
         for key, value in gdal_settings["config_options"].items():
-            cmd.extend(["--config", key, value])
+            if key in config_options_whitelist:
+                cmd.extend(["--config", str(key), str(value)])
 
+        cmd.extend(["-co", "COMPRESS=JPEG", "-co", "PHOTOMETRIC=YCBCR"])
         cmd.extend([tmp_fname3, out_fname1])
 
         run_command(cmd, tmpdir)
@@ -582,6 +585,7 @@ def create_quicklook(product_list, container, outdir):
             out_fname1,
             out_fname2,
         ]
+
         run_command(cmd, tmpdir)
 
     with tempfile.TemporaryDirectory(dir=outdir, prefix="quicklook-") as tmpdir:
