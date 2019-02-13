@@ -76,7 +76,10 @@ class RunFmask(luigi.Task):
         # no point in running fmask if wagl fails...
         # return WorkDir(self.level1, dirname(self.workdir))
         return DataStandardisation(
-            self.level1, self.workdir, self.granule, **self.upstream_settings
+            self.level1,
+            self.workdir,
+            self.granule,
+            **self.upstream_settings,  # pylint: disable=not-a-mapping
         )
 
     def output(self):
@@ -135,7 +138,7 @@ class Package(luigi.Task):
         # Need to improve pluggability across tesp/eugl/wagl
         # and adopt patterns that facilitate reuse
         for key in list(tasks.keys()):
-            if key != "wagl" and key not in self.qa_products:
+            if key != "wagl" and key not in list(self.qa_products):
                 del tasks[key]
 
         return tasks
@@ -169,22 +172,6 @@ class Package(luigi.Task):
         assert ProductPackage.validate_products(self.products)
         # Check that tesp is aware of requested qa products
         assert not set(self.qa_products).difference(set(QA_PRODUCTS))
-
-
-def list_packages(workdir, acq_parser_hint, pkgdir):
-    def worker(level1):
-        work_root = pjoin(workdir, f"{basename(level1)}.ARD")
-
-        result = []
-        for granule in preliminary_acquisitions_data(level1, acq_parser_hint):
-            work_dir = pjoin(work_root, granule["id"])
-            ymd = granule["datetime"].strftime("%Y-%m-%d")
-            outdir = pjoin(pkgdir, ymd)
-            result.append(Package(level1, work_dir, granule["id"], outdir))
-
-        return result
-
-    return worker
 
 
 def list_packages(workdir, acq_parser_hint, pkgdir):

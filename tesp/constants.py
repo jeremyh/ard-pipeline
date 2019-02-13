@@ -10,7 +10,7 @@ class ProductPackage:
 
     _default_excludes = set((ArdProducts.LAMBERTIAN.value, ArdProducts.SBT.value))
 
-    _all_products = set([e.value for e in ArdProducts])
+    _all_products = {e.value for e in ArdProducts}
 
     @classmethod
     def validate_products(cls, product_list):
