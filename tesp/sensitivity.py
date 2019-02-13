@@ -84,7 +84,6 @@ class Experiment(luigi.Task):
             ):
                 work_root = pjoin(self.workdir, self.tag, basename(level1_path))
                 work_dir = pjoin(work_root, granule["id"])
-
                 yield dict(
                     kind="leaf",
                     level1_path=level1_path,
