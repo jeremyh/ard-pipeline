@@ -262,17 +262,24 @@ def write_img(
             if levels:
                 outds.build_overviews(levels, resampling)
 
-        cmd = ["gdal_translate", "-co", "{}={}".format("PREDICTOR", predictor[dtype])]
+        if levels:
+            # This segment of code rewrites a tiff to place the overviews at the
+            # beginning of the file
+            cmd = [
+                "gdal_translate",
+                "-co",
+                "{}={}".format("PREDICTOR", predictor[dtype]),
+            ]
 
-        for key, value in options.items():
-            cmd.extend(["-co", f"{key}={value}"])
+            for key, value in options.items():
+                cmd.extend(["-co", f"{key}={value}"])
 
-        if config_options:
-            for key, value in config_options.items():
-                cmd.extend(["--config", f"{key}", f"{value}"])
+            if config_options:
+                for key, value in config_options.items():
+                    cmd.extend(["--config", f"{key}", f"{value}"])
 
-        cmd.extend([out_fname, filename])
-        subprocess.check_call(cmd, cwd=dirname(filename))
+            cmd.extend([out_fname, filename])
+            subprocess.check_call(cmd, cwd=dirname(filename))
 
 
 def read_subset(fname, ul_xy, ur_xy, lr_xy, ll_xy, bands=1):
