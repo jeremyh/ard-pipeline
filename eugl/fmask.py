@@ -298,7 +298,6 @@ def _sentinel2_fmask(
         str(cloud_buffer_distance),
         "--shadowbufferdistance",
         str(cloud_shadow_buffer_distance),
-        "--parallaxtest",
     ]
 
     if parallax_test:
