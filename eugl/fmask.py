@@ -78,7 +78,13 @@ def run_command(command, work_dir, timeout=None, command_name=None):
         _LOG.debug(stdout.decode("utf-8"))
 
 
-def _landsat_fmask(acquisition, out_fname, work_dir):
+def _landsat_fmask(
+    acquisition,
+    out_fname,
+    work_dir,
+    cloud_buffer_distance,
+    cloud_shadow_buffer_distance,
+):
     """Fmask algorithm for Landsat."""
     acquisition_path = Path(acquisition.pathname)
     if ".tar" in str(acquisition_path):
@@ -200,14 +206,23 @@ def _landsat_fmask(acquisition, out_fname, work_dir):
         "-o",
         out_fname,
         "--cloudbufferdistance",
-        "0",
+        str(cloud_buffer_distance),
         "--shadowbufferdistance",
-        "0",
+        str(cloud_shadow_buffer_distance),
     ]
     run_command(cmd, work_dir)
 
 
-def _sentinel2_fmask(dataset_path, container, granule, out_fname, work_dir):
+def _sentinel2_fmask(
+    dataset_path,
+    container,
+    granule,
+    out_fname,
+    work_dir,
+    cloud_buffer_distance,
+    cloud_shadow_buffer_distance,
+    parallax_test,
+):
     """Fmask algorithm for Sentinel-2."""
     # filenames
     vrt_fname = pjoin(work_dir, "reflective.vrt")
@@ -280,24 +295,87 @@ def _sentinel2_fmask(dataset_path, container, granule, out_fname, work_dir):
         "-o",
         out_fname,
         "--cloudbufferdistance",
-        "0",
+        str(cloud_buffer_distance),
         "--shadowbufferdistance",
-        "0",
+        str(cloud_shadow_buffer_distance),
         "--parallaxtest",
     ]
+
+    if parallax_test:
+        cmd.extend("--parallaxtest")
+
     run_command(cmd, work_dir)
 
 
-def fmask(dataset_path, granule, out_fname, outdir, acq_parser_hint=None):
-    """Execute the fmask process."""
+def fmask(
+    dataset_path,
+    granule,
+    out_fname,
+    outdir,
+    acq_parser_hint=None,
+    cloud_buffer_distance=150.0,
+    cloud_shadow_buffer_distance=300.0,
+    parallax_test=False,
+):
+    """Execute the fmask process.
+
+    :param dataset_path:
+    :type str:
+        A str containing the full file pathname to the dataset.
+
+    :param granule:
+    :type str:
+        A str containing the granule name. This will is used to
+        selectively process a given granule.
+
+    :param out_fname:
+    :type str:
+        A str containing the full file pathname to contain the
+        output file.
+
+    :param acq_parser_hint:
+        A hinting helper for the acquisitions parser.
+
+    :param cloud_buffer_distance:
+    :type float:
+        Distance (in metres) to buffer final cloud objects. Default
+        is 150m.
+
+    :param cloud_shadow_buffer_distance:
+    :type float:
+        Distance (in metres) to buffer final cloud shadow objects.
+        Default is 300m.
+
+    :param parallax_test:
+    :type bool:
+        A bool of whether to turn on the parallax displacement test
+        from Frantz import (2018). Default is False.
+        Setting this parameter to True has no effect for Landsat
+        scenes.
+    """
     container = acquisitions(dataset_path, acq_parser_hint)
     with tempfile.TemporaryDirectory(dir=outdir, prefix="pythonfmask-") as tmpdir:
         acq = container.get_acquisitions(None, granule, False)[0]
 
         if "SENTINEL" in acq.platform_id:
-            _sentinel2_fmask(dataset_path, container, granule, out_fname, tmpdir)
+            _sentinel2_fmask(
+                dataset_path,
+                container,
+                granule,
+                out_fname,
+                tmpdir,
+                cloud_buffer_distance,
+                cloud_shadow_buffer_distance,
+                parallax_test,
+            )
         elif "LANDSAT" in acq.platform_id:
-            _landsat_fmask(acq, out_fname, tmpdir)
+            _landsat_fmask(
+                acq,
+                out_fname,
+                tmpdir,
+                cloud_buffer_distance,
+                cloud_shadow_buffer_distance,
+            )
         else:
             msg = "Sensor not supported"
             raise Exception(msg)
