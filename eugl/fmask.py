@@ -198,6 +198,10 @@ def _fmask_landsat(acquisition, out_fname, work_dir):
         mask_fname,
         "-o",
         out_fname,
+        "--cloudbufferdistance",
+        "0",
+        "--shadowbufferdistance",
+        "0",
     ]
     run_command(cmd, work_dir)
 
@@ -274,6 +278,11 @@ def _sentinel2_fmask(dataset_path, container, granule, out_fname, work_dir):
         angles_fname,
         "-o",
         out_fname,
+        "--cloudbufferdistance",
+        "0",
+        "--shadowbufferdistance",
+        "0",
+        "--parallaxtest",
     ]
     run_command(cmd, work_dir)
 
