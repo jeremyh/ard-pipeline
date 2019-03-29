@@ -466,8 +466,7 @@ def fmask_metadata(
     :type fname: str
 
     :param out_fname:
-        A str containing the full file pathname to the output yaml
-        document location.
+        A str containing the full file pathname to the output file.
     :type out_fname: str
 
     :param cloud_buffer_distance:
