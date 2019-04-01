@@ -602,8 +602,8 @@ def package(
             rel_path = pjoin(QA, f"{grn_id}_FMASK.TIF")
             fmask_location = pjoin(out_path, rel_path)
             fmask_cogtif(antecedents["fmask-image"], fmask_location, platform)
-            with open(antecedents["fmask-metadata"]) as src:
-                antecedent_metadata["fmask"] = yaml.load(src)
+            with open(antecedents["fmask-metadata"]) as fl:
+                antecedent_metadata["fmask"] = yaml.load(fl)
 
             with rasterio.open(fmask_location) as ds:
                 img_paths["fmask"] = get_img_dataset_info(ds, rel_path)
