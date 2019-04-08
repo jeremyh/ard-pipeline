@@ -5,6 +5,7 @@ such as images and tables, as well as attaching metadata.
 """
 
 import datetime
+import re
 from functools import partial
 from posixpath import join as ppjoin
 from posixpath import normpath
@@ -324,10 +325,14 @@ def write_dataframe(
         elif idx_name is None:
             idx_name = default_label.format(i)
         idx_names.append(idx_name)
-        dtype_metadata[f"{idx_name}_dtype"] = idx_data.dtype.name
-        if idx_data.dtype.name == "object":
+        _dtype_name = idx_data.dtype.name
+        if "datetime64" in _dtype_name:
+            # Pandas supports timezones but numpy does not; remove timezone
+            _dtype = re.sub(r"\[ns(?:,[^\]]+)?\]", "[ns]", _dtype_name)
+        dtype_metadata[f"{idx_name}_dtype"] = _dtype_name
+        if _dtype_name == "object":
             dtype.append((idx_name, VLEN_STRING))
-        elif "datetime64" in idx_data.dtype.name:
+        elif "datetime64" in _dtype_name:
             dtype.append((idx_name, "int64"))
         else:
             dtype.append((idx_name, idx_data.dtype))
@@ -335,10 +340,14 @@ def write_dataframe(
     # column datatypes
     for i, val in enumerate(df.dtypes):
         col_name = df.columns[i]
-        dtype_metadata[f"{col_name}_dtype"] = val.name
-        if val.name == "object":
+        _dtype_name = val.name
+        if "datetime64" in _dtype_name:
+            # Pandas supports timezones but numpy does not; remove timezone
+            _dtype_name = re.sub(r"\[ns(?:,[^\]]+)?\]", "[ns]", _dtype)
+        dtype_metadata[f"{col_name}_dtype"] = _dtype_name
+        if _dtype_name == "object":
             dtype.append((col_name, VLEN_STRING))
-        elif ("datetime64" in val.name) or ("timedelta64" in val.name):
+        elif ("datetime64" in _dtype_name) or ("timedelta64" in _dtype_name):
             dtype.append((col_name, "int64"))
         else:
             dtype.append((col_name, val))
@@ -393,7 +402,7 @@ def read_h5_table(fid, dataset_name, dataframe=True):
     """Read a HDF5 `TABLE` as a `pandas.DataFrame`.
 
     :param fid:
-        A h5py `Group` or `File` object from which to write the
+        A h5py `Group` or `File` object from which to read the
         dataset from.
 
     :param dataset_name:
