@@ -359,7 +359,7 @@ def fmask(
     :type parallax_test: bool
     """
     container = acquisitions(dataset_path, acq_parser_hint)
-    with tempfile.TemporaryDirectory(dir=outdir, prefix="pythonfmask-") as tmpdir:
+    with tempfile.TemporaryDirectory(dir=workdir, prefix="pythonfmask-") as tmpdir:
         acq = container.get_acquisitions(None, granule, False)[0]
 
         if "SENTINEL" in acq.platform_id:
