@@ -314,12 +314,15 @@ class HDF5Test(unittest.TestCase):
         tested.
         """
         df = pd.DataFrame(self.table_data)
-        df["timestamps"] = pd.date_range("1/1/2000", periods=10, freq="D")
+        df["timestamps"] = pd.date_range("1/1/2000", periods=10, freq="D", tz="UTC")
         df["string_data"] = [f"period {i}" for i in range(10)]
 
         fname = "test_dataframe_roundtrip.h5"
         with h5py.File(fname, **self.memory_kwargs) as fid:
             hdf5.write_dataframe(df, "dataframe", fid)
+            # Apply conversion to no timezone that occurs in serialisation to hdf5
+            # Numpy is timezone naive; pandas has timezone support
+            df["timestamps"] = df["timestamps"].dt.tz_convert(None)
             assert df.equals(hdf5.read_h5_table(fid, "dataframe"))
 
 
