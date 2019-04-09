@@ -23,7 +23,6 @@ setup(
         "h5py",
         "luigi>2.7.6",
         "numpy",
-        "pathlib",
         "pyyaml",
         "rasterio",
         "scikit-image",
