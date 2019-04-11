@@ -303,7 +303,7 @@ def _sentinel2_fmask(
     ]
 
     if parallax_test:
-        cmd.extend("--parallaxtest")
+        cmd.append("--parallaxtest")
 
     run_command(cmd, work_dir)
 
