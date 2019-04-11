@@ -1,5 +1,6 @@
 import fmask
 import rasterio
+import yaml
 from idl_functions import histogram
 
 from eugl.version import REPO_URL, __version__
@@ -112,17 +113,17 @@ def fmask_metadata(
     pdf = hist[1:] / hist[1:].sum() * 100
 
     md = {
-        "Parameters": {
-            "Cloud Buffer Distance (metres)": cloud_buffer_distance,
-            "Cloud Shadow Buffer Distance (metres)": cloud_shadow_buffer_distance,
-            "Sentinel-2 Parallax (Frantz 2018)": parallax_test,
+        "parameters": {
+            "cloud_buffer_distance_metres": cloud_buffer_distance,
+            "cloud_shadow_buffer_distance_metres": cloud_shadow_buffer_distance,
+            "frantz_parallax_sentinel_2": parallax_test,
         },
-        "Class Distribution (%)": {
-            "Clear": pdf[0],
-            "Cloud": pdf[1],
-            "Cloud Shadow": pdf[2],
-            "Snow": pdf[3],
-            "Water": pdf[4],
+        "percent_class_distribution": {
+            "clear": float(pdf[0]),
+            "cloud": float(pdf[1]),
+            "cloud_shadow": float(pdf[2]),
+            "snow": float(pdf[3]),
+            "water": float(pdf[4]),
         },
     }
 
