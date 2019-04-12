@@ -15,6 +15,7 @@ from wagl.constants import (
     POINT_FMT,
     Albedos,
     BandType,
+    DatasetName,
     GroupName,
     Workflow,
 )
@@ -527,17 +528,6 @@ def card4l(
                         normalized_solar_zenith,
                     )
 
-            # metadata yaml's
-            if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
-                create_ard_yaml(
-                    band_acqs, ancillary_group, res_group, normalized_solar_zenith
-                )
-
-            if workflow == Workflow.STANDARD or workflow == Workflow.SBT:
-                create_ard_yaml(
-                    band_acqs, ancillary_group, res_group, normalized_solar_zenith, True
-                )
-
             # pixel quality
             sbt_only = workflow == Workflow.SBT
             if pixel_quality and can_pq(level1, acq_parser_hint) and not sbt_only:
@@ -561,3 +551,39 @@ def card4l(
                     AP.NBART,
                     acq_parser_hint,
                 )
+
+        def get_band_acqs(grp_name):
+            acqs = container.get_acquisitions(granule=granule, group=grp_name)
+            nbar_acqs = [acq for acq in acqs if acq.band_type == BandType.REFLECTIVE]
+            sbt_acqs = [acq for acq in acqs if acq.band_type == BandType.THERMAL]
+
+            band_acqs = []
+            if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
+                band_acqs.extend(nbar_acqs)
+
+            if workflow == Workflow.STANDARD or workflow == Workflow.SBT:
+                band_acqs.extend(sbt_acqs)
+
+            return band_acqs
+
+        # wagl parameters
+        parameters = {
+            "vertices": list(vertices),
+            "method": method.value,
+            "rori": rori,
+            "buffer_distance": buffer_distance,
+            "normalized_solar_zenith": normalized_solar_zenith,
+        }
+
+        # metadata yaml's
+        metadata = root.create_group(DatasetName.METADATA.value)
+        create_ard_yaml(
+            {
+                grp_name: get_band_acqs(grp_name)
+                for grp_name in container.supported_groups
+            },
+            ancillary_group,
+            metadata,
+            parameters,
+            workflow,
+        )
