@@ -114,7 +114,7 @@ def incident_angles(
     tile_size = solar_zenith_dataset.chunks
     filter_opts["chunks"] = tile_size
     kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
-    no_data = -999
+    no_data = np.nan
     kwargs["shape"] = shape
     kwargs["fillvalue"] = no_data
     kwargs["dtype"] = "float32"
@@ -263,7 +263,7 @@ def exiting_angles(
     tile_size = satellite_view_dataset.chunks
     filter_opts["chunks"] = tile_size
     kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
-    no_data = -999
+    no_data = np.nan
     kwargs["shape"] = shape
     kwargs["fillvalue"] = no_data
     kwargs["dtype"] = "float32"
@@ -431,7 +431,7 @@ def relative_azimuth_slope(
     tile_size = azimuth_incident_dataset.chunks
     filter_opts["chunks"] = tile_size
     kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
-    no_data = -999
+    no_data = np.nan
     kwargs["shape"] = shape
     kwargs["fillvalue"] = no_data
     kwargs["dtype"] = "float32"
