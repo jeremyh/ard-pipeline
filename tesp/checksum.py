@@ -24,7 +24,8 @@ def checksum(out_fname):
     chksum.write(out_fname)
 
 
-if __name__ == "__main__":
+def run():
+    """Enables executing checksum generation by executing the file."""
     description = "Generate a package checksum."
     parser = argparse.ArgumentParser(description=description)
 
@@ -37,3 +38,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     checksum(args.out_fname)
+
+
+if __name__ == "__main__":
+    run()
