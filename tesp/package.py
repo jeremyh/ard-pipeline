@@ -16,6 +16,7 @@ import numpy as np
 import rasterio
 import yaml
 from eugl.contiguity import contiguity
+from eugl.fmask import fmask_cogtif
 from pkg_resources import resource_stream
 from rasterio.enums import Resampling
 from wagl.acquisition import acquisitions
