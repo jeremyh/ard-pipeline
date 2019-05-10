@@ -104,6 +104,7 @@ def calculate_reflectance(
     compression=H5CompressionFilter.LZF,
     filter_opts=None,
     normalized_solar_zenith=45.0,
+    esun=None,
 ):
     """Calculates Lambertian, BRDF corrected and BRDF + terrain
     illumination corrected surface reflectance.
@@ -191,13 +192,20 @@ def calculate_reflectance(
         The compression filter to use.
         Default is H5CompressionFilter.LZF
 
-    :filter_opts:
+    :param filter_opts:
         A dict of key value pairs available to the given configuration
         instance of H5CompressionFilter. For example
         H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
         available.
         Default is None, which will use the default settings for the
         chosen H5CompressionFilter instance.
+
+    :param normalized_solar_zenith:
+        A float value type to normalize reflectance to a particular angle.
+
+    :param esun
+        A float value type. A solar solar irradiance normal to atmosphere
+        in unit of W/sq cm/sr/nm.
 
     :return:
         An opened `h5py.File` object, that is either in-memory using the
@@ -317,7 +325,7 @@ def calculate_reflectance(
         idx = (slice(tile[0][0], tile[0][1]), slice(tile[1][0], tile[1][1]))
 
         # define some static arguments
-        acq_args = {"window": tile, "out_no_data": NO_DATA_VALUE}
+        acq_args = {"window": tile, "out_no_data": NO_DATA_VALUE, "esun": esun}
         f32_args = {"dtype": np.float32, "transpose": True}
 
         # Read the data corresponding to the current tile for all dataset

@@ -196,6 +196,7 @@ def acquisitions_via_mtl(pathname):
     prod_md = data["PRODUCT_METADATA"]
     rad_md = data["MIN_MAX_RADIANCE"]
     quant_md = data["MIN_MAX_PIXEL_VALUE"]
+    rescaling_md = data["RADIOMETRIC_RESCALING"]
 
     # acquisition datetime
     acq_datetime = get_acquisition_datetime_via_mtl(data)
@@ -253,6 +254,9 @@ def acquisitions_via_mtl(pathname):
             f"qcalmax_{band}", quant_md[f"quantize_cal_max_{band}"]
         )
 
+        ref_add = rescaling_md.get(f"reflectance_add_{band}")
+        ref_mult = rescaling_md.get(f"reflectance_mult_{band}")
+
         # metadata
         attrs = {k: v for k, v in sensor_band_info.items()}
         if attrs.get("supported_band"):
@@ -262,6 +266,8 @@ def acquisitions_via_mtl(pathname):
             attrs["max_radiance"] = max_rad
             attrs["min_quantize"] = min_quant
             attrs["max_quantize"] = max_quant
+            attrs["reflectance_add"] = ref_add
+            attrs["reflectance_mult"] = ref_mult
 
         # band_name is an internal property of acquisitions class
         band_name = attrs.pop("band_name", band_id)

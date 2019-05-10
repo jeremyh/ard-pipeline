@@ -14,6 +14,7 @@ from wagl.constants import (
     POINT_ALBEDO_FMT,
     POINT_FMT,
     Albedos,
+    AtmosphericCoefficients,
     BandType,
     DatasetName,
     GroupName,
@@ -21,7 +22,7 @@ from wagl.constants import (
 )
 from wagl.constants import ArdProducts as AP
 from wagl.dsm import get_dsm
-from wagl.hdf5 import H5CompressionFilter
+from wagl.hdf5 import H5CompressionFilter, read_h5_table
 from wagl.incident_exiting_angles import (
     exiting_angles,
     incident_angles,
@@ -446,7 +447,7 @@ def card4l(
         log.info("Coefficients")
         results_group = root[GroupName.ATMOSPHERIC_RESULTS_GRP.value]
         calculate_coefficients(results_group, root, compression, filter_opts)
-
+        esun_values = {}
         # interpolate coefficients
         for grp_name in container.supported_groups:
             log = STATUS_LOGGER.bind(
@@ -464,6 +465,8 @@ def card4l(
             comp_grp = root[GroupName.COEFFICIENTS_GROUP.value]
 
             for coefficient in workflow.atmos_coefficients:
+                if coefficient is AtmosphericCoefficients.ESUN:
+                    continue
                 if coefficient in Workflow.NBAR.atmos_coefficients:
                     band_acqs = nbar_acqs
                 else:
@@ -489,6 +492,7 @@ def card4l(
 
             # standardised products
             band_acqs = []
+
             if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
                 band_acqs.extend(nbar_acqs)
 
@@ -504,6 +508,15 @@ def card4l(
                         acq, interp_grp, res_group, compression, filter_opts
                     )
                 else:
+                    atmos_coefs = read_h5_table(
+                        comp_grp, DatasetName.NBAR_COEFFICIENTS.value
+                    )
+                    esun_values[acq.band_name] = (
+                        atmos_coefs[atmos_coefs.band_name == acq.band_name][
+                            AtmosphericCoefficients.ESUN.value
+                        ]
+                    ).values[0]
+
                     slp_asp_grp = res_group[GroupName.SLP_ASP_GROUP.value]
                     rel_slp_asp = res_group[GroupName.REL_SLP_GROUP.value]
                     incident_grp = res_group[GroupName.INCIDENT_GROUP.value]
@@ -526,6 +539,7 @@ def card4l(
                         compression,
                         filter_opts,
                         normalized_solar_zenith,
+                        esun_values[acq.band_name],
                     )
 
             # pixel quality
@@ -552,6 +566,8 @@ def card4l(
                     acq_parser_hint,
                 )
 
+        print(esun_values)
+
         def get_band_acqs(grp_name):
             acqs = container.get_acquisitions(granule=granule, group=grp_name)
             nbar_acqs = [acq for acq in acqs if acq.band_type == BandType.REFLECTIVE]
@@ -573,6 +589,7 @@ def card4l(
             "rori": rori,
             "buffer_distance": buffer_distance,
             "normalized_solar_zenith": normalized_solar_zenith,
+            "esun": esun_values,
         }
 
         # metadata yaml's
