@@ -566,8 +566,6 @@ def card4l(
                     acq_parser_hint,
                 )
 
-        print(esun_values)
-
         def get_band_acqs(grp_name):
             acqs = container.get_acquisitions(granule=granule, group=grp_name)
             nbar_acqs = [acq for acq in acqs if acq.band_type == BandType.REFLECTIVE]
