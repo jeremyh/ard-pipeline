@@ -240,6 +240,7 @@ class AtmosphericCoefficients(Enum):  # param, coeff, vari... what to use
     PATH_UP = "PATH-UP"
     PATH_DOWN = "PATH-DOWN"
     TRANSMITTANCE_UP = "TRANSMITTANCE-UP"
+    ESUN = "ESUN"
 
 
 class TrackIntersection(Enum):
