@@ -20,7 +20,7 @@ import wagl
 from wagl.constants import (
     POINT_FMT,
     BandType,
-    BrdfParameters,
+    BrdfDirectionalParameters,
     DatasetName,
     GroupName,
     Workflow,
@@ -195,14 +195,13 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
                 continue
 
             bn = acq.band_name
-            for param in BrdfParameters:
+            for param in BrdfDirectionalParameters:
                 fmt = DatasetName.BRDF_FMT.value
                 dname = fmt.format(band_name=bn, parameter=param.value)
                 dset = fid[dname]
                 key = dname.lower().replace("-", "_")
                 result[key] = {k: v for k, v in dset.attrs.items()}
                 result[key]["value"] = dset[()]
-                result[key]["type"] = key
 
         return result
 
@@ -356,3 +355,11 @@ def create_pq_yaml(acquisition, ancillary, tests_run, out_group):
     dname = DatasetName.PQ_YAML.value
     yml_data = yaml.dump(metadata, default_flow_style=False)
     write_scalar(yml_data, dname, out_group, attrs={"file_format": "yaml"})
+
+
+def current_h5_metadata(fid):
+    """Read current metadata from a file."""
+    metadata = fid[DatasetName.METADATA.value][DatasetName.CURRENT_METADATA.value][
+        ()
+    ].item()
+    return yaml.load(metadata)

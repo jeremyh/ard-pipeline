@@ -202,12 +202,19 @@ class Method(Enum):
     RBF = 4
 
 
-class BrdfParameters(Enum):
+class BrdfModelParameters(Enum):
     """Defines the BRDF Parameters used in BRDF correction."""
 
     ISO = "ISO"
     VOL = "VOL"
     GEO = "GEO"
+
+
+class BrdfDirectionalParameters(Enum):
+    """Defines the BRDF Parameters used in BRDF correction."""
+
+    ALPHA_1 = "ALPHA-1"
+    ALPHA_2 = "ALPHA-2"
 
 
 class ArdProducts(Enum):
