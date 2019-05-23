@@ -993,7 +993,7 @@ def calculate_angles(
     )
 
     out_dtype = "float32"
-    no_data = -999
+    no_data = np.nan
     kwargs = compression.config(**filter_opts).dataset_compression_kwargs()
     kwargs["shape"] = (acquisition.lines, acquisition.samples)
     kwargs["fillvalue"] = no_data

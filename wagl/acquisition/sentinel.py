@@ -183,7 +183,7 @@ class Sentinel2Acquisition(Acquisition):
         solar_zenith = np.float32(rbspline(y, x, solar_zenith))
         self._solar_zenith = np.radians(solar_zenith, out=solar_zenith)
 
-    def radiance_data(self, window=None, out_no_data=-999):
+    def radiance_data(self, window=None, out_no_data=-999, esun=None):
         """Return the data as radiance in watts/(m^2*micrometre).
 
         Sentinel-2a's package is a little convoluted with the various

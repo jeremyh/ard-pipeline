@@ -69,16 +69,16 @@ class Sentinel2AScene1AcquisitionTest(unittest.TestCase):
             assert acq.platform_id == "SENTINEL_2A"
 
     def test_samples(self):
-        assert self.acq.samples == 109
+        assert self.acq.samples == 172
 
     def test_lines(self):
-        assert self.acq.lines == 109
+        assert self.acq.lines == 172
 
     def test_spectral_filter_cfg(self):
         assert self.acq.spectral_filter_name == "sentinel2a_all.flt"
 
     def test_read(self):
-        assert self.acq.data()[70, 30] == 1216
+        assert self.acq.data()[70, 30] == 1083
 
 
 class Sentinel2BScene1AcquisitionTest(unittest.TestCase):
@@ -107,13 +107,13 @@ class Sentinel2BScene1AcquisitionTest(unittest.TestCase):
             assert acq.platform_id == "SENTINEL_2B"
 
     def test_samples(self):
-        assert self.acq.samples == 109
+        assert self.acq.samples == 172
 
     def test_lines(self):
-        assert self.acq.lines == 109
+        assert self.acq.lines == 172
 
     def test_spectral_filter_cfg(self):
         assert self.acq.spectral_filter_name == "sentinel2b_all.flt"
 
     def test_read(self):
-        assert self.acq.data()[100, 100] == 1029
+        assert self.acq.data()[100, 100] == 2

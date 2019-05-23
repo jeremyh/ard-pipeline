@@ -14,13 +14,15 @@ from wagl.constants import (
     POINT_ALBEDO_FMT,
     POINT_FMT,
     Albedos,
+    AtmosphericCoefficients,
     BandType,
+    DatasetName,
     GroupName,
     Workflow,
 )
 from wagl.constants import ArdProducts as AP
 from wagl.dsm import get_dsm
-from wagl.hdf5 import H5CompressionFilter
+from wagl.hdf5 import H5CompressionFilter, read_h5_table
 from wagl.incident_exiting_angles import (
     exiting_angles,
     incident_angles,
@@ -445,7 +447,7 @@ def card4l(
         log.info("Coefficients")
         results_group = root[GroupName.ATMOSPHERIC_RESULTS_GRP.value]
         calculate_coefficients(results_group, root, compression, filter_opts)
-
+        esun_values = {}
         # interpolate coefficients
         for grp_name in container.supported_groups:
             log = STATUS_LOGGER.bind(
@@ -463,6 +465,8 @@ def card4l(
             comp_grp = root[GroupName.COEFFICIENTS_GROUP.value]
 
             for coefficient in workflow.atmos_coefficients:
+                if coefficient is AtmosphericCoefficients.ESUN:
+                    continue
                 if coefficient in Workflow.NBAR.atmos_coefficients:
                     band_acqs = nbar_acqs
                 else:
@@ -488,6 +492,7 @@ def card4l(
 
             # standardised products
             band_acqs = []
+
             if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
                 band_acqs.extend(nbar_acqs)
 
@@ -503,6 +508,15 @@ def card4l(
                         acq, interp_grp, res_group, compression, filter_opts
                     )
                 else:
+                    atmos_coefs = read_h5_table(
+                        comp_grp, DatasetName.NBAR_COEFFICIENTS.value
+                    )
+                    esun_values[acq.band_name] = (
+                        atmos_coefs[atmos_coefs.band_name == acq.band_name][
+                            AtmosphericCoefficients.ESUN.value
+                        ]
+                    ).values[0]
+
                     slp_asp_grp = res_group[GroupName.SLP_ASP_GROUP.value]
                     rel_slp_asp = res_group[GroupName.REL_SLP_GROUP.value]
                     incident_grp = res_group[GroupName.INCIDENT_GROUP.value]
@@ -525,18 +539,8 @@ def card4l(
                         compression,
                         filter_opts,
                         normalized_solar_zenith,
+                        esun_values[acq.band_name],
                     )
-
-            # metadata yaml's
-            if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
-                create_ard_yaml(
-                    band_acqs, ancillary_group, res_group, normalized_solar_zenith
-                )
-
-            if workflow == Workflow.STANDARD or workflow == Workflow.SBT:
-                create_ard_yaml(
-                    band_acqs, ancillary_group, res_group, normalized_solar_zenith, True
-                )
 
             # pixel quality
             sbt_only = workflow == Workflow.SBT
@@ -561,3 +565,40 @@ def card4l(
                     AP.NBART,
                     acq_parser_hint,
                 )
+
+        def get_band_acqs(grp_name):
+            acqs = container.get_acquisitions(granule=granule, group=grp_name)
+            nbar_acqs = [acq for acq in acqs if acq.band_type == BandType.REFLECTIVE]
+            sbt_acqs = [acq for acq in acqs if acq.band_type == BandType.THERMAL]
+
+            band_acqs = []
+            if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
+                band_acqs.extend(nbar_acqs)
+
+            if workflow == Workflow.STANDARD or workflow == Workflow.SBT:
+                band_acqs.extend(sbt_acqs)
+
+            return band_acqs
+
+        # wagl parameters
+        parameters = {
+            "vertices": list(vertices),
+            "method": method.value,
+            "rori": rori,
+            "buffer_distance": buffer_distance,
+            "normalized_solar_zenith": normalized_solar_zenith,
+            "esun": esun_values,
+        }
+
+        # metadata yaml's
+        metadata = root.create_group(DatasetName.METADATA.value)
+        create_ard_yaml(
+            {
+                grp_name: get_band_acqs(grp_name)
+                for grp_name in container.supported_groups
+            },
+            ancillary_group,
+            metadata,
+            parameters,
+            workflow,
+        )

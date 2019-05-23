@@ -5,7 +5,6 @@ from a HDF5 file. Any hierarchial structure will be replicated on
 disk as directories.
 """
 
-
 import argparse
 import json
 import os

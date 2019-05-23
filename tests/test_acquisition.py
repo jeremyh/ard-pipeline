@@ -116,13 +116,13 @@ class Landsat5Scene1AcquisitionTest(unittest.TestCase):
             assert acq.platform_id == "LANDSAT_5"
 
     def test_samples(self):
-        assert self.acqs[0].samples == 95
+        assert self.acqs[0].samples == 74
 
     def test_lines(self):
-        assert self.acqs[0].lines == 83
+        assert self.acqs[0].lines == 65
 
     def test_read(self):
-        assert self.acqs[0].data()[70, 30] == 65
+        assert self.acqs[0].data()[40, 30] == 53
 
     def test_spectral_filter_cfg_vsir(self):
         assert self.acqs[0].spectral_filter_name == "landsat5_vsir.flt"
@@ -132,7 +132,7 @@ class Landsat5Scene1AcquisitionTest(unittest.TestCase):
 
     def test_temperature(self):
         result = temperature_at_sensor(self.acqs[5], window=((40, 41), (40, 41)))
-        self.assertAlmostEqual(result[0, 0], 292.87979272)
+        self.assertAlmostEqual(result[0, 0], 293.76944042)
 
 
 class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
@@ -192,13 +192,13 @@ class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
             assert acq.platform_id == "LANDSAT_7"
 
     def test_samples(self):
-        assert self.acqs[0].samples == 96
+        assert self.acqs[0].samples == 75
 
     def test_lines(self):
-        assert self.acqs[0].lines == 83
+        assert self.acqs[0].lines == 65
 
     def test_read(self):
-        assert self.acqs[0].data()[70, 30] == 61
+        assert self.acqs[0].data()[40, 30] == 50
 
     def test_spectral_filter_cfg_vsir(self):
         assert self.acqs[0].spectral_filter_name == "landsat7_vsir.flt"
@@ -208,11 +208,11 @@ class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
 
     def test_temperature61(self):
         result = temperature_at_sensor(self.acqs[5], window=((41, 42), (41, 42)))
-        self.assertAlmostEqual(result[0, 0], 297.00875604)
+        self.assertAlmostEqual(result[0, 0], 293.93158705)
 
     def test_temperature62(self):
         result = temperature_at_sensor(self.acqs[6], window=((41, 42), (41, 42)))
-        self.assertAlmostEqual(result[0, 0], 297.3971409)
+        self.assertAlmostEqual(result[0, 0], 293.990413299)
 
 
 class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
@@ -273,13 +273,13 @@ class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
             assert acq.platform_id == "LANDSAT_8"
 
     def test_samples(self):
-        assert self.acqs[0].samples == 94
+        assert self.acqs[0].samples == 74
 
     def test_lines(self):
-        assert self.acqs[0].lines == 95
+        assert self.acqs[0].lines == 75
 
     def test_read(self):
-        assert self.acqs[0].data()[70, 30] == 11003
+        assert self.acqs[0].data()[70, 30] == 0
 
     def test_spectral_filter_cfg_vsir(self):
         assert self.acqs[0].spectral_filter_name == "landsat8_vsir.flt"
@@ -289,11 +289,11 @@ class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
 
     def test_temperature10(self):
         result = temperature_at_sensor(self.acqs[1], window=((41, 42), (41, 42)))
-        self.assertAlmostEqual(result[0, 0], 293.63805603)
+        self.assertAlmostEqual(result[0, 0], 299.91454310)
 
     def test_temperature11(self):
         result = temperature_at_sensor(self.acqs[2], window=((41, 42), (41, 42)))
-        self.assertAlmostEqual(result[0, 0], 292.90268541)
+        self.assertAlmostEqual(result[0, 0], 298.049253923)
 
 
 if __name__ == "__main__":

@@ -489,7 +489,7 @@ def calculate_coefficients(
         The compression filter to use.
         Default is H5CompressionFilter.LZF
 
-    :filter_opts:
+    :param filter_opts:
         A dict of key value pairs available to the given configuration
         instance of H5CompressionFilter. For example
         H5CompressionFilter.LZF has the keywords *chunks* and *shuffle*
@@ -686,6 +686,7 @@ def coefficients(
         nbar[AC.DIR.value] = E0_cozen * ts * 10000000
         nbar[AC.DIF.value] = (Ts - ts) * E0_cozen * 10000000
         nbar[AC.TS.value] = ts
+        nbar[AC.ESUN.value] = (E0_cozen / cszen0) * 10000000
 
     if upward_radiation is not None:
         columns = [v.value for v in Workflow.SBT.atmos_coefficients]

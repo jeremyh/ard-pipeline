@@ -482,7 +482,6 @@ def interpolate(
         raise ValueError(msg.format(Workflow.STANDARD.atmos_coefficients))
 
     coefficients = read_h5_table(coefficients_group, dataset_name)
-
     coord = np.zeros((coordinator.shape[0], 2), dtype="int")
     map_x = coordinator.map_x.values
     map_y = coordinator.map_y.values
@@ -533,7 +532,7 @@ def interpolate(
 
     fmt = DatasetName.INTERPOLATION_FMT.value
     dset_name = fmt.format(coefficient=coefficient.value, band_name=acq.band_name)
-    no_data = -999
+    no_data = np.nan
     attrs = {
         "crs_wkt": geobox.crs.ExportToWkt(),
         "geotransform": geobox.transform.to_gdal(),
@@ -550,8 +549,7 @@ def interpolate(
     )
     attrs["description"] = desc.format(coefficient.value, acq.band_id, acq.sensor_id)
 
-    # convert any NaN's to -999 (for float data, NaN would be more ideal ...)
-    result[~np.isfinite(result)] = no_data
+    result[result == -999] = no_data
     write_h5_image(result, dset_name, group, compression, attrs, filter_opts)
 
     if out_group is None:
