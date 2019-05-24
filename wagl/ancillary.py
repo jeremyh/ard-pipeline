@@ -12,14 +12,20 @@ from urllib.parse import urlparse
 import h5py
 import numpy as np
 import pandas as pd
-import rasterio
-from affine import Affine
 from geopandas import GeoSeries
 from shapely import wkt
 from shapely.geometry import Point, Polygon
 
 from wagl.brdf import get_brdf_data
-from wagl.constants import POINT_FMT, BandType, DatasetName, GroupName
+from wagl.constants import (
+    POINT_FMT,
+    AerosolTier,
+    BandType,
+    DatasetName,
+    GroupName,
+    OzoneTier,
+    WaterVapourTier,
+)
 from wagl.data import get_pixel
 from wagl.hdf5 import (
     H5CompressionFilter,
@@ -29,7 +35,11 @@ from wagl.hdf5 import (
     write_dataframe,
     write_scalar,
 )
-from wagl.metadata import extract_ancillary_metadata, read_metadata_tags
+from wagl.metadata import (
+    current_h5_metadata,
+    extract_ancillary_metadata,
+    read_metadata_tags,
+)
 from wagl.satellite_solar_angles import create_vertices
 
 ECWMF_LEVELS = [
@@ -627,18 +637,20 @@ def get_aerosol_data(acquisition, aerosol_dict):
     # temporary until we sort out a better default mechanism
     # how do we want to support default values, whilst still support provenance
     if "user" in aerosol_dict:
-        metadata = {"data_source": "User defined value"}
+        tier = AerosolTier.USER
+        metadata = {"id": [None], "tier": tier}
+
         return aerosol_dict["user"], metadata
-    else:
-        aerosol_fname = aerosol_dict["pathname"]
+
+    aerosol_fname = aerosol_dict["pathname"]
 
     fid = h5py.File(aerosol_fname, "r")
-    url = urlparse(aerosol_fname, scheme="file").geturl()
 
     delta_tolerance = datetime.timedelta(days=0.5)
 
     data = None
     for pathname, description in zip(pathnames, descr):
+        tier = AerosolTier["description"]
         if pathname in fid:
             df = read_h5_table(fid, pathname)
             aerosol_poly = wkt.loads(fid[pathname].attrs["extents"])
@@ -658,36 +670,22 @@ def get_aerosol_data(acquisition, aerosol_dict):
                 data = df[idx]["aerosol"].mean()
 
                 if np.isfinite(data):
-                    metadata = {
-                        "data_source": description,
-                        "dataset_pathname": pathname,
-                        "query_date": dt,
-                        "url": url,
-                        "extents": wkt.dumps(intersection),
-                    }
-
                     # ancillary metadata tracking
-                    md = extract_ancillary_metadata(aerosol_fname)
-                    for key in md:
-                        metadata[key] = md[key]
+                    md = current_h5_metadata(fid)
+                    metadata = {"id": [md["id"]], "tier": tier}
 
                     fid.close()
                     return data, metadata
 
-    # now we officially support a default value of 0.05 which
-    # should make the following redundant ....
-
     # default aerosol value
-    # assumes we are only processing Australia in which case it it should
-    # be a coastal scene
     data = 0.06
-    metadata = {"data_source": "Default value used; Assumed a coastal scene"}
+    metadata = {"id": [None], "tier": AerosolTier.FALLBACK_DEFAULT}
 
     fid.close()
     return data, metadata
 
 
-def get_elevation_data(lonlat, dem_path):
+def get_elevation_data(lonlat, pathname):
     """Get elevation data for a scene.
 
     :param lon_lat:
@@ -695,53 +693,41 @@ def get_elevation_data(lonlat, dem_path):
     :type lon_lat:
         float (2-tuple)
 
-    :dem_dir:
-        The directory in which the DEM can be found.
+    :pathname:
+        The pathname of the DEM with a ':' to seperate the
+        dataset name.
     :type dem_dir:
         str
     """
-    datafile = pjoin(dem_path, "DEM_one_deg.tif")
-    url = urlparse(datafile, scheme="file").geturl()
+    fname, dname = pathname.split(":")
 
     try:
-        data = get_pixel(datafile, lonlat) * 0.001  # scale to correct units
-    except IndexError:
+        data, md_uuid = (
+            get_pixel(fname, dname, lonlat) * 0.001
+        )  # scale to correct units
+    except ValueError:
         raise AncillaryError("No Elevation data")
 
-    metadata = {"data_source": "Elevation", "url": url}
-
-    # ancillary metadata tracking
-    md = extract_ancillary_metadata(datafile)
-    for key in md:
-        metadata[key] = md[key]
-
-    return data, metadata
+    return data, md_uuid
 
 
-def get_ozone_data(ozone_path, lonlat, time):
+def get_ozone_data(ozone_fname, lonlat, time):
     """Get ozone data for a scene. `lonlat` should be the (x,y) for the centre
     the scene.
     """
-    filename = time.strftime("%b").lower() + ".tif"
-    datafile = pjoin(ozone_path, filename)
-    url = urlparse(datafile, scheme="file").geturl()
+    dname = time.strftime("%b").lower()
 
     try:
-        data = get_pixel(datafile, lonlat)
-    except IndexError:
+        data, md_uuid = get_pixel(ozone_fname, dname, lonlat)
+    except ValueError:
         raise AncillaryError("No Ozone data")
 
-    metadata = {"data_source": "Ozone", "url": url, "query_date": time}
-
-    # ancillary metadata tracking
-    md = extract_ancillary_metadata(datafile)
-    for key in md:
-        metadata[key] = md[key]
+    metadata = {"id": [md_uuid], "tier": OzoneTier.DEFINITIVE}
 
     return data, metadata
 
 
-def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1):
+def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1, tolerance=1):
     """Retrieve the water vapour value for an `acquisition` and the
     path for the water vapour ancillary data.
     """
@@ -749,77 +735,65 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1):
     geobox = acquisition.gridded_geo_box()
 
     year = dt.strftime("%Y")
-    filename = f"pr_wtr.eatm.{year}.tif"
+    hour = dt.timetuple().tm_hour
+    filename = f"pr_wtr.eatm.{year}.h5"
 
     if "user" in water_vapour_dict:
-        metadata = {"data_source": "User defined value"}
+        metadata = {"id": [None], "tier": WaterVapourTier.USER}
         return water_vapour_dict["user"], metadata
-    else:
-        water_vapour_path = water_vapour_dict["pathname"]
+
+    water_vapour_path = water_vapour_dict["pathname"]
 
     datafile = pjoin(water_vapour_path, filename)
-    url = urlparse(datafile, scheme="file").geturl()
 
-    # calculate the water vapour band number based on the datetime
+    with h5py.File(datafile, "r") as fid:
+        index = read_h5_table(fid, "INDEX")
 
-    doy = dt.timetuple().tm_yday
-    hour = dt.timetuple().tm_hour
-    band = (int(doy) - 1) * 4 + int((hour + 3) / 6)
+    # set the tolerance in days to search back in time
+    day_zero = dt - dt
+    max_tolerance = day_zero - datetime.timedelta(days=tolerance)
 
-    # Check for boundary condition: 1 Jan, 0-3 hours
-    if band == 0 and doy == 1:
-        band = 1
+    # only look for observations that have occured in the past
+    time_delta = index.timestamp - dt
+    result = time_delta[(time_delta < day_zero) & (time_delta > max_tolerance)]
+    if result.shape[0] == 0:
+        if "fallback_dataset" not in water_vapour_dict:
+            raise AncillaryError("No actual or fallback water vapour data.")
+
+        tier = WaterVapourTier.FALLBACK_DATASET
+        month = dt.strftime("%B-%d").upper()
+
+        # closest previous observation
+        # i.e. observations are at 0000, 0600, 1200, 1800
+        # and an acquisition hour of 1700 will use the 1200 observation
+        observations = np.array([0, 6, 12, 18])
+        hr = observations[np.argmin(np.abs(hour - observations))]
+        dataset_name = f"AVERAGE/{month}/{hr:02d}00"
+        datafile = water_vapour_dict["fallback_data"]
+    else:
+        tier = WaterVapourTier.DEFINITIVE
+        # get the index of the closest water vapour observation
+        # which would be the maximum timedelta
+        # as we're only dealing with negative timedelta's here
+        idx = result.argmax()
+        record = index.iloc[idx]
+        dataset_name = record.band_name
 
     try:
-        # Get the number of bands
-        with rasterio.open(datafile) as src:
-            n_bands = src.count
+        data, md_uuid = get_pixel(datafile, dataset_name, geobox.centre_lonlat)
+    except ValueError:
+        # h5py raises a ValueError not an IndexError for out of bounds
+        raise AncillaryError("No Water Vapour data")
 
-        # Enable NBAR Near Real Time (NRT) processing (7 day window)
-        if band > (n_bands + 1):
-            rasterdoy = (((n_bands) - (int((hour + 3) / 6))) / 4) + 1
-            if (doy - rasterdoy) < 7:
-                band = (int(rasterdoy) - 1) * 4 + int((hour + 3) / 6)
-
-        data = get_pixel(datafile, geobox.centre_lonlat, band=band)
-    except (IndexError, rasterio.errors.RasterioIOError):
-        # Fallback for NRT or whenever we have no real data
-        # key name 'fallback_data' can change. Quickest name i could think of
-        if "fallback_data" not in water_vapour_dict:
-            raise AncillaryError("No actual or fallback water vapour data.")
-        else:
-            # maybe a seperate func, but here will do for the time being
-            month = dt.strftime("%B-%d").upper()
-
-            # closest previous observation
-            # i.e. observations are at 0000, 0600, 1200, 1800
-            # and an acquisition hour of 1700 will use the 1200 observation
-            observations = np.array([0, 6, 12, 18])
-            hr = observations[np.argmin(np.abs(hour - observations))]
-            dname = f"AVERAGE/{month}/{hr:02d}00"
-
-            with h5py.File(water_vapour_dict["fallback_data"], "r") as fid:
-                ds = fid[dname]
-                transform = Affine.from_gdal(*ds.attrs["geotransform"])
-                x, y = (int(v) for v in ~transform * geobox.centre_lonlat)
-                data = ds[y, x]
-                url = urlparse(
-                    water_vapour_dict["fallback_data"], scheme="file"
-                ).geturl()
-                datafile = water_vapour_dict["fallback_data"]
-
+    # the metadata from the original file says (Kg/m^2)
+    # so multiply by 0.1 to get (g/cm^2)
     data = data * scale_factor
-
-    metadata = {"data_source": "Water Vapour", "url": url, "query_date": dt}
-
-    # ancillary metadata tracking
-    md = extract_ancillary_metadata(datafile)
-    for key in md:
-        metadata[key] = md[key]
+    metadata = {"id": [md_uuid], "tier": tier}
 
     return data, metadata
 
 
+# TODO; have swfo convert the files to HDF5
 def ecwmf_elevation(datafile, lonlat):
     """Retrieve a pixel from the ECWMF invariant geo-potential
     dataset.
@@ -843,6 +817,7 @@ def ecwmf_elevation(datafile, lonlat):
     return data, metadata
 
 
+# TODO; have swfo convert the files to HDF5
 def ecwmf_temperature_2metre(input_path, lonlat, time):
     """Retrieve a pixel value from the ECWMF 2 metre Temperature
     collection.
@@ -876,6 +851,7 @@ def ecwmf_temperature_2metre(input_path, lonlat, time):
         raise AncillaryError("No ECWMF 2 metre Temperature data")
 
 
+# TODO; have swfo convert the files to HDF5
 def ecwmf_dewpoint_temperature(input_path, lonlat, time):
     """Retrieve a pixel value from the ECWMF 2 metre Dewpoint
     Temperature collection.
@@ -909,6 +885,7 @@ def ecwmf_dewpoint_temperature(input_path, lonlat, time):
         raise AncillaryError("No ECWMF 2 metre Dewpoint Temperature data")
 
 
+# TODO; have swfo convert the files to HDF5
 def ecwmf_surface_pressure(input_path, lonlat, time):
     """Retrieve a pixel value from the ECWMF Surface Pressure
     collection.
@@ -943,6 +920,7 @@ def ecwmf_surface_pressure(input_path, lonlat, time):
         raise AncillaryError("No ECWMF Surface Pressure data")
 
 
+# TODO; have swfo convert the files to HDF5
 def ecwmf_water_vapour(input_path, lonlat, time):
     """Retrieve a pixel value from the ECWMF Total Column Water Vapour
     collection.
@@ -976,6 +954,7 @@ def ecwmf_water_vapour(input_path, lonlat, time):
         raise AncillaryError("No ECWMF Total Column Water Vapour data")
 
 
+# TODO; have swfo convert the files to HDF5
 def ecwmf_temperature(input_path, lonlat, time):
     """Retrieve a pixel value from the ECWMF Temperature collection
     across 37 height pressure levels, for a given longitude,
@@ -1018,6 +997,7 @@ def ecwmf_temperature(input_path, lonlat, time):
         raise AncillaryError("No ECWMF Temperature profile data")
 
 
+# TODO; have swfo convert the files to HDF5
 def ecwmf_geo_potential(input_path, lonlat, time):
     """Retrieve a pixel value from the ECWMF Geo-Potential collection
     across 37 height pressure levels, for a given longitude,
@@ -1063,6 +1043,7 @@ def ecwmf_geo_potential(input_path, lonlat, time):
         raise AncillaryError("No ECWMF Geo-Potential profile data")
 
 
+# TODO; have swfo convert the files to HDF5
 def ecwmf_relative_humidity(input_path, lonlat, time):
     """Retrieve a pixel value from the ECWMF Relative Humidity collection
     across 37 height pressure levels, for a given longitude,
