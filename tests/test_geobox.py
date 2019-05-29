@@ -5,14 +5,19 @@ import unittest
 import affine
 import gdal
 import h5py
+import numpy as np
+import numpy.testing as npt
 import rasterio as rio
-from osgeo import gdal
+from osgeo import gdal, osr
 
 from wagl import unittesting_tools as ut
+from wagl.acquisition import acquisitions
 from wagl.geobox import GriddedGeoBox
 
 affine.EPSILON = 1e-9
 affine.EPSILON2 = 1e-18
+
+from .data import LS8_SCENE1
 
 
 def getFlindersIsletGGB():
@@ -311,6 +316,29 @@ class TestGriddedGeoBox(unittest.TestCase):
         # Get the actual centre co-ordinate of the first pixel
         xcentre, ycentre = geobox.convert_coordinates((0.5, 0.5))
         assert (xcentre, ycentre) == (xmap, ymap)
+
+    def test_project_extents(self):
+        """Test that the geobox extents are correctly converted."""
+        # values that have been pre-computed
+        values = [
+            148.53163652556793,
+            -35.75238475020376,
+            151.2210802166511,
+            -33.501139639003675,
+        ]
+        truth = np.array(values)
+
+        # set up CRS; WGS84 Geographics
+        crs = osr.SpatialReference()
+        crs.SetFromUserInput("EPSG:4326")
+
+        # load the acquisition, get geobox, compute extents
+        acq_cont = acquisitions(LS8_SCENE1)
+        acq = acq_cont.get_acquisitions("RES-GROUP-1")[0]
+        gb = acq.gridded_geo_box()
+        exts = gb.project_extents(crs)
+
+        assert npt.assert_almost_equal(truth, exts, decimal=7) is None
 
     # def test_pixelscale_metres(self):
     #     scale = 0.00025
