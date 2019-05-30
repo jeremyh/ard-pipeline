@@ -230,7 +230,7 @@ class Landsat7PanAcquisitionTest(unittest.TestCase):
             assert isinstance(acq, LandsatAcquisition)
 
     def test_band_type(self):
-        assert self.acqs[0].band_type == BandType.PANCHROMATIC
+        assert self.acqs[0].band_type == BandType.REFLECTIVE
 
 
 class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
@@ -323,7 +323,7 @@ class Landsat8PanAcquisitionTest(unittest.TestCase):
             assert isinstance(acq, LandsatAcquisition)
 
     def test_band_type(self):
-        assert self.acqs[0].band_type == BandType.PANCHROMATIC
+        assert self.acqs[0].band_type == BandType.REFLECTIVE
 
 
 if __name__ == "__main__":
