@@ -43,6 +43,10 @@ yaml.add_representer(np.ndarray, Representer.represent_list)
 yaml.add_representer(bool, Representer.represent_bool)
 
 
+class MetadataError(Exception):
+    """Generic error when handling metadata operations."""
+
+
 def extract_ancillary_metadata(fname):
     """Extracts the change (last metadata change), modified,
     accessed, and owner user id.
@@ -357,9 +361,39 @@ def create_pq_yaml(acquisition, ancillary, tests_run, out_group):
     write_scalar(yml_data, dname, out_group, attrs={"file_format": "yaml"})
 
 
-def current_h5_metadata(fid):
-    """Read current metadata from a file."""
-    metadata = fid[DatasetName.METADATA.value][DatasetName.CURRENT_METADATA.value][
-        ()
-    ].item()
-    return yaml.load(metadata)
+def current_h5_metadata(fid: h5py.Group, dataset_path: str = ""):
+    """Read metadata entrypoint from h5 collection.
+
+    :param fid:
+        A h5py.Group that includes the dataset metadata
+
+    :param dataset_path:
+        An optional reference (string) to the dataset location
+
+    :raises:
+        :MetadataError: Returned when a metadata document couldn't be found for
+            dataset provided
+
+    :return:
+        A dictionary representation of the dataset metadata
+    """
+    metadata = fid.get(
+        "/{}{}/{}".format(
+            DatasetName.METADATA.value, dataset_path, DatasetName.CURRENT_METADATA.value
+        )
+    )
+
+    if not metadata:  # assume h5 collection represents 1 dataset
+        metadata = fid.get(
+            "/{}/{}".format(
+                DatasetName.METADATA.value, DatasetName.CURRENT_METADATA.value
+            )
+        )
+        if not metadata:
+            raise MetadataError(
+                "Unable to find metadata entry for dataset: {}:{}".format(
+                    fid.filename, dataset_path
+                )
+            )
+
+    return yaml.load(metadata[()].item())
