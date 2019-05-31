@@ -86,8 +86,6 @@ ECWMF_LEVELS = [
 class AncillaryError(Exception):
     """Specific error handle for ancillary retrieval."""
 
-    pass
-
 
 def get_4d_idx(day):
     """A small utility function for indexing into a 4D dataset
@@ -151,8 +149,6 @@ def _collect_ancillary(
             out_fid,
             compression,
         )
-
-    return
 
 
 def collect_ancillary(
@@ -671,7 +667,7 @@ def get_aerosol_data(acquisition, aerosol_dict):
 
                 if np.isfinite(data):
                     # ancillary metadata tracking
-                    md = current_h5_metadata(fid)
+                    md = current_h5_metadata(fid, dataset_path=pathname)
                     metadata = {"id": [md["id"]], "tier": tier}
 
                     fid.close()

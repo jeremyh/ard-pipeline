@@ -16,10 +16,10 @@ from rasterio.enums import Resampling
 from rasterio.warp import reproject
 
 from wagl.geobox import GriddedGeoBox
-from wagl.tiling import generate_tiles
 
 # comment till available
-# from wagl.metadata import current_h5_metadata
+from wagl.metadata import current_h5_metadata
+from wagl.tiling import generate_tiles
 
 
 def get_pixel(filename, dataset_name, lonlat):
@@ -37,11 +37,13 @@ def get_pixel(filename, dataset_name, lonlat):
             data = ds[:, y, x]
         elif ds.ndim == 2:
             data = ds[y, x]
+        else:
+            raise NotImplementedError("Only 2 and 3 dimensional data is supported")
         # else: TODO; cater for the 4D data we pulled from ECMWF
         # for 4D [day, level, y, x] we need another input param `day`
         # data = ds[day, :, y, x]
 
-        metadata = current_h5_metadata(fid)
+        metadata = current_h5_metadata(fid, dataset_path=dataset_name)
 
     return data, metadata["id"]
 
