@@ -16,8 +16,6 @@ from rasterio.enums import Resampling
 from rasterio.warp import reproject
 
 from wagl.geobox import GriddedGeoBox
-
-# comment till available
 from wagl.metadata import current_h5_metadata
 from wagl.tiling import generate_tiles
 
