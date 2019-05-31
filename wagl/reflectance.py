@@ -13,7 +13,7 @@ import numpy as np
 from wagl.__surface_reflectance import reflectance
 from wagl.constants import ArdProducts as AP
 from wagl.constants import AtmosphericCoefficients as AC
-from wagl.constants import BrdfParameters, DatasetName, GroupName
+from wagl.constants import BrdfDirectionalParameters, DatasetName, GroupName
 from wagl.data import as_array
 from wagl.hdf5 import (
     H5CompressionFilter,
@@ -251,14 +251,15 @@ def calculate_reflectance(
     shadow_dataset = shadow_masks_group[DatasetName.COMBINED_SHADOW.value]
 
     dname_fmt = DatasetName.BRDF_FMT.value
-    dname = dname_fmt.format(band_name=bn, parameter=BrdfParameters.ISO.value)
-    brdf_iso = ancillary_group[dname][()]
+    dname = dname_fmt.format(
+        band_name=bn, parameter=BrdfDirectionalParameters.ALPHA_1.value
+    )
+    brdf_alpha1 = ancillary_group[dname][()]
 
-    dname = dname_fmt.format(band_name=bn, parameter=BrdfParameters.VOL.value)
-    brdf_vol = ancillary_group[dname][()]
-
-    dname = dname_fmt.format(band_name=bn, parameter=BrdfParameters.GEO.value)
-    brdf_geo = ancillary_group[dname][()]
+    dname = dname_fmt.format(
+        band_name=bn, parameter=BrdfDirectionalParameters.ALPHA_2.value
+    )
+    brdf_alpha2 = ancillary_group[dname][()]
 
     # Initialise the output file
     if out_group is None:
@@ -367,9 +368,8 @@ def calculate_reflectance(
             xsize,
             ysize,
             rori,
-            brdf_iso,
-            brdf_vol,
-            brdf_geo,
+            brdf_alpha1,
+            brdf_alpha2,
             acquisition.reflectance_adjustment,
             kwargs["fillvalue"],
             band_data,
