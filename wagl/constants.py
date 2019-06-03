@@ -260,6 +260,49 @@ class TrackIntersection(Enum):
     EMPTY = 2
 
 
+class WaterVapourTier(Enum):
+    """Defines the tier levels for the water vapour data.
+    The higher the value, the higher the precedence.
+    """
+
+    FALLBACK_DEFAULT = 0
+    FALLBACK_DATASET = 1
+    DEFINITIVE = 2
+    USER = 3
+
+
+class BrdfTier(Enum):
+    """Defines the tier levels for the BRDF data.
+    The higher the value, the higher the precedence.
+    """
+
+    FALLBACK_DEFAULT = 0
+    FALLBACK_DATASET = 1
+    DEFINITIVE = 2
+    USER = 3
+
+
+class AerosolTier(Enum):
+    """Defines the tier levels for the aerosol data.
+    The higher the value, the higher the precedence.
+    """
+
+    FALLBACK_DEFAULT = 0
+    AATSR_CMP_MONTH = 1
+    AATSR_CMP_YEAR_MONTH = 2
+    AATSR_PIX = 3
+    USER = 4
+
+
+class OzoneTier(Enum):
+    """Defines the tier levels for the ozone data.
+    The higher the value, the higher the precedence.
+    """
+
+    DEFINITIVE = 0
+    USER = 1
+
+
 class PQbits(Enum):
     BAND_1_SATURATED = 0
     BAND_2_SATURATED = 1
