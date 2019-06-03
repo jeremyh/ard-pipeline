@@ -14,10 +14,10 @@ from wagl import unittesting_tools as ut
 from wagl.acquisition import acquisitions
 from wagl.geobox import GriddedGeoBox
 
+from .data import LS8_SCENE1
+
 affine.EPSILON = 1e-9
 affine.EPSILON2 = 1e-18
-
-from .data import LS8_SCENE1
 
 
 def getFlindersIsletGGB():
