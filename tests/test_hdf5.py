@@ -256,6 +256,26 @@ class HDF5Test(unittest.TestCase):
 
             assert (minmax == test).all()
 
+    def test_write_h5_image_multiband(self):
+        """Test the {BAND}_MINMAXRANGE attribute is correct."""
+        band_names = ["ISO", "VOL", "GEO"]
+        dtype = np.dtype([(bname, "int16") for bname in band_names])
+
+        dataset = np.ndarray(shape=self.image_data.shape, dtype=dtype)
+        for bname in band_names:
+            dataset[bname] = self.image_data
+        minmax = np.array([self.image_data.min(), self.image_data.max()])
+
+        fname = "test_write_h5_multi.h5"
+        with h5py.File(fname, **self.memory_kwargs) as fid:
+            hdf5.write_h5_image(dataset, "image", fid)
+
+            assert "IMAGE_MINMAXRANGE" not in fid["image"].attrs
+
+            for bname in band_names:
+                test = fid["image"].attrs[f"{bname}_MINMAXRANGE"]
+                assert (minmax == test).all()
+
     def test_attach_table_attributes(self):
         """Test the attach_table_attributes function."""
         attrs = {
