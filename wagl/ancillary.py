@@ -28,6 +28,7 @@ from wagl.constants import (
 )
 from wagl.data import get_pixel
 from wagl.hdf5 import (
+    VLEN_STRING,
     H5CompressionFilter,
     attach_attributes,
     attach_table_attributes,
@@ -630,7 +631,7 @@ def get_aerosol_data(acquisition, aerosol_dict):
     # how do we want to support default values, whilst still support provenance
     if "user" in aerosol_dict:
         tier = AerosolTier.USER
-        metadata = {"id": [], "tier": tier}
+        metadata = {"id": np.array([], VLEN_STRING), "tier": tier.name}
 
         return aerosol_dict["user"], metadata
 
@@ -662,13 +663,19 @@ def get_aerosol_data(acquisition, aerosol_dict):
                     if np.isfinite(data):
                         # ancillary metadata tracking
                         md = current_h5_metadata(fid, dataset_path=pathname)
-                        metadata = {"id": [md["id"]], "tier": tier}
+                        metadata = {
+                            "id": np.array([md["id"]], VLEN_STRING),
+                            "tier": tier.name,
+                        }
 
                         return data, metadata
 
     # default aerosol value
     data = 0.06
-    metadata = {"id": [], "tier": AerosolTier.FALLBACK_DEFAULT}
+    metadata = {
+        "id": np.array([], VLEN_STRING),
+        "tier": AerosolTier.FALLBACK_DEFAULT.name,
+    }
 
     return data, metadata
 
@@ -690,13 +697,16 @@ def get_elevation_data(lonlat, pathname):
     fname, dname = pathname.split(":")
 
     try:
-        data, md_uuid = (
-            get_pixel(fname, dname, lonlat) * 0.001
-        )  # scale to correct units
+        data, md_uuid = get_pixel(fname, dname, lonlat)
+        data = data * 0.001  # scale to correct units
     except ValueError:
         raise AncillaryError("No Elevation data")
 
-    return data, md_uuid
+    metadata = {
+        "id": np.array([md_uuid], VLEN_STRING),
+    }
+
+    return data, metadata
 
 
 def get_ozone_data(ozone_fname, lonlat, time):
@@ -710,7 +720,10 @@ def get_ozone_data(ozone_fname, lonlat, time):
     except ValueError:
         raise AncillaryError("No Ozone data")
 
-    metadata = {"id": [md_uuid], "tier": OzoneTier.DEFINITIVE}
+    metadata = {
+        "id": np.array([md_uuid], VLEN_STRING),
+        "tier": OzoneTier.DEFINITIVE.name,
+    }
 
     return data, metadata
 
@@ -727,7 +740,7 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1, tolerance
     filename = f"pr_wtr.eatm.{year}.h5"
 
     if "user" in water_vapour_dict:
-        metadata = {"id": [], "tier": WaterVapourTier.USER}
+        metadata = {"id": np.array([], VLEN_STRING), "tier": WaterVapourTier.USER.name}
         return water_vapour_dict["user"], metadata
 
     water_vapour_path = water_vapour_dict["pathname"]
@@ -742,7 +755,9 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1, tolerance
 
     # only look for observations that have occured in the past
     time_delta = index.timestamp - dt
-    result = time_delta[(time_delta < day_zero) & (time_delta > max_tolerance)]
+    result = time_delta[
+        (time_delta < datetime.timedelta()) & (time_delta > max_tolerance)
+    ]
     if result.shape[0] == 0:
         if "fallback_dataset" not in water_vapour_dict:
             raise AncillaryError("No actual or fallback water vapour data.")
@@ -764,7 +779,7 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1, tolerance
         # as we're only dealing with negative timedelta's here
         idx = result.argmax()
         record = index.iloc[idx]
-        dataset_name = record.band_name
+        dataset_name = record.dataset_name
 
     try:
         data, md_uuid = get_pixel(datafile, dataset_name, geobox.centre_lonlat)
@@ -775,7 +790,7 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1, tolerance
     # the metadata from the original file says (Kg/m^2)
     # so multiply by 0.1 to get (g/cm^2)
     data = data * scale_factor
-    metadata = {"id": [md_uuid], "tier": tier}
+    metadata = {"id": np.array([md_uuid], VLEN_STRING), "tier": tier.name}
 
     return data, metadata
 

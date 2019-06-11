@@ -378,8 +378,10 @@ def current_h5_metadata(fid: h5py.Group, dataset_path: str = ""):
         A dictionary representation of the dataset metadata
     """
     metadata = fid.get(
-        "/{}{}/{}".format(
-            DatasetName.METADATA.value, dataset_path, DatasetName.CURRENT_METADATA.value
+        "/{}/{}/{}".format(
+            DatasetName.METADATA.value,
+            dataset_path.lstrip("/"),
+            DatasetName.CURRENT_METADATA.value,
         )
     )
 

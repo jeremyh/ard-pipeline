@@ -277,7 +277,7 @@ def valid_region(fname, mask_value=None):
     return geom, crs
 
 
-def load_brdf_tile(src_poly, src_crs, fid, dataset_name, is_fallback, fid_mask):
+def load_brdf_tile(src_poly, src_crs, fid, dataset_name, fid_mask):
     """Summarize BRDF data from a single tile."""
     ds = fid[dataset_name]
 
@@ -331,7 +331,7 @@ def load_brdf_tile(src_poly, src_crs, fid, dataset_name, is_fallback, fid_mask):
 
     valid_pixels = np.sum(mask)
     mask = mask.astype(bool)
-    assert mask.shape == ds.shape[:-2]
+    assert mask.shape == ds.shape[-2:]
 
     def layer_sum(i):
         # TODO Discuss with Imam: should we compute individual number of valid pixels for each BRDF parameter?
@@ -461,12 +461,10 @@ def get_brdf_data(
     tally = {}
     with rasterio.open(brdf_ocean_mask_path, "r") as fid_mask:
         for ds in acquisition.brdf_datasets:
-            tally[ds] = BrdfTileSummary.empty(fallback_brdf)
+            tally[ds] = BrdfTileSummary.empty()
             for tile in tile_list:
                 with h5py.File(tile, "r") as fid:
-                    tally[ds] += load_brdf_tile(
-                        src_poly, src_crs, fid, ds, fallback_brdf, fid_mask
-                    )
+                    tally[ds] += load_brdf_tile(src_poly, src_crs, fid, ds, fid_mask)
             tally[ds] = tally[ds].mean()
 
     results = {
