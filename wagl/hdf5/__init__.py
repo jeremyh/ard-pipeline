@@ -208,11 +208,11 @@ def write_h5_image(
     if data.dtype.names:
         for band_name in data.dtype.names:
             attributes[f"{band_name}_MINMAXRANGE"] = [
-                data[band_name].min(),
-                data[band_name].max(),
+                np.nanmin(data[band_name]),
+                np.nanmax(data[band_name]),
             ]
     else:
-        attributes["IMAGE_MINMAXRANGE"] = [data.min(), data.max()]
+        attributes["IMAGE_MINMAXRANGE"] = [np.nanmin(data), np.nanmax(data)]
 
     attach_image_attributes(dset, attributes)
 
