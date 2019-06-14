@@ -37,8 +37,8 @@ from rasterio.features import rasterize
 from shapely import ops, wkt
 from shapely.geometry import box
 
-from wagl.constants import BrdfDirectionalParameters, BrdfModelParameters
-from wagl.hdf5 import H5CompressionFilter
+from wagl.constants import BrdfDirectionalParameters, BrdfModelParameters, BrdfTier
+from wagl.hdf5 import VLEN_STRING, H5CompressionFilter
 from wagl.metadata import current_h5_metadata
 
 log = logging.getLogger("root." + __name__)
@@ -184,35 +184,42 @@ def coord_transformer(src_crs, dst_crs):
 class BrdfTileSummary:
     """A lightweight class to represent the BRDF information gathered from a tile."""
 
-    def __init__(self, valid_pixels, brdf_sums, source_files):
-        self.valid_pixels = valid_pixels
-        self.brdf_sums = brdf_sums
+    def __init__(self, brdf_summaries, source_files):
+        self.brdf_summaries = brdf_summaries
         self.source_files = source_files
 
     @staticmethod
     def empty():
         """When the tile is not inside the ROI."""
-        return BrdfTileSummary(0, {key: 0.0 for key in BrdfModelParameters}, [])
+        return BrdfTileSummary(
+            {key: {"sum": 0.0, "count": 0} for key in BrdfModelParameters}, []
+        )
 
     def __add__(self, other):
         """Accumulate information from different tiles."""
+
+        def add(key):
+            this = self.brdf_summaries[key]
+            that = other.brdf_summaries[key]
+            return {
+                "sum": this["sum"] + that["sum"],
+                "count": this["count"] + that["count"],
+            }
+
         return BrdfTileSummary(
-            self.valid_pixels + other.valid_pixels,
-            {
-                key: self.brdf_sums[key] + other.brdf_sums[key]
-                for key in BrdfModelParameters
-            },
+            {key: add(key) for key in BrdfModelParameters},
             self.source_files + other.source_files,
         )
 
     def mean(self):
         """Calculate the mean BRDF parameters."""
-        if self.valid_pixels == 0:
+        if all(self.brdf_summaries[key]["count"] == 0 for key in BrdfModelParameters):
             raise BRDFLookupError("no brdf datasets found for the ROI")
 
         # ratio of spatial averages
         averages = {
-            key: self.brdf_sums[key] / self.valid_pixels for key in BrdfModelParameters
+            key: self.brdf_summaries[key]["sum"] / self.brdf_summaries[key]["count"]
+            for key in BrdfModelParameters
         }
 
         bands = {
@@ -222,7 +229,7 @@ class BrdfTileSummary:
 
         return {
             key: dict(
-                dataset_ids=self.source_files,
+                id=self.source_files,
                 value=averages[bands[key]] / averages[BrdfModelParameters.ISO],
             )
             for key in BrdfDirectionalParameters
@@ -302,7 +309,8 @@ def load_brdf_tile(src_poly, src_crs, fid, dataset_name, fid_mask):
     )
 
     # read ocean mask file for correspoing tile window
-    ocean_data = fid_mask.read(1, window=window)
+    # land=1, ocean=0
+    ocean_mask = fid_mask.read(1, window=window).astype(bool)
     # assumes the length scales are the same (m)
     dst_poly = ops.transform(
         coord_transformer(src_crs, dst_crs),
@@ -315,36 +323,31 @@ def load_brdf_tile(src_poly, src_crs, fid, dataset_name, fid_mask):
     if not bound_poly.intersects(dst_poly):
         return BrdfTileSummary.empty()
 
-    mask = rasterize(
+    # inside=1, outside=0
+    roi_mask = rasterize(
         [(dst_poly, 1)],
         fill=0,
         out_shape=(ds_width, ds_height),
         transform=dst_geotransform,
     )
+    roi_mask = roi_mask.astype(bool)
 
-    # both ocean_data and mask shape should be same
-    assert ocean_data.shape == mask.shape
+    # both ocean_mask and mask shape should be same
+    assert ocean_mask.shape == roi_mask.shape
 
-    # if both ocean_data (1=land, 0=ocean) and dst_poly (1=valid, 0=invalid)
-    # then multiplying two masks would result in 1 being if both masks are true
-    mask = mask * ocean_data
+    roi_mask = roi_mask & ocean_mask
 
-    valid_pixels = np.sum(mask)
-    mask = mask.astype(bool)
-    assert mask.shape == ds.shape[-2:]
+    assert roi_mask.shape == ds.shape[-2:]
 
     def layer_sum(i):
-        # TODO Discuss with Imam: should we compute individual number of valid pixels for each BRDF parameter?
         layer = ds[i, :, :]
-        fill_value_mask = layer != ds.attrs["_FillValue"]
+        common_mask = roi_mask & (layer != ds.attrs["_FillValue"])
         layer = layer.astype("float32")
-        layer[~mask] = np.nan
-        layer[~fill_value_mask] = np.nan
+        layer[~common_mask] = np.nan
         layer = ds.attrs["scale_factor"] * (layer - ds.attrs["add_offset"])
-        return np.nansum(layer)
+        return {"sum": np.nansum(layer), "count": np.sum(common_mask)}
 
     return BrdfTileSummary(
-        valid_pixels,
         {key: layer_sum(index) for index, key in enumerate(BrdfModelParameters)},
         [current_h5_metadata(fid)["id"]],
     )
@@ -410,7 +413,7 @@ def get_brdf_data(
         return {
             param: dict(
                 data_source="BRDF",
-                model="user",
+                tier=BrdfTier.USER.name,
                 value=brdf["user"][acquisition.alias][param.value.lower()],
             )
             for param in BrdfDirectionalParameters
@@ -458,9 +461,10 @@ def get_brdf_data(
     src_poly, src_crs = valid_region(acquisition.uri, acquisition.no_data)
     src_crs = rasterio.crs.CRS(**src_crs)
 
+    brdf_datasets = acquisition.brdf_datasets
     tally = {}
     with rasterio.open(brdf_ocean_mask_path, "r") as fid_mask:
-        for ds in acquisition.brdf_datasets:
+        for ds in brdf_datasets:
             tally[ds] = BrdfTileSummary.empty()
             for tile in tile_list:
                 with h5py.File(tile, "r") as fid:
@@ -470,17 +474,16 @@ def get_brdf_data(
     results = {
         param: dict(
             data_source="BRDF",
-            dataset_ids=",".join(
-                {
-                    ds_id
-                    for ds in acquisition.brdf_datasets
-                    for ds_id in tally[ds][param]["dataset_ids"]
-                }
+            id=np.array(
+                list(
+                    {ds_id for ds in brdf_datasets for ds_id in tally[ds][param]["id"]}
+                ),
+                dtype=VLEN_STRING,
             ),
-            value=np.mean(
-                [tally[ds][param]["value"] for ds in acquisition.brdf_datasets]
-            ).item(),
-            model="fallback" if fallback_brdf else "definitive",
+            value=np.mean([tally[ds][param]["value"] for ds in brdf_datasets]).item(),
+            tier=BrdfTier.FALLBACK_DATASET.name
+            if fallback_brdf
+            else BrdfTier.DEFINITIVE.name,
         )
         for param in BrdfDirectionalParameters
     }
