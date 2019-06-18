@@ -34,6 +34,7 @@ import shapely.geometry
 from osgeo import ogr
 from rasterio.crs import CRS
 from rasterio.features import rasterize
+from rasterio.windows import Window
 from shapely import ops, wkt
 from shapely.geometry import box
 
@@ -214,7 +215,11 @@ class BrdfTileSummary:
     def mean(self):
         """Calculate the mean BRDF parameters."""
         if all(self.brdf_summaries[key]["count"] == 0 for key in BrdfModelParameters):
-            raise BRDFLookupError("no brdf datasets found for the ROI")
+            # possible over the ocean, so lambertian
+            return {
+                key: dict(id=self.source_files, value=0.0)
+                for key in BrdfDirectionalParameters
+            }
 
         # ratio of spatial averages
         averages = {
@@ -306,6 +311,12 @@ def load_brdf_tile(src_poly, src_crs, fid, dataset_name, fid_mask):
     # get a tile window to read from continental coastal mask
     window = rasterio.windows.from_bounds(
         left, bottom, right, top, transform=fid_mask.transform
+    )
+    window = Window(
+        col_off=round(window.col_off),
+        row_off=round(window.row_off),
+        width=round(window.width),
+        height=round(window.height),
     )
 
     # read ocean mask file for correspoing tile window
