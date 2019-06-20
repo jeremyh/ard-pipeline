@@ -31,6 +31,7 @@ from structlog import wrap_logger
 from structlog.processors import JSONRenderer
 from wagl.acquisition import acquisitions
 from wagl.data import write_img
+from wagl.geobox import GriddedGeoBox
 from wagl.singlefile_workflow import DataStandardisation
 
 from eugl.acquisition_info import acquisition_info
@@ -157,7 +158,7 @@ class GverifyTask(luigi.Task):
                 write_img(
                     source_image,
                     source_band,
-                    geobox=acq_info.geobox,
+                    geobox=GriddedGeoBox.from_dataset(h5[location]),
                     nodata=0,
                     options={"compression": "deflate", "zlevel": 1},
                 )
