@@ -27,11 +27,10 @@ import pandas as pd
 import rasterio
 import yaml
 from rasterio.warp import Resampling
-from structlog import wrap_logger
-from structlog.processors import JSONRenderer
 from wagl.acquisition import acquisitions
 from wagl.data import write_img
 from wagl.geobox import GriddedGeoBox
+from wagl.logs import ERROR_LOGGER
 from wagl.singlefile_workflow import DataStandardisation
 
 from eugl.acquisition_info import acquisition_info
@@ -48,15 +47,10 @@ from eugl.gqa.geometric_utils import (
 )
 from eugl.metadata import get_gqa_metadata
 
-ERROR_LOGGER = wrap_logger(
-    logging.getLogger("errors"), processors=[JSONRenderer(indent=1, sort_keys=True)]
-)
-
-write_yaml = partial(yaml.safe_dump, default_flow_style=False, indent=4)
-
-_LOG = wrap_logger(
-    logging.getLogger(__name__), processors=[JSONRenderer(indent=1, sort_keys=True)]
-)
+_LOG = logging.getLogger(__name__)
+write_yaml = partial(
+    yaml.safe_dump, default_flow_style=False, indent=4
+)  # pylint: disable=invalid-name
 
 
 class GverifyTask(luigi.Task):
@@ -195,7 +189,12 @@ class GverifyTask(luigi.Task):
             )
         except (ValueError, FileNotFoundError, CommandError) as ve:
             error_msg = str(ve)
-            ERROR_LOGGER.error(f"gverify was not executed because:\n {error_msg}")
+            ERROR_LOGGER.error(
+                task=self.get_task_family(),
+                params=self.to_str_params(),
+                level1=self.level1,
+                exception=f"gverify was not executed because:\n {error_msg}",
+            )
         finally:
             # Write out runtime data to be processed by the gqa task
             run_args = {
