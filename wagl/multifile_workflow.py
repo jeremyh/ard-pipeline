@@ -52,7 +52,7 @@ from wagl.incident_exiting_angles import (
     _relative_azimuth_slope,
 )
 from wagl.interpolation import _interpolate, link_interpolated_data
-from wagl.logging import ERROR_LOGGER
+from wagl.logs import ERROR_LOGGER
 from wagl.longitude_latitude_arrays import _create_lon_lat_grids
 from wagl.modtran import (
     JsonEncoder,
