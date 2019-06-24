@@ -2,7 +2,6 @@
 
 """A temporary workflow for processing S2 data into an ARD package."""
 
-import logging
 import re
 import shutil
 import traceback
@@ -14,21 +13,12 @@ import luigi
 from eugl.fmask import fmask
 from eugl.gqa import GQATask
 from luigi.local_target import LocalFileSystem
-from structlog import wrap_logger
-from structlog.processors import JSONRenderer
 from wagl.acquisition import preliminary_acquisitions_data
+from wagl.logs import ERROR_LOGGER
 from wagl.singlefile_workflow import DataStandardisation
 
 from tesp.constants import ProductPackage
 from tesp.package import ARD, PATTERN2, package
-
-ERROR_LOGGER = wrap_logger(
-    logging.getLogger("errors"), processors=[JSONRenderer(indent=1, sort_keys=True)]
-)
-STATUS_LOGGER = wrap_logger(
-    logging.getLogger("status"), processors=[JSONRenderer(indent=1, sort_keys=True)]
-)
-INTERFACE_LOGGER = logging.getLogger("luigi-interface")
 
 QA_PRODUCTS = ["gqa", "fmask"]
 
