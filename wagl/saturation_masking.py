@@ -27,9 +27,10 @@ def saturation_mask(band_array, under_sat=1, over_sat=255, use_numexpr=True):
     :return:
         A 2D Numpy Boolean array with True == Unsaturated.
     """
-    if len(band_array) == 0:
-        return None
     assert isinstance(band_array, np.ndarry), "Input is not valid"
+
+    if any(dim == 0 for dim in band_array.shape):
+        return None
 
     if use_numexpr:
         msg = (

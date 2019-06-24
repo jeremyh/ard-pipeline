@@ -361,7 +361,7 @@ class Acquisition:
 
         return data
 
-    def radiance_data(self, window=None, out_no_data=-999):
+    def radiance_data(self, window=None, out_no_data=-999, esun=None):
         """Return the data as radiance in watts/(m^2*micrometre).
         Override with a custom version for a specific sensor.
         """
@@ -427,7 +427,6 @@ class Acquisition:
         for handling various read methods is resolved.
         Override as needed.
         """
-        pass
 
     def tiles(self):
         """Generate the tiling regime for this acquisition."""

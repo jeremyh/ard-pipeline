@@ -204,6 +204,7 @@ class TiledOutput:
         self.nodata = nodata
         self.geobox = geobox
         self.bands = bands
+        self.out_bands = None
 
         self._set_geobox()
         self._set_bands_lookup()

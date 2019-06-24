@@ -232,7 +232,7 @@ def card4l(
                 tle_path,
             )
 
-            if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
+            if workflow in (Workflow.STANDARD, Workflow.NBAR):
                 # DEM
                 log.info("DEM-retriveal")
                 get_dsm(
@@ -493,10 +493,10 @@ def card4l(
             # standardised products
             band_acqs = []
 
-            if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
+            if workflow in (Workflow.STANDARD, Workflow.NBAR):
                 band_acqs.extend(nbar_acqs)
 
-            if workflow == Workflow.STANDARD or workflow == Workflow.SBT:
+            if workflow in (Workflow.STANDARD, Workflow.SBT):
                 band_acqs.extend(sbt_acqs)
 
             for acq in band_acqs:
@@ -572,10 +572,10 @@ def card4l(
             sbt_acqs = [acq for acq in acqs if acq.band_type == BandType.THERMAL]
 
             band_acqs = []
-            if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
+            if workflow in (Workflow.STANDARD, Workflow.NBAR):
                 band_acqs.extend(nbar_acqs)
 
-            if workflow == Workflow.STANDARD or workflow == Workflow.SBT:
+            if workflow in (Workflow.STANDARD, Workflow.SBT):
                 band_acqs.extend(sbt_acqs)
 
             return band_acqs

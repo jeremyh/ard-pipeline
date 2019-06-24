@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # pragma pylint: disable=line-too-long
-
 """These are the templates for the inputs into MODTRAN.
 Parameters to be inserted are:
     * albedo
@@ -18,6 +17,7 @@ Parameters to be inserted are:
     * satellite azimuth angle; corrected (angle + 180); units: degrees
     * satellite view offset; (180 - angle); units: degrees.
 """
+
 
 MIDLAT_SUMMER_ALBEDO = """\
 TM{binary} 2    2    2    1    2    2    2    2    2    2    1    1    0  10.000{albedo:7.2f}

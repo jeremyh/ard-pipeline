@@ -176,7 +176,7 @@ def format_json(
 
     json_data = {}
     # setup the json files required by MODTRAN
-    if workflow == Workflow.STANDARD or workflow == Workflow.NBAR:
+    if workflow in (Workflow.STANDARD, Workflow.NBAR):
         acqs = [a for a in acquisitions if a.band_type == BandType.REFLECTIVE]
 
         for p in range(npoints):
@@ -344,9 +344,9 @@ def run_modtran(
         fid.create_group(group_name)
 
     fid[group_name].attrs["npoints"] = npoints
-    applied = workflow == Workflow.STANDARD or workflow == Workflow.NBAR
+    applied = workflow in (Workflow.STANDARD, Workflow.NBAR)
     fid[group_name].attrs["nbar_atmospherics"] = applied
-    applied = workflow == Workflow.STANDARD or workflow == Workflow.SBT
+    applied = workflow in (Workflow.STANDARD, Workflow.SBT)
     fid[group_name].attrs["sbt_atmospherics"] = applied
 
     acqs = acquisitions
@@ -791,7 +791,7 @@ def _get_solar_angles(tp6_fname):
         lines = f.readlines()
 
         for line in lines:
-            cnt += 1
+            cnt = cnt + 1
             if fnmatch.fnmatch(
                 line,
                 "*SINGLE SCATTER SOLAR PATH GEOMETRY " "TABLE FOR MULTIPLE SCATTERING*",

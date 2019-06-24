@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-# pragma pylint: disable=line-too-long
-
-
 """These are the templates for the inputs into MODTRAN.
 Parameters to be inserted are:
     * name
@@ -20,6 +17,7 @@ Parameters to be inserted are:
     * satellite azimuth angle; corrected (angle + 180); units: degrees
     * satellite view offset; (180 - angle); units: degrees.
 """
+# pragma pylint: disable=line-too-long
 
 
 def midlat_summer_albedo(
@@ -40,7 +38,7 @@ def midlat_summer_albedo(
     binary,
 ):
     """MODTRAN 6.0.1 input: 'json' format template for mid latitude summer albedo."""
-    MIDLAT_SUMMER_ALBEDO = {
+    _midlat_summer_albedo = {
         "MODTRAN": [
             {
                 "MODTRANINPUT": {
@@ -143,7 +141,7 @@ def midlat_summer_albedo(
             }
         ]
     }
-    return MIDLAT_SUMMER_ALBEDO
+    return _midlat_summer_albedo
 
 
 def tropical_albedo(
@@ -164,7 +162,7 @@ def tropical_albedo(
     binary,
 ):
     """MODTRAN 6.0.1 input: 'json' format template for tropical albedo."""
-    TROPICAL_ALBEDO = {
+    _tropical_albedo = {
         "MODTRAN": [
             {
                 "MODTRANINPUT": {
@@ -268,7 +266,7 @@ def tropical_albedo(
         ]
     }
 
-    return TROPICAL_ALBEDO
+    return _tropical_albedo
 
 
 def thermal_transmittance(
@@ -323,7 +321,7 @@ def thermal_transmittance(
         1.4610000107e-05,
     ]
 
-    THERMAL_TRANSMITTANCE = {
+    _thermal_transmittance = {
         "MODTRAN": [
             {
                 "MODTRANINPUT": {
@@ -554,4 +552,4 @@ def thermal_transmittance(
         ]
     }
 
-    return THERMAL_TRANSMITTANCE
+    return _thermal_transmittance
