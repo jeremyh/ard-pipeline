@@ -31,14 +31,14 @@ from luigi.util import inherits
 from wagl.acquisition import acquisitions
 from wagl.constants import Method, Workflow
 from wagl.hdf5 import H5CompressionFilter
-from wagl.logging import ERROR_LOGGER
+from wagl.logs import ERROR_LOGGER
 from wagl.standardise import card4l
 
 
 @luigi.Task.event_handler(luigi.Event.FAILURE)
 def on_failure(task, exception):
     """Capture any Task Failure here."""
-    ERROR_LOGGER.error(
+    ERROR_LOGGER.exception(
         task=task.get_task_family(),
         params=task.to_str_params(),
         level1=getattr(task, "level1", ""),

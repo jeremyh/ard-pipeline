@@ -3,6 +3,8 @@ import logging
 import numexpr
 import numpy as np
 
+_LOG = logging.getLogger(__name__)
+
 
 def saturation_mask(band_array, under_sat=1, over_sat=255, use_numexpr=True):
     """Creates a saturation mask for a single band.
@@ -35,33 +37,33 @@ def saturation_mask(band_array, under_sat=1, over_sat=255, use_numexpr=True):
             '(band_array != {over_sat})")'
         )
         msg = msg.format(under_sat=under_sat, over_sat=over_sat)
-        logging.debug(msg)
+        _LOG.debug(msg)
         mask = numexpr.evaluate(
             "(band_array != under_sat)" "& (band_array != over_sat)"
         )
     else:
         msg = "numpy used: (band_array != {0}) & (band_array != {1})"
         msg = msg.format(under_sat, over_sat)
-        logging.debug(msg)
+        _LOG.debug(msg)
         mask = (band_array != under_sat) & (band_array != over_sat)
 
-    logging.debug("saturation mask computed")
+    _LOG.debug("saturation mask computed")
     return mask
 
 
 def set_saturation_bits(acquisitions, pq_const, result):
-    logging.debug("set_saturation_bits() called")
+    _LOG.debug("set_saturation_bits() called")
     band_list = pq_const.saturation_bands
     full_band_list = pq_const.available_bands
 
     bit_index_list = pq_const.saturation_bits
-    logging.debug("bit_index_list = %s", bit_index_list)
+    _LOG.debug(f"bit_index_list = {bit_index_list}")
 
     bits_set = []
 
     for band in band_list:
         if band not in full_band_list:
-            logging.warning("Ignoring invalid band number: %s", band)
+            _LOG.warning(f"Ignoring invalid band number: {band}")
             continue
 
         band_index = full_band_list.index(band)
@@ -71,7 +73,7 @@ def set_saturation_bits(acquisitions, pq_const, result):
             "band_index = {band_index}, bit_index = {bit_index}"
         )
         msg = msg.format(band=band, band_index=band_index, bit_index=bit_index)
-        logging.debug(msg)
+        _LOG.debug(msg)
 
         band_array = acquisitions[band_index].data()
 
@@ -90,7 +92,7 @@ def set_saturation_bits(acquisitions, pq_const, result):
         # dataset
         if bit_index == 5 and 6 not in bit_index_list:
             bit_index = 6
-            logging.debug("Copying thermal band mask to bit %d", bit_index)
+            _LOG.debug(f"Copying thermal band mask to bit {str(bit_index)}")
             result.set_mask(mask, bit_index)
             bits_set.append(bit_index)
 

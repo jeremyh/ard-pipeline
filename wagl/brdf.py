@@ -42,7 +42,7 @@ from wagl.data import read_subset
 from wagl.hdf5 import VLEN_STRING, H5CompressionFilter
 from wagl.metadata import current_h5_metadata
 
-log = logging.getLogger("root." + __name__)
+_LOG = logging.getLogger(__name__)
 
 
 class BRDFLoaderError(Exception):
@@ -243,7 +243,7 @@ class BrdfTileSummary:
 
 def valid_region(fname, mask_value=None):
     """Return valid data region for input images based on mask value and input image path."""
-    log.info("Valid regions for %s", fname)
+    _LOG.info(f"Valid regions for {fname}")
 
     # ensure formats match
     with rasterio.open(str(fname), "r") as dataset:

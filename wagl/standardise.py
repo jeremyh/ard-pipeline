@@ -29,7 +29,7 @@ from wagl.incident_exiting_angles import (
     relative_azimuth_slope,
 )
 from wagl.interpolation import interpolate
-from wagl.logging import STATUS_LOGGER
+from wagl.logs import STATUS_LOGGER
 from wagl.longitude_latitude_arrays import create_lon_lat_grids
 from wagl.metadata import create_ard_yaml
 from wagl.modtran import (

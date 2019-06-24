@@ -178,12 +178,8 @@ def interpolate_grid(
         raise ValueError("Unable to interpolate grid of %s", str(shape))
     elif max_depth < depth:
         _LOG.warning(
-            "Requested depth of %s but maximum interpolated depth is %s; using %s"
-            " for shape %s",
-            depth,
-            max_depth,
-            max_depth,
-            str(shape),
+            "Requested depth of {} but maximum interpolated depth is {}; using {}"
+            " for shape {}".format(depth, max_depth, max_depth, str(shape))
         )
         depth = max_depth
     return __interpolate_grid_inner(grid, eval_func, depth, origin, shape)

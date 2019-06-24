@@ -19,6 +19,8 @@ from wagl.geobox import GriddedGeoBox
 from wagl.metadata import current_h5_metadata
 from wagl.tiling import generate_tiles
 
+_LOG = logging.getLogger(__name__)
+
 
 def get_pixel(filename, dataset_name, lonlat):
     """Return a pixel from `filename` at the longitude and latitude given
@@ -184,7 +186,7 @@ def write_img(
         lines = dims[1]
         bands = dims[0]
     else:
-        logging.error("Input array is not of 2 or 3 dimensions!!!")
+        _LOG.error("Input array is not of 2 or 3 dimensions!!!")
         err = f"Array dimensions: {ndims}"
         raise IndexError(err)
 
