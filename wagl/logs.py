@@ -36,5 +36,6 @@ class FormatJSONL(logging.Formatter):
 
 
 ERROR_LOGGER = get_wrapped_logger("error", stack_info=True)
-INTERFACE_LOGGER = get_wrapped_logger("luigi-interface")
 STATUS_LOGGER = get_wrapped_logger("status")
+
+INTERFACE_LOGGER = logging.getLogger("luigi-interface")
