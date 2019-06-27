@@ -146,7 +146,7 @@ class GverifyTask(luigi.Task):
             # Extract the source band from the results archive
             with h5py.File(self.input()[0].path, "r") as h5:
                 band_id = h5[location].attrs["band_id"]
-                source_band = pjoin(workdir, "source.tif")
+                source_band = pjoin(workdir, f"source-BAND-{band_id}.tif")
                 source_image = h5[location][:]
                 source_image[source_image == -999] = 0
                 write_img(
