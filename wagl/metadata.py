@@ -73,7 +73,7 @@ def extract_ancillary_metadata(fname):
 
 
 def get_system_information():
-    utc_now = dtime.utcnow().replace(tzinfo=dtz.utc).isoformat()
+    utc_now = dtime.utcnow().replace(tzinfo=dtz.utc)
     system_info = {
         "uname": " ".join(os.uname()),
         "hostname": socket.getfqdn(),
@@ -216,7 +216,7 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
 
     acquisition = pick_acquisition()
     level1_path = acquisition.pathname
-    acq_datetime = acquisition.acquisition_datetime.replace(tzinfo=dtz.utc).isoformat()
+    acq_datetime = acquisition.acquisition_datetime.replace(tzinfo=dtz.utc)
 
     def source_info():
         result = {
@@ -225,14 +225,8 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
             "platform_id": acquisition.platform_id,
             "sensor_id": acquisition.sensor_id,
         }
-
         # ancillary metadata tracking
-        for key, value in extract_ancillary_metadata(level1_path).items():
-            if isinstance(value, dtime):
-                result[key] = value.isoformat()
-            else:
-                result[key] = value
-
+        result.update(extract_ancillary_metadata(level1_path))
         return result
 
     def ancillary(fid):
