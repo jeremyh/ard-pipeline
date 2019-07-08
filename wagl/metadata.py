@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime as dtime
 from datetime import timezone as dtz
 from os.path import dirname
+from posixpath import join as ppjoin
 
 import h5py
 import numpy as np
@@ -21,6 +22,7 @@ from wagl.constants import (
     POINT_FMT,
     BandType,
     BrdfDirectionalParameters,
+    BrdfTier,
     DatasetName,
     GroupName,
     Workflow,
@@ -193,7 +195,12 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
 
     def load_nbar_ancillary(acquisitions, fid):
         """Load the ancillary data retrieved during the workflow."""
-        result = {}
+        ids = []
+        tier = []
+        alphas = {
+            "alpha_1": {},
+            "alpha_2": {},
+        }
         for acq in acquisitions:
             if acq.band_type == BandType.THERMAL:
                 continue
@@ -203,9 +210,24 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
                 fmt = DatasetName.BRDF_FMT.value
                 dname = fmt.format(band_name=bn, parameter=param.value)
                 dset = fid[dname]
-                key = dname.lower().replace("-", "_")
-                result[key] = {k: v for k, v in dset.attrs.items()}
-                result[key]["value"] = dset[()]
+                ids.extend(dset["id"])
+                tier.append(BrdfTier[dset["tier"]].value)
+                alpha_key = param.value.lower().replace("-", "_")
+                bn_key = bn.lower().replace("-", "_")
+                alphas[alpha_key][bn_key] = dset[()]
+
+        # unique listing of brdf ids
+        ids = np.unique(np.array(ids)).tolist()
+
+        # a single tier level will dictate the metadata entry
+        tier = BrdfTier(np.max(tier)).name
+
+        result = {
+            "id": ids,
+            "tier": tier,
+            "alpha_1": alphas["alpha_1"],
+            "alpha_2": alphas["alpha_2"],
+        }
 
         return result
 
@@ -229,6 +251,37 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
         result.update(extract_ancillary_metadata(level1_path))
         return result
 
+    def remove_fields(data):
+        fields = ["CLASS", "VERSION", "query_date", "data_source"]
+        for field in fields:
+            data.pop(field, None)
+        return data
+
+    def elevation_provenance(anc_grp):
+        ids = []
+
+        # low resolution source
+        dname = DatasetName.ELEVATION.value
+        dset = anc_grp[dname]
+        ids.extend(dset["id"])
+
+        # high resolution source (res group is adjacent to ancillary group)
+        parent_group = anc_grp.parent
+        for res_group in res_group_bands:
+            dname = ppjoin(
+                res_group, GroupName.ELEVATION_GROUP.name, DatasetName.DSM_SMOOTHED
+            )
+            dset = parent_group[dname]
+            ids.extend(dset["id"])
+
+        # unique listing of ids
+        ids = np.unique(np.array(ids)).tolist()
+        md = {
+            "id": ids,
+        }
+
+        return md
+
     def ancillary(fid):
         # load the ancillary and remove fields not of use to ODC
         # retrieve the averaged ancillary if available
@@ -237,13 +290,14 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
             anc_grp = fid
 
         dname = DatasetName.AEROSOL.value
-        aerosol_data = read_scalar(anc_grp, dname)
+        aerosol_data = remove_fields(read_scalar(anc_grp, dname))
         dname = DatasetName.WATER_VAPOUR.value
-        water_vapour_data = read_scalar(anc_grp, dname)
+        water_vapour_data = remove_fields(read_scalar(anc_grp, dname))
         dname = DatasetName.OZONE.value
-        ozone_data = read_scalar(anc_grp, dname)
-        dname = DatasetName.ELEVATION.value
-        elevation_data = read_scalar(anc_grp, dname)
+        ozone_data = remove_fields(read_scalar(anc_grp, dname))
+
+        # currently have multiple sources of elevation data
+        elevation_data = elevation_provenance(anc_grp)
 
         result = {
             "aerosol": aerosol_data,
@@ -258,9 +312,6 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
         if nbar:
             for grp_name in res_group_bands:
                 grp_ancillary = load_nbar_ancillary(res_group_bands[grp_name], fid)
-                for item in grp_ancillary:
-                    for remove in ["CLASS", "VERSION", "query_date", "data_source"]:
-                        grp_ancillary[item].pop(remove, None)
                 result.update(grp_ancillary)
 
         return result
