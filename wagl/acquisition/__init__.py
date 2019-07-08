@@ -32,6 +32,7 @@ from .sentinel import (
     Sentinel2bSinergiseAcquisition,
     s2_index_to_band_id,
 )
+from .worldview import WorldView2MultiAcquisition
 
 # resolution group format
 RESG_FMT = "RES-GROUP-{}"
@@ -90,7 +91,16 @@ def preliminary_acquisitions_data(path, hint=None):
                 }
             ]
         except OSError:
-            raise OSError(f"No acquisitions found in: {path}")
+            try:
+                data = preliminary_worldview2_acquisition_data_via_xml(path)
+                return [
+                    {
+                        "id": worldview2_acquisition_id(data),
+                        "datetime": worldview2_acquisition_datetime(data),
+                    }
+                ]
+            except OSError:
+                raise OSError(f"No acquisitions found in: {path}")
 
 
 def acquisitions(path, hint=None):
@@ -106,7 +116,10 @@ def acquisitions(path, hint=None):
         try:
             container = acquisitions_via_mtl(path)
         except OSError:
-            raise OSError(f"No acquisitions found in: {path}")
+            try:
+                container = worldview2_acquisitions_via_xml(path)
+            except OSError:
+                raise OSError(f"No acquisitions found in: {path}")
 
     return container
 
@@ -173,6 +186,82 @@ def get_acquisition_datetime_via_mtl(data):
     acq_datetime = datetime.datetime.combine(acq_date, centre_time)
 
     return acq_datetime
+
+
+def preliminary_worldview2_acquisition_data_via_xml(pathname):
+    xml_file = None
+
+    for root, _, files in os.walk(pathname):
+        for f in files:
+            if f.lower().endswith("xml"):
+                xml_file = os.path.join(root, f)
+
+    if xml_file is None:
+        raise OSError("Cannot find XML file in %s" % pathname)
+
+    with open(xml_file) as fl:
+        root = ElementTree.XML(fl.read())
+
+    return root
+
+
+def worldview2_acquisition_id(xml_root):
+    return xml_root.findall("./IMD/PRODUCTCATALOGID")[0].text
+
+
+def worldview2_acquisition_datetime(xml_root):
+    key = "./IMD/MAP_PROJECTED_PRODUCT/EARLIESTACQTIME"
+    return parser.parse(xml_root.findall(key)[0].text).replace(tzinfo=None)
+
+
+def worldview2_acquisitions_via_xml(pathname):
+    xml_root = preliminary_worldview2_acquisition_data_via_xml(pathname)
+
+    granule_id = worldview2_acquisition_id(xml_root)
+    acq_datetime = worldview2_acquisition_datetime(xml_root)
+
+    tile_file = None
+
+    for root, _, files in os.walk(pathname):
+        for f in files:
+            if f.lower().endswith("til"):
+                tile_file = os.path.join(root, f)
+
+    if tile_file is None:
+        raise OSError("Cannot find TIL file in %s" % pathname)
+
+    WV2 = WorldView2MultiAcquisition
+
+    acqs = []
+    for band_tag in xml_root.find("IMD").getchildren():
+        if band_tag.tag.startswith("BAND_"):
+            band_name = band_tag.tag.replace("_", "-")
+            band_id = str(WV2.band_names.index(band_name) + 1)
+
+            band_configurations = SENSORS[WV2.platform_id][WV2.sensor_id]["band_ids"]
+            metadata = {
+                key: value
+                for key, value in band_configurations.get(band_id, {}).items()
+                if key != "band_name"
+            }
+            metadata["abs_cal_factor"] = float(band_tag.find("ABSCALFACTOR").text)
+            metadata["effective_bandwidth"] = float(
+                band_tag.find("EFFECTIVEBANDWIDTH").text
+            )
+
+            acq = WV2(
+                pathname,
+                tile_file,
+                acq_datetime,
+                band_name=band_name,
+                band_id=band_id,
+                metadata=metadata,
+            )
+
+            acqs.append(acq)
+
+    res_groups = create_resolution_groups(acqs)
+    return AcquisitionsContainer(label=pathname, granules={granule_id: res_groups})
 
 
 def acquisitions_via_mtl(pathname):
