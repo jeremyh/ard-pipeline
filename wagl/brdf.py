@@ -241,20 +241,20 @@ class BrdfTileSummary:
         }
 
 
-def valid_region(fname, mask_value=None):
+def valid_region(acquisition, mask_value=None):
     """Return valid data region for input images based on mask value and input image path."""
-    _LOG.info(f"Valid regions for {fname}")
+    img = acquisition.data()
+    gbox = acquisition.gridded_geo_box()
+    crs = CRS.from_wkt(gbox.crs.ExportToWkt()).to_dict()
+    transform = gbox.transform.to_gdal()
 
-    # ensure formats match
-    with rasterio.open(str(fname), "r") as dataset:
-        transform = dataset.transform.to_gdal()
-        crs = dataset.crs.to_dict()
-        img = dataset.read(1)
+    if mask_value is None:
+        mask_value = acquisition.no_data
 
-        if mask_value is not None:
-            mask = img & mask_value == mask_value
-        else:
-            mask = img != 0
+    if mask_value is not None:
+        mask = img & mask_value == mask_value
+    else:
+        mask = img != 0
 
     shapes = rasterio.features.shapes(mask.astype("uint8"), mask=mask)
     shape = ops.unary_union(
@@ -465,7 +465,7 @@ def get_brdf_data(
         if f.endswith(".h5")
     ]
 
-    src_poly, src_crs = valid_region(acquisition.uri, acquisition.no_data)
+    src_poly, src_crs = valid_region(acquisition)
     src_crs = rasterio.crs.CRS(**src_crs)
 
     brdf_datasets = acquisition.brdf_datasets
