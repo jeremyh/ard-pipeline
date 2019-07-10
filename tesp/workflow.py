@@ -2,14 +2,16 @@
 
 """A temporary workflow for processing S2 data into an ARD package."""
 
-import re
+import json
 import shutil
 import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from os.path import basename
 from os.path import join as pjoin
+from pathlib import Path
 
 import luigi
+from eodatasets3.wagl import package_file
 from eugl.fmask import fmask
 from eugl.gqa import GQATask
 from luigi.local_target import LocalFileSystem
@@ -18,7 +20,6 @@ from wagl.logs import ERROR_LOGGER
 from wagl.singlefile_workflow import DataStandardisation
 
 from tesp.constants import ProductPackage
-from tesp.package import ARD, PATTERN2, package
 
 QA_PRODUCTS = ["gqa", "fmask"]
 
@@ -147,7 +148,7 @@ class Package(luigi.Task):
 
     def requires(self):
         # Ensure configuration values are valid
-        self._validate_cfg()
+        # self._validate_cfg()
 
         tasks = {
             "wagl": DataStandardisation(self.level1, self.workdir, self.granule),
@@ -173,38 +174,26 @@ class Package(luigi.Task):
         return tasks
 
     def output(self):
-        granule = re.sub(PATTERN2, ARD, self.granule)
-        out_fname = pjoin(self.pkgdir, granule, "CHECKSUM.sha1")
+        # temp work around. rather than duplicate the packaging logic
+        # create a text file to act as a completion target
+        # this could be changed to be a database record
+        parent_dir = Path(self.workdir).parent
+        out_fname = parent_dir.joinpath(f"{self.granule}.completed")
 
-        return luigi.LocalTarget(out_fname)
+        return luigi.LocalTarget(str(out_fname))
 
     def run(self):
-        # Extract the file path for each dependent task configured
-        antecedent_paths = {}
-        for key, value in self.input().items():
-            if key == "fmask":
-                antecedent_paths["fmask-image"] = value["image"].path
-                antecedent_paths["fmask-metadata"] = value["metadata"].path
-            else:
-                antecedent_paths[key] = value.path
-
-        package(
-            self.level1,
-            antecedent_paths,
-            self.yamls_dir,
-            self.pkgdir,
-            self.granule,
-            self.products,
-            self.acq_parser_hint,
-        )
+        # TODO; the package_file func can accept additional fnames for yamls etc
+        wagl_fname = self.input()["wagl"].path
+        package_file(Path(self.pkgdir), Path(wagl_fname), self.products)
 
         if self.cleanup:
             shutil.rmtree(self.workdir)
 
-    def _validate_cfg(self):
-        assert ProductPackage.validate_products(self.products)
-        # Check that tesp is aware of requested qa products
-        assert not set(self.qa_products).difference(set(QA_PRODUCTS))
+        with self.output().temporary_path() as out_fname:
+            with open(out_fname, "w") as outf:
+                data = {k: v for k, v in self.get_params()}
+                json.dump(data, outf)
 
 
 def list_packages(workdir, acq_parser_hint, pkgdir):
@@ -214,9 +203,7 @@ def list_packages(workdir, acq_parser_hint, pkgdir):
         result = []
         for granule in preliminary_acquisitions_data(level1, acq_parser_hint):
             work_dir = pjoin(work_root, granule["id"])
-            ymd = granule["datetime"].strftime("%Y-%m-%d")
-            outdir = pjoin(pkgdir, ymd)
-            result.append(Package(level1, work_dir, granule["id"], outdir))
+            result.append(Package(level1, work_dir, granule["id"], pkgdir))
 
         return result
 
