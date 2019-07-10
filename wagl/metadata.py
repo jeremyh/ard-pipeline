@@ -220,7 +220,7 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
         ids = np.unique(np.array(ids)).tolist()
 
         # a single tier level will dictate the metadata entry
-        tier = BrdfTier(np.max(tier)).name
+        tier = BrdfTier(np.min(tier)).name
 
         result = {
             "id": ids,
