@@ -11,7 +11,7 @@ from os.path import join as pjoin
 from pathlib import Path
 
 import luigi
-from eodatasets3.wagl import package_file
+from eodatasets3.wagl import Granule, package
 from eugl.fmask import fmask
 from eugl.gqa import GQATask
 from luigi.local_target import LocalFileSystem
@@ -184,17 +184,31 @@ class Package(luigi.Task):
 
     def run(self):
         # TODO; the package_file func can accept additional fnames for yamls etc
-        wagl_fname = self.input()["wagl"].path
-        md = package_file(Path(self.pkgdir), Path(wagl_fname), self.products)
+        wagl_fname = Path(self.input()["wagl"].path)
+        fmask_img_fname = Path(self.input()["fmask"]["image"].path)
+        fmask_doc_fname = Path(self.input()["fmask"]["metadata"].path)
+        gqa_doc_fname = Path(self.input()["gqa"].path)
+
+        eods_granule = Granule.for_path(
+            wagl_fname,
+            [self.granule],
+            fmask_image_path=fmask_img_fname,
+            fmask_doc_path=fmask_doc_fname,
+            gqa_doc_path=gqa_doc_fname,
+        )
+
+        md = package(Path(self.pkgdir), eods_granule, self.products)
 
         if self.cleanup:
             shutil.rmtree(self.workdir)
 
         with self.output().temporary_path() as out_fname:
             with open(out_fname, "w") as outf:
-                data = {k: v for k, v in self.get_param_values()}
-                # JSON can't serialise the returned Path obj
-                data["packaged_datasets"] = {str(k): str(v) for k, v in md.items()}
+                data = {
+                    "params": self.to_str_params(),
+                    # JSON can't serialise the returned Path obj
+                    "packaged_datasets": {str(k): str(v) for k, v in md.items()},
+                }
                 json.dump(data, outf)
 
 
