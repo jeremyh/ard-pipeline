@@ -9,10 +9,7 @@ setup(
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     url="https://github.com/OpenDataCubePipelines/tesp",
-    description=(
-        "A temporary solution to get packaging underway. "
-        "Code will eventually be ported eo-datasets."
-    ),
+    description="Data Pipeline construction.",
     packages=find_packages(exclude=("tests",)),
     install_requires=[
         "click",
@@ -44,7 +41,7 @@ setup(
     ),
     dependency_links=[
         "git+https://github.com/GeoscienceAustralia/eo-datasets.git@develop#egg=eodatasets",
-        "git+https://github.com/GeoscienceAustralia/wagl@master#egg=wagl",
+        "git+https://github.com/GeoscienceAustralia/wagl@develop#egg=wagl",
         "git+https://github.com/OpenDataCubePipelines/eugl.git@master#egg=eugl",
     ],
     scripts=["bin/s2package", "bin/ard_pbs", "bin/search_s2", "bin/s2-nci-processing"],
