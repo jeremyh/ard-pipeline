@@ -2,6 +2,7 @@
 from functools import total_ordering
 from os.path import join as pjoin
 
+import dateutil
 import numpy as np
 import rasterio
 from pkg_resources import resource_filename
@@ -232,7 +233,9 @@ class Acquisition:
     ):
         self._pathname = pathname
         self._uri = uri
-        self._acquisition_datetime = acquisition_datetime
+        self._acquisition_datetime = acquisition_datetime.astimezone(
+            dateutil.tz.UTC
+        ).replace(tzinfo=None)
         self._band_name = band_name
         self._band_id = band_id
 
