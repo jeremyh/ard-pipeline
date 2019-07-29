@@ -140,6 +140,10 @@ class Landsat5Scene1AcquisitionTest(unittest.TestCase):
         result = temperature_at_sensor(self.acqs[5], window=((40, 41), (40, 41)))
         self.assertAlmostEqual(result[0, 0], 293.76944042)
 
+    def test_tzinfo(self):
+        for acq in self.acqs:
+            assert acq.acquisition_datetime, None
+
 
 class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
     def setUp(self):
@@ -220,6 +224,10 @@ class Landsat7Mtl1AcquisitionTest(unittest.TestCase):
         result = temperature_at_sensor(self.acqs[6], window=((41, 42), (41, 42)))
         self.assertAlmostEqual(result[0, 0], 293.990413299)
 
+    def test_tzinfo(self):
+        for acq in self.acqs:
+            assert acq.acquisition_datetime, None
+
 
 class Landsat7PanAcquisitionTest(unittest.TestCase):
     def setUp(self):
@@ -231,6 +239,10 @@ class Landsat7PanAcquisitionTest(unittest.TestCase):
 
     def test_band_type(self):
         assert self.acqs[0].band_type == BandType.REFLECTIVE
+
+    def test_tzinfo(self):
+        for acq in self.acqs:
+            assert acq.acquisition_datetime, None
 
 
 class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
@@ -313,6 +325,10 @@ class Landsat8Mtl1AcquisitionTest(unittest.TestCase):
         result = temperature_at_sensor(self.acqs[2], window=((41, 42), (41, 42)))
         self.assertAlmostEqual(result[0, 0], 298.049253923)
 
+    def test_tzinfo(self):
+        for acq in self.acqs:
+            assert acq.acquisition_datetime, None
+
 
 class Landsat8PanAcquisitionTest(unittest.TestCase):
     def setUp(self):
@@ -324,6 +340,10 @@ class Landsat8PanAcquisitionTest(unittest.TestCase):
 
     def test_band_type(self):
         assert self.acqs[0].band_type == BandType.REFLECTIVE
+
+    def test_tzinfo(self):
+        for acq in self.acqs:
+            assert acq.acquisition_datetime, None
 
 
 if __name__ == "__main__":
