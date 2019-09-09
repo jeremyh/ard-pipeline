@@ -243,6 +243,12 @@ class Landsat7Acquisition(LandsatAcquisition):
 
         return radiance
 
+    def close(self):
+        """Clears acquisition level cache."""
+        self._gap_mask = None
+        self.__data = {}
+        super().close()
+
 
 class Landsat8Acquisition(LandsatAcquisition):
     """Landsat 8 acquisition."""
