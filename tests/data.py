@@ -25,3 +25,7 @@ S2B_SCENE1 = pjoin(
 )
 
 LAND_SEA_RASTERS = pjoin(DATA_DIR, "ancillary", "Land_Sea_Rasters")
+
+LS7_GAP_MASK = pjoin(
+    DATA_DIR, "LANDSAT7", "LE07_L1TP_092084_20110809_20161206_01_T1_RR.tar"
+)
