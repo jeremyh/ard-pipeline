@@ -5,6 +5,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 
+import numpy as np
 import rasterio
 
 from .base import Acquisition
@@ -217,7 +218,12 @@ class Landsat7Acquisition(LandsatAcquisition):
         """
         # retrieve the gap mask if we haven't already done so
         if self._gap_mask is None:
-            self._extract_gap_mask()
+            try:
+                self._extract_gap_mask()
+            except FileNotFoundError:
+                # we might not be dealing with an acquisition that has
+                # gap masks, nor a tarfile (legacy)
+                self._gap_mask = np.zeros((self.lines, self.samples), dtype="bool")
 
         # Python style index
         if window is None:
