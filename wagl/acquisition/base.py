@@ -232,7 +232,11 @@ class Acquisition:
     ):
         self._pathname = pathname
         self._uri = uri
+
+        # strip the datetime as it can play havoc with other libs
+        # this also assumes that the datetime is already in UTC
         self._acquisition_datetime = acquisition_datetime.replace(tzinfo=None)
+
         self._band_name = band_name
         self._band_id = band_id
 
