@@ -14,7 +14,6 @@ setup(
     maintainer="wagl developers",
     packages=find_packages(),
     install_requires=[
-        "eodatasets",
         "click",
         "click_datetime",
         "numpy",
@@ -28,6 +27,5 @@ setup(
         "hg+https://bitbucket.org/chchrsc/rios/get/rios-1.4.5.zip#egg=rios-1.4.5",
         "hg+https://bitbucket.org/chchrsc/python-fmask/get/python-fmask-0.4.5.zip#egg=python-fmask-0.4.5"
         "git+https://github.com/GeoscienceAustralia/wagl@develop#egg=wagl",
-        "git+https://github.com/GeoscienceAustralia/eo-datasets.git@develop#egg=eodatasets",
     ],
 )
