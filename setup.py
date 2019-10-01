@@ -44,6 +44,12 @@ setup(
         "git+https://github.com/GeoscienceAustralia/wagl@develop#egg=wagl",
         "git+https://github.com/OpenDataCubePipelines/eugl.git@master#egg=eugl",
     ],
-    scripts=["bin/s2package", "bin/ard_pbs", "bin/search_s2", "bin/s2-nci-processing"],
+    scripts=[
+        "bin/s2package",
+        "bin/ard_pbs",
+        "bin/search_s2",
+        "bin/s2-nci-processing",
+        "batch_summary",
+    ],
     include_package_data=True,
 )
