@@ -27,11 +27,8 @@ def read_task_db(fname):
     return tasks, events, params
 
 
-def retrieve_status(fname, task_name=None):
+def retrieve_status(fname, task_name):
     """Retrieve the task status given by `task_name` for each L1 dataset."""
-    if task_name is None:
-        raise ValueError('Parameter "task_name" cannot be None')
-
     tasks, events, params = read_task_db(fname)
 
     task = tasks[tasks.name == task_name]
