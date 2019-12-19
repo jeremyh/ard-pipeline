@@ -1,58 +1,82 @@
 #!/usr/bin/env python
 
-"""PBS submission scripts."""
+"""
+PBS submission scripts.
+"""
 
-import json
-import logging
 import os
 import re
+import json
+import logging
+from os.path import join as pjoin, dirname, exists
+from pathlib import Path
 import subprocess
 import uuid
-from os.path import dirname, exists
-from os.path import join as pjoin
-
 import click
+
 from wagl.tiling import scatter
 
-PBS_RESOURCES = """#!/bin/bash
+
+PBS_RESOURCES = ("""#!/bin/bash
 #PBS -P {project}
 #PBS -W umask=017
 #PBS -q {queue}
 #PBS -l walltime={walltime},mem={memory}GB,ncpus={ncpus},jobfs={jobfs}GB,other=pernodejobfs
 #PBS -l wd
+{filesystem_projects}
 #PBS -me
 {email}
-"""
+""")
 
-NODE_TEMPLATE = """{pbs_resources}
+NODE_TEMPLATE = ("""{pbs_resources}
 source {env}
 
 {daemon}
 
 luigi --module tesp.workflow ARDP --level1-list {scene_list} --workdir {outdir} --pkgdir {pkgdir} --workers {workers} --parallel-scheduling
-"""
+""")
 
-SUMMARY_TEMPLATE = """{pbs_resources}
+SUMMARY_TEMPLATE = ("""{pbs_resources}
 #PBS -W depend=afterany:{jobids}
 
 source {env}
 batch_summary --indir {indir} --outdir {outdir}
-"""
+""")
 
 
-FMT1 = "batchid-{batchid}"
-FMT2 = "jobid-{jobid}"
-FMT3 = "level1-scenes-{jobid}.txt"
-FMT4 = "jobid-{jobid}.bash"
-FMT5 = "batch-{batchid}.bash"
-DAEMON_FMT = "luigid --background --logdir {}"
+FMT1 = 'batchid-{batchid}'
+FMT2 = 'jobid-{jobid}'
+FMT3 = 'level1-scenes-{jobid}.txt'
+FMT4 = 'jobid-{jobid}.bash'
+FMT5 = 'batch-{batchid}.bash'
+FMT6 = '#PBS -l storage=scratch/{f_project}+gdata/{f_project}\n'
+DAEMON_FMT = 'luigid --background --logdir {}'
+
+
+def _get_project_for_path(path: Path):
+    """
+    Get the NCI project used to store the given path, if any.
+    >>> _get_project_for_path(Path('/g/data/v10/some/data/path.txt'))
+    'v10'
+    >>> _get_project_for_path(Path('/g/data4/fk4/some/data/path.txt'))
+    'fk4'
+    >>> _get_project_for_path(Path('/scratch/da82/path.txt'))
+    'da82'
+    >>> _get_project_for_path(Path('/tmp/other/data'))
+    """
+    posix_path = path.as_posix()
+    if posix_path.startswith('/g/data'):
+        return posix_path.split('/')[3]
+    if posix_path.startswith('/scratch/'):
+        return posix_path.split('/')[2]
+    return None
 
 
 # pylint: disable=too-many-arguments
-def _submit_multiple(
-    scattered, env, batch_logdir, batch_outdir, pkgdir, workers, pbs_resources, test
-):
+def _submit_multiple(scattered, env, batch_logdir, batch_outdir, pkgdir,
+                     workers, pbs_resources, test):
     """Submit multiple PBS formatted jobs."""
+
     nci_job_ids = []
 
     # setup and submit each block of scenes for processing
@@ -69,44 +93,37 @@ def _submit_multiple(
 
         # write level1 data listing
         out_fname = pjoin(jobdir, FMT3.format(jobid=jobid))
-        with open(out_fname, "w") as src:
+        with open(out_fname, 'w') as src:
             src.writelines(block)
 
-        pbs = NODE_TEMPLATE.format(
-            pbs_resources=pbs_resources,
-            env=env,
-            daemon=DAEMON_FMT.format(jobdir),
-            scene_list=out_fname,
-            outdir=job_outdir,
-            pkgdir=pkgdir,
-            workers=workers,
-        )
+        pbs = NODE_TEMPLATE.format(pbs_resources=pbs_resources, env=env,
+                                   daemon=DAEMON_FMT.format(jobdir),
+                                   scene_list=out_fname, outdir=job_outdir,
+                                   pkgdir=pkgdir, workers=workers)
 
         # write pbs script
         out_fname = pjoin(jobdir, FMT4.format(jobid=jobid))
-        with open(out_fname, "w") as src:
+        with open(out_fname, 'w') as src:
             src.write(pbs)
 
         if test:
-            click.echo(f"Mocking... Submitting Job: {jobid} ...Mocking")
-            click.echo(f"qsub {out_fname}")
+            click.echo("Mocking... Submitting Job: {} ...Mocking".format(jobid))
+            click.echo("qsub {}".format(out_fname))
             continue
 
         os.chdir(dirname(out_fname))
-        click.echo(f"Submitting Job: {jobid}")
+        click.echo("Submitting Job: {}".format(jobid))
         try:
-            raw_output = subprocess.check_output(["qsub", out_fname])
+            raw_output = subprocess.check_output(['qsub', out_fname])
         except subprocess.CalledProcessError as exc:
-            logging.error("qsub failed with exit code %s", str(exc.returncode))
+            logging.error('qsub failed with exit code %s', str(exc.returncode))
             logging.error(exc.output)
             raise
 
-        if hasattr(raw_output, "decode"):
-            matches = re.match(
-                r"^(?P<nci_job_id>\d+\.gadi-pbs)$", raw_output.decode("utf-8")
-            )
+        if hasattr(raw_output, 'decode'):
+            matches = re.match(r'^(?P<nci_job_id>\d+\.gadi-pbs)$', raw_output.decode('utf-8'))
             if matches:
-                nci_job_ids.append(matches.groupdict()["nci_job_id"])
+                nci_job_ids.append(matches.groupdict()['nci_job_id'])
 
     # return a list of the nci job ids
     return nci_job_ids
@@ -114,110 +131,71 @@ def _submit_multiple(
 
 def _submit_summary(indir, outdir, batch_id, pbs_resources, env, job_ids, test):
     """Summarise the jobs submitted within the batchjob."""
-    jobids = ":".join([j.split(".")[0] for j in job_ids])
-    pbs = SUMMARY_TEMPLATE.format(
-        pbs_resources=pbs_resources, env=env, indir=indir, outdir=outdir, jobids=jobids
-    )
+    jobids = ":".join([j.split('.')[0] for j in job_ids])
+    pbs = SUMMARY_TEMPLATE.format(pbs_resources=pbs_resources, env=env,
+                                  indir=indir, outdir=outdir, jobids=jobids)
 
     out_fname = pjoin(indir, FMT5.format(batchid=batch_id))
-    with open(out_fname, "w") as src:
+    with open(out_fname, 'w') as src:
         src.write(pbs)
 
     if test:
-        click.echo(f"Mocking... Submitting Job: {batch_id} ...Mocking")
-        click.echo(f"qsub {out_fname}")
+        click.echo("Mocking... Submitting Job: {} ...Mocking".format(batch_id))
+        click.echo("qsub {}".format(out_fname))
 
     os.chdir(dirname(out_fname))
-    click.echo(f"Submitting Job: {batch_id}")
+    click.echo("Submitting Job: {}".format(batch_id))
     try:
-        raw_output = subprocess.check_output(["qsub", out_fname])
+        raw_output = subprocess.check_output(['qsub', out_fname])
     except subprocess.CalledProcessError as exc:
-        logging.error("qsub failed with exit code %s", str(exc.returncode))
+        logging.error('qsub failed with exit code %s', str(exc.returncode))
         logging.error(exc.output)
         raise
 
-    if hasattr(raw_output, "decode"):
-        matches = re.match(
-            r"^(?P<nci_job_id>\d+\.gadi-pbs)$", raw_output.decode("utf-8")
-        )
+    if hasattr(raw_output, 'decode'):
+        matches = re.match(r'^(?P<nci_job_id>\d+\.gadi-pbs)$', raw_output.decode('utf-8'))
         if matches:
-            job_id = matches.groupdict()["nci_job_id"]
+            job_id = matches.groupdict()['nci_job_id']
 
     return job_id
 
 
 @click.command()
-@click.option(
-    "--level1-list",
-    type=click.Path(exists=True, readable=True),
-    help="The input level1 scene list.",
-)
-@click.option(
-    "--workdir",
-    type=click.Path(file_okay=False, writable=True),
-    help="The base output working directory.",
-)
-@click.option(
-    "--logdir",
-    type=click.Path(file_okay=False, writable=True),
-    help="The base logging and scripts output directory.",
-)
-@click.option(
-    "--pkgdir",
-    type=click.Path(file_okay=False, writable=True),
-    help="The base output packaged directory.",
-)
-@click.option(
-    "--env",
-    type=click.Path(exists=True, readable=True),
-    help="Environment script to source.",
-)
-@click.option(
-    "--workers",
-    type=click.IntRange(1, 32),
-    default=16,
-    help="The number of workers to request per node.",
-)
+@click.option("--level1-list", type=click.Path(exists=True, readable=True),
+              help="The input level1 scene list.")
+@click.option("--workdir", type=click.Path(file_okay=False, writable=True),
+              help="The base output working directory.")
+@click.option("--logdir", type=click.Path(file_okay=False, writable=True),
+              help="The base logging and scripts output directory.")
+@click.option("--pkgdir", type=click.Path(file_okay=False, writable=True),
+              help="The base output packaged directory.")
+@click.option("--env", type=click.Path(exists=True, readable=True),
+              help="Environment script to source.")
+@click.option("--workers", type=click.IntRange(1, 32), default=16,
+              help="The number of workers to request per node.")
 @click.option("--nodes", default=1, help="The number of nodes to request.")
-@click.option("--memory", default=32, help="The memory in GB to request per node.")
-@click.option("--jobfs", default=50, help="The jobfs memory in GB to request per node.")
+@click.option("--memory", default=32,
+              help="The memory in GB to request per node.")
+@click.option("--jobfs", default=50,
+              help="The jobfs memory in GB to request per node.")
 @click.option("--project", required=True, help="Project code to run under.")
-@click.option(
-    "--queue",
-    default="normal",
-    help="Queue to submit the job into, eg normal, express.",
-)
-@click.option(
-    "--walltime", default="48:00:00", help="Job walltime in `hh:mm:ss` format."
-)
-@click.option("--email", default="", help="Notification email address.")
-@click.option(
-    "--test",
-    default=False,
-    is_flag=True,
-    help=("Test job execution (Don't submit the job to the " "PBS queue)."),
-)
+@click.option("--queue", default='normal',
+              help="Queue to submit the job into, eg normal, express.")
+@click.option("--walltime", default="48:00:00",
+              help="Job walltime in `hh:mm:ss` format.")
+@click.option("--email", default="",
+              help="Notification email address.")
+@click.option("--test", default=False, is_flag=True,
+              help=("Test job execution (Don't submit the job to the "
+                    "PBS queue)."))
 # pylint: disable=too-many-arguments
-def main(
-    level1_list,
-    workdir,
-    logdir,
-    pkgdir,
-    env,
-    workers,
-    nodes,
-    memory,
-    jobfs,
-    project,
-    queue,
-    walltime,
-    email,
-    test,
-):
-    """Equally partition a list of scenes across n nodes and submit
+def main(level1_list, workdir, logdir, pkgdir, env, workers, nodes, memory,
+         jobfs, project, queue, walltime, email, test):
+    """
+    Equally partition a list of scenes across n nodes and submit
     n jobs into the PBS queue.
     """
-    with open(level1_list) as src:
+    with open(level1_list, 'r') as src:
         scenes = src.readlines()
 
     scattered = scatter(scenes, nodes)
@@ -226,48 +204,49 @@ def main(
     batch_logdir = pjoin(logdir, FMT1.format(batchid=batchid))
     batch_outdir = pjoin(workdir, FMT1.format(batchid=batchid))
 
+    filesystem_projects = {None}
+    filesystem_projects.add(_get_project_for_path(Path(workdir))
+    filesystem_projects.add(_get_project_for_path(Path(logdir))
+    filesystem_projects.add(_get_project_for_path(Path(pkgdir))
+    filesystem_projects.remove(None)
+
+    fsys_projects = [FMT6.format(f_project=fprj) for fprj in filesystem_projects]
+
     # optionally set pbs email string
-    pbs_resources = PBS_RESOURCES.format(
-        project=project,
-        queue=queue,
-        walltime=walltime,
-        memory=memory,
-        ncpus=workers,
-        jobfs=jobfs,
-        email=("#PBS -M " + email) if email else "",
-    )
+    pbs_resources = PBS_RESOURCES.format(project=project, queue=queue,
+                                         walltime=walltime, memory=memory,
+                                         ncpus=workers, jobfs=jobfs,
+                                         filesystem_projects=''.join(fsys_projects),
+                                         email=('#PBS -M ' + email) if email else "")
 
     if test:
-        click.echo(f"Mocking... Submitting Batch: {batchid} ...Mocking")
+        click.echo("Mocking... Submitting Batch: {} ...Mocking".format(batchid))
     else:
-        click.echo(f"Submitting Batch: {batchid}")
+        click.echo("Submitting Batch: {}".format(batchid))
 
-    click.echo(f"Executing Batch: {batchid}")
-    nci_job_ids = _submit_multiple(
-        scattered, env, batch_logdir, batch_outdir, pkgdir, workers, pbs_resources, test
-    )
+    click.echo("Executing Batch: {}".format(batchid))
+    nci_job_ids = _submit_multiple(scattered, env, batch_logdir, batch_outdir,
+                                   pkgdir, workers, pbs_resources, test)
 
     # job resources for batch summary
-    pbs_resources = PBS_RESOURCES.format(
-        project=project,
-        queue="express",
-        walltime="00:10:00",
-        memory=6,
-        ncpus=1,
-        jobfs=2,
-        email=("#PBS -M " + email) if email else "",
-    )
+    pbs_resources = PBS_RESOURCES.format(project=project, queue='express',
+                                         walltime="00:10:00", memory=6,
+                                         ncpus=1, jobfs=2,
+                                         filesystem_projects=''.join(fsys_projects),
+                                         email=('#PBS -M ' + email) if email else "")
 
-    job_id = _submit_summary(
-        batch_logdir, batch_logdir, batchid, pbs_resources, env, nci_job_ids, test
-    )
+    job_id = _submit_summary(batch_logdir, batch_logdir, batchid,
+                             pbs_resources, env, nci_job_ids, test)
 
     nci_job_ids.append(job_id)
-    job_details = {"ardpbs_batch_id": batchid, "nci_job_ids": nci_job_ids}
+    job_details = {
+        'ardpbs_batch_id': batchid,
+        'nci_job_ids': nci_job_ids
+    }
 
     # Enable the job details to be picked up by the calling process
     click.echo(json.dumps(job_details))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
