@@ -79,6 +79,7 @@ def _filesystem_projects(
     fs_projects.add(_get_project_for_path(Path(logdir)))
     fs_projects.add(_get_project_for_path(Path(pkgdir)))
     fs_projects.add(_get_project_for_path(Path(env)))
+    fs_projects.add(_get_project_for_path(Path(click.__file__)))
 
     with open(level1_list) as src:
         paths = [p.strip() for p in src.readlines()]
