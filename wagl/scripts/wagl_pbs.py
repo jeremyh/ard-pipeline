@@ -9,6 +9,7 @@ import subprocess
 import uuid
 from os.path import dirname, exists
 from os.path import join as pjoin
+from pathlib import Path
 
 from wagl.tiling import scatter
 
@@ -16,8 +17,9 @@ PBS_RESOURCES = """#!/bin/bash
 #PBS -P {project}
 #PBS -W umask=017
 #PBS -q {queue}
-#PBS -l walltime={hours}:00:00,mem={memory}GB,ncpus={ncpus},jobfs=50GB,other=pernodejobfs
+#PBS -l walltime={walltime},mem={memory}GB,ncpus={ncpus},jobfs=50GB,other=pernodejobfs
 #PBS -l wd
+#PBS -l storage={filesystem_projects}
 #PBS -me
 #PBS -M {email}
 """
@@ -27,7 +29,7 @@ source {env}
 
 {daemon}
 
-luigi {options} --level1-list {scene_list} --outdir {outdir} --workers 16{scheduler}
+luigi {options} --level1-list {scene_list} --outdir {outdir} --workers {workers}{scheduler}
 """
 
 DSH_TEMPLATE = """{pbs_resources}
@@ -39,11 +41,11 @@ OUTDIRS=({outdirs})
 
 for i in "${{!FILES[@]}}"; do
   X=$(($i+1))
-  pbsdsh -n $((16 *$X)) -- bash -l -c "source {env}; ${{DAEMONS[$i]}}; luigi \\
+  pbsdsh -n $((48 *$X)) -- bash -l -c "source {env}; ${{DAEMONS[$i]}}; luigi \\
     {options} \\
     --level1-list ${{FILES[$i]}} \\
     --outdir ${{OUTDIRS[$i]}} \\
-    --workers 16" &
+    --workers {workers}" &
 done;
 wait
 """
@@ -51,13 +53,60 @@ wait
 
 FMT1 = "level1-scenes-{jobid}.txt"
 FMT2 = "jobid-{jobid}.bash"
+FMT3 = "scratch/{f_project}+gdata/{f_project}"
 DAEMON_FMT = "luigid --background --logdir {}"
 ARD_FMT = "--module wagl.{workflow_type} ARD --workflow {workflow} --vertices '{vertices}' --buffer-distance {distance} --method {method}{pq}"  # pylint: disable=line-too-long
 TASK_FMT = "--module wagl.multifile_workflow CallTask --task {task}"
 
 
+def _get_project_for_path(path: Path):
+    """Get the NCI project used to store the given path, if any.
+    >>> _get_project_for_path(Path('/g/data/v10/some/data/path.txt'))
+    'v10'
+    >>> _get_project_for_path(Path('/g/data4/fk4/some/data/path.txt'))
+    'fk4'
+    >>> _get_project_for_path(Path('/scratch/da82/path.txt'))
+    'da82'
+    >>> _get_project_for_path(Path('/tmp/other/data')).
+    """
+    posix_path = path.as_posix()
+    if posix_path.startswith("/g/data"):
+        return posix_path.split("/")[3]
+    if posix_path.startswith("/scratch/"):
+        return posix_path.split("/")[2]
+    return None
+
+
+def _filesystem_projects(level1_list: list, env: str, logdir: str, workdir: str):
+    """Collect all the filesystem projects into a set."""
+    fs_projects = {None}
+
+    fs_projects.add(_get_project_for_path(Path(workdir)))
+    fs_projects.add(_get_project_for_path(Path(logdir)))
+    fs_projects.add(_get_project_for_path(Path(env)))
+    fs_projects.add(_get_project_for_path(Path(subprocess.__file__)))
+
+    with open(level1_list) as src:
+        paths = [p.strip() for p in src.readlines()]
+
+    for pathname in paths:
+        fs_projects.add(_get_project_for_path(Path(pathname)))
+
+    fs_projects.remove(None)
+
+    return fs_projects
+
+
 def _submit_dsh(
-    scattered, options, env, batchid, batch_logdir, batch_outdir, pbs_resources, test
+    scattered,
+    options,
+    env,
+    batchid,
+    batch_logdir,
+    batch_outdir,
+    pbs_resources,
+    test,
+    workers,
 ):
     """Submit a single PBSDSH formatted job."""
     files = []
@@ -98,6 +147,7 @@ def _submit_dsh(
         files="".join(files),
         daemons="".join(daemons),
         outdirs="".join(outdirs),
+        workers=workers,
     )
 
     out_fname = pjoin(batch_logdir, FMT2.format(jobid=batchid))
@@ -122,6 +172,7 @@ def _submit_multiple(
     local_scheduler,
     pbs_resources,
     test,
+    workers,
 ):
     """Submit multiple PBS formatted jobs."""
     print(f"Executing Batch: {batchid}")
@@ -157,6 +208,7 @@ def _submit_multiple(
             scene_list=out_fname,
             outdir=job_outdir,
             scheduler=scheduler,
+            workers=workers,
         )
 
         out_fname = pjoin(jobdir, FMT2.format(jobid=jobid))
@@ -182,10 +234,10 @@ def run(
     outdir=None,
     logdir=None,
     env=None,
-    nodes=10,
+    nodes=1,
     project=None,
     queue="normal",
-    hours=48,
+    walltime="48:00:00",
     buffer_distance=8000,
     email="your.name@something.com",
     local_scheduler=False,
@@ -193,6 +245,9 @@ def run(
     test=False,
     singlefile=False,
     task=None,
+    ncpus=48,
+    workers=30,
+    memory=192,
 ):
     """Base level program."""
     with open(level1) as src:
@@ -205,17 +260,21 @@ def run(
     batch_logdir = pjoin(logdir, f"batchid-{batchid}")
     batch_outdir = pjoin(outdir, f"batchid-{batchid}")
 
+    fs_projects = _filesystem_projects(level1, env, logdir, outdir)
+    fsys_projects = "+".join([FMT3.format(f_project=f) for f in fs_projects])
+
     # compute resources
-    memory = 32 * nodes if dsh else 32
-    ncpus = 16 * nodes if dsh else 16
+    memory = memory * nodes
+    ncpus = ncpus * nodes
 
     pbs_resources = PBS_RESOURCES.format(
         project=project,
         queue=queue,
-        hours=hours,
+        walltime=walltime,
         memory=memory,
         ncpus=ncpus,
         email=email,
+        filesystem_projects=fsys_projects,
     )
 
     pq = " --pixel-quality" if pixel_quality else ""
@@ -250,6 +309,7 @@ def run(
             batch_outdir,
             pbs_resources,
             test,
+            workers,
         )
     else:
         _submit_multiple(
@@ -262,6 +322,7 @@ def run(
             local_scheduler,
             pbs_resources,
             test,
+            workers,
         )
 
 
@@ -304,6 +365,18 @@ def _parser():
         help=("The distance in units to buffer an image's " "extents by."),
     )
     parser.add_argument(
+        "--ncpus", default=48, type=int, help="The number of cpus per node to request."
+    )
+    parser.add_argument(
+        "--workers",
+        default=30,
+        type=int,
+        help="The number of workers per node to request.",
+    )
+    parser.add_argument(
+        "--memory", default=192, type=int, help="The memory in GB to request per node."
+    )
+    parser.add_argument(
         "--pixel-quality",
         action="store_true",
         help=("Whether to run the pixel quality workflow, " "if applicable, or not."),
@@ -314,7 +387,7 @@ def _parser():
     )
     parser.add_argument("--env", help="Environment script to source.", required=True)
     parser.add_argument(
-        "--nodes", type=int, help="The number of nodes to request.", default=10
+        "--nodes", type=int, help="The number of nodes to request.", default=1
     )
     parser.add_argument("--project", help="Project code to run under.", required=True)
     parser.add_argument(
@@ -322,7 +395,9 @@ def _parser():
         default="normal",
         help=("Queue to submit the job into, " "eg normal, express."),
     )
-    parser.add_argument("--hours", help="Job walltime in hours.", default=48)
+    parser.add_argument(
+        "--walltime", default="48:00:00", help="Job walltime in `hh:mm:ss` format."
+    )
     parser.add_argument(
         "--email", help="Notification email address.", default="your.name@something.com"
     )
@@ -375,7 +450,7 @@ def main():
         args.nodes,
         args.project,
         args.queue,
-        args.hours,
+        args.walltime,
         args.buffer_distance,
         args.email,
         args.local_scheduler,
@@ -383,6 +458,9 @@ def main():
         args.test,
         args.singlefile,
         args.task,
+        args.ncpus,
+        args.workers,
+        args.memory,
     )
 
 
