@@ -16,7 +16,7 @@ from eugl.fmask import fmask
 from eugl.gqa import GQATask
 from luigi.local_target import LocalFileSystem
 from wagl.acquisition import preliminary_acquisitions_data
-from wagl.logs import ERROR_LOGGER
+from wagl.logs import TASK_LOGGER
 from wagl.singlefile_workflow import DataStandardisation
 
 from tesp.constants import ProductPackage
@@ -27,12 +27,24 @@ QA_PRODUCTS = ["gqa", "fmask"]
 @luigi.Task.event_handler(luigi.Event.FAILURE)
 def on_failure(task, exception):
     """Capture any Task Failure here."""
-    ERROR_LOGGER.error(
+    TASK_LOGGER.exception(
         task=task.get_task_family(),
         params=task.to_str_params(),
         level1=getattr(task, "level1", ""),
+        status="failure",
         exception=exception.__str__(),
         traceback=traceback.format_exc().splitlines(),
+    )
+
+
+@luigi.Task.event_handler(luigi.Event.SUCCESS)
+def on_success(task):
+    """Capture any Task Success here."""
+    TASK_LOGGER.info(
+        task=task.get_task_family(),
+        params=task.to_str_params(),
+        level1=getattr(task, "level1", ""),
+        status="success",
     )
 
 
