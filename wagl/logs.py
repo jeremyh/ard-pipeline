@@ -1,7 +1,7 @@
 """Logging configuration for wagl logs.
 
 Defines structured logging for:
-    * Errors            -- qualname error
+    * Task message      -- qualname task
     * Status messages   -- qualname status
     * Luigi interface   -- qualname luigi-interface
 """
@@ -35,7 +35,7 @@ class FormatJSONL(logging.Formatter):
         return
 
 
-ERROR_LOGGER = get_wrapped_logger("error", stack_info=True)
+TASK_LOGGER = get_wrapped_logger("task")
 STATUS_LOGGER = get_wrapped_logger("status")
 
 INTERFACE_LOGGER = logging.getLogger("luigi-interface")

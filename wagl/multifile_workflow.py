@@ -52,7 +52,7 @@ from wagl.incident_exiting_angles import (
     _relative_azimuth_slope,
 )
 from wagl.interpolation import _interpolate, link_interpolated_data
-from wagl.logs import ERROR_LOGGER
+from wagl.logs import TASK_LOGGER
 from wagl.longitude_latitude_arrays import _create_lon_lat_grids
 from wagl.modtran import (
     JsonEncoder,
@@ -77,12 +77,25 @@ from wagl.terrain_shadow_masks import (
 @luigi.Task.event_handler(luigi.Event.FAILURE)
 def on_failure(task, exception):
     """Capture any Task Failure here."""
-    ERROR_LOGGER.error(
+    TASK_LOGGER.exception(
         task=task.get_task_family(),
         params=task.to_str_params(),
         level1=getattr(task, "level1", ""),
+        stack_info=True,
+        status="failure",
         exception=exception.__str__(),
         traceback=traceback.format_exc().splitlines(),
+    )
+
+
+@luigi.Task.event_handler(luigi.Event.SUCCESS)
+def on_success(task):
+    """Capture any Task Success here."""
+    TASK_LOGGER.info(
+        task=task.get_task_family(),
+        params=task.to_str_params(),
+        level1=getattr(task, "level1", ""),
+        status="success",
     )
 
 
