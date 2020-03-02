@@ -19,7 +19,7 @@ setup(
         "numpy",
         "rasterio",
         "rios",
-        "python_fmask",
+        "python-fmask",
         "wagl",
     ],
     package_data={"eugl.gqa": ["data/*.csv"]},
