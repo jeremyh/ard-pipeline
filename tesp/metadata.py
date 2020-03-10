@@ -1,11 +1,11 @@
-from tesp.version import REPO_URL, __version__
+from tesp.version import REPO_URL, get_version
 
 
-def _get_eugl_metadata():
+def _get_tesp_metadata():
     return {
         "software_versions": {
             "tesp": {
-                "version": __version__,
+                "version": get_version(),
                 "repo_url": REPO_URL,
             }
         }
