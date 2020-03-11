@@ -204,9 +204,9 @@ class Package(luigi.Task):
         fmask_doc_fname = Path(self.input()["fmask"]["metadata"].path)
         gqa_doc_fname = Path(self.input()["gqa"].path)
 
-        tesp_doc_fname = Path(pjoin(self.workdir, f"{self.granule}.tesp.yaml"))
-        with open(tesp_doc_fname, "w") as src:
-            yaml.dump(_get_tesp_metadata(), src)
+        tesp_doc_fname = Path(self.workdir) / f"{self.granule}.tesp.yaml"
+        with tesp_doc_fname.open("w") as src:
+            yaml.safe_dump(_get_tesp_metadata(), src)
 
         md = {}
         for eods_granule in Granule.for_path(
