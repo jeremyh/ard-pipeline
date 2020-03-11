@@ -11,6 +11,7 @@ from os.path import join as pjoin
 from pathlib import Path
 
 import luigi
+import yaml
 from eodatasets3.wagl import Granule, package
 from eugl.fmask import fmask
 from eugl.gqa import GQATask
@@ -20,6 +21,7 @@ from wagl.logs import TASK_LOGGER
 from wagl.singlefile_workflow import DataStandardisation
 
 from tesp.constants import ProductPackage
+from tesp.metadata import _get_tesp_metadata
 
 QA_PRODUCTS = ["gqa", "fmask"]
 
@@ -202,6 +204,10 @@ class Package(luigi.Task):
         fmask_doc_fname = Path(self.input()["fmask"]["metadata"].path)
         gqa_doc_fname = Path(self.input()["gqa"].path)
 
+        tesp_doc_fname = Path(pjoin(self.workdir, f"{self.granule}.tesp.yaml"))
+        with open(tesp_doc_fname, "w") as src:
+            yaml.dump(_get_tesp_metadata(), src)
+
         md = {}
         for eods_granule in Granule.for_path(
             wagl_fname,
@@ -209,6 +215,7 @@ class Package(luigi.Task):
             fmask_image_path=fmask_img_fname,
             fmask_doc_path=fmask_doc_fname,
             gqa_doc_path=gqa_doc_fname,
+            tesp_doc_path=tesp_doc_fname,
         ):
             ds_id, md_path = package(Path(self.pkgdir), eods_granule, self.products)
 
