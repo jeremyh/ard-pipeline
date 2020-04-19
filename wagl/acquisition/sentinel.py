@@ -11,6 +11,8 @@ import pyproj
 from dateutil import parser
 from scipy import interpolate
 
+from wagl.logs import STATUS_LOGGER as LOG
+
 from .base import Acquisition
 
 
@@ -197,6 +199,13 @@ class Sentinel2Acquisition(Acquisition):
         if self._solar_zenith is None:
             self._retrieve_solar_zenith()
 
+        if esun is None:
+            LOG.warning(
+                "Using solar irradiance provided by ESA",
+                esun=self.solar_irradiance,
+            )
+            esun = np.float32(self.solar_irradiance)
+
         # Python style index
         if window is None:
             idx = (slice(None, None), slice(None, None))
@@ -205,11 +214,10 @@ class Sentinel2Acquisition(Acquisition):
 
         # coefficients
         # pylint: disable=unused-argument,unused-variable
-        np.float32(1 / (self.c1 * self.qv))
-        np.float32(np.pi * self.d2)
-        np.float32(self.solar_irradiance / 10)
-        self._solar_zenith[idx]
-        np.float32(self.radiance_scale_factor)
+        sf = np.float32(1 / (self.c1 * self.qv))  # noqa: F841
+        pi = np.float32(np.pi)  # noqa: F841
+        solar_zenith = self._solar_zenith[idx]  # noqa: F841
+        rsf = np.float32(self.radiance_scale_factor)  # noqa: F841
 
         # toa reflectance
         data = self.data(window=window)
@@ -219,7 +227,7 @@ class Sentinel2Acquisition(Acquisition):
         nulls = data == no_data
 
         # inversion
-        expr = "((data * esun * cos(solar_zenith) * sf) / pi_d2) * rsf"
+        expr = "(data * cos(solar_zenith) * sf * rsf) * esun / pi"
         radiance = numexpr.evaluate(expr)
         radiance[nulls] = out_no_data
 
