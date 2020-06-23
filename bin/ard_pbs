@@ -65,7 +65,7 @@ FMT2 = "jobid-{jobid}"
 FMT3 = "level1-scenes-{jobid}.txt"
 FMT4 = "jobid-{jobid}.bash"
 FMT5 = "batch-{batchid}-summary.bash"
-FMT6 = "batch-{batchid}-summary.bash"
+FMT6 = "batch-{batchid}-indexing.bash"
 FMT7 = "scratch/{f_project}+gdata/{f_project}"
 DAEMON_FMT = "luigid --background --logdir {}"
 
@@ -394,8 +394,8 @@ def main(
         pbs_resources = PBS_RESOURCES.format(
             project=project,
             queue="normal",
-            walltime="01:00:00",
-            memory=6,
+            walltime="00:30:00",
+            memory=4,
             ncpus=48,
             jobfs=2,
             filesystem_projects="".join(fsys_projects),
