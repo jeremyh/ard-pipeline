@@ -17,7 +17,7 @@ from eugl.fmask import fmask
 from eugl.gqa import GQATask
 from luigi.local_target import LocalFileSystem
 from wagl.acquisition import preliminary_acquisitions_data
-from wagl.logs import TASK_LOGGER
+from wagl.logs import STATUS_LOGGER, TASK_LOGGER
 from wagl.singlefile_workflow import DataStandardisation
 
 from tesp.constants import ProductPackage
@@ -220,7 +220,7 @@ class Package(luigi.Task):
             ds_id, md_path = package(Path(self.pkgdir), eods_granule, self.products)
 
             md[ds_id] = md_path
-            TASK_LOGGER.info(
+            STATUS_LOGGER.info(
                 "packaged dataset",
                 granule=self.granule,
                 level1=self.level1,
