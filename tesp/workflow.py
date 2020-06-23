@@ -220,6 +220,13 @@ class Package(luigi.Task):
             ds_id, md_path = package(Path(self.pkgdir), eods_granule, self.products)
 
             md[ds_id] = md_path
+            TASK_LOGGER.info(
+                "packaged dataset",
+                granule=self.granule,
+                level1=self.level1,
+                dataset_id=str(ds_id),
+                dataset_path=str(md_path),
+            )
 
         if self.cleanup:
             shutil.rmtree(self.workdir)
