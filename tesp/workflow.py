@@ -33,6 +33,7 @@ def on_failure(task, exception):
         task=task.get_task_family(),
         params=task.to_str_params(),
         level1=getattr(task, "level1", ""),
+        granule=getattr(task, "granule", ""),
         stack_info=True,
         status="failure",
         exception=exception.__str__(),
@@ -47,6 +48,7 @@ def on_success(task):
         task=task.get_task_family(),
         params=task.to_str_params(),
         level1=getattr(task, "level1", ""),
+        granule=getattr(task, "granule", ""),
         status="success",
     )
 
