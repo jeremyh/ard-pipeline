@@ -318,7 +318,7 @@ def _submit_index(indir, outdir, batch_id, pbs_resources, env, job_id, test):
     default=30,
     help="The number of workers to request per node.",
 )
-@click.option("--nodes", default=None, help="The number of nodes to request.")
+@click.option("--nodes", default=0, help="The number of nodes to request.")
 @click.option("--memory", default=192, help="The memory in GB to request per node.")
 @click.option("--jobfs", default=50, help="The jobfs memory in GB to request per node.")
 @click.option("--project", required=True, help="Project code to run under.")
@@ -372,7 +372,7 @@ def main(
     """
     with open(level1_list) as src:
         scenes = src.readlines()
-    if nodes is None:
+    if nodes == 0:
         nodes = _calc_nodes_req(len(scenes), walltime, workers)
     scattered = scatter(scenes, nodes)
 
