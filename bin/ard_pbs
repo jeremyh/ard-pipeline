@@ -332,7 +332,7 @@ def _submit_index(indir, outdir, batch_id, pbs_resources, env, job_id, test):
 )
 @click.option("--email", default="", help="Notification email address.")
 @click.option(
-    "--datacube-env",
+    "--index-datacube-env",
     type=click.Path(exists=True, readable=True),
     help="Datacube specific environment script to source.",
 )
@@ -357,7 +357,7 @@ def main(
     queue,
     walltime,
     email,
-    datacube_env,
+    index_datacube_env,
     test,
 ):
     """Equally partition a list of scenes across n nodes and submit
@@ -415,7 +415,7 @@ def main(
     )
     nci_job_ids.append(job_id)
 
-    if datacube_env:
+    if index_datacube_env:
         pbs_resources = PBS_RESOURCES.format(
             project=project,
             queue="normal",
@@ -431,7 +431,7 @@ def main(
             batch_logdir,
             batchid,
             pbs_resources,
-            datacube_env,
+            index_datacube_env,
             job_id,
             test,
         )
