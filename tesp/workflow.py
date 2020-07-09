@@ -17,7 +17,7 @@ from eugl.fmask import fmask
 from eugl.gqa import GQATask
 from luigi.local_target import LocalFileSystem
 from wagl.acquisition import preliminary_acquisitions_data
-from wagl.logs import TASK_LOGGER
+from wagl.logs import STATUS_LOGGER, TASK_LOGGER
 from wagl.singlefile_workflow import DataStandardisation
 
 from tesp.constants import ProductPackage
@@ -33,6 +33,7 @@ def on_failure(task, exception):
         task=task.get_task_family(),
         params=task.to_str_params(),
         level1=getattr(task, "level1", ""),
+        granule=getattr(task, "granule", ""),
         stack_info=True,
         status="failure",
         exception=exception.__str__(),
@@ -47,6 +48,7 @@ def on_success(task):
         task=task.get_task_family(),
         params=task.to_str_params(),
         level1=getattr(task, "level1", ""),
+        granule=getattr(task, "granule", ""),
         status="success",
     )
 
@@ -220,6 +222,13 @@ class Package(luigi.Task):
             ds_id, md_path = package(Path(self.pkgdir), eods_granule, self.products)
 
             md[ds_id] = md_path
+            STATUS_LOGGER.info(
+                "packaged dataset",
+                granule=self.granule,
+                level1=self.level1,
+                dataset_id=str(ds_id),
+                dataset_path=str(md_path),
+            )
 
         if self.cleanup:
             shutil.rmtree(self.workdir)
