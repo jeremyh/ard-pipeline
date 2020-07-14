@@ -72,11 +72,5 @@ def retrieve_status(fname, task_name):
     l1_running = running.merge(
         l1_granules, how="left", right_on="task_id", left_on=f"id_{task_name}"
     )
-    l1_running = running.merge(
-        l1_datasets, how="left", right_on="task_id", left_on=f"id_{task_name}"
-    )
-    l1_running = running.merge(
-        l1_datasets, how="left", right_on="task_id", left_on=f"id_{task_name}"
-    )
 
     return l1_done, l1_fail, l1_pending, l1_running
