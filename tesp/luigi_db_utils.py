@@ -33,6 +33,10 @@ def retrieve_status(fname, task_name):
 
     task = tasks[tasks.name == task_name]
     l1_datasets = params[params.name == "level1"]
+    granules = params[params.name == "granule"]
+    l1_granules = l1_datasets.merge(
+        granules, suffixes=("_level1", "_granule"), on="task_id"
+    )
 
     # event status for the DataStandardisation Task
     status = task.merge(
@@ -57,13 +61,16 @@ def retrieve_status(fname, task_name):
     running = final_status[final_status.event_name == "RUNNING"]
 
     l1_done = done.merge(
-        l1_datasets, how="left", right_on="task_id", left_on=f"id_{task_name}"
+        l1_granules, how="left", right_on="task_id", left_on=f"id_{task_name}"
     )
     l1_fail = fail.merge(
-        l1_datasets, how="left", right_on="task_id", left_on=f"id_{task_name}"
+        l1_granules, how="left", right_on="task_id", left_on=f"id_{task_name}"
     )
     l1_pending = pending.merge(
-        l1_datasets, how="left", right_on="task_id", left_on=f"id_{task_name}"
+        l1_granules, how="left", right_on="task_id", left_on=f"id_{task_name}"
+    )
+    l1_running = running.merge(
+        l1_granules, how="left", right_on="task_id", left_on=f"id_{task_name}"
     )
     l1_running = running.merge(
         l1_datasets, how="left", right_on="task_id", left_on=f"id_{task_name}"
