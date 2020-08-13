@@ -420,9 +420,9 @@ def main(
             project=project,
             queue="normal",
             walltime="00:30:00",
-            memory=4,
+            memory=192,
             ncpus=48,
-            jobfs=2,
+            jobfs=20,
             filesystem_projects="".join(fsys_projects),
             email=("#PBS -M " + email) if email else "",
         )
