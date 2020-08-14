@@ -128,7 +128,7 @@ def slope_aspect_arrays(
     # Output the reprojected result
     # Initialise the output files
     if out_group is None:
-        fid = h5py.File("slope-aspect.h5", driver="core", backing_store=False)
+        fid = h5py.File("slope-aspect.h5", "w", driver="core", backing_store=False)
     else:
         fid = out_group
 

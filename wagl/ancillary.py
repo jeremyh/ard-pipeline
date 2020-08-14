@@ -223,7 +223,7 @@ def collect_ancillary(
     """
     # Initialise the output files
     if out_group is None:
-        fid = h5py.File("ancillary.h5", driver="core", backing_store=False)
+        fid = h5py.File("ancillary.h5", "w", driver="core", backing_store=False)
     else:
         fid = out_group
 
@@ -321,7 +321,7 @@ def collect_sbt_ancillary(
     """
     # Initialise the output files
     if out_group is None:
-        fid = h5py.File("sbt-ancillary.h5", driver="core", backing_store=False)
+        fid = h5py.File("sbt-ancillary.h5", "w", driver="core", backing_store=False)
     else:
         fid = out_group
 
@@ -493,7 +493,7 @@ def collect_nbar_ancillary(
     """
     # Initialise the output files
     if out_group is None:
-        fid = h5py.File("nbar-ancillary.h5", driver="core", backing_store=False)
+        fid = h5py.File("nbar-ancillary.h5", "w", driver="core", backing_store=False)
     else:
         fid = out_group
 

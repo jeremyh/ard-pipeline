@@ -161,7 +161,7 @@ def get_dsm(
     # Output the reprojected result
     # Initialise the output files
     if out_group is None:
-        fid = h5py.File("dsm-subset.h5", driver="core", backing_store=False)
+        fid = h5py.File("dsm-subset.h5", "w", driver="core", backing_store=False)
     else:
         fid = out_group
 

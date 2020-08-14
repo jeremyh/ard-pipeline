@@ -959,7 +959,9 @@ def calculate_angles(
 
     # Initialise the output files
     if out_group is None:
-        fid = h5py.File("satellite-solar-angles.h5", driver="core", backing_store=False)
+        fid = h5py.File(
+            "satellite-solar-angles.h5", "w", driver="core", backing_store=False
+        )
     else:
         fid = out_group
 
