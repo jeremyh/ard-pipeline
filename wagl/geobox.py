@@ -210,6 +210,10 @@ class GriddedGeoBox:
             self.crs = osr.SpatialReference()
             if self.crs == self.crs.SetFromUserInput(crs):
                 raise ValueError(f"Invalid crs: {crs}")
+
+        # enforce x,y axis ordering
+        self.crs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
         self.transform = Affine(
             self.pixelsize[0], 0, self.origin[0], 0, -self.pixelsize[1], self.origin[1]
         )
@@ -350,6 +354,10 @@ class GriddedGeoBox:
             err = "Err: to_crs is not an instance of osr.SpatialReference: {}"
             err = err.format(type(to_crs))
             raise TypeError(err)
+
+        # ensure we using the traditional x, y axis ordering
+        self.crs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+        to_crs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
         # Define the transform we are transforming to
         transform = osr.CoordinateTransformation(self.crs, to_crs)
