@@ -777,7 +777,7 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1, tolerance
         # get the index of the closest water vapour observation
         # which would be the maximum timedelta
         # as we're only dealing with negative timedelta's here
-        idx = result.argmax()
+        idx = result.idxmax()
         record = index.iloc[idx]
         dataset_name = record.dataset_name
 
