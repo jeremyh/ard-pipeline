@@ -90,7 +90,7 @@ def self_shadow(
 
     # Initialise the output file
     if out_group is None:
-        fid = h5py.File("self-shadow.h5", driver="core", backing_store=False)
+        fid = h5py.File("self-shadow.h5", "w", driver="core", backing_store=False)
     else:
         fid = out_group
 
@@ -461,7 +461,7 @@ def calculate_cast_shadow(
     # Initialise the output file
     if out_group is None:
         fid = h5py.File(
-            f"cast-shadow-{source_dir}.h5", driver="core", backing_store=False
+            f"cast-shadow-{source_dir}.h5", "w", driver="core", backing_store=False
         )
     else:
         fid = out_group
@@ -594,7 +594,7 @@ def combine_shadow_masks(
 
     # Initialise the output files
     if out_group is None:
-        fid = h5py.File("combined-shadow.h5", driver="core", backing_store=False)
+        fid = h5py.File("combined-shadow.h5", "w", driver="core", backing_store=False)
     else:
         fid = out_group
 

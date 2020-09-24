@@ -223,7 +223,7 @@ def collect_ancillary(
     """
     # Initialise the output files
     if out_group is None:
-        fid = h5py.File("ancillary.h5", driver="core", backing_store=False)
+        fid = h5py.File("ancillary.h5", "w", driver="core", backing_store=False)
     else:
         fid = out_group
 
@@ -321,7 +321,7 @@ def collect_sbt_ancillary(
     """
     # Initialise the output files
     if out_group is None:
-        fid = h5py.File("sbt-ancillary.h5", driver="core", backing_store=False)
+        fid = h5py.File("sbt-ancillary.h5", "w", driver="core", backing_store=False)
     else:
         fid = out_group
 
@@ -493,7 +493,7 @@ def collect_nbar_ancillary(
     """
     # Initialise the output files
     if out_group is None:
-        fid = h5py.File("nbar-ancillary.h5", driver="core", backing_store=False)
+        fid = h5py.File("nbar-ancillary.h5", "w", driver="core", backing_store=False)
     else:
         fid = out_group
 
@@ -777,7 +777,7 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1, tolerance
         # get the index of the closest water vapour observation
         # which would be the maximum timedelta
         # as we're only dealing with negative timedelta's here
-        idx = result.argmax()
+        idx = result.idxmax()
         record = index.iloc[idx]
         dataset_name = record.dataset_name
 

@@ -120,7 +120,9 @@ def surface_brightness_temperature(
 
     # Initialise the output file
     if out_group is None:
-        fid = h5py.File("surface-temperature.h5", driver="core", backing_store=False)
+        fid = h5py.File(
+            "surface-temperature.h5", "w", driver="core", backing_store=False
+        )
     else:
         fid = out_group
 

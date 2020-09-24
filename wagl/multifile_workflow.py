@@ -1057,7 +1057,7 @@ class LinkwaglOutputs(luigi.Task):
                             new_path = ppjoin(self.granule, grp_name, pth)
                             create_external_link(fname, pth, out_fname, new_path)
 
-            with h5py.File(out_fname) as fid:
+            with h5py.File(out_fname, "a") as fid:
                 fid.attrs["level1_uri"] = self.level1
 
 
