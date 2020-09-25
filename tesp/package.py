@@ -619,7 +619,9 @@ def get_level1_tags(container, granule=None, yamls_path=None):
     if yamls_path:
         # TODO define a consistent file structure where yaml metadata exists
         yaml_fname = pjoin(
-            yamls_path, basename(dirname(_acq.pathname)), f"{container.label}.yaml"
+            yamls_path,
+            basename(dirname(_acq.pathname)),
+            f"{container.label}.yaml",
         )
 
         # quick workaround if no source yaml
