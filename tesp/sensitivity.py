@@ -117,7 +117,7 @@ class Experiment(luigi.Task):
         if self.input():
             unpack(self.input(), outdir)
 
-        with open(pjoin(self.pkgdir, self.tag, ".done"), "w"):
+        with open(pjoin(self.pkgdir, self.tag, ".done"), "w") as fl:  # noqa: F841
             pass
 
         if self.input() and self.cleanup:
