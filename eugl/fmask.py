@@ -1,7 +1,7 @@
 """Execution method for FMask - http://pythonfmask.org - (cloud, cloud shadow, water and
-snow/ice classification) code supporting Sentinel-2 Level 1 C SAFE format zip archives hosted by the
-Australian Copernicus Data Hub - http://www.copernicus.gov.au/ - for direct (zip) read access
-by datacube.
+snow/ice classification) code supporting Sentinel-2 Level 1 C SAFE format zip archives
+hosted by the Australian Copernicus Data Hub - http://www.copernicus.gov.au/ - for
+direct (zip) read access by datacube.
 """
 import logging
 import os
