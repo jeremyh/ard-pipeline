@@ -72,9 +72,7 @@ def run_command(command, work_dir, timeout=None, command_name=None):
             raise CommandError('"%s" timed out' % (command_name))
         else:
             raise CommandError(
-                '"{}" failed with return code: {}'.format(
-                    command_name, str(_proc.returncode)
-                )
+                f'"{command_name}" failed with return code: {str(_proc.returncode)}'
             )
     else:
         _LOG.debug(stdout.decode("utf-8"))
