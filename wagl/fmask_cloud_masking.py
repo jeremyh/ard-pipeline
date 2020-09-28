@@ -1214,7 +1214,11 @@ def nd2toarbt(filename, images=None):
         # convert from Kelvin to Celcius with 0.01 scale_facor
         im_B6 = numexpr.evaluate(
             "a * ((K2 / log((K1 / im_B6) + one)) - b)",
-            {"a": np.float32(100), "b": np.float32(273.15), "one": np.float32(1.0)},
+            {
+                "a": np.float32(100),
+                "b": np.float32(273.15),
+                "one": np.float32(1.0),
+            },
             locals(),
         )
 

@@ -2,7 +2,10 @@ import datetime
 import unittest
 
 from wagl.acquisition import acquisitions
-from wagl.acquisition.sentinel import Sentinel2aAcquisition, Sentinel2bAcquisition
+from wagl.acquisition.sentinel import (
+    Sentinel2aAcquisition,
+    Sentinel2bAcquisition,
+)
 from wagl.constants import BandType
 
 from .data import S2A_SCENE1, S2B_SCENE1
