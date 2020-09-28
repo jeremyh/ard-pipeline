@@ -2,33 +2,37 @@
 
 # coding=utf-8
 # pylint: skip-file
-"""A near literal port of the FMask matlab code to python using numpy/scipy and itk.
-- As a result of the literal port, original comments should still be intact - as is the original code structure.
+# flake8: noqa
+"""
+ A near literal port of the FMask matlab code to python using numpy/scipy and itk.
+ - As a result of the literal port, original comments should still be intact - as is the original code structure.
 
-Transcription History
-1.6.3 transcription Mitchell Wheeler
-3.0 transcription Josh Sixsmith
-+ added skimage library
-+ better handling for imagery of different resolutions
+ Transcription History
+ 1.6.3 transcription Mitchell Wheeler
+ 3.0 transcription Josh Sixsmith
+     + added skimage library
+     + better handling for imagery of different resolutions
 """
 
-import argparse
-import datetime
-import gc
-import logging
-import math
-import os.path
-import re
+from __future__ import absolute_import, print_function
 import sys
+import re
+import gc
 import time
-
+import math
+import logging
+import datetime
+import os.path
+import argparse
+import numpy
 import numexpr
-import numpy as np
-import scipy.ndimage.morphology
-import scipy.signal
 import scipy.stats
+import scipy.signal
+import scipy.ndimage.morphology
 from osgeo import gdal
-from skimage import measure, morphology, segmentation
+from skimage import morphology
+from skimage import measure
+from skimage import segmentation
 
 # pylint: disable=invalid-name
 
@@ -427,12 +431,14 @@ def match_file(dir_path, pattern):
 
 
 def im_info(filename):
-    """A function to retrieve the geotransform and projection details using GDAL.
+    """
+    A function to retrieve the geotransform and projection details using GDAL.
     The original MATLAB code handles it differently, we'll just implement something unique here
     and let GDAL automatically handle the read/write of the projection info.
     Less messy than the MATLAB code which assumes that everything is in UTM.
     Some products may come as Lat/Lon geographic projections.
     """
+
     img = gdal.Open(filename)
     geoT = img.GetGeoTransform()
     prj = img.GetProjection()
@@ -529,10 +535,12 @@ def imfill(img, ts):
 
 
 def imfill_skimage(img):
-    """Replicates the imfill function available within MATLAB.
+    """
+    Replicates the imfill function available within MATLAB.
     Based on the example provided in http://scikit-image.org/docs/dev/auto_examples/plot_holes_and_peaks.html#example-plot-holes-and-peaks-py.
 
     """
+
     seed = img.copy()
 
     # Define seed points and the start points for the erosion process.
@@ -548,7 +556,8 @@ def imfill_skimage(img):
 
 
 def lndhdrread(filename):
-    """Load Landsat scene MTL file metadata.
+    """
+    Load Landsat scene MTL file metadata.
 
     :param filename:
         A string containing the full path the scene's MTL file.
@@ -577,7 +586,7 @@ def lndhdrread(filename):
     ##
     # open and read hdr file
     data = {}
-    fl = open(filename)
+    fl = open(filename, "r")
     file_lines = fl.readlines()
     for line in file_lines:
         values = line.split(" = ")
@@ -600,49 +609,49 @@ def lndhdrread(filename):
         # variables.
         Refmin = None
         # Test for New/Old MTL file
-        if "LANDSAT_SCENE_ID" not in data.keys():
+        if not "LANDSAT_SCENE_ID" in data.keys():
             # Process Old version of MTL file
 
             # read in LMAX
-            Lmax_B1 = np.float32(data["LMAX_BAND1"])
-            Lmax_B2 = np.float32(data["LMAX_BAND2"])
-            Lmax_B3 = np.float32(data["LMAX_BAND3"])
-            Lmax_B4 = np.float32(data["LMAX_BAND4"])
-            Lmax_B5 = np.float32(data["LMAX_BAND5"])
+            Lmax_B1 = numpy.float32(data["LMAX_BAND1"])
+            Lmax_B2 = numpy.float32(data["LMAX_BAND2"])
+            Lmax_B3 = numpy.float32(data["LMAX_BAND3"])
+            Lmax_B4 = numpy.float32(data["LMAX_BAND4"])
+            Lmax_B5 = numpy.float32(data["LMAX_BAND5"])
             if Lnum == 7:
-                Lmax_B6 = np.float32(data["LMAX_BAND61"])
+                Lmax_B6 = numpy.float32(data["LMAX_BAND61"])
             else:
-                Lmax_B6 = np.float32(data["LMAX_BAND6"])
+                Lmax_B6 = numpy.float32(data["LMAX_BAND6"])
 
-            Lmax_B7 = np.float32(data["LMAX_BAND7"])
+            Lmax_B7 = numpy.float32(data["LMAX_BAND7"])
             Lmax = (Lmax_B1, Lmax_B2, Lmax_B3, Lmax_B4, Lmax_B5, Lmax_B6, Lmax_B7)
 
             # Read in LMIN
-            Lmin_B1 = np.float32(data["LMIN_BAND1"])
-            Lmin_B2 = np.float32(data["LMIN_BAND2"])
-            Lmin_B3 = np.float32(data["LMIN_BAND3"])
-            Lmin_B4 = np.float32(data["LMIN_BAND4"])
-            Lmin_B5 = np.float32(data["LMIN_BAND5"])
+            Lmin_B1 = numpy.float32(data["LMIN_BAND1"])
+            Lmin_B2 = numpy.float32(data["LMIN_BAND2"])
+            Lmin_B3 = numpy.float32(data["LMIN_BAND3"])
+            Lmin_B4 = numpy.float32(data["LMIN_BAND4"])
+            Lmin_B5 = numpy.float32(data["LMIN_BAND5"])
             if Lnum == 7:
-                Lmin_B6 = np.float32(data["LMIN_BAND61"])
+                Lmin_B6 = numpy.float32(data["LMIN_BAND61"])
             else:
-                Lmin_B6 = np.float32(data["LMIN_BAND6"])
+                Lmin_B6 = numpy.float32(data["LMIN_BAND6"])
 
-            Lmin_B7 = np.float32(data["LMIN_BAND7"])
+            Lmin_B7 = numpy.float32(data["LMIN_BAND7"])
             Lmin = (Lmin_B1, Lmin_B2, Lmin_B3, Lmin_B4, Lmin_B5, Lmin_B6, Lmin_B7)
 
             # Read in QCALMAX
-            Qcalmax_B1 = np.float32(data["QCALMAX_BAND1"])
-            Qcalmax_B2 = np.float32(data["QCALMAX_BAND2"])
-            Qcalmax_B3 = np.float32(data["QCALMAX_BAND3"])
-            Qcalmax_B4 = np.float32(data["QCALMAX_BAND4"])
-            Qcalmax_B5 = np.float32(data["QCALMAX_BAND5"])
+            Qcalmax_B1 = numpy.float32(data["QCALMAX_BAND1"])
+            Qcalmax_B2 = numpy.float32(data["QCALMAX_BAND2"])
+            Qcalmax_B3 = numpy.float32(data["QCALMAX_BAND3"])
+            Qcalmax_B4 = numpy.float32(data["QCALMAX_BAND4"])
+            Qcalmax_B5 = numpy.float32(data["QCALMAX_BAND5"])
             if Lnum == 7:
-                Qcalmax_B6 = np.float32(data["QCALMAX_BAND61"])
+                Qcalmax_B6 = numpy.float32(data["QCALMAX_BAND61"])
             else:
-                Qcalmax_B6 = np.float32(data["QCALMAX_BAND6"])
+                Qcalmax_B6 = numpy.float32(data["QCALMAX_BAND6"])
 
-            Qcalmax_B7 = np.float32(data["QCALMAX_BAND7"])
+            Qcalmax_B7 = numpy.float32(data["QCALMAX_BAND7"])
             Qcalmax = (
                 Qcalmax_B1,
                 Qcalmax_B2,
@@ -654,17 +663,17 @@ def lndhdrread(filename):
             )
 
             # Read in QCALMIN
-            Qcalmin_B1 = np.float32(data["QCALMIN_BAND1"])
-            Qcalmin_B2 = np.float32(data["QCALMIN_BAND2"])
-            Qcalmin_B3 = np.float32(data["QCALMIN_BAND3"])
-            Qcalmin_B4 = np.float32(data["QCALMIN_BAND4"])
-            Qcalmin_B5 = np.float32(data["QCALMIN_BAND5"])
+            Qcalmin_B1 = numpy.float32(data["QCALMIN_BAND1"])
+            Qcalmin_B2 = numpy.float32(data["QCALMIN_BAND2"])
+            Qcalmin_B3 = numpy.float32(data["QCALMIN_BAND3"])
+            Qcalmin_B4 = numpy.float32(data["QCALMIN_BAND4"])
+            Qcalmin_B5 = numpy.float32(data["QCALMIN_BAND5"])
             if Lnum == 7:
-                Qcalmin_B6 = np.float32(data["QCALMIN_BAND61"])
+                Qcalmin_B6 = numpy.float32(data["QCALMIN_BAND61"])
             else:
-                Qcalmin_B6 = np.float32(data["QCALMIN_BAND6"])
+                Qcalmin_B6 = numpy.float32(data["QCALMIN_BAND6"])
 
-            Qcalmin_B7 = np.float32(data["QCALMIN_BAND7"])
+            Qcalmin_B7 = numpy.float32(data["QCALMIN_BAND7"])
             Qcalmin = (
                 Qcalmin_B1,
                 Qcalmin_B2,
@@ -687,17 +696,17 @@ def lndhdrread(filename):
             ijdim_thm = (Line_thm, Sample_thm)
 
             # Read in resolution of optical and thermal bands
-            reso_ref = np.float32(data["GRID_CELL_SIZE_REF"])
-            reso_thm = np.float32(data["GRID_CELL_SIZE_THM"])
+            reso_ref = numpy.float32(data["GRID_CELL_SIZE_REF"])
+            reso_thm = numpy.float32(data["GRID_CELL_SIZE_THM"])
 
             # Read in UTM Zone Number
-            zc = np.float32(data["ZONE_NUMBER"])
+            zc = numpy.float32(data["ZONE_NUMBER"])
             # Read in Solar Azimuth & Elevation angle (degrees)
-            azi = np.float32(data["SUN_AZIMUTH"])
-            zen = 90 - np.float32(data["SUN_ELEVATION"])
+            azi = numpy.float32(data["SUN_AZIMUTH"])
+            zen = 90 - numpy.float32(data["SUN_ELEVATION"])
             # Read in upperleft mapx,y
-            ulx = np.float32(data["PRODUCT_UL_CORNER_MAPX"])
-            uly = np.float32(data["PRODUCT_UL_CORNER_MAPY"])
+            ulx = numpy.float32(data["PRODUCT_UL_CORNER_MAPX"])
+            uly = numpy.float32(data["PRODUCT_UL_CORNER_MAPY"])
             ul = (ulx, uly)
             # Read in date of year
             char_doy = data["DATEHOUR_CONTACT_PERIOD"]
@@ -706,45 +715,45 @@ def lndhdrread(filename):
             # Process New version of MTL file
 
             # read in LMAX
-            Lmax_B1 = np.float32(data["RADIANCE_MAXIMUM_BAND_1"])
-            Lmax_B2 = np.float32(data["RADIANCE_MAXIMUM_BAND_2"])
-            Lmax_B3 = np.float32(data["RADIANCE_MAXIMUM_BAND_3"])
-            Lmax_B4 = np.float32(data["RADIANCE_MAXIMUM_BAND_4"])
-            Lmax_B5 = np.float32(data["RADIANCE_MAXIMUM_BAND_5"])
+            Lmax_B1 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_1"])
+            Lmax_B2 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_2"])
+            Lmax_B3 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_3"])
+            Lmax_B4 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_4"])
+            Lmax_B5 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_5"])
             if Lnum == 7:
-                Lmax_B6 = np.float32(data["RADIANCE_MAXIMUM_BAND_6_VCID_1"])
+                Lmax_B6 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_6_VCID_1"])
             else:
-                Lmax_B6 = np.float32(data["RADIANCE_MAXIMUM_BAND_6"])
+                Lmax_B6 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_6"])
 
-            Lmax_B7 = np.float32(data["RADIANCE_MAXIMUM_BAND_7"])
+            Lmax_B7 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_7"])
             Lmax = (Lmax_B1, Lmax_B2, Lmax_B3, Lmax_B4, Lmax_B5, Lmax_B6, Lmax_B7)
 
             # Read in LMIN
-            Lmin_B1 = np.float32(data["RADIANCE_MINIMUM_BAND_1"])
-            Lmin_B2 = np.float32(data["RADIANCE_MINIMUM_BAND_2"])
-            Lmin_B3 = np.float32(data["RADIANCE_MINIMUM_BAND_3"])
-            Lmin_B4 = np.float32(data["RADIANCE_MINIMUM_BAND_4"])
-            Lmin_B5 = np.float32(data["RADIANCE_MINIMUM_BAND_5"])
+            Lmin_B1 = numpy.float32(data["RADIANCE_MINIMUM_BAND_1"])
+            Lmin_B2 = numpy.float32(data["RADIANCE_MINIMUM_BAND_2"])
+            Lmin_B3 = numpy.float32(data["RADIANCE_MINIMUM_BAND_3"])
+            Lmin_B4 = numpy.float32(data["RADIANCE_MINIMUM_BAND_4"])
+            Lmin_B5 = numpy.float32(data["RADIANCE_MINIMUM_BAND_5"])
             if Lnum == 7:
-                Lmin_B6 = np.float32(data["RADIANCE_MINIMUM_BAND_6_VCID_1"])
+                Lmin_B6 = numpy.float32(data["RADIANCE_MINIMUM_BAND_6_VCID_1"])
             else:
-                Lmin_B6 = np.float32(data["RADIANCE_MINIMUM_BAND_6"])
+                Lmin_B6 = numpy.float32(data["RADIANCE_MINIMUM_BAND_6"])
 
-            Lmin_B7 = np.float32(data["RADIANCE_MINIMUM_BAND_7"])
+            Lmin_B7 = numpy.float32(data["RADIANCE_MINIMUM_BAND_7"])
             Lmin = (Lmin_B1, Lmin_B2, Lmin_B3, Lmin_B4, Lmin_B5, Lmin_B6, Lmin_B7)
 
             # Read in QCALMAX
-            Qcalmax_B1 = np.float32(data["QUANTIZE_CAL_MAX_BAND_1"])
-            Qcalmax_B2 = np.float32(data["QUANTIZE_CAL_MAX_BAND_2"])
-            Qcalmax_B3 = np.float32(data["QUANTIZE_CAL_MAX_BAND_3"])
-            Qcalmax_B4 = np.float32(data["QUANTIZE_CAL_MAX_BAND_4"])
-            Qcalmax_B5 = np.float32(data["QUANTIZE_CAL_MAX_BAND_5"])
+            Qcalmax_B1 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_1"])
+            Qcalmax_B2 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_2"])
+            Qcalmax_B3 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_3"])
+            Qcalmax_B4 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_4"])
+            Qcalmax_B5 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_5"])
             if Lnum == 7:
-                Qcalmax_B6 = np.float32(data["QUANTIZE_CAL_MAX_BAND_6_VCID_1"])
+                Qcalmax_B6 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_6_VCID_1"])
             else:
-                Qcalmax_B6 = np.float32(data["QUANTIZE_CAL_MAX_BAND_6"])
+                Qcalmax_B6 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_6"])
 
-            Qcalmax_B7 = np.float32(data["QUANTIZE_CAL_MAX_BAND_7"])
+            Qcalmax_B7 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_7"])
             Qcalmax = (
                 Qcalmax_B1,
                 Qcalmax_B2,
@@ -756,17 +765,17 @@ def lndhdrread(filename):
             )
 
             # Read in QCALMIN
-            Qcalmin_B1 = np.float32(data["QUANTIZE_CAL_MIN_BAND_1"])
-            Qcalmin_B2 = np.float32(data["QUANTIZE_CAL_MIN_BAND_2"])
-            Qcalmin_B3 = np.float32(data["QUANTIZE_CAL_MIN_BAND_3"])
-            Qcalmin_B4 = np.float32(data["QUANTIZE_CAL_MIN_BAND_4"])
-            Qcalmin_B5 = np.float32(data["QUANTIZE_CAL_MIN_BAND_5"])
+            Qcalmin_B1 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_1"])
+            Qcalmin_B2 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_2"])
+            Qcalmin_B3 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_3"])
+            Qcalmin_B4 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_4"])
+            Qcalmin_B5 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_5"])
             if Lnum == 7:
-                Qcalmin_B6 = np.float32(data["QUANTIZE_CAL_MIN_BAND_6_VCID_1"])
+                Qcalmin_B6 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_6_VCID_1"])
             else:
-                Qcalmin_B6 = np.float32(data["QUANTIZE_CAL_MIN_BAND_6"])
+                Qcalmin_B6 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_6"])
 
-            Qcalmin_B7 = np.float32(data["QUANTIZE_CAL_MIN_BAND_7"])
+            Qcalmin_B7 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_7"])
             Qcalmin = (
                 Qcalmin_B1,
                 Qcalmin_B2,
@@ -789,17 +798,17 @@ def lndhdrread(filename):
             ijdim_thm = (Line_thm, Sample_thm)
 
             # Read in resolution of optical and thermal bands
-            reso_ref = np.float32(data["GRID_CELL_SIZE_REFLECTIVE"])
-            reso_thm = np.float32(data["GRID_CELL_SIZE_THERMAL"])
+            reso_ref = numpy.float32(data["GRID_CELL_SIZE_REFLECTIVE"])
+            reso_thm = numpy.float32(data["GRID_CELL_SIZE_THERMAL"])
 
             # Read in UTM Zone Number
-            zc = np.float32(data["UTM_ZONE"])
+            zc = numpy.float32(data["UTM_ZONE"])
             # Read in Solar Azimuth & Elevation angle (degrees)
-            azi = np.float32(data["SUN_AZIMUTH"])
-            zen = 90 - np.float32(data["SUN_ELEVATION"])
+            azi = numpy.float32(data["SUN_AZIMUTH"])
+            zen = 90 - numpy.float32(data["SUN_ELEVATION"])
             # Read in upperleft mapx,y
-            ulx = np.float32(data["CORNER_UL_PROJECTION_X_PRODUCT"])
-            uly = np.float32(data["CORNER_UL_PROJECTION_Y_PRODUCT"])
+            ulx = numpy.float32(data["CORNER_UL_PROJECTION_X_PRODUCT"])
+            uly = numpy.float32(data["CORNER_UL_PROJECTION_Y_PRODUCT"])
             ul = (ulx, uly)
             # Read in date of year
             char_doy = data["LANDSAT_SCENE_ID"]
@@ -807,38 +816,38 @@ def lndhdrread(filename):
 
     elif Lnum == 8:
         # Retrieve LS8 info
-        Lmax_B2 = np.float32(data["RADIANCE_MAXIMUM_BAND_2"])
-        Lmax_B3 = np.float32(data["RADIANCE_MAXIMUM_BAND_3"])
-        Lmax_B4 = np.float32(data["RADIANCE_MAXIMUM_BAND_4"])
-        Lmax_B5 = np.float32(data["RADIANCE_MAXIMUM_BAND_5"])
-        Lmax_B6 = np.float32(data["RADIANCE_MAXIMUM_BAND_6"])
-        Lmax_B7 = np.float32(data["RADIANCE_MAXIMUM_BAND_7"])
-        Lmax_B9 = np.float32(data["RADIANCE_MAXIMUM_BAND_9"])
-        Lmax_B10 = np.float32(data["RADIANCE_MAXIMUM_BAND_10"])
+        Lmax_B2 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_2"])
+        Lmax_B3 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_3"])
+        Lmax_B4 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_4"])
+        Lmax_B5 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_5"])
+        Lmax_B6 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_6"])
+        Lmax_B7 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_7"])
+        Lmax_B9 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_9"])
+        Lmax_B10 = numpy.float32(data["RADIANCE_MAXIMUM_BAND_10"])
 
         Lmax = (Lmax_B2, Lmax_B3, Lmax_B4, Lmax_B5, Lmax_B6, Lmax_B7, Lmax_B9, Lmax_B10)
 
         # Read in LMIN
-        Lmin_B2 = np.float32(data["RADIANCE_MINIMUM_BAND_2"])
-        Lmin_B3 = np.float32(data["RADIANCE_MINIMUM_BAND_3"])
-        Lmin_B4 = np.float32(data["RADIANCE_MINIMUM_BAND_4"])
-        Lmin_B5 = np.float32(data["RADIANCE_MINIMUM_BAND_5"])
-        Lmin_B6 = np.float32(data["RADIANCE_MINIMUM_BAND_6"])
-        Lmin_B7 = np.float32(data["RADIANCE_MINIMUM_BAND_7"])
-        Lmin_B9 = np.float32(data["RADIANCE_MINIMUM_BAND_9"])
-        Lmin_B10 = np.float32(data["RADIANCE_MINIMUM_BAND_10"])
+        Lmin_B2 = numpy.float32(data["RADIANCE_MINIMUM_BAND_2"])
+        Lmin_B3 = numpy.float32(data["RADIANCE_MINIMUM_BAND_3"])
+        Lmin_B4 = numpy.float32(data["RADIANCE_MINIMUM_BAND_4"])
+        Lmin_B5 = numpy.float32(data["RADIANCE_MINIMUM_BAND_5"])
+        Lmin_B6 = numpy.float32(data["RADIANCE_MINIMUM_BAND_6"])
+        Lmin_B7 = numpy.float32(data["RADIANCE_MINIMUM_BAND_7"])
+        Lmin_B9 = numpy.float32(data["RADIANCE_MINIMUM_BAND_9"])
+        Lmin_B10 = numpy.float32(data["RADIANCE_MINIMUM_BAND_10"])
 
         Lmin = (Lmin_B2, Lmin_B3, Lmin_B4, Lmin_B5, Lmin_B6, Lmin_B7, Lmin_B9, Lmin_B10)
 
         # Read in QCALMAX
-        Qcalmax_B2 = np.float32(data["QUANTIZE_CAL_MAX_BAND_2"])
-        Qcalmax_B3 = np.float32(data["QUANTIZE_CAL_MAX_BAND_3"])
-        Qcalmax_B4 = np.float32(data["QUANTIZE_CAL_MAX_BAND_4"])
-        Qcalmax_B5 = np.float32(data["QUANTIZE_CAL_MAX_BAND_5"])
-        Qcalmax_B6 = np.float32(data["QUANTIZE_CAL_MAX_BAND_6"])
-        Qcalmax_B7 = np.float32(data["QUANTIZE_CAL_MAX_BAND_7"])
-        Qcalmax_B9 = np.float32(data["QUANTIZE_CAL_MAX_BAND_9"])
-        Qcalmax_B10 = np.float32(data["QUANTIZE_CAL_MAX_BAND_10"])
+        Qcalmax_B2 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_2"])
+        Qcalmax_B3 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_3"])
+        Qcalmax_B4 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_4"])
+        Qcalmax_B5 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_5"])
+        Qcalmax_B6 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_6"])
+        Qcalmax_B7 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_7"])
+        Qcalmax_B9 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_9"])
+        Qcalmax_B10 = numpy.float32(data["QUANTIZE_CAL_MAX_BAND_10"])
 
         Qcalmax = (
             Qcalmax_B2,
@@ -852,14 +861,14 @@ def lndhdrread(filename):
         )
 
         # Read in QCALMIN
-        Qcalmin_B2 = np.float32(data["QUANTIZE_CAL_MIN_BAND_2"])
-        Qcalmin_B3 = np.float32(data["QUANTIZE_CAL_MIN_BAND_3"])
-        Qcalmin_B4 = np.float32(data["QUANTIZE_CAL_MIN_BAND_4"])
-        Qcalmin_B5 = np.float32(data["QUANTIZE_CAL_MIN_BAND_5"])
-        Qcalmin_B6 = np.float32(data["QUANTIZE_CAL_MIN_BAND_6"])
-        Qcalmin_B7 = np.float32(data["QUANTIZE_CAL_MIN_BAND_7"])
-        Qcalmin_B9 = np.float32(data["QUANTIZE_CAL_MIN_BAND_9"])
-        Qcalmin_B10 = np.float32(data["QUANTIZE_CAL_MIN_BAND_10"])
+        Qcalmin_B2 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_2"])
+        Qcalmin_B3 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_3"])
+        Qcalmin_B4 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_4"])
+        Qcalmin_B5 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_5"])
+        Qcalmin_B6 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_6"])
+        Qcalmin_B7 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_7"])
+        Qcalmin_B9 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_9"])
+        Qcalmin_B10 = numpy.float32(data["QUANTIZE_CAL_MIN_BAND_10"])
 
         Qcalmin = (
             Qcalmin_B2,
@@ -873,13 +882,13 @@ def lndhdrread(filename):
         )
 
         # Read in Refmax
-        Refmax_B2 = np.float32(data["REFLECTANCE_MAXIMUM_BAND_2"])
-        Refmax_B3 = np.float32(data["REFLECTANCE_MAXIMUM_BAND_3"])
-        Refmax_B4 = np.float32(data["REFLECTANCE_MAXIMUM_BAND_4"])
-        Refmax_B5 = np.float32(data["REFLECTANCE_MAXIMUM_BAND_5"])
-        Refmax_B6 = np.float32(data["REFLECTANCE_MAXIMUM_BAND_6"])
-        Refmax_B7 = np.float32(data["REFLECTANCE_MAXIMUM_BAND_7"])
-        Refmax_B9 = np.float32(data["REFLECTANCE_MAXIMUM_BAND_9"])
+        Refmax_B2 = numpy.float32(data["REFLECTANCE_MAXIMUM_BAND_2"])
+        Refmax_B3 = numpy.float32(data["REFLECTANCE_MAXIMUM_BAND_3"])
+        Refmax_B4 = numpy.float32(data["REFLECTANCE_MAXIMUM_BAND_4"])
+        Refmax_B5 = numpy.float32(data["REFLECTANCE_MAXIMUM_BAND_5"])
+        Refmax_B6 = numpy.float32(data["REFLECTANCE_MAXIMUM_BAND_6"])
+        Refmax_B7 = numpy.float32(data["REFLECTANCE_MAXIMUM_BAND_7"])
+        Refmax_B9 = numpy.float32(data["REFLECTANCE_MAXIMUM_BAND_9"])
 
         Refmax = (
             Refmax_B2,
@@ -892,13 +901,13 @@ def lndhdrread(filename):
         )
 
         # Read in Refmin
-        Refmin_B2 = np.float32(data["REFLECTANCE_MINIMUM_BAND_2"])
-        Refmin_B3 = np.float32(data["REFLECTANCE_MINIMUM_BAND_3"])
-        Refmin_B4 = np.float32(data["REFLECTANCE_MINIMUM_BAND_4"])
-        Refmin_B5 = np.float32(data["REFLECTANCE_MINIMUM_BAND_5"])
-        Refmin_B6 = np.float32(data["REFLECTANCE_MINIMUM_BAND_6"])
-        Refmin_B7 = np.float32(data["REFLECTANCE_MINIMUM_BAND_7"])
-        Refmin_B9 = np.float32(data["REFLECTANCE_MINIMUM_BAND_9"])
+        Refmin_B2 = numpy.float32(data["REFLECTANCE_MINIMUM_BAND_2"])
+        Refmin_B3 = numpy.float32(data["REFLECTANCE_MINIMUM_BAND_3"])
+        Refmin_B4 = numpy.float32(data["REFLECTANCE_MINIMUM_BAND_4"])
+        Refmin_B5 = numpy.float32(data["REFLECTANCE_MINIMUM_BAND_5"])
+        Refmin_B6 = numpy.float32(data["REFLECTANCE_MINIMUM_BAND_6"])
+        Refmin_B7 = numpy.float32(data["REFLECTANCE_MINIMUM_BAND_7"])
+        Refmin_B9 = numpy.float32(data["REFLECTANCE_MINIMUM_BAND_9"])
 
         Refmin = (
             Refmin_B2,
@@ -922,17 +931,17 @@ def lndhdrread(filename):
         ijdim_thm = (Line_thm, Sample_thm)
 
         # Read in resolution of optical and thermal bands
-        reso_ref = np.float32(data["GRID_CELL_SIZE_REFLECTIVE"])
-        reso_thm = np.float32(data["GRID_CELL_SIZE_THERMAL"])
+        reso_ref = numpy.float32(data["GRID_CELL_SIZE_REFLECTIVE"])
+        reso_thm = numpy.float32(data["GRID_CELL_SIZE_THERMAL"])
 
         # Read in UTM Zone Number
-        zc = np.float32(data["UTM_ZONE"])
+        zc = numpy.float32(data["UTM_ZONE"])
         # Read in Solar Azimuth & Elevation angle (degrees)
-        azi = np.float32(data["SUN_AZIMUTH"])
-        zen = 90 - np.float32(data["SUN_ELEVATION"])
+        azi = numpy.float32(data["SUN_AZIMUTH"])
+        zen = 90 - numpy.float32(data["SUN_ELEVATION"])
         # Read in upperleft mapx,y
-        ulx = np.float32(data["CORNER_UL_PROJECTION_X_PRODUCT"])
-        uly = np.float32(data["CORNER_UL_PROJECTION_Y_PRODUCT"])
+        ulx = numpy.float32(data["CORNER_UL_PROJECTION_X_PRODUCT"])
+        uly = numpy.float32(data["CORNER_UL_PROJECTION_Y_PRODUCT"])
         ul = (ulx, uly)
         # Read in date of year
         char_doy = data["LANDSAT_SCENE_ID"]
@@ -972,7 +981,8 @@ def lndhdrread(filename):
 
 
 def nd2toarbt(filename, images=None):
-    """Load metadata from MTL file & calculate reflectance values for scene bands.
+    """
+    Load metadata from MTL file & calculate reflectance values for scene bands.
 
     :param filename:
         A string containing the file path of the MTL file for the landsat scene.
@@ -1021,9 +1031,9 @@ def nd2toarbt(filename, images=None):
         if thm_lines != ref_lines or thm_samples != ref_samples:
             im_B6 = imread(
                 n_B6, resample=True, samples=ref_samples, lines=ref_lines
-            ).astype(np.float32)
+            ).astype(numpy.float32)
         else:
-            im_B6 = imread(n_B6).astype(np.float32)
+            im_B6 = imread(n_B6).astype(numpy.float32)
 
         # convert Band6 from radiance to BT
         # fprintf('From Band 6 Radiance to Brightness Temperature\n')
@@ -1045,13 +1055,13 @@ def nd2toarbt(filename, images=None):
             K1 = K1_L4
             K2 = K2_L4
 
-        if images is not None:
-            im_B1 = images[0, :, :].astype(np.float32)
-            im_B2 = images[1, :, :].astype(np.float32)
-            im_B3 = images[2, :, :].astype(np.float32)
-            im_B4 = images[3, :, :].astype(np.float32)
-            im_B5 = images[4, :, :].astype(np.float32)
-            im_B7 = images[6, :, :].astype(np.float32)
+        if images != None:
+            im_B1 = images[0, :, :].astype(numpy.float32)
+            im_B2 = images[1, :, :].astype(numpy.float32)
+            im_B3 = images[2, :, :].astype(numpy.float32)
+            im_B4 = images[3, :, :].astype(numpy.float32)
+            im_B5 = images[4, :, :].astype(numpy.float32)
+            im_B7 = images[6, :, :].astype(numpy.float32)
             del images
 
             # find pixels that are saturated in the visible bands
@@ -1067,22 +1077,22 @@ def nd2toarbt(filename, images=None):
         else:
             # Band1
             n_B1 = match_file(base, ".*B1.TIF")
-            im_B1 = imread(n_B1).astype(np.float32)
+            im_B1 = imread(n_B1).astype(numpy.float32)
             # Band2
             n_B2 = match_file(base, ".*B2.TIF")
-            im_B2 = imread(n_B2).astype(np.float32)
+            im_B2 = imread(n_B2).astype(numpy.float32)
             # Band3
             n_B3 = match_file(base, ".*B3.TIF")
-            im_B3 = imread(n_B3).astype(np.float32)
+            im_B3 = imread(n_B3).astype(numpy.float32)
             # Band4
             n_B4 = match_file(base, ".*B4.TIF")
-            im_B4 = imread(n_B4).astype(np.float32)
+            im_B4 = imread(n_B4).astype(numpy.float32)
             # Band5
             n_B5 = match_file(base, ".*B5.TIF")
-            im_B5 = imread(n_B5).astype(np.float32)
+            im_B5 = imread(n_B5).astype(numpy.float32)
             # Band7
             n_B7 = match_file(base, ".*B7.TIF")
-            im_B7 = imread(n_B7).astype(np.float32)
+            im_B7 = imread(n_B7).astype(numpy.float32)
 
             # Retrieve the projection and geotransform info from the blue band
             # (B1 LS 4,5,7)
@@ -1175,39 +1185,51 @@ def nd2toarbt(filename, images=None):
             # converted from degrees to radiance
             s_zen = math.radians(zen)
             stack = {
-                "a": np.float32(10000.0 * math.pi),
-                "b": np.float32(dsun_doy * dsun_doy),
-                "c": np.float32(math.cos(s_zen)),
+                "a": numpy.float32(10000.0 * math.pi),
+                "b": numpy.float32(dsun_doy * dsun_doy),
+                "c": numpy.float32(math.cos(s_zen)),
             }
 
             im_B1 = numexpr.evaluate(
                 "a * im_B1 * b / (sun * c)",
-                dict(list(stack.items()) + list({"sun": np.float32(ESUN[0])}.items())),
+                dict(
+                    list(stack.items()) + list({"sun": numpy.float32(ESUN[0])}.items())
+                ),
                 locals(),
             )
             im_B2 = numexpr.evaluate(
                 "a * im_B2 * b / (sun * c)",
-                dict(list(stack.items()) + list({"sun": np.float32(ESUN[1])}.items())),
+                dict(
+                    list(stack.items()) + list({"sun": numpy.float32(ESUN[1])}.items())
+                ),
                 locals(),
             )
             im_B3 = numexpr.evaluate(
                 "a * im_B3 * b / (sun * c)",
-                dict(list(stack.items()) + list({"sun": np.float32(ESUN[2])}.items())),
+                dict(
+                    list(stack.items()) + list({"sun": numpy.float32(ESUN[2])}.items())
+                ),
                 locals(),
             )
             im_B4 = numexpr.evaluate(
                 "a * im_B4 * b / (sun * c)",
-                dict(list(stack.items()) + list({"sun": np.float32(ESUN[3])}.items())),
+                dict(
+                    list(stack.items()) + list({"sun": numpy.float32(ESUN[3])}.items())
+                ),
                 locals(),
             )
             im_B5 = numexpr.evaluate(
                 "a * im_B5 * b / (sun * c)",
-                dict(list(stack.items()) + list({"sun": np.float32(ESUN[4])}.items())),
+                dict(
+                    list(stack.items()) + list({"sun": numpy.float32(ESUN[4])}.items())
+                ),
                 locals(),
             )
             im_B7 = numexpr.evaluate(
                 "a * im_B7 * b / (sun * c)",
-                dict(list(stack.items()) + list({"sun": np.float32(ESUN[6])}.items())),
+                dict(
+                    list(stack.items()) + list({"sun": numpy.float32(ESUN[6])}.items())
+                ),
                 locals(),
             )
 
@@ -1215,9 +1237,9 @@ def nd2toarbt(filename, images=None):
         im_B6 = numexpr.evaluate(
             "a * ((K2 / log((K1 / im_B6) + one)) - b)",
             {
-                "a": np.float32(100),
-                "b": np.float32(273.15),
-                "one": np.float32(1.0),
+                "a": numpy.float32(100),
+                "b": numpy.float32(273.15),
+                "one": numpy.float32(1.0),
             },
             locals(),
         )
@@ -1232,7 +1254,7 @@ def nd2toarbt(filename, images=None):
         im_B7[id_missing] = -9999
         del id_missing
 
-        images = np.array([im_B1, im_B2, im_B3, im_B4, im_B5, im_B7], "float32")
+        images = numpy.array([im_B1, im_B2, im_B3, im_B4, im_B5, im_B7], "float32")
         del im_B1, im_B2, im_B3, im_B4, im_B5, im_B7
 
         # We'll modify the return argument for the Python implementation
@@ -1261,31 +1283,31 @@ def nd2toarbt(filename, images=None):
         if thm_lines != ref_lines or thm_samples != ref_samples:
             im_B10 = imread(
                 n_B10, resample=True, samples=ref_samples, lines=ref_lines
-            ).astype(np.float32)
+            ).astype(numpy.float32)
         else:
-            im_B10 = imread(n_B10).astype(np.float32)
+            im_B10 = imread(n_B10).astype(numpy.float32)
 
         # Band2
         n_B2 = match_file(base, ".*B2.TIF")
-        im_B2 = imread(n_B2).astype(np.float32)
+        im_B2 = imread(n_B2).astype(numpy.float32)
         # Band3
         n_B3 = match_file(base, ".*B3.TIF")
-        im_B3 = imread(n_B3).astype(np.float32)
+        im_B3 = imread(n_B3).astype(numpy.float32)
         # Band4
         n_B4 = match_file(base, ".*B4.TIF")
-        im_B4 = imread(n_B4).astype(np.float32)
+        im_B4 = imread(n_B4).astype(numpy.float32)
         # Band5
         n_B5 = match_file(base, ".*B5.TIF")
-        im_B5 = imread(n_B5).astype(np.float32)
+        im_B5 = imread(n_B5).astype(numpy.float32)
         # Band6
         n_B6 = match_file(base, ".*B6.TIF")
-        im_B6 = imread(n_B6).astype(np.float32)
+        im_B6 = imread(n_B6).astype(numpy.float32)
         # Band7
         n_B7 = match_file(base, ".*B7.TIF")
-        im_B7 = imread(n_B7).astype(np.float32)
+        im_B7 = imread(n_B7).astype(numpy.float32)
         # Band9
         n_B9 = match_file(base, ".*B9.TIF")
-        im_B9 = imread(n_B9).astype(np.float32)
+        im_B9 = imread(n_B9).astype(numpy.float32)
 
         # Retrieve the projection and geotransform info from the blue band (B2
         # in LS8)
@@ -1347,7 +1369,7 @@ def nd2toarbt(filename, images=None):
             locals(),
         )
 
-        s_zen = np.deg2rad(zen)
+        s_zen = numpy.deg2rad(zen)
         im_B2 = numexpr.evaluate("10000 * im_B2 / cos(s_zen)")
         im_B3 = numexpr.evaluate("10000 * im_B3 / cos(s_zen)")
         im_B4 = numexpr.evaluate("10000 * im_B4 / cos(s_zen)")
@@ -1358,14 +1380,14 @@ def nd2toarbt(filename, images=None):
 
         # convert Band6 from radiance to BT
         # fprintf('From Band 6 Radiance to Brightness Temperature\n');
-        K1_B10 = np.float32(774.89)
-        K2_B10 = np.float32(1321.08)
-        one = np.float32(1)
+        K1_B10 = numpy.float32(774.89)
+        K2_B10 = numpy.float32(1321.08)
+        one = numpy.float32(1)
 
         im_B10 = numexpr.evaluate("K2_B10 / log((K1_B10 / im_B10) + one)")
 
         # convert from Kelvin to Celcius with 0.01 scale_factor
-        K = np.float32(273.15)
+        K = numpy.float32(273.15)
         im_B10 = numexpr.evaluate("100 * (im_B10 - K)")
 
         # get data ready for Fmask
@@ -1379,7 +1401,9 @@ def nd2toarbt(filename, images=None):
         im_B10[id_missing] = -9999
         del id_missing
 
-        images = np.array([im_B2, im_B3, im_B4, im_B5, im_B6, im_B7, im_B9], "float32")
+        images = numpy.array(
+            [im_B2, im_B3, im_B4, im_B5, im_B6, im_B7, im_B9], "float32"
+        )
         del im_B2, im_B3, im_B4, im_B5, im_B6, im_B7, im_B9
 
         # We'll modify the return argument for the Python implementation
@@ -1413,7 +1437,8 @@ def plcloud(
     mask=None,
     aux_data=None,
 ):
-    """Calculates a cloud mask for a landsat 5/7 scene.
+    """
+    Calculates a cloud mask for a landsat 5/7 scene.
 
     :param filename:
         A string containing the file path of the landsat scene MTL file.
@@ -1436,6 +1461,7 @@ def plcloud(
     :return:
         Tuple (zen,azi,ptm, temperature band (celcius*100),t_templ,t_temph, water mask, snow mask, cloud mask , shadow probability,dim,ul,resolu,zc).
     """
+
     # pylint: disable=unused-variable
 
     aux_data = aux_data or {}
@@ -1462,17 +1488,17 @@ def plcloud(
     else:
         Thin_prob = numexpr.evaluate("cirrus / 400", {"cirrus": data[-1]}, locals())
 
-    Cloud = np.zeros(dim, "uint8")  # cloud mask
-    Snow = np.zeros(dim, "uint8")  # Snow mask
-    WT = np.zeros(dim, "uint8")  # Water msk
+    Cloud = numpy.zeros(dim, "uint8")  # cloud mask
+    Snow = numpy.zeros(dim, "uint8")  # Snow mask
+    WT = numpy.zeros(dim, "uint8")  # Water msk
 
     # process only the overlap area
-    if mask is None:
+    if mask == None:
         mask = Temp > -9999
     else:
         mask = mask.astype("bool")
 
-    Shadow = np.zeros(dim, "uint8")  # shadow mask
+    Shadow = numpy.zeros(dim, "uint8")  # shadow mask
 
     data1 = data[0, :, :]
     data2 = data[1, :, :]
@@ -1634,8 +1660,8 @@ def plcloud(
         NDSI[numexpr.evaluate("satu_B2 & (NDSI < 0)")] = 0
         NDVI[numexpr.evaluate("satu_B3 & (NDVI > 0)")] = 0
 
-        Vari_prob = 1 - np.maximum(
-            np.maximum(np.absolute(NDSI), np.absolute(NDVI)), whiteness
+        Vari_prob = 1 - numpy.maximum(
+            numpy.maximum(numpy.absolute(NDSI), numpy.absolute(NDVI)), whiteness
         )
 
         # release memory
@@ -1703,7 +1729,7 @@ def plcloud(
             swir = swir - data5
 
             # compute shadow probability
-            shadow_prob = np.minimum(nir, swir)
+            shadow_prob = numpy.minimum(nir, swir)
             # release remory
             del nir
             del swir
@@ -1762,14 +1788,14 @@ def plcloud(
         aux_data["fmask_snow_percent"] = (
             float(Snow[mask].sum()) * 100.0 / float(mask.sum())
         )
-        logging.debug("FMASK cloud mean: %f C", (np.mean(cloud_temp) / 100.0))
-        aux_data["fmask_cloud_mean_temp_deg_C"] = np.mean(cloud_temp) / 100.0
+        logging.debug("FMASK cloud mean: %f C", (numpy.mean(cloud_temp) / 100.0))
+        aux_data["fmask_cloud_mean_temp_deg_C"] = numpy.mean(cloud_temp) / 100.0
 
-        if np.sum(cloud_mask) > 0:
-            cloud_stddev = np.std(cloud_temp, dtype="float64", ddof=1) / 100.0
-            pct_upper = np.percentile(cloud_temp, 97.5) / 100.0
-            pct_lower = np.percentile(cloud_temp, 83.5) / 100.0
-            pct_upper_max = np.percentile(cloud_temp, 98.75) / 100.0
+        if numpy.sum(cloud_mask) > 0:
+            cloud_stddev = numpy.std(cloud_temp, dtype="float64", ddof=1) / 100.0
+            pct_upper = numpy.percentile(cloud_temp, 97.5) / 100.0
+            pct_lower = numpy.percentile(cloud_temp, 83.5) / 100.0
+            pct_upper_max = numpy.percentile(cloud_temp, 98.75) / 100.0
 
             logging.debug("FMASK Standard Deviation: %f C", cloud_stddev)
             aux_data["FMASK_std_dev_degC"] = cloud_stddev
@@ -1831,7 +1857,8 @@ def fcssm(
     sdpix,
     snpix,
 ):
-    """Calculates the cloud shadow mask for a scene, given solar geometry information, the thermal band for the scene & a cloud mask.
+    """
+    Calculates the cloud shadow mask for a scene, given solar geometry information, the thermal band for the scene & a cloud mask.
 
     :param Sun_zen:
         Solar Elevation angle (degrees).
@@ -1900,16 +1927,16 @@ def fcssm(
     win_width = ijDim[1]
 
     # potential cloud & shadow layer
-    cloud_test = np.zeros(ijDim, "uint8")
-    shadow_test = np.zeros(ijDim, "uint8")
+    cloud_test = numpy.zeros(ijDim, "uint8")
+    shadow_test = numpy.zeros(ijDim, "uint8")
     # matched cloud & shadow layer
-    shadow_cal = np.zeros(ijDim, "uint8")
-    cloud_cal = np.zeros(ijDim, "uint8")
+    shadow_cal = numpy.zeros(ijDim, "uint8")
+    cloud_cal = numpy.zeros(ijDim, "uint8")
     # cloud_height=zeros(ijDim)# cloud relative height (m)
     # boundary layer
-    boundary_test = np.zeros(ijDim, "uint8")
+    boundary_test = numpy.zeros(ijDim, "uint8")
     # final cloud, shadow and snow mask
-    cs_final = np.zeros(ijDim, "uint8")
+    cs_final = numpy.zeros(ijDim, "uint8")
 
     # get potential mask values
     shadow_test[plsim == 1] = 1  # plshadow layer
@@ -1920,7 +1947,7 @@ def fcssm(
     del plcim  # empty memory
 
     # revised percent of cloud on the scene after plcloud
-    revised_ptm = np.sum(cloud_test) / np.sum(boundary_test)
+    revised_ptm = numpy.sum(cloud_test) / numpy.sum(boundary_test)
     # no t test  => more than 98 # clouds and partly cloud over land
     # => no match => rest are definite shadows
 
@@ -1930,8 +1957,8 @@ def fcssm(
 
     if ptm <= 0.1 or revised_ptm >= 0.90:
         #     fprintf('No Shadow Match due to too much cloud (>90 percent)\n')
-        cloud_cal[cloud_test is True] = 1
-        shadow_cal[cloud_test is False] = 1
+        cloud_cal[cloud_test == True] = 1
+        shadow_cal[cloud_test == False] = 1
         similar_num = -1
         #   height_num=-1
 
@@ -1941,6 +1968,7 @@ def fcssm(
         # define constants
         Tsimilar = 0.30
         Tbuffer = 0.95  # threshold for matching buffering
+        max_similar = 0.95  # max similarity threshold
         num_cldoj = 3  # minimum matched cloud object (pixels)
         num_pix = 3  # number of inward pixes (90m) for cloud base temperature
 
@@ -1956,7 +1984,7 @@ def fcssm(
         i_step = 2 * sub_size * math.tan(sun_ele_rad)  # move 2 pixel at a time
 
         # get moving direction
-        (rows, cols) = np.nonzero(boundary_test)
+        (rows, cols) = numpy.nonzero(boundary_test)
         (y_ul, num) = (rows.min(), rows.argmin())
         x_ul = cols[num]
 
@@ -1990,7 +2018,7 @@ def fcssm(
         # filter out cloud object < than num_cldoj pixels
         morphology.remove_small_objects(segm_cloud_init, num_cldoj, in_place=True)
         segm_cloud, fw, inv = segmentation.relabel_from_one(segm_cloud_init)
-        num = np.max(segm_cloud)
+        num = numpy.max(segm_cloud)
 
         # NOTE: properties is deprecated as of version 0.9 and all properties are computed. Currently using version 0.8.2. If this version or a later versionproves too slow, I'll implement another method. JS 16/12/2013
         # The properties is taking approx 3min, I can cut that down to just a
@@ -2001,7 +2029,7 @@ def fcssm(
         # Calulate the moving cloud shadow
 
         # height_num=zeros(num) # cloud relative height (m)
-        similar_num = np.zeros(num)  # cloud shadow match similarity (m)
+        similar_num = numpy.zeros(num)  # cloud shadow match similarity (m)
 
         # Newer method of looping through the cloud objects/segments JS
         # 16/12/2013
@@ -2013,14 +2041,14 @@ def fcssm(
 
             # Have re-formatted the arrays to be Python style memory ordering (2,num_pixels) JS 16/12/2013
             # moving cloud xys
-            XY_type = np.zeros((2, num_pixels), dtype="uint32")
+            XY_type = numpy.zeros((2, num_pixels), dtype="uint32")
 
             # record the max threshold moving cloud xys
-            tmp_XY_type = np.zeros((2, num_pixels), dtype="uint32")
+            tmp_XY_type = numpy.zeros((2, num_pixels), dtype="uint32")
 
             # corrected for view angle xys
             # Leave as float for the time being
-            tmp_xys = np.zeros((2, num_pixels))
+            tmp_xys = numpy.zeros((2, num_pixels))
 
             # record this original ids
             orin_cid = (
@@ -2038,7 +2066,7 @@ def fcssm(
             #        num_pix=8
             pct_obj = math.pow(r_obj - num_pix, 2) / math.pow(r_obj, 2)
             # pct of edge pixel should be less than 1
-            pct_obj = np.minimum(pct_obj, 1)
+            pct_obj = numpy.minimum(pct_obj, 1)
             t_obj = scipy.stats.mstats.mquantiles(temp_obj, pct_obj)
 
             # put the edge of the cloud the same value as t_obj
@@ -2063,7 +2091,7 @@ def fcssm(
             record_thresh = 0.0
 
             # iterate in height (m)
-            for base_h in np.arange(Min_cl_height, Max_cl_height, i_step):
+            for base_h in numpy.arange(Min_cl_height, Max_cl_height, i_step):
                 # Get the true postion of the cloud
                 # calculate cloud DEM with initial base height
                 h = 10 * (t_obj - temp_obj) / rate_elapse + base_h
@@ -2076,17 +2104,17 @@ def fcssm(
                 i_xy = h / (sub_size * math.tan(sun_ele_rad))
 
                 if Sun_azi < 180:
-                    XY_type[1, :] = np.round(
+                    XY_type[1, :] = numpy.round(
                         tmp_xys[1, :] - i_xy * math.cos(sun_tazi_rad)
                     )  # X is for j,1
-                    XY_type[0, :] = np.round(
+                    XY_type[0, :] = numpy.round(
                         tmp_xys[0, :] - i_xy * math.sin(sun_tazi_rad)
                     )  # Y is for i,0
                 else:
-                    XY_type[1, :] = np.round(
+                    XY_type[1, :] = numpy.round(
                         tmp_xys[1, :] + i_xy * math.cos(sun_tazi_rad)
                     )  # X is for j,1
-                    XY_type[0, :] = np.round(
+                    XY_type[0, :] = numpy.round(
                         tmp_xys[0, :] + i_xy * math.sin(sun_tazi_rad)
                     )  # Y is for i,0
 
@@ -2100,7 +2128,7 @@ def fcssm(
                     | (tmp_j < 0)
                     | (tmp_j >= win_width)
                 )
-                out_all = np.sum(out_id)
+                out_all = numpy.sum(out_id)
 
                 tmp_ii = tmp_i[out_id == 0]
                 tmp_jj = tmp_j[out_id == 0]
@@ -2119,13 +2147,13 @@ def fcssm(
                     },
                 )
 
-                matched_all = np.sum(match_id) + out_all
+                matched_all = numpy.sum(match_id) + out_all
 
                 # the id that is the total pixel (exclude original cloud)
                 total_id = segm_cloud[tmp_id] != cld_label
-                total_all = np.sum(total_id) + out_all
+                total_all = numpy.sum(total_id) + out_all
 
-                thresh_match = np.float32(matched_all) / total_all
+                thresh_match = numpy.float32(matched_all) / total_all
                 if (
                     (thresh_match >= (Tbuffer * record_thresh))
                     and (base_h < (Max_cl_height - i_step))
@@ -2142,17 +2170,17 @@ def fcssm(
                     # height_num=record_h
 
                     if Sun_azi < 180:
-                        tmp_XY_type[1, :] = np.round(
+                        tmp_XY_type[1, :] = numpy.round(
                             tmp_xys[1, :] - i_vir * math.cos(sun_tazi_rad)
                         )  # X is for col j,2
-                        tmp_XY_type[0, :] = np.round(
+                        tmp_XY_type[0, :] = numpy.round(
                             tmp_xys[0, :] - i_vir * math.sin(sun_tazi_rad)
                         )  # Y is for row i,1
                     else:
-                        tmp_XY_type[1, :] = np.round(
+                        tmp_XY_type[1, :] = numpy.round(
                             tmp_xys[1, :] + i_vir * math.cos(sun_tazi_rad)
                         )  # X is for col j,2
-                        tmp_XY_type[0, :] = np.round(
+                        tmp_XY_type[0, :] = numpy.round(
                             tmp_xys[0, :] + i_vir * math.sin(sun_tazi_rad)
                         )  # Y is for row i,1
 
@@ -2186,11 +2214,11 @@ def fcssm(
         # The number of iterations is equal to the number of dilations if using
         # a 3x3 structuring element. JS 16/12/2013
         SEc = 2 * cldpix + 1
-        SEc = np.ones((SEc, SEc), "uint8")
+        SEc = numpy.ones((SEc, SEc), "uint8")
         SEs = 2 * sdpix + 1
-        SEs = np.ones((SEs, SEs), "uint8")
+        SEs = numpy.ones((SEs, SEs), "uint8")
         SEsn = 2 * snpix + 1
-        SEsn = np.ones((SEsn, SEsn), "uint8")
+        SEsn = numpy.ones((SEsn, SEsn), "uint8")
 
         # dilate shadow first
         # NOTE: The original transcription returned the inverse, i.e.
@@ -2343,7 +2371,7 @@ if __name__ == "__main__":
     # It would be better to open it once and restructure the function
     # parameters.
     data = {}
-    fl = open(mtl)
+    fl = open(mtl, "r")
     file_lines = fl.readlines()
     for line in file_lines:
         values = line.split(" = ")

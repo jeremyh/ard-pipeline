@@ -8,7 +8,7 @@ import h5py
 import numpy as np
 import numpy.testing as npt
 import rasterio as rio
-from osgeo import gdal, osr
+from osgeo import osr
 
 from wagl import unittesting_tools as ut
 from wagl.acquisition import acquisitions
@@ -29,51 +29,39 @@ def getFlindersIsletGGB():
 
 class TestGriddedGeoBox(unittest.TestCase):
     def test_create_shape(self):
-        scale = 0.00025
         shape = (3, 2)
         origin = (150.0, -34.0)
-        (shape[1] * scale + origin[0], origin[1] - shape[0] * scale)
         ggb = GriddedGeoBox(shape, origin)
         assert shape == ggb.shape
 
     def test_get_shape_xy(self):
-        scale = 0.00025
         shape = (3, 2)
         shape_xy = (2, 3)
         origin = (150.0, -34.0)
-        (shape[1] * scale + origin[0], origin[1] - shape[0] * scale)
         ggb = GriddedGeoBox(shape, origin)
         assert shape_xy == ggb.get_shape_xy()
 
     def test_get_shape_yx(self):
-        scale = 0.00025
         shape = (3, 2)
         origin = (150.0, -34.0)
-        (shape[1] * scale + origin[0], origin[1] - shape[0] * scale)
         ggb = GriddedGeoBox(shape, origin)
         assert shape == ggb.get_shape_yx()
 
     def test_x_size(self):
-        scale = 0.00025
         shape = (3, 2)
         origin = (150.0, -34.0)
-        (shape[1] * scale + origin[0], origin[1] - shape[0] * scale)
         ggb = GriddedGeoBox(shape, origin)
         assert shape[1] == ggb.x_size()
 
     def test_y_size(self):
-        scale = 0.00025
         shape = (3, 2)
         origin = (150.0, -34.0)
-        (shape[1] * scale + origin[0], origin[1] - shape[0] * scale)
         ggb = GriddedGeoBox(shape, origin)
         assert shape[0] == ggb.y_size()
 
     def test_create_origin(self):
-        scale = 0.00025
         shape = (3, 2)
         origin = (150.0, -34.0)
-        (shape[1] * scale + origin[0], origin[1] - shape[0] * scale)
         ggb = GriddedGeoBox(shape, origin)
         assert origin == ggb.origin
 
@@ -107,10 +95,6 @@ class TestGriddedGeoBox(unittest.TestCase):
         flindersOrigin = (150.927659, -34.453309)
         flindersCorner = (150.931697, -34.457915)
         shapeShouldBe = (19, 17)
-        (
-            flindersOrigin[0] + shapeShouldBe[1] * 0.00025,
-            flindersOrigin[1] - shapeShouldBe[0] * 0.00025,
-        )
 
         ggb = GriddedGeoBox.from_corners(flindersOrigin, flindersCorner)
         assert shapeShouldBe == ggb.shape
@@ -121,10 +105,6 @@ class TestGriddedGeoBox(unittest.TestCase):
         flindersCorner = (150.931697, -34.457915)
         originShouldBe = flindersOrigin
         shapeShouldBe = (19, 17)
-        (
-            flindersOrigin[0] + shapeShouldBe[1] * 0.00025,
-            flindersOrigin[1] - shapeShouldBe[0] * 0.00025,
-        )
 
         ggb = GriddedGeoBox.from_corners(flindersOrigin, flindersCorner)
         assert shapeShouldBe == ggb.shape
@@ -135,11 +115,6 @@ class TestGriddedGeoBox(unittest.TestCase):
         flindersOrigin = (150.927659, -34.453309)
         flindersCorner = (150.931697, -34.457915)
         originShouldBe = flindersOrigin
-        shapeShouldBe = (19, 17)
-        (
-            flindersOrigin[0] + shapeShouldBe[1] * 0.00025,
-            flindersOrigin[1] - shapeShouldBe[0] * 0.00025,
-        )
 
         ggb = GriddedGeoBox.from_corners(flindersOrigin, flindersCorner)
         self.assertAlmostEqual(originShouldBe[1], ggb.origin[1])

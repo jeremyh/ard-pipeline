@@ -1,15 +1,18 @@
-"""Cloud Shadow Masking
---------------------.
 """
+Cloud Shadow Masking
+--------------------
+"""
+# flake8: noqa
+from __future__ import absolute_import, print_function
 import datetime
-import gc
 import logging
+import gc
 
-import numexpr
 import numpy as np
-from idl_functions import histogram
-from scipy import ndimage
+import numexpr
 
+from scipy import ndimage
+from idl_functions import histogram
 from wagl.acca_cloud_masking import majority_filter
 
 
@@ -32,7 +35,8 @@ def cloud_shadow(
     growregion=False,
     aux_data=None,
 ):
-    """Identifies cloud shadow and creates a mask.
+    """
+    Identifies cloud shadow and creates a mask.
 
     Uses the sun position to find the shadow direction, and estimated
     cloud height to project a cloud shadows location.
@@ -149,7 +153,8 @@ def cloud_shadow(
     stdv_mltp = pq_const.cshadow_stdv_multiplier
 
     def origin_map(geoTransform, cindex):
-        """Converts the origin pixel co-ordinates to map units.
+        """
+        Converts the origin pixel co-ordinates to map units.
 
         :param geoTransform:
             Image co-ordinate information (upper left coords, offset and pixel
@@ -162,6 +167,7 @@ def cloud_shadow(
             The coordinates of every cloud pixel as a map units, in two Lists
             for the x and y positions.
         """
+
         omapx = numexpr.evaluate(
             "a*b + c",
             {
@@ -182,7 +188,8 @@ def cloud_shadow(
         return omapx, omapy
 
     def cloud_height(ctherm, surface_temp, lapse_rate=np.float32(6.4)):
-        """Determines the height of the cloud.
+        """
+        Determines the height of the cloud.
 
         Uses a standard environmental lapse rate, the surface temperature,
         and the temperature of the clouds.
@@ -199,6 +206,7 @@ def cloud_shadow(
         :return:
             An array of cloud heights.
         """
+
         result = numexpr.evaluate(
             "((surface_temp - ctherm)/lapse_rate)*thou",
             {"thou": np.float32(1000)},
@@ -207,7 +215,8 @@ def cloud_shadow(
         return result
 
     def shadow_length(cheight, rad_elev):
-        """Determines the length of the shadow cast by the cloud.
+        """
+        Determines the length of the shadow cast by the cloud.
 
         :param cheight:
             The height of the cloud.
@@ -218,10 +227,12 @@ def cloud_shadow(
         :return:
             An array of shadow lengths.
         """
+
         return cheight / np.tan(rad_elev)
 
     def rect_xy(shad_length, rad_cor_az):
-        """Retrieve the x and y distances of projected shadow.
+        """
+        Retrieve the x and y distances of projected shadow.
 
         The distances are in metres from the originating cloud pixel.
 
@@ -242,7 +253,8 @@ def cloud_shadow(
         return rectxy
 
     def mapxy(rect_xy, omapx, omapy):
-        """Convert the x and y locations into map co-ordinates.
+        """
+        Convert the x and y locations into map co-ordinates.
 
         :param rect_xy:
             The complex array containing the x and y distances.
@@ -257,12 +269,14 @@ def cloud_shadow(
             Two arrays, one for the x co-ordinate, the second for the
             y co-ordinate.
         """
+
         new_mapx = numexpr.evaluate("omapx + real(rect_xy)").astype("float32")
         new_mapy = numexpr.evaluate("omapy + imag(rect_xy)").astype("float32")
         return new_mapx, new_mapy
 
     def map2img(new_mapx, new_mapy, geoTransform, dims):
-        """Converts the x and y map locations in image co-ordinates.
+        """
+        Converts the x and y map locations in image co-ordinates.
 
         :param new_mapx:
             The x projected shadow location.
@@ -277,6 +291,7 @@ def cloud_shadow(
         :return:
              A tuple containing the indices of the shadow locations.
         """
+
         dct = {"a": np.float32(geoTransform[0]), "b": np.float32(geoTransform[1])}
 
         imgx = np.round(numexpr.evaluate("(new_mapx - a)/b", dct, locals())).astype(
@@ -301,7 +316,8 @@ def cloud_shadow(
         return (imgy, imgx)
 
     def ndvi(red, nir):
-        """The NDVI function calculates the Normalised Differenced Vegetation
+        """
+        The NDVI function calculates the Normalised Differenced Vegetation
         Index.
 
         :param red:
@@ -313,11 +329,13 @@ def cloud_shadow(
         :return:
             An 2D array in the range of -1 to 1.
         """
+
         ndvi = numexpr.evaluate("(nir - red) / (nir + red)")
         return ndvi
 
     def water_test(ndvi, band5):
-        """The water_test function is used to identify water pixels.
+        """
+        The water_test function is used to identify water pixels.
 
         :param ndvi:
              Normalised Differenced Vegetation Index.
@@ -328,6 +346,7 @@ def cloud_shadow(
         :return:
              An 2D array of type 'bool'.
         """
+
         wt = numexpr.evaluate(
             "((ndvi < wt_ndvi) &" "(band5 < wt_b5))",
             {"wt_b5": wt_b5, "wt_ndvi": wt_ndvi},
@@ -337,7 +356,8 @@ def cloud_shadow(
         return wt
 
     def mndwi(red, band5):
-        """Modified Normalised Difference Water Index.
+        """
+        Modified Normalised Difference Water Index.
 
         Used to identify water pixels.
 
@@ -350,6 +370,7 @@ def cloud_shadow(
         :return:
             An 2D array of type 'bool'.
         """
+
         wt = numexpr.evaluate(
             "((1 - (band5 / red)) / (1 + (band5 / red))) >" "mndwi_thresh",
             {"mndwi_thresh": mndwi_thresh},
@@ -359,7 +380,8 @@ def cloud_shadow(
         return wt
 
     def stdev(b1, b2, b3, b4, b5, b7):
-        """Calculates the standard deviation through the bands.
+        """
+        Calculates the standard deviation through the bands.
 
         Creating a bool array that is used to identify water pixels.
 
@@ -384,7 +406,8 @@ def cloud_shadow(
         :return:
             An 2D array of type 'float32'.
         """
-        numexpr.evaluate("(b1 + b2 + b3 + b4 + b5 + b7) / 6")
+
+        xbar = numexpr.evaluate("(b1 + b2 + b3 + b4 + b5 + b7) / 6")
         stdv = numexpr.evaluate(
             "(sqrt(((b1 - xbar)**2 + (b2 - xbar)**2 +"
             "(b3 - xbar)**2 + (b4 - xbar)**2 + "
@@ -401,12 +424,12 @@ def cloud_shadow(
 
     # Return mask with all true there is no cloud
     if len(cindex[0]) == 0:
-        aux_data[f"{cloud_algorithm}_cloud_shadow_percent"] = 0.0
+        aux_data["%s_cloud_shadow_percent" % (cloud_algorithm,)] = 0.0
         logging.info("Cloud Shadow Percent: 0.0")
         cshadow = np.ones(cloud_mask.shape, dtype="bool")
         end_time = datetime.datetime.now()
         time = (end_time - start_time).total_seconds()
-        aux_data[f"{cloud_algorithm}_cloud_shadow_runtime"] = time
+        aux_data["%s_cloud_shadow_runtime" % (cloud_algorithm,)] = time
         return cshadow
 
     # Create a spatial reference from the projection string
@@ -564,14 +587,14 @@ def cloud_shadow(
         stng = datetime.datetime.now()
 
         q1 = numexpr.evaluate("(cloud_mask >= 1) & s_index")
-        if contiguity_mask is not None:
+        if contiguity_mask != None:
             q2 = numexpr.evaluate("(contiguity_mask >= 1) & s_index")
-            if land_sea_mask is not None:
+            if land_sea_mask != None:
                 q3 = numexpr.evaluate("(land_sea_mask >= 1) & s_index")
                 q4 = numexpr.evaluate("q1 & q2 & q3")
             else:
                 q4 = numexpr.evaluate("q1 & q2")
-        elif land_sea_mask is not None:
+        elif land_sea_mask != None:
             q3 = numexpr.evaluate("(land_sea_mask >= 1) & s_index")
             q4 = numexpr.evaluate("q1 & q3")
         else:
@@ -733,25 +756,25 @@ def cloud_shadow(
     cshadow[cindex] = False
 
     # Where a sea pixel is a shadow pixel, change to no shadow
-    if land_sea_mask is not None:
+    if land_sea_mask != None:
         sea = numexpr.evaluate("land_sea_mask == 0")
         cshadow[sea] = False
         del sea
 
     # Where a null pixel is shadow, change to no shadow
-    if contiguity_mask is not None:
+    if contiguity_mask != None:
         null = numexpr.evaluate("contiguity_mask == 0")
         cshadow[null] = False
         del null
 
     shadow_percent = (float(cshadow.sum()) / cshadow.size) * 100
-    aux_data[f"{cloud_algorithm}_cloud_shadow_percent"] = shadow_percent
+    aux_data["%s_cloud_shadow_percent" % (cloud_algorithm,)] = shadow_percent
     logging.info("%s_cloud_shadow_percent: %f", cloud_algorithm, shadow_percent)
 
     end_time = datetime.datetime.now()
     time = (end_time - start_time).total_seconds()
 
-    aux_data[f"{cloud_algorithm}_cloud_shadow_runtime"] = time
+    aux_data["%s_cloud_shadow_runtime" % (cloud_algorithm,)] = time
 
     # Invert array from 1 == "Cloud" to True = "No Cloud"
-    return (~cshadow).astype(bool)
+    return (~cshadow).astype(np.bool)

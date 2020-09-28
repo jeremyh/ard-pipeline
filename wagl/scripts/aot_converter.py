@@ -31,8 +31,8 @@ def read_pix(filename):
     time = np.fromfile(src, dtype="int16", count=recs[2] * 3).reshape(3, recs[2])
 
     # lat, lon variables are read to move the buffer pointer
-    np.fromfile(src, dtype="float32", count=recs[2])
-    np.fromfile(src, dtype="float32", count=recs[2])
+    lat = np.fromfile(src, dtype="float32", count=recs[2])  # noqa: F841
+    lon = np.fromfile(src, dtype="float32", count=recs[2])  # noqa: F841
     aot = np.fromfile(src, dtype="float32", count=recs[2])
     src.close()
 

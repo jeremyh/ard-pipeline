@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # wagl documentation build configuration file, created by
 # sphinx-quickstart on Tue Jan  6 14:54:34 2015.
@@ -11,6 +12,11 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+# flake8: noqa
+
+from __future__ import absolute_import
+import sys
+import os
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

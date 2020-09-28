@@ -739,7 +739,7 @@ def read_spectral_response(fname, spectral_range=None):
     response = {}
     for i, idx in enumerate(ids[0:-1]):
         data = np.array(
-            [l.split("  ") for l in lines[idx + 1 : ids[i + 1]]], dtype="float"
+            [line.split("  ") for line in lines[idx + 1 : ids[i + 1]]], dtype="float"
         )
         df = pd.DataFrame(
             {"band_name": lines[idx], "wavelength": data[:, 0], "response": data[:, 1]}
@@ -748,7 +748,7 @@ def read_spectral_response(fname, spectral_range=None):
 
     # get spectral response data for band n
     idx = ids[-1]
-    data = np.array([l.split("  ") for l in lines[idx + 1 :]], dtype="float")
+    data = np.array([line.split("  ") for line in lines[idx + 1 :]], dtype="float")
     df = pd.DataFrame(
         {"band_name": lines[idx], "wavelength": data[:, 0], "response": data[:, 1]}
     )
