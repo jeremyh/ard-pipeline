@@ -328,7 +328,7 @@ class GQATask(luigi.Task):
                     "error_message": gverify_args["error_msg"],
                 }
 
-        except (StopIteration, FileNotFoundError):
+        except (StopIteration, FileNotFoundError) as _:  # noqa: F841
             TASK_LOGGER.error(
                 "Gverify results file contains no tabulated data; {}".format(
                     self.input()["results"].path
@@ -371,8 +371,8 @@ def collect_gcp(fix_location, landsat_scenes, result_file):
             _LOG.debug(f"collecting GCPs from {path} {row}")
             scene_gcp_file = pjoin(fix_location, path, row, "points.txt")
             with open(scene_gcp_file) as src:
-                for l in src:
-                    dest.write(l)
+                for line in src:
+                    dest.write(line)
 
 
 def parse_gverify(res_filepath):
