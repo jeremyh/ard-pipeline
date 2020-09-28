@@ -461,7 +461,10 @@ def calculate_cast_shadow(
     # Initialise the output file
     if out_group is None:
         fid = h5py.File(
-            f"cast-shadow-{source_dir}.h5", "w", driver="core", backing_store=False
+            f"cast-shadow-{source_dir}.h5",
+            "w",
+            driver="core",
+            backing_store=False,
         )
     else:
         fid = out_group

@@ -23,7 +23,7 @@ from dateutil import parser
 from nested_lookup import nested_lookup
 
 from ..mtl import load_mtl
-from .base import AcquisitionsContainer
+from .base import Acquisition, AcquisitionsContainer  # noqa: F401
 from .landsat import ACQUISITION_TYPE, LandsatAcquisition
 from .sentinel import (
     Sentinel2aAcquisition,

@@ -95,7 +95,7 @@ def read_metadata_tags(fname, bands):
 
     :param bands:
         A `list` containing the band numbers (1 -> n) from which
-    to retreive the metadata tags.
+        to retreive the metadata tags.
 
     :return:
         A `pandas.DataFrame`.
@@ -326,7 +326,7 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
             },
             "modtran": {
                 "version": "6.0.1",
-                "repo_url": "http://www.ontar.com/software/productdetails.aspx?item=modtran",
+                "repo_url": "http://www.ontar.com/software/productdetails.aspx?item=modtran",  # noqa: E501
             },
         }
 
@@ -434,9 +434,7 @@ def current_h5_metadata(fid: h5py.Group, dataset_path: str = ""):
 
     if not metadata:  # assume h5 collection represents 1 dataset
         metadata = fid.get(
-            "/{}/{}".format(
-                DatasetName.METADATA.value, DatasetName.CURRENT_METADATA.value
-            )
+            f"/{DatasetName.METADATA.value}/{DatasetName.CURRENT_METADATA.value}"
         )
         if not metadata:
             raise MetadataError(

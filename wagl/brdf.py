@@ -151,12 +151,14 @@ def get_brdf_dirs_fallback(brdf_root, scene_date):
     # Add boundary entry for next year accounting for inserted entry
     dir_dates.append((str(scene_date.year + 1), dir_dates[1][1]))
 
-    # Interpreter function
-    def doy_intpr(x):
-        return datetime.datetime.strptime(" ".join(x), "%Y %j").date()
-
     # return directory name without year
-    return min(dir_dates, key=_date_proximity(scene_date, doy_intpr))[1]
+    return min(
+        dir_dates,
+        key=_date_proximity(
+            scene_date,
+            lambda x: datetime.datetime.strptime(" ".join(x), "%Y %j").date(),
+        ),
+    )[1]
 
 
 def coord_transformer(src_crs, dst_crs):

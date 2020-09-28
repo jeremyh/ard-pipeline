@@ -42,10 +42,7 @@ SPECTRAL_RESPONSE_LS8 = pkg_resources.resource_filename(
 
 def mock_spectral_response():
     """Quick callable to return the spectral response from the repository."""
-    with pkg_resources.resource_stream("wagl", "spectral_response/landsat8_vsir.flt"):
-        return read_spectral_response(
-            SPECTRAL_RESPONSE_LS8, False, range(2600, 349, -1)
-        )
+    return read_spectral_response(SPECTRAL_RESPONSE_LS8, range(2600, 349, -1))
 
 
 class ModtranTest(unittest.TestCase):
@@ -126,7 +123,6 @@ class ModtranTest(unittest.TestCase):
             assert fid[base_path].attrs["datetime"] == datetime(2001, 1, 1).isoformat()
             # test albedo headers?
             # Summarise modtran results to surface reflectance coefficients
-            fid[base_path][ALBEDO_FMT.format(a=albedo.value)]
             nbar_coefficients, _ = coefficients(
                 read_h5_table(
                     fid,

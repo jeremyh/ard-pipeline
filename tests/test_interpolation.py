@@ -35,9 +35,9 @@ class TestInterpolateBlock(unittest.TestCase):
         """Simple test case for the interpolate block function."""
 
         def test_fnc(y, x):
-            return 8 * y + x
+            return 8 * y + 2 * x
 
-        np.arange(0, 16).reshape(4, 4) * 2
+        expected = np.arange(0, 16).reshape(4, 4) * 2
 
         in_arr = np.zeros(16).reshape(4, 4)
 
@@ -47,39 +47,41 @@ class TestInterpolateBlock(unittest.TestCase):
 
         interpolate_block((0, 0), shape=in_arr.shape, eval_func=test_fnc, grid=in_arr)
 
+        assert np.allclose(expected, in_arr)
+
 
 class TestInterpolateGrid(unittest.TestCase):
     def test_interpolate_grid(self):
         """Simple test case for interpolate grid."""
-        result = np.arange(64).reshape(8, 8)
-        in_arr = result.copy()  # Interpolation is performed in place
 
         def eval_func(y, x):
             return 8 * y + x
 
+        result = np.arange(64).reshape(8, 8)
+        in_arr = result.copy()  # Interpolation is performed in place
         depth = 3
         interpolate_grid(result, eval_func, depth)
         assert np.allclose(result, in_arr)
 
     def test_small_grid(self):
         """Test grid too small to calculate bilinear interpolation."""
+
+        def eval_func(y, x):
+            return y * 1 + x
+
         with self.assertRaises(ValueError):
             in_arr = np.zeros(1).reshape(1, 1)
-
-            def eval_func(y, x):
-                return y * 1 + x
-
             depth = 7
             interpolate_grid(in_arr, eval_func, depth)
 
     def test_interpolate_default_max_depth(self):
         """Test that the wrapper defaults to max depth."""
-        result = np.arange(64).reshape(8, 8)
-        in_arr = result.copy()  # Interpolation is performed in place
 
         def eval_func(y, x):
             return 8 * y + x
 
+        result = np.arange(64).reshape(8, 8)
+        in_arr = result.copy()  # Interpolation is performed in place
         depth = 10
         interpolate_grid(result, eval_func, depth)
         assert np.allclose(result, in_arr)
