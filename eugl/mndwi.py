@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-
-# from funcs_data import reproject_array_to_array
 from os.path import split as psplit
 
 import h5py
