@@ -2,12 +2,18 @@
 
 """Various metadata extraction and creation, and writing tools."""
 
+from datetime import datetime as dtime
+from datetime import timezone as dtz
+
+try:
+    from importlib.metadata import distribution
+except ImportError:
+    # Running on pre-3.8 Python; use importlib-metadata package
+    from importlib_metadata import distribution
+
 import os
 import socket
 import uuid
-from datetime import datetime as dtime
-from datetime import timezone as dtz
-from importlib.metadata import distribution
 from os.path import dirname
 from posixpath import join as ppjoin
 
