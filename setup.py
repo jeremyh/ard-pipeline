@@ -3,8 +3,6 @@
 import setuptools
 from numpy.distutils.core import setup
 
-import versioneer
-
 tests_require = [
     "pytest",
 ]
@@ -31,6 +29,7 @@ install_requires = [
     "structlog>=16.1.0",
     "idl-functions>=0.5.2",  # custom package
     "attrs>=17.4.0",
+    "importlib-metadata;python_version<'3.8'",
 ]
 
 dependency_links = [
@@ -55,8 +54,7 @@ def configuration(parent_package="", top_path=None):
 setup(
     name="wagl",
     configuration=configuration,
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    use_scm_version=True,
     url="https://github.com/GeoscienceAustralia/wagl",
     license="CC0 1.0 Universal",
     author="The wagl authors",
@@ -77,7 +75,7 @@ setup(
         "utils/wagl_residuals",
         "utils/wagl_pbs",
     ],
-    setup_requires=["pytest-runner"],
+    setup_requires=["pytest-runner", "setuptools_scm"],
     tests_require=tests_require,
     install_requires=install_requires,
     dependency_links=dependency_links,
