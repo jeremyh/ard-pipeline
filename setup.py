@@ -2,12 +2,10 @@
 
 from setuptools import find_packages, setup
 
-import versioneer
-
 setup(
     name="tesp",
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    use_scm_version=True,
+    setup_requires=["setuptools_scm"],
     url="https://github.com/OpenDataCubePipelines/tesp",
     description="Data Pipeline construction.",
     packages=find_packages(exclude=("tests",)),
@@ -29,15 +27,10 @@ setup(
         "eodatasets",
         "eugl",
         "wagl",
+        "importlib-metadata;python_version<'3.8'",
     ],
     extras_require=dict(
-        test=[
-            "pytest",
-            "pytest-flake8",
-            "deepdiff",
-            "flake8",
-            "pep8-naming",
-        ],
+        test=["pytest", "pytest-flake8", "deepdiff", "flake8", "pep8-naming"]
     ),
     dependency_links=[
         "git+https://github.com/GeoscienceAustralia/eo-datasets.git@develop#egg=eodatasets",
