@@ -25,8 +25,9 @@ S3_INPUT_PREFIX="$5"
 # separate s3://bucket_name/prefix into bucket_name prefix
 read S3_BUCKET S3_BUCKET_PREFIX <<< $(echo "$S3_INPUT_PREFIX" | perl -pe's/s3:\/\/([^\/]+)\/(.*)/\1 \2/;')
 
-WORKDIR="/granules"
-OUTDIR="/output"
+WORKDIR="/ancillary/granules"
+OUTDIR="/ancillary/output"
+PKGDIR="/ancillary/upload"
 
 LOG_DEBUG=1
 LOG_INFO=10
@@ -68,6 +69,7 @@ function wait_for_ancillary {
 log_message $LOG_INFO "$0 called with $GRANULE_URL $DATASTRIP_URL $TASK_UUID $S3_REGION $S3_INPUT_PREFIX"
 log_message $LOG_INFO "[s3 config] BUCKET:'$S3_BUCKET' PREFIX:'$S3_BUCKET_PREFIX'"
 umask 000  # Safe guard against ancillary files locked to a specific container
+
 mkdir -p $WORKDIR
 
 # Activate Python environment
@@ -114,13 +116,13 @@ python3 /scripts/ancillary_fetch.py $CAPTURE_DATE --action brdf
 
 log_message $LOG_INFO "Running WAGL"
 
-mkdir -p "$OUTDIR/upload"
 mkdir -p "$OUTDIR/$TASK_UUID"
+mkdir -p "$PKGDIR/$TASK_UUID"
 
 luigi --module tesp.workflow ARDP \
     --level1-list "$WORKDIR/$TASK_UUID/scenes.txt" \
     --workdir "$OUTDIR/$TASK_UUID" \
-    --pkgdir "$OUTDIR/upload" \
+    --pkgdir "$PKGDIR/$TASK_UUID" \
     --acq-parser-hint s2_sinergise \
     --local-scheduler \
     --workers 1
@@ -155,7 +157,10 @@ rm -rf "$WORKDIR/$TASK_UUID"
 rm "$WORKDIR/$TASK_UUID.yaml"
 
 # upload to destination
-aws s3 sync --only-show-errors "$OUTDIR/upload" "${S3_INPUT_PREFIX}"
+aws s3 sync --only-show-errors "$PKGDIR/$TASK_UUID" "${S3_INPUT_PREFIX}"
+
+rm -rf "$OUTDIR/$TASK_UUID"
+rm -rf "$PKGDIR/$TASK_UUID"
 
 log_message $LOG_INFO "Complete"
 exit ${EXIT_CODE};
