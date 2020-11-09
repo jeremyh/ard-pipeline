@@ -159,6 +159,9 @@ rm "$WORKDIR/$TASK_UUID.yaml"
 # upload to destination
 aws s3 sync --only-show-errors "$PKGDIR/$TASK_UUID" "${S3_INPUT_PREFIX}"
 
+mkdir -p /airflow/xcom/
+echo "{\"dataset\": \"$(find $PKGDIR/$TASK_UUID/ -type f -name 'ARD-METADATA.yaml' -printf '%P')\""
+echo "{\"dataset\": \"$(find $PKGDIR/$TASK_UUID/ -type f -name 'ARD-METADATA.yaml' -printf '%P')\"" > /airflow/xcom/return.json
 rm -rf "$OUTDIR/$TASK_UUID"
 rm -rf "$PKGDIR/$TASK_UUID"
 
