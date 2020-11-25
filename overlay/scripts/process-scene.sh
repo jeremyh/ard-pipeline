@@ -79,6 +79,7 @@ if [ "$?" -ne 0 ]; then
     log_message $LOG_ERROR "Unable to find environment"
     exit -1;
 fi
+log_message $LOG_INFO "wagl environment activated"
 
 log_message $LOG_INFO "Syncing tile information from s3"
 # Sync data for the current granule
@@ -87,20 +88,21 @@ if [ "$?" -ne 0 ]; then
     log_message $LOG_ERROR "Unable to fetch granule";
     exit -1;
 fi
+log_message $LOG_INFO "Tile synched"
 
 aws s3 sync --only-show-errors "$DATASTRIP_URL" "$WORKDIR/$TASK_UUID/datastrip"
 if [ "$?" -ne 0 ]; then
     log_message $LOG_ERROR "Unable to fetch metadata";
     exit -1;
 fi
-
-log_message $LOG_INFO "Adding user to /etc/passwd"
+log_message $LOG_INFO "Metadata synched"
 
 # Create work file
 echo "$WORKDIR/$TASK_UUID" > "$WORKDIR/$TASK_UUID/scenes.txt"
 
 log_message $LOG_INFO "Waiting for ancillary to become ready"
 wait_for_ancillary
+log_message $LOG_INFO "Ancillary ready"
 
 # Config files for wagl/luigi default to the current directory
 # The Dockerfile moves the configs to the script folder
@@ -108,11 +110,17 @@ cd /scripts
 
 # Generate the index yaml for the level 1c product
 # Note that argument refers to a filename and not a directory
+log_message $LOG_INFO "Generating 1C product metadata"
 python3 s2_l1c_aws_pds_generate_metadata.py --output "$WORKDIR" "$WORKDIR/$TASK_UUID"
 CAPTURE_DATE="$(date -u --date=$(cat "$WORKDIR/$TASK_UUID/productInfo.json" | jq -r '.tiles[0].timestamp') '+%Y-%m-%d')"
+log_message $LOG_INFO "Generated 1C product metadata"
+log_message $LOG_INFO "CAPTURE_DATE=$CAPTURE_DATE"
 
+log_message $LOG_INFO "Fetching water vapour"
 python3 /scripts/ancillary_fetch.py $CAPTURE_DATE --action water_vapour
+log_message $LOG_INFO "Fetching BRDF"
 python3 /scripts/ancillary_fetch.py $CAPTURE_DATE --action brdf
+log_message $LOG_INFO "Ancillary fetched"
 
 log_message $LOG_INFO "Running WAGL"
 
@@ -157,9 +165,12 @@ rm -rf "$WORKDIR/$TASK_UUID"
 rm "$WORKDIR/$TASK_UUID.yaml"
 
 # upload to destination
+log_message $LOG_INFO "Synching to destination"
 aws s3 sync --only-show-errors "$PKGDIR/$TASK_UUID" "${S3_INPUT_PREFIX}"
+log_message $LOG_INFO "Synch to destination complete"
 
 # pass the location of the dataset to airflow xcom
+log_message $LOG_INFO "Passing XCom"
 mkdir -p /airflow/xcom/
 pushd "$PKGDIR/$TASK_UUID/"
 echo "{\"dataset\": \"${S3_INPUT_PREFIX}$(find . -type f -name 'ARD-METADATA.yaml' -printf '%P')\"}" > /airflow/xcom/return.json
