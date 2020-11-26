@@ -25,9 +25,9 @@ S3_INPUT_PREFIX="$5"
 # separate s3://bucket_name/prefix into bucket_name prefix
 read S3_BUCKET S3_BUCKET_PREFIX <<< $(echo "$S3_INPUT_PREFIX" | perl -pe's/s3:\/\/([^\/]+)\/(.*)/\1 \2/;')
 
-WORKDIR="/ancillary/granules"
-OUTDIR="/ancillary/output"
-PKGDIR="/ancillary/upload"
+WORKDIR="/granules"
+OUTDIR="/output"
+PKGDIR="/upload"
 
 LOG_DEBUG=1
 LOG_INFO=10
