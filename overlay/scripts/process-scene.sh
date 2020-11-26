@@ -27,7 +27,7 @@ read S3_BUCKET S3_BUCKET_PREFIX <<< $(echo "$S3_INPUT_PREFIX" | perl -pe's/s3:\/
 
 WORKDIR="/granules"
 OUTDIR="/output"
-PKGDIR="/upload"
+PKGDIR="$OUTDIR/upload"
 
 LOG_DEBUG=1
 LOG_INFO=10
@@ -176,8 +176,8 @@ pushd "$PKGDIR/$TASK_UUID/"
 echo "{\"dataset\": \"${S3_INPUT_PREFIX}$(find . -type f -name 'ARD-METADATA.yaml' -printf '%P')\"}" > /airflow/xcom/return.json
 popd
 
-rm -rf "$OUTDIR/$TASK_UUID"
 rm -rf "$PKGDIR/$TASK_UUID"
+rm -rf "$OUTDIR/$TASK_UUID"
 
 log_message $LOG_INFO "Complete"
 exit ${EXIT_CODE};
