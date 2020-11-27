@@ -27,7 +27,7 @@ read S3_BUCKET S3_BUCKET_PREFIX <<< $(echo "$S3_INPUT_PREFIX" | perl -pe's/s3:\/
 
 WORKDIR="/granules"
 OUTDIR="/output"
-PKGDIR="$OUTDIR/upload"
+PKGDIR="/upload"
 
 LOG_DEBUG=1
 LOG_INFO=10
