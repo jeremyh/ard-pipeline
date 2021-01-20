@@ -5,5 +5,6 @@ RUN chown -R wagl_nrt:wagl_nrt /upload
 USER wagl_nrt
 COPY scripts/process-scene.sh /scripts/process-scene.sh
 COPY scripts/luigi.cfg /scripts/luigi.cfg
+COPY scripts/check_exists.py /scripts/check_exists.py
 ENTRYPOINT []
 CMD []

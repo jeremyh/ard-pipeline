@@ -100,6 +100,15 @@ log_message $LOG_INFO "Metadata synched"
 # Create work file
 echo "$WORKDIR/$TASK_UUID" > "$WORKDIR/$TASK_UUID/scenes.txt"
 
+# Check if output already exists
+python3 /scripts/check_exists.py --level1-path="$WORKDIR/$TASK_UUID" --acq-parser-hint="s2_sinergise" --s3-bucket="$S3_BUCKET" --s3-prefix="$S3_BUCKET_PREFIX"
+if [ "$?" -ne 0 ]; then
+    log_message $LOG_INFO "Passing XCom"
+    mkdir -p /airflow/xcom/
+    echo "{\"dataset\": \"exists\"}" > /airflow/xcom/return.json
+    exit 0;
+fi
+
 log_message $LOG_INFO "Waiting for ancillary to become ready"
 wait_for_ancillary
 log_message $LOG_INFO "Ancillary ready"
