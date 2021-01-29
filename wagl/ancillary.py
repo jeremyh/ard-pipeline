@@ -771,7 +771,7 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1, tolerance
         observations = np.array([0, 6, 12, 18])
         hr = observations[np.argmin(np.abs(hour - observations))]
         dataset_name = f"AVERAGE/{month}/{hr:02d}00"
-        datafile = water_vapour_dict["fallback_data"]
+        datafile = water_vapour_dict["fallback_dataset"]
     else:
         tier = WaterVapourTier.DEFINITIVE
         # get the index of the closest water vapour observation
