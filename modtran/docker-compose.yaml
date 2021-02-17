@@ -1,0 +1,6 @@
+version: "3.3"
+services:
+  wagl:
+    build: .
+    volumes:
+      - ./bin/modtran:/modtran6
