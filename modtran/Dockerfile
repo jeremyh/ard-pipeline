@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM ubuntu:latest
 COPY ./modtran_runner ./modtran_runner
 
-CMD [ "/bin/sh", "/modtran_runner/md_runner.sh" ]
+CMD [ "/modtran_runner/modtran_runner.sh" ]
