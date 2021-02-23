@@ -1,7 +1,8 @@
-version: "3.3"
+version: "3.4"
 services:
   wagl:
-    build: .
+    build:
+      context: .
     environment:
       - MODTRAN_PRODUCT_KEY
       - MODTRAN_DATA=/modtran6/DATA
