@@ -28,7 +28,7 @@
 -   multiple instance:
 
         docker-compose build
-        docker-compose up --scale=3
+        docker-compose up --scale wagl=3
         docker-compose down
 
     there should be 3 different folders under `./tests`
