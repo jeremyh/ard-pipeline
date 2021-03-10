@@ -1,5 +1,5 @@
 #!/bin/bash
-export MOD6=/modtran6/bin/linux/mod6c_cons
+export MOD6=/modtran6/MODTRAN6.0/bin/linux/mod6c_cons
 $MOD6 -version
 $MOD6 -activate_license $MODTRAN_PRODUCT_KEY
 
