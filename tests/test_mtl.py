@@ -20,6 +20,12 @@ L8_MTL2 = pjoin(DATA_DIR, "LANDSAT8", "LO80900842013284ASA00_MTL.txt")
 L8_MTL1C2 = pjoin(
     DATA_DIR, "LANDSAT8", "LC08_L1TP_092084_20201029_20201106_02_T1_MTL.txt"
 )
+L8_MTRTC2 = pjoin(
+    DATA_DIR,
+    "LANDSAT8",
+    "LC81060632021051LGN00__C2_RT",
+    "LC08_L1TP_106063_20210220_20210220_02_RT_MTL.txt",
+)
 
 
 class TypeParserTest(unittest.TestCase):
@@ -153,6 +159,20 @@ class Landsat8MTL1C2ParserTest(unittest.TestCase):
         assert "PRODUCT_CONTENTS" in tree  # was METADATA_FILE_INFO
         # self.assertTrue("PRODUCT_METADATA" in tree)
         assert "IMAGE_ATTRIBUTES" in tree  # PRODUCT_METADATA info added here
+        assert "LEVEL1_MIN_MAX_RADIANCE" in tree
+        assert "LEVEL1_MIN_MAX_REFLECTANCE" in tree
+        assert "LEVEL1_MIN_MAX_PIXEL_VALUE" in tree
+        assert "LEVEL1_RADIOMETRIC_RESCALING" in tree
+        assert "LEVEL1_THERMAL_CONSTANTS" in tree
+        assert "LEVEL1_PROJECTION_PARAMETERS" in tree
+
+
+class Landsat8MTL1C2ParserTest(unittest.TestCase):
+    def test_load(self):
+        tree = load_mtl(L8_MTRTC2)
+        assert len(tree) == 10
+        assert "PRODUCT_CONTENTS" in tree
+        assert "IMAGE_ATTRIBUTES" in tree
         assert "LEVEL1_MIN_MAX_RADIANCE" in tree
         assert "LEVEL1_MIN_MAX_REFLECTANCE" in tree
         assert "LEVEL1_MIN_MAX_PIXEL_VALUE" in tree
