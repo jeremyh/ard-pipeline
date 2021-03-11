@@ -15,6 +15,12 @@ L7_MTL1 = pjoin(DATA_DIR, "LANDSAT7", "L71090081_08120090415_MTL.txt")
 L7_MTL2 = pjoin(
     DATA_DIR, "LANDSAT7", "LE07_L1TP_112066_20020218_20170221_01_T1_MTL.txt"
 )
+L7_MTLRTC2 = pjoin(
+    DATA_DIR,
+    "LANDSAT7",
+    "LE71140812021051EDC00__C2_RT",
+    "LE07_L1TP_114081_20210220_20210220_02_RT_MTL.txt",
+)
 L8_MTL1 = pjoin(DATA_DIR, "LANDSAT8", "LO80900842013284ASA00_MTL.txt")
 L8_MTL2 = pjoin(DATA_DIR, "LANDSAT8", "LO80900842013284ASA00_MTL.txt")
 L8_MTL1C2 = pjoin(
@@ -171,6 +177,20 @@ class Landsat8MTRTC2ParserTest(unittest.TestCase):
     def test_load(self):
         tree = load_mtl(L8_MTRTC2)
         assert len(tree) == 10
+        assert "PRODUCT_CONTENTS" in tree
+        assert "IMAGE_ATTRIBUTES" in tree
+        assert "LEVEL1_MIN_MAX_RADIANCE" in tree
+        assert "LEVEL1_MIN_MAX_REFLECTANCE" in tree
+        assert "LEVEL1_MIN_MAX_PIXEL_VALUE" in tree
+        assert "LEVEL1_RADIOMETRIC_RESCALING" in tree
+        assert "LEVEL1_THERMAL_CONSTANTS" in tree
+        assert "LEVEL1_PROJECTION_PARAMETERS" in tree
+
+
+class Landsat7MTRTC2ParserTest(unittest.TestCase):
+    def test_load(self):
+        tree = load_mtl(L7_MTLRTC2)
+        assert len(tree) == 11
         assert "PRODUCT_CONTENTS" in tree
         assert "IMAGE_ATTRIBUTES" in tree
         assert "LEVEL1_MIN_MAX_RADIANCE" in tree
