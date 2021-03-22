@@ -175,7 +175,7 @@ rm "$WORKDIR/$TASK_UUID.yaml"
 
 # upload to destination
 log_message $LOG_INFO "Synching to destination"
-aws s3 sync --only-show-errors "$PKGDIR/$TASK_UUID" "${S3_INPUT_PREFIX}"
+aws s3 sync --only-show-errors --acl bucket-owner-full-control "$PKGDIR/$TASK_UUID" "${S3_INPUT_PREFIX}"
 log_message $LOG_INFO "Synch to destination complete"
 
 # pass the location of the dataset to airflow xcom
