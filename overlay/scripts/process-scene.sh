@@ -177,9 +177,7 @@ rm "$WORKDIR/$TASK_UUID.yaml"
 log_message $LOG_INFO "Synching to destination"
 echo aws s3 sync --only-show-errors --acl bucket-owner-full-control "$PKGDIR/$TASK_UUID" "${S3_INPUT_PREFIX}"
 aws s3 sync --only-show-errors --acl bucket-owner-full-control "$PKGDIR/$TASK_UUID" "${S3_INPUT_PREFIX}"
-find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n'
-find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n' | xargs -n 1 -I {} echo --bucket "${S3_BUCKET}" --key "${S3_INPUT_PREFIX}"{}
-find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n' | xargs -n 1 -I {} aws s3api put-object-tagging --bucket "${S3_BUCKET}" --tagging 'TagSet=[{Key=pipeline,Value="NRT Processing"},{Key=target_data,Value="Sentinel2 NRT"},{Key=remote_host,Value="AWS PDS Europe"},{Key=transfer_method,Value="Public Internet Fetch"},{Key=input_data,Value="Sentinel2 L1C"},{Key=input_data_type,Value="JP2000"},{Key=egress_location,Value="ap-southeast-2"},{Key=egress_method,Value="s3 upload"},{Key=archive_time,Value="30 days"},{Key=orchestrator,Value="airflow"}]' --key "${S3_INPUT_PREFIX}"{}
+find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n' | xargs -n 1 -I {} aws s3api put-object-tagging --bucket "${S3_BUCKET}" --tagging 'TagSet=[{Key=pipeline,Value="NRT Processing"},{Key=target_data,Value="Sentinel2 NRT"},{Key=remote_host,Value="AWS PDS Europe"},{Key=transfer_method,Value="Public Internet Fetch"},{Key=input_data,Value="Sentinel2 L1C"},{Key=input_data_type,Value="JP2000"},{Key=egress_location,Value="ap-southeast-2"},{Key=egress_method,Value="s3 upload"},{Key=archive_time,Value="30 days"},{Key=orchestrator,Value="airflow"}]' --key "${S3_BUCKET_PREFIX}"{}
 log_message $LOG_INFO "Synch to destination complete"
 
 # pass the location of the dataset to airflow xcom
