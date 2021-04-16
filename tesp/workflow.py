@@ -12,7 +12,7 @@ from pathlib import Path
 
 import luigi
 import yaml
-from eodatasets3.wagl import Granule
+from eodatasets3.wagl import Granule, package
 from eugl.fmask import fmask
 from eugl.gqa import GQATask
 from luigi.local_target import LocalFileSystem
@@ -22,7 +22,7 @@ from wagl.singlefile_workflow import DataStandardisation
 
 from tesp.constants import ProductPackage
 from tesp.metadata import _get_tesp_metadata
-from tesp.package import package, package_non_standard
+from tesp.package import package_non_standard
 
 QA_PRODUCTS = ["gqa", "fmask"]
 
