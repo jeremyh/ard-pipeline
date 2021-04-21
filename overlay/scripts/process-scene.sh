@@ -184,7 +184,7 @@ log_message $LOG_INFO "Synch to destination complete"
 log_message $LOG_INFO "Passing XCom"
 mkdir -p /airflow/xcom/
 pushd "$PKGDIR/$TASK_UUID/"
-echo "{\"dataset\": \"${S3_INPUT_PREFIX}$(find . -type f -name 'ARD-METADATA.yaml' -printf '%P')\"}" > /airflow/xcom/return.json
+cat $(find . -type f -name 'ARD-METADATA.yaml') > /airflow/xcom/return.json
 popd
 
 rm -rf "$PKGDIR/$TASK_UUID"
