@@ -105,7 +105,7 @@ python3 /scripts/check_exists.py --level1-path="$WORKDIR/$TASK_UUID" --acq-parse
 if [ "$?" -ne 0 ]; then
     log_message $LOG_INFO "Passing XCom"
     mkdir -p /airflow/xcom/
-    echo "{\"dataset\": \"exists\"}" > /airflow/xcom/return.json
+    echo "{}" > /airflow/xcom/return.json
     exit 0;
 fi
 
