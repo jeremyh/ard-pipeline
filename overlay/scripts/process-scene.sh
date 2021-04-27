@@ -184,7 +184,13 @@ log_message $LOG_INFO "Synch to destination complete"
 log_message $LOG_INFO "Passing XCom"
 mkdir -p /airflow/xcom/
 pushd "$PKGDIR/$TASK_UUID/"
+echo dataset yaml
+cat $(find . -type f -name 'ARD-METADATA.yaml')
+echo ----
 cat $(find . -type f -name 'ARD-METADATA.yaml') | python3 -c 'import sys, yaml, json; json.dump(yaml.safe_load(sys.stdin), sys.stdout); sys.stdout.flush()' > /airflow/xcom/return.json
+echo dataset json
+cat /airflow/xcom/return.json
+echo ----
 popd
 
 rm -rf "$PKGDIR/$TASK_UUID"
