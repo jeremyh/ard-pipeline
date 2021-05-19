@@ -103,7 +103,7 @@ echo "$WORKDIR/$TASK_UUID" > "$WORKDIR/$TASK_UUID/scenes.txt"
 # Check if output already exists
 python3 /scripts/check_exists.py --level1-path="$WORKDIR/$TASK_UUID" --acq-parser-hint="s2_sinergise" --s3-bucket="$S3_BUCKET" --s3-prefix="$S3_BUCKET_PREFIX"
 if [ "$?" -ne 0 ]; then
-    log_message $LOG_INFO "Passing XCom"
+    log_message $LOG_INFO "Output already exists, passing {} to XCom"
     mkdir -p /airflow/xcom/
     echo "{}" > /airflow/xcom/return.json
     exit 0;
@@ -163,7 +163,14 @@ if [ "$?" -ne 0 ]; then
         log_message $LOG_ERROR "$line"
     done < "luigi-interface.log"
 
-    EXIT_CODE=-1
+    # Cleanup
+    log_message $LOG_INFO "Processing failed, remove working directories";
+    rm -rf "$WORKDIR/$TASK_UUID"
+    rm -f "$WORKDIR/$TASK_UUID.yaml"
+    rm -rf "$PKGDIR/$TASK_UUID"
+    rm -rf "$OUTDIR/$TASK_UUID"
+    log_message $LOG_INFO "Cleanup complete";
+    exit -1;
 fi
 
 log_message $LOG_INFO "Remove working directories"
@@ -171,7 +178,8 @@ log_message $LOG_INFO "Remove working directories"
 # Remove referenced data ahead of time since the docker orchestrator may be
 # delayed in freeing up storage for re-use
 rm -rf "$WORKDIR/$TASK_UUID"
-rm "$WORKDIR/$TASK_UUID.yaml"
+rm -f "$WORKDIR/$TASK_UUID.yaml"
+log_message $LOG_INFO "Working directories removed"
 
 # upload to destination
 log_message $LOG_INFO "Synching to destination"
@@ -184,11 +192,12 @@ log_message $LOG_INFO "Synch to destination complete"
 log_message $LOG_INFO "Passing XCom"
 mkdir -p /airflow/xcom/
 pushd "$PKGDIR/$TASK_UUID/"
-cat $(find . -type f -name 'ARD-METADATA.yaml') | python3 -c 'import sys, yaml, json; json.dump(yaml.safe_load(sys.stdin), sys.stdout); sys.stdout.flush()' > /airflow/xcom/return.json
+echo "{\"dataset\": \"${S3_INPUT_PREFIX}$(find . -type f -name 'ARD-METADATA.yaml' -printf '%P')\"}" > /airflow/xcom/return.json
 popd
 
 rm -rf "$PKGDIR/$TASK_UUID"
 rm -rf "$OUTDIR/$TASK_UUID"
 
 log_message $LOG_INFO "Complete"
+log_message $LOG_INFO "Exiting with exit code ${EXIT_CODE}"
 exit ${EXIT_CODE};
