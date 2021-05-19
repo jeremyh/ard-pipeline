@@ -45,5 +45,6 @@ RUN pip install numpy \
 # RUN cd ${BUILD_DIR}/eo-datasets && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git \
 #     && cd ${BUILD_DIR}/luigi && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git \
 #     && cd ${BUILD_DIR}/idl-functions && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git \
+    # && cd ${BUILD_DIR}/wagl && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git
 #     && cd ${BUILD_DIR}/tesp && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git
     # && cd ${BUILD_DIR}/eugl && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git
