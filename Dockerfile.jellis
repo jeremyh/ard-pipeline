@@ -43,11 +43,8 @@ RUN cd ${BUILD_DIR}/eo-datasets && pip install . --user && rm -rf .git \
     && cd ${BUILD_DIR}/eugl && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git
     # && cd ${BUILD_DIR}/wagl && python setup.py install --prefix=${BUILD_DIR} && rm-rf .git
 
-# RUN /bin/bash -c "conda update -n base conda"
 
 # Luigi config
 # Logging config
-
-# Comment out compression in luigi file
 
 # https://gist.github.com/sixy6e/316e95533d1ada3afbab6b381e19742d

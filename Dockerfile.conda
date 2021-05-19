@@ -23,24 +23,25 @@ WORKDIR ${BUILD_DIR}
 ADD https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh /root/miniconda.sh
 RUN chmod +x /root/miniconda.sh && /root/miniconda.sh -b -f -p conda
 
-# Download the necessary codebases (@versions) (using git now as installs needed version info)
+# # Download the necessary codebases (@versions) (using git now as installs needed version info)
 RUN git clone --branch master https://github.com/sixy6e/idl-functions.git idl-functions \
     && git clone --branch ${LUIGI_VERSION} https://github.com/spotify/luigi.git luigi \
-    && git clone --branch eodatasets3 https://github.com/GeoscienceAustralia/eo-datasets.git eo-datasets \
-    && git clone --branch ${WAGL_VERSION} https://github.com/GeoscienceAustralia/wagl.git wagl \
-    && git clone --branch ${TESP_VERSION} https://github.com/OpenDataCubePipelines/tesp.git tesp \
+    && git clone --branch eodatasets3-0.19.3 https://github.com/GeoscienceAustralia/eo-datasets.git eo-datasets \
+    # && git clone --branch ${TESP_VERSION} https://github.com/OpenDataCubePipelines/tesp.git tesp \
     && git clone --branch ${EUGL_VERSION} https://github.com/OpenDataCubePipelines/eugl.git eugl
+#     # && git clone --branch ${WAGL_VERSION} https://github.com/GeoscienceAustralia/wagl.git wagl
 
-# Force versions
+# # Force versions
 RUN pip install numpy \
     && conda install \
         hdf5==1.12.0 \
-        # gdal==3.0.2 \
+        scikit-image==0.18.1 \
         # blosc==1.21.0 \
-        click==7.1.2 -y
+        click==7.1.2 -y \
+    && conda install -c conda-forge gdal==3.3.0
 
-#RUN cd ${BUILD_DIR}/eo-datasets && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git \
-    RUN cd ${BUILD_DIR}/luigi && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git \
+RUN cd ${BUILD_DIR}/eo-datasets && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git \
+    && cd ${BUILD_DIR}/luigi && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git \
     && cd ${BUILD_DIR}/idl-functions && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git \
     && cd ${BUILD_DIR}/tesp && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git
     # && cd ${BUILD_DIR}/eugl && python setup.py install --prefix=${BUILD_DIR} && rm -rf .git
