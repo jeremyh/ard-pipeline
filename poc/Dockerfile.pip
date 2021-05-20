@@ -1,0 +1,13 @@
+FROM ubuntu:focal
+
+ENV APP_PATH=/app
+ENV PATH="${PATH}:${APP_PATH}/conda/bin:${APP_PATH}/bin"
+
+RUN apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        git
+
+WORKDIR ${APP_PATH}
+
+ADD https://repo.continuum.io/miniconda/Miniconda3-py38_4.8.2-Linux-x86_64.sh /root/miniconda.sh
+RUN chmod +x /root/miniconda.sh && /root/miniconda.sh -b -f -p conda

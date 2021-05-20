@@ -51,4 +51,5 @@ Thumbs.db
 *.mov
 *.wmv
 
-pkgs/
+tesp/
+poc/pkgs/\/.git
