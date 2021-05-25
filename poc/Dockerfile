@@ -28,10 +28,13 @@ RUN chmod +x /root/miniconda.sh && /root/miniconda.sh -b -f -p conda
 RUN pip install numpy \
     && conda install \
         # hdf5==1.12.0 \
-        # blosc==1.21.0 \
+        blosc==1.21.0 \
         click==7.1.2 -y
 
-RUN conda install -c conda-forge gdal==3.3.0 python-fmask==0.5.5
+RUN conda install -c conda-forge \
+        gdal==3.3.0 \
+        python-fmask==0.5.5
+        # hdf5plugin==2.3.2
 
 # Download the necessary codebases (@versions) (using git now as installs needed version info)
 RUN git clone --branch master https://github.com/sixy6e/idl-functions.git idl-functions \
@@ -47,3 +50,19 @@ RUN cd ${BUILD_DIR}/idl-functions && pip install . && rm -rf .git \
     && cd ${BUILD_DIR}/eodatasets3 && pip install . && rm -rf .git \
     && cd ${BUILD_DIR}/eugl && pip install . && rm -rf .git \
     && cd ${BUILD_DIR}/tesp && pip install . && rm -rf .git
+
+RUN conda clean --all -y
+
+FROM ubuntu:focal as prod
+
+ENV BUILD_DIR=/build
+ENV PATH="${PATH}:${BUILD_DIR}/conda/bin:${BUILD_DIR}/bin"
+ENV PYTHONPATH=${BUILD_DIR}/lib/python3.8/site-packages/
+
+RUN apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        libgfortran5 \
+        jq \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
