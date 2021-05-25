@@ -2,11 +2,11 @@ FROM ubuntu:focal as builder
 SHELL ["/bin/bash", "-c"]
 
 ENV BUILD_DIR=/build
-ENV PATH="${PATH}:${BUILD_DIR}/conda/bin:${BUILD_DIR}/bin"
+ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
 ENV WAGL_VERSION=develop
 ENV EUGL_VERSION=master
 ENV TESP_VERSION=master
-ENV PYTHONPATH=${BUILD_DIR}/lib/python3.8/site-packages/
+ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
 
 USER root
 
@@ -25,14 +25,15 @@ ADD https://repo.continuum.io/miniconda/Miniconda3-py38_4.8.2-Linux-x86_64.sh /r
 RUN chmod +x /root/miniconda.sh && /root/miniconda.sh -b -f -p conda
 
 # Force versions
-RUN pip install numpy \
+RUN pip install numpy awscli boto3 botocore \
     && conda install \
         # hdf5==1.12.0 \
         blosc==1.21.0 \
         click==7.1.2 -y
 
+# GDAL 3.1 is being used because https://gdal.org/api/python.html#usage
 RUN conda install -c conda-forge \
-        gdal==3.3.0 \
+        gdal==3.1.0 \
         python-fmask==0.5.5
         # hdf5plugin==2.3.2
 
@@ -55,9 +56,13 @@ RUN conda clean --all -y
 
 FROM ubuntu:focal as prod
 
+# locale variables required by Click
+ENV LC_ALL="C.UTF-8"
+ENV LANG="C.UTF-8"
+
 ENV BUILD_DIR=/build
-ENV PATH="${PATH}:${BUILD_DIR}/conda/bin:${BUILD_DIR}/bin"
-ENV PYTHONPATH=${BUILD_DIR}/lib/python3.8/site-packages/
+ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
+ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
 
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
