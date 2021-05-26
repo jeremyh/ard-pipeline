@@ -20,6 +20,7 @@ pipelines:
         script:
           # Construct the version tag
           - VERSION="poc-$BITBUCKET_BUILD_NUMBER"
-          - docker build -t opendatacube/dea-wagl-docker:$VERSION -f overlay/Dockerfile.poc .
+          - cd overlay
+          - docker build -t opendatacube/dea-wagl-docker:$VERSION -f Dockerfile.poc .
           - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_TOKEN
           - docker push opendatacube/dea-wagl-docker:$VERSION
