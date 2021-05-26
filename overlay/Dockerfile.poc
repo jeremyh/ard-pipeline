@@ -27,7 +27,6 @@ RUN chmod +x /root/miniconda.sh && /root/miniconda.sh -b -f -p conda
 # Force versions
 RUN pip install numpy awscli boto3 botocore \
     && conda install \
-        # hdf5==1.12.0 \
         blosc==1.21.0 \
         click==7.1.2 -y
 
@@ -35,7 +34,7 @@ RUN pip install numpy awscli boto3 botocore \
 RUN conda install -c conda-forge \
         gdal==3.1.0 \
         python-fmask==0.5.5
-        # hdf5plugin==2.3.2
+        # hdf5plugin==2.3.2 # Will probably need to deal with this soon
 
 # Download the necessary codebases (@versions) (using git now as installs needed version info)
 RUN git clone --branch master https://github.com/sixy6e/idl-functions.git idl-functions \
