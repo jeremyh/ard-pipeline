@@ -63,6 +63,7 @@ ENV LANG="C.UTF-8"
 ENV BUILD_DIR=/build
 ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
 ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
+ENV MODTRAN_KEY=${MODTRAN_KEY}
 
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -70,4 +71,9 @@ RUN apt-get update -y \
         jq \
     && rm -rf /var/lib/apt/lists/*
 
+RUN mkdir /granules /output /upload
+
 COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
+COPY scripts/process-scene.sh /scripts/process-scene.sh
+COPY scripts/luigi.cfg /scripts/luigi.cfg
+COPY scripts/check_exists.py /scripts/check_exists.py
