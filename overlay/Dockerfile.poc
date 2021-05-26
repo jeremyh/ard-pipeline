@@ -70,7 +70,7 @@ RUN apt-get update -y \
         jq \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir /granules /output /upload
+RUN mkdir /scripts /granules /output /upload
 
 COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
 COPY scripts/process-scene.sh /scripts/process-scene.sh
