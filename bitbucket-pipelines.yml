@@ -4,16 +4,23 @@ image: opendatacube/k8s-dev
 options:
   docker: true
 
+definitions:
+  services:
+    docker:
+      memory: 6000
+
 pipelines:
   default:
     - step:
         name: Build and push docker image (nonprod)
         caches:
           - docker
+        size: 2x
         deployment: test
         script:
           # Construct the version tag
           - VERSION="poc-$BITBUCKET_BUILD_NUMBER"
-          - docker build -t opendatacube/dea-wagl-docker:$VERSION -f overlay/Dockerfile.poc .
-          - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
-          - docker push opendatacube/dea-wagl-docker:$VERSION
+          - cd overlay
+          - docker build -t geoscienceaustralia/dea-wagl-docker:$VERSION -f Dockerfile.poc .
+          - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_TOKEN
+          - docker push geoscienceaustralia/dea-wagl-docker:$VERSION
