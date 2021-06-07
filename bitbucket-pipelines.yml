@@ -20,7 +20,6 @@ pipelines:
         script:
           # Construct the version tag
           - VERSION="poc-$BITBUCKET_BUILD_NUMBER"
-          - cd overlay
-          - docker build -t geoscienceaustralia/dea-wagl-docker:$VERSION -f Dockerfile.poc .
+          - docker build -t geoscienceaustralia/dea-wagl-docker:$VERSION .
           - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_TOKEN
           - docker push geoscienceaustralia/dea-wagl-docker:$VERSION
