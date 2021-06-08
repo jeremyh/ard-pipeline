@@ -76,6 +76,7 @@ RUN mkdir /scripts /granules /output /upload
 
 COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
 COPY scripts/process-scene-sentinel-2.sh /scripts/process-scene-sentinel-2.sh
+COPY scripts/s2-l1c-aws-pds-generate-metadata.py /scripts/s2-l1c-aws-pds-generate-metadata.py
 COPY scripts/luigi-sentinel-2.cfg /scripts/luigi-sentinel-2.cfg
-COPY scripts/check_exists.py /scripts/check_exists.py
-RUN chmod +x /scripts/process-scene-sentinel-2.sh /scripts/check_exists.py
+COPY scripts/check-exists.py /scripts/check-exists.py
+RUN chmod +x /scripts/process-scene-sentinel-2.sh

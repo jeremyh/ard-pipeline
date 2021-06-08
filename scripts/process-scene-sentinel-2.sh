@@ -94,7 +94,7 @@ log_message $LOG_INFO "Metadata synched"
 echo "$WORKDIR/$TASK_UUID" > "$WORKDIR/$TASK_UUID/scenes.txt"
 
 # Check if output already exists
-python /scripts/check_exists.py --level1-path="$WORKDIR/$TASK_UUID" --acq-parser-hint="s2_sinergise" --s3-bucket="$S3_BUCKET" --s3-prefix="$S3_BUCKET_PREFIX"
+python /scripts/check-exists.py --level1-path="$WORKDIR/$TASK_UUID" --acq-parser-hint="s2_sinergise" --s3-bucket="$S3_BUCKET" --s3-prefix="$S3_BUCKET_PREFIX"
 if [ "$?" -ne 0 ]; then
     log_message $LOG_INFO "Output already exists, passing {} to XCom"
     mkdir -p /airflow/xcom/
@@ -113,16 +113,10 @@ cd /scripts
 # Generate the index yaml for the level 1c product
 # Note that argument refers to a filename and not a directory
 log_message $LOG_INFO "Generating 1C product metadata"
-python s2_l1c_aws_pds_generate_metadata.py --output "$WORKDIR" "$WORKDIR/$TASK_UUID"
+python s2-l1c-aws-pds-generate-metadata.py --output "$WORKDIR" "$WORKDIR/$TASK_UUID"
 CAPTURE_DATE="$(date -u --date=$(cat "$WORKDIR/$TASK_UUID/productInfo.json" | jq -r '.tiles[0].timestamp') '+%Y-%m-%d')"
 log_message $LOG_INFO "Generated 1C product metadata"
 log_message $LOG_INFO "CAPTURE_DATE=$CAPTURE_DATE"
-
-log_message $LOG_INFO "Fetching water vapour"
-python /scripts/ancillary_fetch.py $CAPTURE_DATE --action water_vapour
-log_message $LOG_INFO "Fetching BRDF"
-python /scripts/ancillary_fetch.py $CAPTURE_DATE --action brdf
-log_message $LOG_INFO "Ancillary fetched"
 
 log_message $LOG_INFO "Running WAGL"
 
