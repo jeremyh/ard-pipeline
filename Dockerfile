@@ -3,11 +3,11 @@ SHELL ["/bin/bash", "-c"]
 
 ENV BUILD_DIR=/build
 ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
-ENV EODATASETS1_VERSION=eodatasets-0.12
-ENV EODATASETS3_VERSION=eodatasets3-0.19.3
 ENV WAGL_VERSION=develop
 ENV EUGL_VERSION=master
 ENV TESP_VERSION=master
+ENV EODATASETS1_VERSION=eodatasets-0.12
+ENV EODATASETS3_VERSION=eodatasets3-0.20.1
 ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
 
 USER root
