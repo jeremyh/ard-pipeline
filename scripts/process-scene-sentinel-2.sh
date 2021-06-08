@@ -22,7 +22,7 @@ DATASTRIP_URL="$2"
 TASK_UUID="$3"
 S3_REGION="$4"
 S3_INPUT_PREFIX="$5"
-LUIGI_CONFIG_PATH="$6"
+LUIGI_CONFIG_PATH="/scripts/luigi-sentinel-2.cfg"
 
 # separate s3://bucket_name/prefix into bucket_name prefix
 read S3_BUCKET S3_BUCKET_PREFIX <<< $(echo "$S3_INPUT_PREFIX" | perl -pe's/s3:\/\/([^\/]+)\/(.*)/\1 \2/;')

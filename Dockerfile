@@ -3,6 +3,8 @@ SHELL ["/bin/bash", "-c"]
 
 ENV BUILD_DIR=/build
 ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
+ENV EODATASETS1_VERSION=eodatasets-0.12
+ENV EODATASETS3_VERSION=eodatasets3-0.19.3
 ENV WAGL_VERSION=develop
 ENV EUGL_VERSION=master
 ENV TESP_VERSION=master
@@ -38,8 +40,8 @@ RUN conda install -c conda-forge \
 
 # Download the necessary codebases (@versions) (using git now as installs needed version info)
 RUN git clone --branch master https://github.com/sixy6e/idl-functions.git idl-functions \
-    && git clone --branch eodatasets1 https://github.com/GeoscienceAustralia/eo-datasets.git eodatasets1 \
-    && git clone --branch eodatasets3-0.19.3 https://github.com/GeoscienceAustralia/eo-datasets.git eodatasets3 \
+    && git clone --branch ${EODATASETS1_VERSION} https://github.com/GeoscienceAustralia/eo-datasets.git eodatasets1 \
+    && git clone --branch ${EODATASETS1_VERSION} https://github.com/GeoscienceAustralia/eo-datasets.git eodatasets3 \
     && git clone --branch ${TESP_VERSION} https://github.com/OpenDataCubePipelines/tesp.git tesp \
     && git clone --branch ${EUGL_VERSION} https://github.com/OpenDataCubePipelines/eugl.git eugl \
     && git clone --branch ${WAGL_VERSION} https://github.com/GeoscienceAustralia/wagl.git wagl
@@ -76,3 +78,4 @@ COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
 COPY scripts/process-scene-sentinel-2.sh /scripts/process-scene-sentinel-2.sh
 COPY scripts/luigi-sentinel-2.cfg /scripts/luigi-sentinel-2.cfg
 COPY scripts/check_exists.py /scripts/check_exists.py
+RUN chmod +x /scripts/process-scene-sentinel-2.sh /scripts/check_exists.py
