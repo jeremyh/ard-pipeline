@@ -22,4 +22,4 @@ pipelines:
           - VERSION="poc-$BITBUCKET_BUILD_NUMBER"
           - docker build -t geoscienceaustralia/dea-wagl-docker:$VERSION -t geoscienceaustralia/dea-wagl-docker:latest .
           - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_TOKEN
-          - docker push geoscienceaustralia/dea-wagl-docker --all-tags
+          - docker push geoscienceaustralia/dea-wagl-docker
