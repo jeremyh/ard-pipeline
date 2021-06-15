@@ -78,5 +78,6 @@ COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
 COPY scripts/process-scene-sentinel-2.sh /scripts/process-scene-sentinel-2.sh
 COPY scripts/s2-l1c-aws-pds-generate-metadata.py /scripts/s2-l1c-aws-pds-generate-metadata.py
 COPY scripts/luigi-sentinel-2.cfg /scripts/luigi-sentinel-2.cfg
+COPY scripts/luigi-logging-sentinel-2.cfg /scripts/luigi-logging-sentinel-2.cfg
 COPY scripts/check-exists.py /scripts/check-exists.py
 RUN chmod +x /scripts/process-scene-sentinel-2.sh
