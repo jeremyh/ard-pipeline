@@ -34,7 +34,7 @@ RUN pip install numpy awscli boto3 botocore \
 
 # GDAL 3.1 is being used because https://gdal.org/api/python.html#usage
 RUN conda install -c conda-forge \
-        gdal==3.1.0 \
+        gdal==3.1.4 \
         python-fmask==0.5.5
         # hdf5plugin==2.3.2 # Will probably need to deal with this soon
 
