@@ -36,7 +36,8 @@ RUN pip install numpy awscli boto3 botocore \
 RUN conda install -c conda-forge \
         gdal==3.1.4 \
         python-fmask==0.5.5 \
-        hdf5plugin==2.3.2
+        hdf5plugin==2.3.2 \
+        bitshuffle==0.3.5
 
 # Download the necessary codebases (@versions) (using git now as installs needed version info)
 RUN git clone --branch master https://github.com/sixy6e/idl-functions.git idl-functions \
