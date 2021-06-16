@@ -35,8 +35,8 @@ RUN pip install numpy awscli boto3 botocore \
 # GDAL 3.1 is being used because https://gdal.org/api/python.html#usage
 RUN conda install -c conda-forge \
         gdal==3.1.4 \
-        python-fmask==0.5.5
-        # hdf5plugin==2.3.2 # Will probably need to deal with this soon
+        python-fmask==0.5.5 \
+        hdf5plugin==2.3.2
 
 # Download the necessary codebases (@versions) (using git now as installs needed version info)
 RUN git clone --branch master https://github.com/sixy6e/idl-functions.git idl-functions \
