@@ -53,6 +53,7 @@ RUN cd ${BUILD_DIR}/idl-functions && pip install . && rm -rf .git \
     && cd ${BUILD_DIR}/tesp && pip install . && rm -rf .git
 
 RUN conda install -c conda-forge hdf5plugin==2.3.2 \
+        blosc-hdf5-plugin==1.0.0 \
         bitshuffle==0.3.5 \
         hdf5-external-filter-plugins-bitshuffle==0.1.0
 
