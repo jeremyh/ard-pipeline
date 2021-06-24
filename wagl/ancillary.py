@@ -3,6 +3,7 @@
 """Ancillary dataset retrieval and storage."""
 
 import datetime
+import os.path
 from os.path import join as pjoin
 
 # import glob
@@ -746,6 +747,9 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1, tolerance
     water_vapour_path = water_vapour_dict["pathname"]
 
     datafile = pjoin(water_vapour_path, filename)
+
+    if not os.path.isfile(datafile):
+        datafile = water_vapour_dict["fallback_dataset"]
 
     with h5py.File(datafile, "r") as fid:
         index = read_h5_table(fid, "INDEX")
