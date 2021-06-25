@@ -27,7 +27,7 @@ ADD https://repo.continuum.io/miniconda/Miniconda3-py38_4.8.2-Linux-x86_64.sh /r
 RUN chmod +x /root/miniconda.sh && /root/miniconda.sh -b -f -p conda
 
 # Force versions
-RUN pip install numpy \
+RUN pip install boto boto3 numpy \
     && conda install \
         blosc==1.21.0 \
         click==7.1.2 -y
