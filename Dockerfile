@@ -14,8 +14,8 @@ USER root
 
 # Build deps
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        git bzip2 ca-certificates gfortran-10 gcc-10 make software-properties-common libpq-dev
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
+        awscli git bzip2 ca-certificates gfortran-10 gcc-10 make software-properties-common libpq-dev
 
 RUN ln -s $(which gfortran-10) $(which gfortran-10 | sed 's/\(.*\)\/\gfortran-10/\1\/gfortran/') \
     && ln -s $(which gcc-10) $(which gcc-10 | sed 's/\(.*\)\/\gcc-10/\1\/gcc/')
@@ -27,7 +27,7 @@ ADD https://repo.continuum.io/miniconda/Miniconda3-py38_4.8.2-Linux-x86_64.sh /r
 RUN chmod +x /root/miniconda.sh && /root/miniconda.sh -b -f -p conda
 
 # Force versions
-RUN pip install numpy awscli boto3 botocore \
+RUN pip install numpy boto3 botocore \
     && conda install \
         blosc==1.21.0 \
         click==7.1.2 -y
@@ -68,7 +68,6 @@ ENV LANG="C.UTF-8"
 ENV BUILD_DIR=/build
 ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
 ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
-ENV MODTRAN_KEY=${MODTRAN_KEY}
 
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
