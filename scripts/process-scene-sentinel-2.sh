@@ -31,6 +31,8 @@ WORKDIR="/granules"
 OUTDIR="/output"
 PKGDIR="/upload"
 
+MOD6=/ancillary/MODTRAN6.0.2.3G/bin/linux/mod6c_cons
+
 LOG_DEBUG=1
 LOG_INFO=10
 LOG_WARN=100
@@ -117,6 +119,11 @@ python s2-l1c-aws-pds-generate-metadata.py --output "$WORKDIR" "$WORKDIR/$TASK_U
 CAPTURE_DATE="$(date -u --date=$(cat "$WORKDIR/$TASK_UUID/productInfo.json" | jq -r '.tiles[0].timestamp') '+%Y-%m-%d')"
 log_message $LOG_INFO "Generated 1C product metadata"
 log_message $LOG_INFO "CAPTURE_DATE=$CAPTURE_DATE"
+
+# activate modtran6 license
+log_message $LOG_INFO "Activating MODTRAN6"
+$MOD6 -version
+$MOD6 -activate_license $MODTRAN_PRODUCT_KEY
 
 log_message $LOG_INFO "Running WAGL"
 
