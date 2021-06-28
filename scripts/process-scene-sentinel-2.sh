@@ -167,6 +167,8 @@ if [ "$?" -ne 0 ]; then
     exit -1;
 fi
 
+cat luigi-interface.log wagl-errors.log wagl-status.log
+
 log_message $LOG_INFO "Remove working directories"
 
 # Remove referenced data ahead of time since the docker orchestrator may be
