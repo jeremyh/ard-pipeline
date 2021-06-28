@@ -139,17 +139,17 @@ luigi --module tesp.workflow ARDP \
     --workers 1
 
 if [ "$?" -ne 0 ]; then
-    log_message $LOG_ERROR "Luigi failed: wagl-errors.log"
+    log_message $LOG_ERROR "Luigi failed: status-log.jsonl"
     while IFS='' read -r line || [[ -n "$line" ]];
     do
         log_message $LOG_ERROR "$line"
-    done < "wagl-errors.log"
+    done < "status-log.jsonl"
 
-    log_message $LOG_ERROR "Luigi failed: wagl-status.log"
+    log_message $LOG_ERROR "Luigi failed: task-log.jsonl"
     while IFS='' read -r line || [[ -n "$line" ]];
     do
         log_message $LOG_ERROR "$line"
-    done < "wagl-status.log"
+    done < "task-log.jsonl"
 
     log_message $LOG_ERROR "Luigi failed: luigi-interface.log"
     while IFS='' read -r line || [[ -n "$line" ]];
@@ -167,7 +167,7 @@ if [ "$?" -ne 0 ]; then
     exit -1;
 fi
 
-cat luigi-interface.log wagl-errors.log wagl-status.log
+cat luigi-interface.log status-log.jsonl task-log.jsonl
 
 log_message $LOG_INFO "Remove working directories"
 
