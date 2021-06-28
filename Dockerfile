@@ -15,6 +15,8 @@ USER root
 # Build deps
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
+        # REMOVE vim in prod!
+        vim \
         git bzip2 ca-certificates gfortran-10 gcc-10 make software-properties-common libpq-dev
 
 RUN ln -s $(which gfortran-10) $(which gfortran-10 | sed 's/\(.*\)\/\gfortran-10/\1\/gfortran/') \
