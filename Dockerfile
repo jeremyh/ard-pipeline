@@ -40,7 +40,7 @@ RUN conda install -c conda-forge \
 # Download the necessary codebases (@versions) (using git now as installs needed version info)
 RUN git clone --branch master https://github.com/sixy6e/idl-functions.git idl-functions \
     && git clone --branch ${EODATASETS1_VERSION} https://github.com/GeoscienceAustralia/eo-datasets.git eodatasets1 \
-    && git clone --branch ${EODATASETS1_VERSION} https://github.com/GeoscienceAustralia/eo-datasets.git eodatasets3 \
+    && git clone --branch ${EODATASETS3_VERSION} https://github.com/GeoscienceAustralia/eo-datasets.git eodatasets3 \
     && git clone --branch ${TESP_VERSION} https://github.com/OpenDataCubePipelines/tesp.git tesp \
     && git clone --branch ${EUGL_VERSION} https://github.com/OpenDataCubePipelines/eugl.git eugl \
     && git clone --branch ${WAGL_VERSION} https://github.com/GeoscienceAustralia/wagl.git wagl
@@ -52,9 +52,9 @@ RUN cd ${BUILD_DIR}/idl-functions && pip install . && rm -rf .git \
     && cd ${BUILD_DIR}/eugl && pip install . && rm -rf .git \
     && cd ${BUILD_DIR}/tesp && pip install . && rm -rf .git
 
-RUN conda install -c conda-forge hdf5plugin==2.3.2 \
-        blosc-hdf5-plugin==1.0.0 \
-        bitshuffle==0.3.5 \
+# RUN conda install -c conda-forge hdf5plugin==2.3.2 \
+RUN conda install -c conda-forge blosc-hdf5-plugin==1.0.0 \
+        # bitshuffle==0.3.5 \
         hdf5-external-filter-plugins-bitshuffle==0.1.0
 
 RUN conda clean --all -y
