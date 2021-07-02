@@ -31,6 +31,7 @@ QA_PRODUCTS = ["gqa", "fmask"]
 def on_failure(task, exception):
     """Capture any Task Failure here."""
     TASK_LOGGER.exception(
+        event="task-failure",
         task=task.get_task_family(),
         params=task.to_str_params(),
         level1=getattr(task, "level1", ""),
@@ -46,6 +47,7 @@ def on_failure(task, exception):
 def on_success(task):
     """Capture any Task Success here."""
     TASK_LOGGER.info(
+        event="task-success",
         task=task.get_task_family(),
         params=task.to_str_params(),
         level1=getattr(task, "level1", ""),
