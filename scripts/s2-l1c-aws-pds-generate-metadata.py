@@ -380,7 +380,7 @@ def main(output, datasets, checksum):
             raise RuntimeError('want xml or zipped archive')
         logging.info("Processing %s", path)
         output_path = Path(output)
-        yaml_path = output_path.joinpath(path.name + '.yaml')
+        yaml_path = output_path.joinpath(path.name + '.odc-metadata.yaml')
         logging.info("Output %s", yaml_path)
         if os.path.exists(yaml_path):
             logging.info("Output already exists %s", yaml_path)

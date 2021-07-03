@@ -115,7 +115,7 @@ cd /scripts
 # Generate the index yaml for the level 1c product
 # Note that argument refers to a filename and not a directory
 log_message $LOG_INFO "Generating 1C product metadata"
-python s2-l1c-aws-pds-generate-metadata.py --output "$WORKDIR" "$WORKDIR/$TASK_UUID"
+python s2-l1c-aws-pds-generate-metadata.py --output "$WORKDIR/$TASK_UUID" "$WORKDIR/$TASK_UUID"
 CAPTURE_DATE="$(date -u --date=$(cat "$WORKDIR/$TASK_UUID/productInfo.json" | jq -r '.tiles[0].timestamp') '+%Y-%m-%d')"
 log_message $LOG_INFO "Generated 1C product metadata"
 log_message $LOG_INFO "CAPTURE_DATE=$CAPTURE_DATE"
