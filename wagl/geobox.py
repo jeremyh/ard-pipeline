@@ -6,10 +6,9 @@ import affine
 import geopandas
 import h5py
 import numpy as np
-import osr
 import rasterio as rio
 from affine import Affine
-from osgeo import gdal
+from osgeo import gdal, osr
 from shapely.geometry import Polygon, box
 
 from wagl.satellite_solar_angles import setup_spheroid

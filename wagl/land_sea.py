@@ -3,8 +3,8 @@
 # get Land/Sea mask from UTM dataset
 # -----------------------------------
 import numpy as np
-import osr
 import rasterio as rio
+from osgeo import osr
 
 from wagl.data import write_img
 from wagl.geobox import GriddedGeoBox

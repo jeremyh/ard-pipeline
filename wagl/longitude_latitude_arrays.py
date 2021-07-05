@@ -6,7 +6,7 @@ from functools import partial
 
 import h5py
 import numpy as np
-import osr
+from osgeo import osr
 
 from wagl.constants import DatasetName, GroupName
 from wagl.hdf5 import H5CompressionFilter, attach_image_attributes

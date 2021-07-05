@@ -3,7 +3,7 @@
 import unittest
 
 import numpy as np
-import osr
+from osgeo import osr
 
 from wagl.geobox import GriddedGeoBox
 
