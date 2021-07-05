@@ -3,13 +3,13 @@ import math
 from math import radians
 
 import affine
-import gdal
 import geopandas
 import h5py
 import numpy as np
 import osr
 import rasterio as rio
 from affine import Affine
+from osgeo import gdal
 from shapely.geometry import Polygon, box
 
 from wagl.satellite_solar_angles import setup_spheroid

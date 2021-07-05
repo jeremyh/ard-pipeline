@@ -14,8 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
-import gdal
 import numpy as np
+from osgeo import gdal
 
 
 def generate_tiles(samples, lines, xtile=None, ytile=None):

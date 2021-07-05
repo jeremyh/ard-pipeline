@@ -3,12 +3,11 @@
 import unittest
 
 import affine
-import gdal
 import h5py
 import numpy as np
 import numpy.testing as npt
 import rasterio as rio
-from osgeo import osr
+from osgeo import gdal, osr
 
 from wagl import unittesting_tools as ut
 from wagl.acquisition import acquisitions
