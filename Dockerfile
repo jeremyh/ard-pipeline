@@ -5,7 +5,7 @@ ENV BUILD_DIR=/build
 ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
 ENV WAGL_VERSION=develop
 ENV EUGL_VERSION=master
-ENV TESP_VERSION=support-provisional
+ENV TESP_VERSION=master
 ENV EODATASETS1_VERSION=eodatasets-0.12
 ENV EODATASETS3_VERSION=eodatasets3
 ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
@@ -81,4 +81,3 @@ RUN mkdir /scripts /granules /output /upload
 
 COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
 COPY scripts /scripts
-RUN chmod +x /scripts/process-scene-sentinel-2.sh
