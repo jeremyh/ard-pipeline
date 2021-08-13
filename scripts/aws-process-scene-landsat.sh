@@ -42,17 +42,16 @@ log_message $LOG_INFO "L1_BUCKET=${L1_BUCKET}"
 
 create_task_folders
 fetch_landsat_granule
-
-find $WORKDIR/
-echo "bailing"
-exit -1;
-
-check_output_exists
+check_output_exists_landsat
 
 # Create work file
 echo "$WORKDIR/$TASK_UUID" > "$WORKDIR/$TASK_UUID/scenes.txt"
 
 prepare_level1_landsat
+
+find $WORKDIR/
+echo "bailing"
+exit -1;
 
 cd /scripts
 

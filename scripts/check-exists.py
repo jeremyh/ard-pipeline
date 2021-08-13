@@ -25,6 +25,7 @@ def main(level1_path, acq_parser_hint, s3_bucket, s3_prefix):
     key = package.output().path
 
     try:
+        print('checking', s3_bucket, key)
         obj = s3.head_object(Bucket=s3_bucket, Key=key)
         print('output already exists')
         sys.exit(-1)

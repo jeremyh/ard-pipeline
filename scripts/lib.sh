@@ -92,10 +92,18 @@ function activate_modtran {
     $MOD6 -activate_license $MODTRAN_PRODUCT_KEY
 }
 
-# Check if output already exists
-# TODO is this function Sentinel-2 only?
-function check_output_exists {
+# Check if output already exists for sentinel-2
+function check_output_exists_sentinel2 {
     python /scripts/check-exists.py --level1-path="$WORKDIR/$TASK_UUID" --acq-parser-hint="s2_sinergise" --s3-bucket="$DESINATION_BUCKET" --s3-prefix="$DESINATION_PREFIX"
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_INFO "Output already exists, exiting."
+        exit 0;
+    fi
+}
+
+# Check if output already exists for landsat
+function check_output_exists_landsat {
+    python /scripts/check-exists.py --level1-path="$WORKDIR/$TASK_UUID" --s3-bucket="$DESINATION_BUCKET" --s3-prefix="$DESINATION_PREFIX"
     if [ "$?" -ne 0 ]; then
         log_message $LOG_INFO "Output already exists, exiting."
         exit 0;
