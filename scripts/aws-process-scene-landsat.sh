@@ -29,6 +29,8 @@ log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESINATION_BUCKET' PREFI
 
 # saves the message to $WORKDIR/task.json
 receive_message_landsat
+echo "bailing"
+exit -1;
 
 GRANULE_PATH=$(jq -r '.tiles[0].path' "$WORKDIR/task.json")
 DATASTRIP_PATH=$(jq -r '.tiles[0].datastrip.path' "$WORKDIR/task.json")
@@ -38,8 +40,6 @@ GRANULE_URL="s3://${SOURCE_BUCKET}/${GRANULE_PATH}"
 DATASTRIP_URL="s3://${SOURCE_BUCKET}/${DATASTRIP_PATH}"
 
 create_task_folders
-echo "bailing"
-exit -1;
 fetch_landsat_granule
 check_output_exists
 
