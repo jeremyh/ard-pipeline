@@ -58,4 +58,8 @@ run_luigi
 upload_landsat
 remove_workdir
 
+# TO DO
+# SNS notification
+# delete SQS message
+
 finish_up
