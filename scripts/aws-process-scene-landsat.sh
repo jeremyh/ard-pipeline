@@ -50,10 +50,6 @@ echo "$WORKDIR/$TASK_UUID" > "$WORKDIR/$TASK_UUID/scenes.txt"
 
 prepare_level1_landsat
 
-find $WORKDIR/
-echo "bailing"
-exit -1;
-
 cd /scripts
 
 activate_modtran
