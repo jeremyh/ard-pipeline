@@ -11,7 +11,7 @@ SOURCE_BUCKET="$2"
 DESTINATION_S3_URL="$3"
 SNS_TOPIC="$4"
 
-ESTIMATED_COMPLETION_TIME=$(echo '3 * 60 * 60' | bc)   # 3 hours
+ESTIMATED_COMPLETION_TIME=10800   # 3 hours
 WORKDIR="/granules"
 OUTDIR="/output"
 PKGDIR="/upload"
@@ -24,7 +24,7 @@ read DESINATION_BUCKET DESINATION_PREFIX <<< $(echo "$DESTINATION_S3_URL" | perl
 source /scripts/lib.sh
 LOG_LEVEL=$LOG_DEBUG
 
-log_message $LOG_INFO "$0 called with $SQS_QUEUE $SOURCE_BUCKET $DESTINATION_PREFIX $SNS_TOPIC"
+log_message $LOG_INFO "$0 called with $SQS_QUEUE $SOURCE_BUCKET $DESINATION_S3_URL $SNS_TOPIC"
 log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESINATION_BUCKET' PREFIX:'$DESINATION_PREFIX'"
 
 # saves the message to $WORKDIR/task.json
@@ -38,6 +38,8 @@ GRANULE_URL="s3://${SOURCE_BUCKET}/${GRANULE_PATH}"
 DATASTRIP_URL="s3://${SOURCE_BUCKET}/${DATASTRIP_PATH}"
 
 create_task_folders
+echo "bailing"
+exit -1;
 fetch_landsat_granule
 check_output_exists
 
