@@ -31,6 +31,7 @@ log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESINATION_BUCKET' PREFI
 receive_message_landsat
 
 RECEIPT_HANDLE=$(jq -r '.Messages[0].ReceiptHandle' "$WORKDIR/message.json")
+TASK_UUID=$(jq -r '.Messages[0].MessageId' "$WORKDIR/message.json")
 L1_SUCCESS=$(jq -r '.success' "$WORKDIR/task.json")
 L1_PREFIX=$(jq -r '.prefix' "$WORKDIR/task.json")
 L1_BUCKET=$(jq -r '.bucket' "$WORKDIR/task.json")
