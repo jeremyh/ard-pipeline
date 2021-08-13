@@ -52,6 +52,8 @@ prepare_level1_landsat
 
 cd /scripts
 
+cat $LUIGI_CONFIG_PATH
+
 activate_modtran
 run_luigi
 
