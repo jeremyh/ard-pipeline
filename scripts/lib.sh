@@ -153,7 +153,7 @@ function prepare_level1_sentinel_2 {
 }
 
 # Prepare level-1 dataset yaml for landsat
-function prepare_level1_sentinel_2 {
+function prepare_level1_landsat {
     log_message $LOG_INFO "Generating 1C product metadata"
     eo3-prepare landsat-l1 $WORKDIR/$TASK_UUID
     mv $WORKDIR/*.yaml $WORKDIR/$TASK_UUID
