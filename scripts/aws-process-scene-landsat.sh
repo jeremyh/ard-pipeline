@@ -29,15 +29,17 @@ log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESINATION_BUCKET' PREFI
 
 # saves the message to $WORKDIR/task.json
 receive_message_landsat
+
+L1_SUCCESS=$(jq -r '.success')
+L1_PREFIX=$(jq -r '.prefix')
+L1_BUCKET=$(jq -r '.bucket')
+
+log_message $LOG_INFO "L1_SUCCESS=${L1_SUCCESS}"
+log_message $LOG_INFO "L1_PREFIX=${L1_PREFIX}"
+log_message $LOG_INFO "L1_BUCKET=${L1_BUCKET}"
+
 echo "bailing"
 exit -1;
-
-GRANULE_PATH=$(jq -r '.tiles[0].path' "$WORKDIR/task.json")
-DATASTRIP_PATH=$(jq -r '.tiles[0].datastrip.path' "$WORKDIR/task.json")
-
-TASK_UUID=$(jq -r '.id' "$WORKDIR/task.json")
-GRANULE_URL="s3://${SOURCE_BUCKET}/${GRANULE_PATH}"
-DATASTRIP_URL="s3://${SOURCE_BUCKET}/${DATASTRIP_PATH}"
 
 create_task_folders
 fetch_landsat_granule
