@@ -34,7 +34,6 @@ RUN conda install -y -c conda-forge \
         blosc==1.21.0 \
         click==7.1.2 \
         gdal==3.1.4 \
-        matplotlib==3.4.3 \
         python-fmask==0.5.5 \
         hdf5plugin==2.3.2 \
         blosc-hdf5-plugin==1.0.0 \
