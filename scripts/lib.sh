@@ -144,6 +144,13 @@ function prepare_level1_sentinel_2 {
     log_message $LOG_INFO "CAPTURE_DATE=$CAPTURE_DATE"
 }
 
+# Prepare level-1 dataset yaml for landsat
+function prepare_level1_sentinel_2 {
+    log_message $LOG_INFO "Generating 1C product metadata"
+    eo3-prepare landsat-l1 $WORKDIR/$TASK_UUID
+    mv $WORKDIR/*.yaml $WORKDIR/$TASK_UUID
+    log_message $LOG_INFO "Generated 1C product metadata"
+}
 
 function upload_sentinel2 {
     # upload to destination
