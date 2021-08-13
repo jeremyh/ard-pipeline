@@ -25,6 +25,17 @@ function create_task_folders {
     mkdir -p "$PKGDIR/$TASK_UUID"
 }
 
+# Fetch Landsat granule from S3 bucket
+function fetch_landsat_granule {
+    log_message $LOG_INFO "Fetching scene from s3"
+    aws s3 sync --only-show-errors "$L1_BUCKET/$L1_PREFIX" "$WORKDIR/$TASK_UUID"
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_ERROR "Unable to fetch scene";
+        exit -1;
+    fi
+    log_message $LOG_INFO "Fetching scene completed."
+}
+
 # Fetch Sentinel-2 granule from S3 bucket
 function fetch_sentinel2_granule {
     log_message $LOG_INFO "Syncing tile information from s3"
