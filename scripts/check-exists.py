@@ -11,10 +11,10 @@ from tesp.workflow import Package
 
 @click.command()
 @click.option('--level1-path', required=True)
-@click.option('--acq-parser-hint', required=True)
 @click.option('--s3-bucket', required=True)
 @click.option('--s3-prefix', required=True)
-def main(level1_path, acq_parser_hint, s3_bucket, s3_prefix):
+@click.option('--acq-parser-hint', required=False)
+def main(level1_path, s3_bucket, s3_prefix, acq_parser_hint):
     container = acquisitions(level1_path, hint=acq_parser_hint)
     [granule] = container.granules
     acq = container.get_acquisitions(None, granule, False)[0]
@@ -23,9 +23,9 @@ def main(level1_path, acq_parser_hint, s3_bucket, s3_prefix):
 
     s3 = boto3.client('s3')
     key = package.output().path
+    print('checking for output at', s3_bucket, key)
 
     try:
-        print('checking', s3_bucket, key)
         obj = s3.head_object(Bucket=s3_bucket, Key=key)
         print('output already exists')
         sys.exit(-1)
