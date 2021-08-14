@@ -25,6 +25,15 @@ function create_task_folders {
     mkdir -p "$PKGDIR/$TASK_UUID"
 }
 
+function remove_workdirs {
+    # Remove referenced data ahead of time since the docker orchestrator may be
+    # delayed in freeing up storage for re-use
+    rm -rf "$PKGDIR/$TASK_UUID"
+    rm -rf "$OUTDIR/$TASK_UUID"
+    rm -rf "$WORKDIR/$TASK_UUID"
+    log_message $LOG_INFO "Working directories removed"
+}
+
 # Fetch Landsat granule from S3 bucket
 function fetch_landsat_granule {
     log_message $LOG_INFO "Fetching scene from s3"
@@ -33,6 +42,7 @@ function fetch_landsat_granule {
         log_message $LOG_ERROR "Unable to fetch scene";
         exit -1;
     fi
+    find "$WORKDIR/$TASK_UUID" -type f
     log_message $LOG_INFO "Fetching scene completed"
 }
 
@@ -53,6 +63,9 @@ function fetch_sentinel2_granule {
         exit -1;
     fi
     log_message $LOG_INFO "Metadata synched"
+
+    find "$WORKDIR/$TASK_UUID" -type f
+    log_message $LOG_INFO "Fetching scene completed"
 }
 
 # Run luigi task ARDP
@@ -119,8 +132,15 @@ function receive_message_landsat {
         log_stream $LOG_DEBUG < "$WORKDIR/message.json"
     fi
 
-    # Extract the task from the message
-    jq -r '.Messages[0].Body' "$WORKDIR/message.json" | jq -r '.Message' > "$WORKDIR/task.json"
+
+    if [ -s "$WORKDIR/message.json" ]; then
+        # Extract the task from the message
+        jq -r '.Messages[0].Body' "$WORKDIR/message.json" | jq -r '.Message' > "$WORKDIR/task.json"
+    else
+        log_message $LOG_INFO "No messages in the queue, nothing to do!"
+        log_message $LOG_INFO "Exiting with exit code 0"
+	exit 0;
+    fi
 }
 
 # Receive message from queue for Sentinel-2
@@ -135,8 +155,14 @@ function receive_message_sentinel2 {
         log_stream $LOG_DEBUG < "$WORKDIR/message.json"
     fi
 
-    # Extract the task from the message
-    jq -r '.Messages[0].Body' "$WORKDIR/message.json" | jq -r '.Message' > "$WORKDIR/task.json"
+    if [ -s "$WORKDIR/message.json" ]; then
+        # Extract the task from the message
+        jq -r '.Messages[0].Body' "$WORKDIR/message.json" | jq -r '.Message' > "$WORKDIR/task.json"
+    else
+        log_message $LOG_INFO "No messages in the queue, nothing to do!"
+        log_message $LOG_INFO "Exiting with exit code 0"
+	exit 0;
+    fi
 }
 
 # Prepare level-1 dataset yaml for sentinel-2
@@ -177,15 +203,6 @@ function upload_landsat {
     aws s3 cp --recursive --only-show-errors --acl bucket-owner-full-control "$PKGDIR/$TASK_UUID" "${DESTINATION_S3_URL}"
     find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n' | xargs -n 1 -I {} aws s3api put-object-tagging --bucket "${DESINATION_BUCKET}" --tagging 'TagSet=[{Key=pipeline,Value="NRT Processing"},{Key=target_data,Value="Landsat NRT"},{Key=remote_host,Value="USGS M2M API"},{Key=transfer_method,Value="Internet Transfer"},{Key=input_data,Value="Landsat L1RT"},{Key=input_data_type,Value="GeoTIFF"},{Key=egress_location,Value="ap-southeast-2"},{Key=egress_method,Value="s3 upload"},{Key=archive_time,Value="30 days"},{Key=orchestrator,Value="airflow"}]' --key "${DESINATION_PREFIX}"{}
     log_message $LOG_INFO "Synch to destination complete"
-}
-
-function remove_workdirs {
-    # Remove referenced data ahead of time since the docker orchestrator may be
-    # delayed in freeing up storage for re-use
-    rm -rf "$PKGDIR/$TASK_UUID"
-    rm -rf "$OUTDIR/$TASK_UUID"
-    rm -rf "$WORKDIR/$TASK_UUID"
-    log_message $LOG_INFO "Working directories removed"
 }
 
 # Acknowledge success by deleting the SQS message
