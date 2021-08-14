@@ -24,7 +24,7 @@ source /scripts/lib.sh
 LOG_LEVEL=$LOG_DEBUG
 
 log_message $LOG_INFO "$0 called with $GRANULE_URL $DATASTRIP_URL $TASK_UUID $DESTINATION_S3_URL"
-log_message $LOG_INFO "[s3 config] BUCKET:'$DESTINATION_BUCKET' PREFIX:'$DESTINATION_PREFIX'"
+log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESTINATION_BUCKET' PREFIX:'$DESTINATION_PREFIX'"
 
 create_task_folders
 fetch_sentinel2_granule
