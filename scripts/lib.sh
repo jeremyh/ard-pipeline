@@ -157,6 +157,12 @@ function prepare_level1_landsat {
     log_message $LOG_INFO "Generated 1C product metadata"
 }
 
+function notify_sns {
+    # send SNS notification
+    # TODO actually send it
+    find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n' -name '*.odc-metadata.yaml'
+}
+
 function upload_sentinel2 {
     # upload to destination
     log_message $LOG_INFO "Copying to destination"
@@ -180,6 +186,11 @@ function remove_workdirs {
     rm -rf "$OUTDIR/$TASK_UUID"
     rm -rf "$WORKDIR/$TASK_UUID"
     log_message $LOG_INFO "Working directories removed"
+}
+
+# Acknowledge success by deleting the SQS message
+function delete_message {
+    aws sqs delete-message --queue-url="$SQS_QUEUE" --receipt-handle="$RECEIPT_HANDLE"
 }
 
 # Finish up script run

@@ -56,6 +56,8 @@ activate_modtran
 run_luigi
 
 upload_landsat
+notify_sns
+delete_message
 remove_workdirs
 
 # TO DO

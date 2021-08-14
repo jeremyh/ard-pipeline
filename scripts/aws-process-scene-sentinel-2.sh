@@ -30,6 +30,7 @@ log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESINATION_BUCKET' PREFI
 # saves the message to $WORKDIR/task.json
 receive_message_sentinel2
 
+RECEIPT_HANDLE=$(jq -r '.Messages[0].ReceiptHandle' "$WORKDIR/message.json")
 GRANULE_PATH=$(jq -r '.tiles[0].path' "$WORKDIR/task.json")
 DATASTRIP_PATH=$(jq -r '.tiles[0].datastrip.path' "$WORKDIR/task.json")
 
@@ -56,6 +57,8 @@ activate_modtran
 run_luigi
 
 upload_sentinel2
+notify_sns
+delete_message
 remove_workdirs
 
 # TO DO
