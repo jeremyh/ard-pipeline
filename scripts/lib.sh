@@ -104,7 +104,7 @@ function activate_modtran {
 
 # Check if output already exists for sentinel-2
 function check_output_exists_sentinel2 {
-    python /scripts/check-exists.py --level1-path="$WORKDIR/$TASK_UUID" --acq-parser-hint="s2_sinergise" --s3-bucket="$DESINATION_BUCKET" --s3-prefix="$DESINATION_PREFIX"
+    python /scripts/check-exists.py --level1-path="$WORKDIR/$TASK_UUID" --acq-parser-hint="s2_sinergise" --s3-bucket="$DESTINATION_BUCKET" --s3-prefix="$DESTINATION_PREFIX"
     if [ "$?" -ne 0 ]; then
         log_message $LOG_INFO "Output already exists, exiting"
         exit 0;
@@ -113,7 +113,7 @@ function check_output_exists_sentinel2 {
 
 # Check if output already exists for landsat
 function check_output_exists_landsat {
-    python /scripts/check-exists.py --level1-path="$WORKDIR/$TASK_UUID" --s3-bucket="$DESINATION_BUCKET" --s3-prefix="$DESINATION_PREFIX"
+    python /scripts/check-exists.py --level1-path="$WORKDIR/$TASK_UUID" --s3-bucket="$DESTINATION_BUCKET" --s3-prefix="$DESTINATION_PREFIX"
     if [ "$?" -ne 0 ]; then
         log_message $LOG_INFO "Output already exists, exiting"
         exit 0;
@@ -193,7 +193,7 @@ function upload_sentinel2 {
     # upload to destination
     log_message $LOG_INFO "Copying to destination"
     aws s3 cp --recursive --only-show-errors --acl bucket-owner-full-control "$PKGDIR/$TASK_UUID" "${DESTINATION_S3_URL}"
-    find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n' | xargs -n 1 -I {} aws s3api put-object-tagging --bucket "${DESINATION_BUCKET}" --tagging 'TagSet=[{Key=pipeline,Value="NRT Processing"},{Key=target_data,Value="Sentinel2 NRT"},{Key=remote_host,Value="AWS PDS Europe"},{Key=transfer_method,Value="Public Internet Fetch"},{Key=input_data,Value="Sentinel2 L1C"},{Key=input_data_type,Value="JP2000"},{Key=egress_location,Value="ap-southeast-2"},{Key=egress_method,Value="s3 upload"},{Key=archive_time,Value="30 days"},{Key=orchestrator,Value="airflow"}]' --key "${DESINATION_PREFIX}"{}
+    find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n' | xargs -n 1 -I {} aws s3api put-object-tagging --bucket "${DESTINATION_BUCKET}" --tagging 'TagSet=[{Key=pipeline,Value="NRT Processing"},{Key=target_data,Value="Sentinel2 NRT"},{Key=remote_host,Value="AWS PDS Europe"},{Key=transfer_method,Value="Public Internet Fetch"},{Key=input_data,Value="Sentinel2 L1C"},{Key=input_data_type,Value="JP2000"},{Key=egress_location,Value="ap-southeast-2"},{Key=egress_method,Value="s3 upload"},{Key=archive_time,Value="30 days"},{Key=orchestrator,Value="airflow"}]' --key "${DESTINATION_PREFIX}"{}
     log_message $LOG_INFO "Synch to destination complete"
 }
 
@@ -201,7 +201,7 @@ function upload_landsat {
     # upload to destination
     log_message $LOG_INFO "Copying to destination"
     aws s3 cp --recursive --only-show-errors --acl bucket-owner-full-control "$PKGDIR/$TASK_UUID" "${DESTINATION_S3_URL}"
-    find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n' | xargs -n 1 -I {} aws s3api put-object-tagging --bucket "${DESINATION_BUCKET}" --tagging 'TagSet=[{Key=pipeline,Value="NRT Processing"},{Key=target_data,Value="Landsat NRT"},{Key=remote_host,Value="USGS M2M API"},{Key=transfer_method,Value="Internet Transfer"},{Key=input_data,Value="Landsat L1RT"},{Key=input_data_type,Value="GeoTIFF"},{Key=egress_location,Value="ap-southeast-2"},{Key=egress_method,Value="s3 upload"},{Key=archive_time,Value="30 days"},{Key=orchestrator,Value="airflow"}]' --key "${DESINATION_PREFIX}"{}
+    find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n' | xargs -n 1 -I {} aws s3api put-object-tagging --bucket "${DESTINATION_BUCKET}" --tagging 'TagSet=[{Key=pipeline,Value="NRT Processing"},{Key=target_data,Value="Landsat NRT"},{Key=remote_host,Value="USGS M2M API"},{Key=transfer_method,Value="Internet Transfer"},{Key=input_data,Value="Landsat L1RT"},{Key=input_data_type,Value="GeoTIFF"},{Key=egress_location,Value="ap-southeast-2"},{Key=egress_method,Value="s3 upload"},{Key=archive_time,Value="30 days"},{Key=orchestrator,Value="airflow"}]' --key "${DESTINATION_PREFIX}"{}
     log_message $LOG_INFO "Synch to destination complete"
 }
 

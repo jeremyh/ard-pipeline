@@ -2,7 +2,7 @@
 
 # $0: this script
 # $1: $SQS_QUEUE: URL of the SQS queue to fetch task from
-# $2: $DESINATION_S3_URL: URL of the destination of the L2 data
+# $2: $DESTINATION_S3_URL: URL of the destination of the L2 data
 # $3: $SNS_TOPIC: URL to publish ODC metadata of the L2 dataset
 
 SQS_QUEUE="$1"
@@ -17,13 +17,13 @@ MOD6=/ancillary/MODTRAN6.0.2.3G/bin/linux/mod6c_cons
 export LUIGI_CONFIG_PATH="/configs/landsat.cfg"
 
 # separate s3://bucket_name/prefix into bucket_name prefix
-read DESINATION_BUCKET DESINATION_PREFIX <<< $(echo "$DESTINATION_S3_URL" | perl -pe's/s3:\/\/([^\/]+)\/(.*)/\1 \2/;')
+read DESTINATION_BUCKET DESTINATION_PREFIX <<< $(echo "$DESTINATION_S3_URL" | perl -pe's/s3:\/\/([^\/]+)\/(.*)/\1 \2/;')
 
 source /scripts/lib.sh
 LOG_LEVEL=$LOG_DEBUG
 
 log_message $LOG_INFO "$0 called with $SQS_QUEUE $DESTINATION_S3_URL $SNS_TOPIC"
-log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESINATION_BUCKET' PREFIX:'$DESINATION_PREFIX'"
+log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESTINATION_BUCKET' PREFIX:'$DESTINATION_PREFIX'"
 
 # saves the message to $WORKDIR/message.json and the body to $WORKDIR/task.json
 receive_message_landsat
