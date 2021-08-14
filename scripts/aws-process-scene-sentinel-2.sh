@@ -61,8 +61,4 @@ notify_sns
 delete_message
 remove_workdirs
 
-# TO DO
-# SNS notification
-# delete SQS message
-
 finish_up
