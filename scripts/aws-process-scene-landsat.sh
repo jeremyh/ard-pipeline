@@ -2,14 +2,12 @@
 
 # $0: this script
 # $1: $SQS_QUEUE: URL of the SQS queue to fetch task from
-# $2: $SOURCE_BUCKET: URL of the source bucket for L1 data
-# $3: $DESINATION_S3_URL: URL of the destination of the L2 data
-# $4: $SNS_TOPIC: URL to publish ODC metadata of the L2 dataset
+# $2: $DESINATION_S3_URL: URL of the destination of the L2 data
+# $3: $SNS_TOPIC: URL to publish ODC metadata of the L2 dataset
 
 SQS_QUEUE="$1"
-SOURCE_BUCKET="$2"
-DESTINATION_S3_URL="$3"
-SNS_TOPIC="$4"
+DESTINATION_S3_URL="$2"
+SNS_TOPIC="$3"
 
 ESTIMATED_COMPLETION_TIME=10800   # 3 hours
 WORKDIR="/granules"
@@ -24,10 +22,10 @@ read DESINATION_BUCKET DESINATION_PREFIX <<< $(echo "$DESTINATION_S3_URL" | perl
 source /scripts/lib.sh
 LOG_LEVEL=$LOG_DEBUG
 
-log_message $LOG_INFO "$0 called with $SQS_QUEUE $SOURCE_BUCKET $DESTINATION_S3_URL $SNS_TOPIC"
+log_message $LOG_INFO "$0 called with $SQS_QUEUE $DESTINATION_S3_URL $SNS_TOPIC"
 log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESINATION_BUCKET' PREFIX:'$DESINATION_PREFIX'"
 
-# saves the message to $WORKDIR/task.json
+# saves the message to $WORKDIR/message.json and the body to $WORKDIR/task.json
 receive_message_landsat
 
 RECEIPT_HANDLE=$(jq -r '.Messages[0].ReceiptHandle' "$WORKDIR/message.json")
@@ -35,6 +33,11 @@ TASK_UUID=$(jq -r '.Messages[0].MessageId' "$WORKDIR/message.json")
 L1_SUCCESS=$(jq -r '.success' "$WORKDIR/task.json")
 L1_PREFIX=$(jq -r '.prefix' "$WORKDIR/task.json")
 L1_BUCKET=$(jq -r '.bucket' "$WORKDIR/task.json")
+
+if [[ "$L1_SUCCESS" != "true" ]]; then
+    log_message $LOG_INFO "Level-1 data download was not successful, nothing to do!"
+    exit 0;
+fi
 
 log_message $LOG_INFO "RECEIPT_HANDLE=${RECEIPT_HANDLE}"
 log_message $LOG_INFO "L1_SUCCESS=${L1_SUCCESS}"
@@ -59,9 +62,5 @@ upload_landsat
 notify_sns
 delete_message
 remove_workdirs
-
-# TO DO
-# SNS notification
-# delete SQS message
 
 finish_up

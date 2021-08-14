@@ -27,7 +27,7 @@ LOG_LEVEL=$LOG_DEBUG
 log_message $LOG_INFO "$0 called with $SQS_QUEUE $SOURCE_BUCKET $DESTINATION_S3_URL $SNS_TOPIC"
 log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESINATION_BUCKET' PREFIX:'$DESINATION_PREFIX'"
 
-# saves the message to $WORKDIR/task.json
+# saves the message to $WORKDIR/message.json and the body to $WORKDIR/task.json
 receive_message_sentinel2
 
 RECEIPT_HANDLE=$(jq -r '.Messages[0].ReceiptHandle' "$WORKDIR/message.json")
