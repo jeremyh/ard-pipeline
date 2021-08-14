@@ -81,3 +81,4 @@ RUN mkdir /scripts /granules /output /upload
 
 COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
 COPY scripts /scripts
+COPY configs /configs

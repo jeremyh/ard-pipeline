@@ -16,7 +16,7 @@ WORKDIR="/granules"
 OUTDIR="/output"
 PKGDIR="/upload"
 MOD6=/ancillary/MODTRAN6.0.2.3G/bin/linux/mod6c_cons
-export LUIGI_CONFIG_PATH="/scripts/luigi-landsat.cfg"
+export LUIGI_CONFIG_PATH="/configs/landsat.cfg"
 
 # separate s3://bucket_name/prefix into bucket_name prefix
 read DESINATION_BUCKET DESINATION_PREFIX <<< $(echo "$DESTINATION_S3_URL" | perl -pe's/s3:\/\/([^\/]+)\/(.*)/\1 \2/;')
