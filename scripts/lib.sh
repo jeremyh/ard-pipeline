@@ -33,7 +33,7 @@ function fetch_landsat_granule {
         log_message $LOG_ERROR "Unable to fetch scene";
         exit -1;
     fi
-    log_message $LOG_INFO "Fetching scene completed."
+    log_message $LOG_INFO "Fetching scene completed"
 }
 
 # Fetch Sentinel-2 granule from S3 bucket
@@ -76,11 +76,8 @@ function run_luigi {
         log_stream $LOG_ERROR < "luigi-interface.log"
 
         # Cleanup
-        log_message $LOG_INFO "Processing failed, remove working directories";
-        rm -rf "$WORKDIR/$TASK_UUID"
-        rm -rf "$PKGDIR/$TASK_UUID"
-        rm -rf "$OUTDIR/$TASK_UUID"
-        log_message $LOG_INFO "Cleanup complete";
+        log_message $LOG_INFO "Processing failed, removing working directories";
+        remove_workdirs
         exit -1;
     fi
 }
@@ -96,7 +93,7 @@ function activate_modtran {
 function check_output_exists_sentinel2 {
     python /scripts/check-exists.py --level1-path="$WORKDIR/$TASK_UUID" --acq-parser-hint="s2_sinergise" --s3-bucket="$DESINATION_BUCKET" --s3-prefix="$DESINATION_PREFIX"
     if [ "$?" -ne 0 ]; then
-        log_message $LOG_INFO "Output already exists, exiting."
+        log_message $LOG_INFO "Output already exists, exiting"
         exit 0;
     fi
 }
@@ -105,7 +102,7 @@ function check_output_exists_sentinel2 {
 function check_output_exists_landsat {
     python /scripts/check-exists.py --level1-path="$WORKDIR/$TASK_UUID" --s3-bucket="$DESINATION_BUCKET" --s3-prefix="$DESINATION_PREFIX"
     if [ "$?" -ne 0 ]; then
-        log_message $LOG_INFO "Output already exists, exiting."
+        log_message $LOG_INFO "Output already exists, exiting"
         exit 0;
     fi
 }
@@ -177,13 +174,12 @@ function upload_landsat {
 }
 
 function remove_workdirs {
-    log_message $LOG_INFO "Remove working directory"
     # Remove referenced data ahead of time since the docker orchestrator may be
     # delayed in freeing up storage for re-use
     rm -rf "$PKGDIR/$TASK_UUID"
     rm -rf "$OUTDIR/$TASK_UUID"
     rm -rf "$WORKDIR/$TASK_UUID"
-    log_message $LOG_INFO "Working directory removed"
+    log_message $LOG_INFO "Working directories removed"
 }
 
 # Finish up script run

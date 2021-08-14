@@ -56,7 +56,7 @@ activate_modtran
 run_luigi
 
 upload_sentinel2
-remove_workdir
+remove_workdirs
 
 # TO DO
 # SNS notification
