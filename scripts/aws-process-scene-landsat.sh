@@ -54,14 +54,6 @@ cd /scripts
 
 activate_modtran
 run_luigi
-log_message $LOG_ERROR "Luigi succeeded: status-log.jsonl"
-log_stream $LOG_ERROR < "status-log.jsonl"
-
-log_message $LOG_ERROR "Luigi succeeded: task-log.jsonl"
-log_stream $LOG_ERROR < "task-log.jsonl"
-
-log_message $LOG_ERROR "Luigi succeeded: luigi-interface.log"
-log_stream $LOG_ERROR < "luigi-interface.log"
 
 upload_landsat
 notify_sns
