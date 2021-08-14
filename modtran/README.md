@@ -32,14 +32,3 @@
         docker-compose down
 
     there should be 3 different folders under `./tests`
-
-## Notes
--   within the docker container we get an error message for the license activation:
-
-        STAT_CRITICAL MODTRAN activation failed: unknown error.
-
-    fortunately this does not stop modtran from running
-
--   when we run it from our EC2 instance this error message does not show up:
-
-        STAT_VALID MODTRAN activation successful.

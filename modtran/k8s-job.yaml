@@ -8,17 +8,19 @@ spec:
     spec:
       containers:
         - name: mod6
-          image: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com/dev/mod6:test-20210313
+          image: uchchwhash/mod6:test
           command: ["/modtran_runner/modtran_runner.sh"]
           volumeMounts:
             - name: wagl-nrt-ancillary-volume
-              mountPath: /modtran6
+              mountPath: /ancillary
           env:
             - name: MODTRAN_DATA
-              value: /modtran6/MODTRAN6.0/DATA
+              value: /ancillary/MODTRAN6.0.2.3G/DATA
+            - name: MOD6
+              value: /ancillary/MODTRAN6.0.2.3G/bin/linux/mod6c_cons
           envFrom:
             - secretRef:
-                name: mod6-key
+                name: modtran-key
             - secretRef:
                 name: wagl-nrt-aws-creds
       volumes:

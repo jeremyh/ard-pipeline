@@ -5,7 +5,8 @@ services:
       context: .
     environment:
       - MODTRAN_PRODUCT_KEY
-      - MODTRAN_DATA=/modtran6/MODTRAN6.0/DATA
+      - MODTRAN_DATA=/ancillary/MODTRAN6.0.2.3G/DATA
+      - MOD6=/ancillary/MODTRAN6.0.2.3G/bin/linux/mod6c_cons
     volumes:
-      - /home/ubuntu/projects/modtran6:/modtran6
+      - /home/ubuntu/projects/modtran6:/ancillary
       - ./tests/:/tests
