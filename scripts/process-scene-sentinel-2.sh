@@ -1,27 +1,16 @@
 #!/bin/bash
 
-##############################################################################
-#                                                                            #
-# Script configures the existing docker environment for a execution of WAGL. #
-#                                                                            #
-# Usage ./process-scene.sh {{GRANULE_URL}} {{DATASTRIP_URL}} {{TASK_UUID}}   #
-#                                                                            #
-##############################################################################
-
-# $0: process-scene.sh
-# $1: $GRANULE_URL: Url to fetch the granule data from
-# $2: $DATASTRIP_URL: Url to fetch the datastrip data from
+# $0: this scripts
+# $1: $GRANULE_URL: URL to fetch the granule data from
+# $2: $DATASTRIP_URL: URL to fetch the datastrip data from
 # $3: $TASK_UUID: Unique identifier for the task
-# $4: $S3_REGION: Region that the packaged content will be uploaded to
-# $5: $S3_INPUT_PREFIX: s3://bucket/prefix that will serve as the root for uploaded content
-# $6: $LUIGI_CONFIG_PATH: Which luigi config to use
+# $4: $S3_INPUT_PREFIX: s3://bucket/prefix that will serve as the root for uploaded content
 
 # Command line args
 GRANULE_URL="$1"
 DATASTRIP_URL="$2"
 TASK_UUID="$3"
-S3_REGION="$4"
-S3_INPUT_PREFIX="$5"
+S3_INPUT_PREFIX="$4"
 export LUIGI_CONFIG_PATH="/configs/sentinel-2.cfg"
 
 # separate s3://bucket_name/prefix into bucket_name prefix
@@ -52,25 +41,7 @@ function log_message {
     return 0;
 }
 
-# When the instance is initially launched some ancillary has to be updated
-# This function waits for the ancillary data to complete syncing
-# Assumption is made that the instance will have sufficient time to create
-# the lockfile prior to the container initialising for the first time
-function wait_for_ancillary {
-    WAITING_FOR=0
-    TIMEOUT_SECONDS=600
-    while [[ -f "/ancillary/ancillary-fetch.lock" ]]; do
-        if [ $WAITING_FOR -gt $TIMEOUT_SECONDS ]; then
-            exit 124;
-        fi
-        WAITING_FOR=$(($WAITING_FOR+2))
-        sleep 2
-    done;
-
-    return 0;
-}
-
-log_message $LOG_INFO "$0 called with $GRANULE_URL $DATASTRIP_URL $TASK_UUID $S3_REGION $S3_INPUT_PREFIX"
+log_message $LOG_INFO "$0 called with $GRANULE_URL $DATASTRIP_URL $TASK_UUID $S3_INPUT_PREFIX"
 log_message $LOG_INFO "[s3 config] BUCKET:'$S3_BUCKET' PREFIX:'$S3_BUCKET_PREFIX'"
 umask 000  # Safe guard against ancillary files locked to a specific container
 
@@ -103,10 +74,6 @@ if [ "$?" -ne 0 ]; then
     echo "{}" > /airflow/xcom/return.json
     exit 0;
 fi
-
-log_message $LOG_INFO "Waiting for ancillary to become ready"
-wait_for_ancillary
-log_message $LOG_INFO "Ancillary ready"
 
 # Config files for wagl/luigi default to the current directory
 # The Dockerfile moves the configs to the script folder
