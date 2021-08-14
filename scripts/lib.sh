@@ -190,7 +190,9 @@ function remove_workdirs {
 
 # Acknowledge success by deleting the SQS message
 function delete_message {
+    log_message $LOG_INFO "Deleting message"
     aws sqs delete-message --queue-url="$SQS_QUEUE" --receipt-handle="$RECEIPT_HANDLE"
+    log_message $LOG_INFO "Message deleted"
 }
 
 # Finish up script run
