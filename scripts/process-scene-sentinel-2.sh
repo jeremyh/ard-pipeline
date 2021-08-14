@@ -1,34 +1,31 @@
 #!/bin/bash
 
-# $0: this scripts
+# $0: this script
 # $1: $GRANULE_URL: URL to fetch the granule data from
 # $2: $DATASTRIP_URL: URL to fetch the datastrip data from
 # $3: $TASK_UUID: Unique identifier for the task
 # $4: $S3_INPUT_PREFIX: s3://bucket/prefix that will serve as the root for uploaded content
 
-# Command line args
 GRANULE_URL="$1"
 DATASTRIP_URL="$2"
 TASK_UUID="$3"
 S3_INPUT_PREFIX="$4"
+
+WORKDIR="/granules"
+OUTDIR="/output"
+PKGDIR="/upload"
+MOD6=/ancillary/MODTRAN6.0.2.3G/bin/linux/mod6c_cons
 export LUIGI_CONFIG_PATH="/configs/sentinel-2.cfg"
 
 # separate s3://bucket_name/prefix into bucket_name prefix
 read S3_BUCKET S3_BUCKET_PREFIX <<< $(echo "$S3_INPUT_PREFIX" | perl -pe's/s3:\/\/([^\/]+)\/(.*)/\1 \2/;')
 
-WORKDIR="/granules"
-OUTDIR="/output"
-PKGDIR="/upload"
-
-MOD6=/ancillary/MODTRAN6.0.2.3G/bin/linux/mod6c_cons
-
+source /scripts/lib.sh
 LOG_DEBUG=1
 LOG_INFO=10
 LOG_WARN=100
 LOG_ERROR=1000
 LOG_LEVEL=$LOG_DEBUG
-
-EXIT_CODE=0
 
 # Logging interface similar to python logging
 function log_message {
@@ -157,9 +154,6 @@ pushd "$PKGDIR/$TASK_UUID/"
 echo "{\"dataset\": \"${S3_INPUT_PREFIX}$(find . -type f -name '*.odc-metadata.yaml' -printf '%P')\"}" > /airflow/xcom/return.json
 popd
 
-rm -rf "$PKGDIR/$TASK_UUID"
-rm -rf "$OUTDIR/$TASK_UUID"
+remove_workdirs
 
-log_message $LOG_INFO "Complete"
-log_message $LOG_INFO "Exiting with exit code ${EXIT_CODE}"
-exit ${EXIT_CODE};
+finish_up
