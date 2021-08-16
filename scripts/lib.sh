@@ -182,6 +182,10 @@ function prepare_level1_sentinel_2 {
 # Note that argument refers to a filename and not a directory
     log_message $LOG_INFO "Generating 1C product metadata"
     eo3-prepare sentinel-l1 "$WORKDIR/$TASK_UUID"
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_ERROR "Could not prepare level-1 metadata";
+        exit -1;
+    fi
     CAPTURE_DATE="$(date -u --date=$(cat "$WORKDIR/$TASK_UUID/productInfo.json" | jq -r '.tiles[0].timestamp') '+%Y-%m-%d')"
     log_message $LOG_INFO "Generated 1C product metadata"
     log_message $LOG_INFO "CAPTURE_DATE=$CAPTURE_DATE"
@@ -191,6 +195,10 @@ function prepare_level1_sentinel_2 {
 function prepare_level1_landsat {
     log_message $LOG_INFO "Generating 1C product metadata"
     eo3-prepare landsat-l1 $WORKDIR/$TASK_UUID
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_ERROR "Could not prepare level-1 metadata";
+        exit -1;
+    fi
     mv $WORKDIR/*.yaml $WORKDIR/$TASK_UUID
     log_message $LOG_INFO "Generated 1C product metadata"
 }
@@ -199,13 +207,25 @@ function notify_sns {
     # send SNS notification
     # TODO actually send it
     find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n' -name '*.odc-metadata.yaml'
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_ERROR "Could not send success notification";
+        exit -1;
+    fi
 }
 
 function upload_sentinel2 {
     # upload to destination
     log_message $LOG_INFO "Copying to destination"
     aws s3 cp --recursive --only-show-errors --acl bucket-owner-full-control "$PKGDIR/$TASK_UUID" "${DESTINATION_S3_URL}"
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_ERROR "Could not upload s3 objects";
+        exit -1;
+    fi
     find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n' | xargs -n 1 -I {} aws s3api put-object-tagging --bucket "${DESTINATION_BUCKET}" --tagging 'TagSet=[{Key=pipeline,Value="NRT Processing"},{Key=target_data,Value="Sentinel2 NRT"},{Key=remote_host,Value="AWS PDS Europe"},{Key=transfer_method,Value="Public Internet Fetch"},{Key=input_data,Value="Sentinel2 L1C"},{Key=input_data_type,Value="JP2000"},{Key=egress_location,Value="ap-southeast-2"},{Key=egress_method,Value="s3 upload"},{Key=archive_time,Value="30 days"},{Key=orchestrator,Value="airflow"}]' --key "${DESTINATION_PREFIX}"{}
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_ERROR "Could not update s3 object tags";
+        exit -1;
+    fi
     log_message $LOG_INFO "Synch to destination complete"
 }
 
@@ -213,7 +233,15 @@ function upload_landsat {
     # upload to destination
     log_message $LOG_INFO "Copying to destination"
     aws s3 cp --recursive --only-show-errors --acl bucket-owner-full-control "$PKGDIR/$TASK_UUID" "${DESTINATION_S3_URL}"
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_ERROR "Could not upload s3 objects";
+        exit -1;
+    fi
     find "$PKGDIR/$TASK_UUID" -type f -printf '%P\n' | xargs -n 1 -I {} aws s3api put-object-tagging --bucket "${DESTINATION_BUCKET}" --tagging 'TagSet=[{Key=pipeline,Value="NRT Processing"},{Key=target_data,Value="Landsat NRT"},{Key=remote_host,Value="USGS M2M API"},{Key=transfer_method,Value="Internet Transfer"},{Key=input_data,Value="Landsat L1RT"},{Key=input_data_type,Value="GeoTIFF"},{Key=egress_location,Value="ap-southeast-2"},{Key=egress_method,Value="s3 upload"},{Key=archive_time,Value="30 days"},{Key=orchestrator,Value="airflow"}]' --key "${DESTINATION_PREFIX}"{}
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_ERROR "Could not update s3 object tags";
+        exit -1;
+    fi
     log_message $LOG_INFO "Synch to destination complete"
 }
 
@@ -221,6 +249,10 @@ function upload_landsat {
 function delete_message {
     log_message $LOG_INFO "Deleting message"
     aws sqs delete-message --queue-url="$SQS_QUEUE" --receipt-handle="$RECEIPT_HANDLE"
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_ERROR "Could not delete task after completion";
+        exit -1;
+    fi
     log_message $LOG_INFO "Message deleted"
 }
 
