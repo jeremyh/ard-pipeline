@@ -28,7 +28,7 @@ log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESTINATION_BUCKET' PREF
 
 create_task_folders
 fetch_sentinel2_granule
-check_output_exists_sentinel2
+check_output_exists_sentinel2_xcom
 
 # Create work file
 echo "$WORKDIR/$TASK_UUID" > "$WORKDIR/$TASK_UUID/scenes.txt"
@@ -45,7 +45,11 @@ run_luigi
 upload_sentinel2
 remove_workdirs
 
-# pushd "$PKGDIR/$TASK_UUID/"
-# echo "{\"dataset\": \"${DESTINATION_S3_URL}$(find . -type f -name '*.odc-metadata.yaml' -printf '%P')\"}"
+# pass the location of the dataset to airflow xcom
+log_message $LOG_INFO "Passing XCom"
+mkdir -p /airflow/xcom/
+pushd "$PKGDIR/$TASK_UUID/"
+echo "{\"dataset\": \"${DESTINATION_S3_URL}$(find . -type f -name '*.odc-metadata.yaml' -printf '%P')\"}" > /airflow/xcom/return.json
+popd
 
 finish_up

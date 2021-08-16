@@ -111,6 +111,18 @@ function check_output_exists_sentinel2 {
     fi
 }
 
+# Check if output already exists for sentinel-2 (comm to xcom)
+function check_output_exists_sentinel2_xcom {
+    python /scripts/check-exists.py --level1-path="$WORKDIR/$TASK_UUID" --acq-parser-hint="s2_sinergise" --s3-bucket="$DESTINATION_BUCKET" --s3-prefix="$DESTINATION_PREFIX"
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_INFO "Output already exists, passing {} to XCom"
+        mkdir -p /airflow/xcom/
+        echo "{}" > /airflow/xcom/return.json
+        exit 0;
+    fi
+}
+
+
 # Check if output already exists for landsat
 function check_output_exists_landsat {
     python /scripts/check-exists.py --level1-path="$WORKDIR/$TASK_UUID" --s3-bucket="$DESTINATION_BUCKET" --s3-prefix="$DESTINATION_PREFIX"
