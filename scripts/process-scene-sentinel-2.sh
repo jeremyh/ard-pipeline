@@ -43,7 +43,6 @@ activate_modtran
 run_luigi
 
 upload_sentinel2
-remove_workdirs
 
 # pass the location of the dataset to airflow xcom
 log_message $LOG_INFO "Passing XCom"
@@ -51,5 +50,7 @@ mkdir -p /airflow/xcom/
 pushd "$PKGDIR/$TASK_UUID/"
 echo "{\"dataset\": \"${DESTINATION_S3_URL}$(find . -type f -name '*.odc-metadata.yaml' -printf '%P')\"}" > /airflow/xcom/return.json
 popd
+
+remove_workdirs
 
 finish_up
