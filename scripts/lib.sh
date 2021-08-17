@@ -207,7 +207,7 @@ function write_stac_metadata {
     # create STAC item for this dataset
     local PARENT_DIR=$(dirname $(find "$PKGDIR/$TASK_UUID" -type f -name '*.odc-metadata.yaml' -printf '%P\n'))
     log_message $LOG_INFO "parent dir for documents ${PARENT_DIR}"
-    pushd "${PARENT_DIR}"
+    pushd "$PKGDIR/$TASK_UUID/${PARENT_DIR}"
     eo3-to-stac -v --validate -u ${DESTINATION_S3_URL}${PARENT_DIR} -e ${EXPLORER_URL} *.odc-metadata.yaml
     if [ "$?" -ne 0 ]; then
         log_message $LOG_ERROR "Could not create STAC item";
