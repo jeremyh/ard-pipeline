@@ -214,6 +214,7 @@ function write_stac_metadata {
         exit -1;
     fi
     rm -f stac_schema_cache.sqlite
+    popd
 }
 
 function upload_sentinel2 {
