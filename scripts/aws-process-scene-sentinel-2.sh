@@ -58,8 +58,8 @@ cd /scripts
 activate_modtran
 run_luigi
 
-upload_sentinel2
 write_stac_metadata
+upload_sentinel2
 delete_message
 remove_workdirs
 

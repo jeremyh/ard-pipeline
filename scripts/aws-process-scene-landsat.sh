@@ -60,8 +60,8 @@ cd /scripts
 activate_modtran
 run_luigi
 
-upload_landsat
 write_stac_metadata
+upload_landsat
 delete_message
 remove_workdirs
 

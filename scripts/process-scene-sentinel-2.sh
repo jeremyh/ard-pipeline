@@ -5,6 +5,7 @@
 # $2: $DATASTRIP_URL: URL to fetch the datastrip data from
 # $3: $TASK_UUID: Unique identifier for the task
 # $4: $DESTINATION_S3_URL: s3://bucket/prefix that will serve as the root for uploaded content
+# $5: $EXPLORER_URL: URL for destination STAC metadata
 
 GRANULE_URL="$1"
 DATASTRIP_URL="$2"
@@ -23,7 +24,7 @@ read DESTINATION_BUCKET DESTINATION_PREFIX <<< $(echo "$DESTINATION_S3_URL" | pe
 source /scripts/lib.sh
 LOG_LEVEL=$LOG_DEBUG
 
-log_message $LOG_INFO "$0 called with $GRANULE_URL $DATASTRIP_URL $TASK_UUID $DESTINATION_S3_URL"
+log_message $LOG_INFO "$0 called with $GRANULE_URL $DATASTRIP_URL $TASK_UUID $DESTINATION_S3_URL $EXPLORER_URL"
 log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESTINATION_BUCKET' PREFIX:'$DESTINATION_PREFIX'"
 
 create_task_folders
@@ -42,6 +43,7 @@ cd /scripts
 activate_modtran
 run_luigi
 
+write_stac_metadata
 upload_sentinel2
 
 # pass the location of the dataset to airflow xcom
