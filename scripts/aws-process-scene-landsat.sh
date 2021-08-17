@@ -4,10 +4,12 @@
 # $1: $SQS_QUEUE: URL of the SQS queue to fetch task from
 # $2: $DESTINATION_S3_URL: URL of the destination of the L2 data
 # $3: $SNS_TOPIC: URL to publish ODC metadata of the L2 dataset
+# $4: $EXPLORER_URL: URL for destination STAC metadata
 
 SQS_QUEUE="$1"
 DESTINATION_S3_URL="$2"
 SNS_TOPIC="$3"
+EXPLORER_URL="$4"
 
 ESTIMATED_COMPLETION_TIME=10800   # 3 hours
 WORKDIR="/granules"
@@ -22,7 +24,7 @@ read DESTINATION_BUCKET DESTINATION_PREFIX <<< $(echo "$DESTINATION_S3_URL" | pe
 source /scripts/lib.sh
 LOG_LEVEL=$LOG_DEBUG
 
-log_message $LOG_INFO "$0 called with $SQS_QUEUE $DESTINATION_S3_URL $SNS_TOPIC"
+log_message $LOG_INFO "$0 called with $SQS_QUEUE $DESTINATION_S3_URL $SNS_TOPIC $EXPLORER_URL"
 log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESTINATION_BUCKET' PREFIX:'$DESTINATION_PREFIX'"
 
 # saves the message to $WORKDIR/message.json and the body to $WORKDIR/task.json
@@ -59,7 +61,7 @@ activate_modtran
 run_luigi
 
 upload_landsat
-notify_sns
+write_stac_metadata
 delete_message
 remove_workdirs
 
