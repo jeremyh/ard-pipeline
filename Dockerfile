@@ -7,7 +7,7 @@ ENV WAGL_VERSION=develop
 ENV EUGL_VERSION=master
 ENV TESP_VERSION=master
 ENV EODATASETS1_VERSION=eodatasets-0.12
-ENV EODATASETS3_VERSION=eodatasets3
+ENV EODATASETS3_VERSION=eodatasets3-0.22.0
 ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
 
 USER root
