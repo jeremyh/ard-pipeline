@@ -18,6 +18,7 @@ pipelines:
         script:
           # Construct the version tag
           - VERSION=$(git describe --tags --always)
+          - echo Building $VERSION
           - docker build -t geoscienceaustralia/dea-wagl-docker:$VERSION -t geoscienceaustralia/dea-wagl-docker:latest .
           - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_TOKEN
           - docker push geoscienceaustralia/dea-wagl-docker
