@@ -36,10 +36,6 @@ def get_attributes(stac_doc):
             "DataType": "Number",
             "StringValue": str(properties["eo:cloud_cover"]),
         },
-        "gqa_iterative_mean_xy": {
-            "DataType": "Number",
-            "StringValue": str(properties["gqa:iterative_mean_xy"]),
-        },
     }
 
 
