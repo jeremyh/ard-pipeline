@@ -18,7 +18,7 @@ def get_attributes(stac_doc):
         },
         "product": {
             "DataType": "String",
-            "StringValue": properties["odc:product"],
+            "StringValue": stac_doc["collection"],
         },
         "region_code": {
             "DataType": "String",
