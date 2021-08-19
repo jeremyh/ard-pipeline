@@ -5,14 +5,15 @@
 # $2: $DATASTRIP_URL: URL to fetch the datastrip data from
 # $3: $TASK_UUID: Unique identifier for the task
 # $4: $DESTINATION_S3_URL: s3://bucket/prefix that will serve as the root for uploaded content
-# $4: $SNS_TOPIC: URL to publish ODC metadata of the L2 dataset
-# $5: $EXPLORER_URL: URL for destination STAC metadata
+# $5: $SNS_TOPIC: URL to publish ODC metadata of the L2 dataset
+# $6: $EXPLORER_URL: URL for destination STAC metadata
 
 GRANULE_URL="$1"
 DATASTRIP_URL="$2"
 TASK_UUID="$3"
 DESTINATION_S3_URL="$4"
-EXPLORER_URL="$5"
+SNS_TOPIC="$5"
+EXPLORER_URL="$6"
 
 WORKDIR="/granules"
 OUTDIR="/output"
@@ -26,7 +27,7 @@ read DESTINATION_BUCKET DESTINATION_PREFIX <<< $(echo "$DESTINATION_S3_URL" | pe
 source /scripts/lib.sh
 LOG_LEVEL=$LOG_DEBUG
 
-log_message $LOG_INFO "$0 called with $GRANULE_URL $DATASTRIP_URL $TASK_UUID $DESTINATION_S3_URL $EXPLORER_URL"
+log_message $LOG_INFO "$0 called with $GRANULE_URL $DATASTRIP_URL $TASK_UUID $DESTINATION_S3_URL $SNS_TOPIC $EXPLORER_URL"
 log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESTINATION_BUCKET' PREFIX:'$DESTINATION_PREFIX'"
 
 create_task_folders
