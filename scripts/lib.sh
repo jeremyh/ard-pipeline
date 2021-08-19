@@ -262,6 +262,16 @@ function delete_message {
     log_message $LOG_INFO "Message deleted"
 }
 
+# Publish success in an sns
+function publish_sns() {
+	python /scripts/publish-sns.py --stac-file=$(find "$PKGDIR/$TASK_UUID" -type f -name '*.stac-item.json' -printf '%P\n') --sns-arn=$SNS_TOPIC
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_ERROR "Could not send success SNS notification";
+        exit -1;
+    fi
+    log_message $LOG_INFO "SNS notification published"
+}
+
 # Finish up script run
 function finish_up {
     log_message $LOG_INFO "Complete"

@@ -5,6 +5,7 @@
 # $2: $DATASTRIP_URL: URL to fetch the datastrip data from
 # $3: $TASK_UUID: Unique identifier for the task
 # $4: $DESTINATION_S3_URL: s3://bucket/prefix that will serve as the root for uploaded content
+# $4: $SNS_TOPIC: URL to publish ODC metadata of the L2 dataset
 # $5: $EXPLORER_URL: URL for destination STAC metadata
 
 GRANULE_URL="$1"
@@ -54,6 +55,7 @@ pushd "$PKGDIR/$TASK_UUID/"
 echo "{\"dataset\": \"${DESTINATION_S3_URL}$(find . -type f -name '*.odc-metadata.yaml' -printf '%P')\"}" > /airflow/xcom/return.json
 popd
 
+publish_sns
 remove_workdirs
 
 finish_up

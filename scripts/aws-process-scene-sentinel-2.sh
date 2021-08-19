@@ -61,6 +61,7 @@ run_luigi
 write_stac_metadata
 upload_sentinel2
 delete_message
+publish_sns
 remove_workdirs
 
 finish_up
