@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+import sys
 from pathlib import Path
 from datetime import datetime
 
@@ -11,19 +13,16 @@ from botocore.exceptions import ClientError
 import eodatasets3
 
 
-def check_object_exists(s3_bucket, key):
+def check_object_exists(bucket, key):
     s3 = boto3.client('s3')
-    print('checking for output at', s3_bucket, key)
 
     try:
-        obj = s3.head_object(Bucket=s3_bucket, Key=key)
-        print('output already exists')
+        obj = s3.head_object(Bucket=bucket, Key=key)
         return True
 
     except ClientError as e:
         if e.response['Error']['Code'] != '404':
             raise
-        print('output does not exist yet')
         return False
 
 
@@ -35,7 +34,8 @@ def get_luigi_config_params():
     maturity = config.get('Package', 'product_maturity', 'stable')
     if maturity != 'stable':
         result['dea:product_maturity'] = maturity
-    }
+
+    return result
 
 
 def convert_to_l2(properties):
@@ -46,12 +46,14 @@ def convert_to_l2(properties):
     result['odc:producer'] = 'ga.gov.au'
     result['odc:dataset_version'] = '3.2.1'
 
+    return result
+
 
 def target_metadata_doc(properties, collection_prefix):
     if 'sentinel' in properties['eo:platform']:
         conventions = 'dea_s2'
     else:
-        convensions = 'dea'
+        conventions = 'dea'
 
     names = eodatasets3.namer(properties, collection_prefix=collection_prefix, conventions=conventions)
 
@@ -63,18 +65,31 @@ def target_metadata_doc(properties, collection_prefix):
 @click.option('--s3-bucket', required=True)
 @click.option('--s3-prefix', required=True)
 def main(level1_path, s3_bucket, s3_prefix):
-    [metadata_doc] = Path(level1_path).rglob('*.odc-metadata.yaml')
+    [metadata_file] = Path(level1_path).rglob('*.odc-metadata.yaml')
 
-    with open(metadata_doc) as fl:
+    print('level1 metadata file', metadata_file)
+    with open(metadata_file) as fl:
         level1_doc = yaml.load(fl, Loader=yaml.SafeLoader)
 
     properties = {**level1_doc['properties'], **get_luigi_config_params()}
 
-    metadata_doc = target_metadata_doc(properties, '').lstrip('/')
+    print('level1 properties')
+    print(yaml.dump(properties, indent=4))
 
+    properties = convert_to_l2(properties)
+    print('level2 properties')
+    print(yaml.dump(properties, indent=4))
+
+    metadata_doc = target_metadata_doc(properties, '').lstrip('/')
     print('metadata_doc', metadata_doc)
-    if check_object_exists(s3_bucket, s3_prefix + metadata_doc):
+
+    key = s3_prefix + metadata_doc
+    print('checking for output at', s3_bucket, key)
+    if check_object_exists(s3_bucket, key):
+        print('output already exists')
         sys.exit(-1)
+
+    print('output does not exist yet')
 
 
 if __name__ == '__main__':
