@@ -46,7 +46,7 @@ log_message $LOG_INFO "DATASTRIP_URL=${DATASTRIP_URL}"
 
 create_task_folders
 fetch_sentinel2_granule
-check_output_exists_sentinel2
+check_output_exists
 
 # Create work file
 echo "$WORKDIR/$TASK_UUID" > "$WORKDIR/$TASK_UUID/scenes.txt"
