@@ -80,10 +80,11 @@ def main(level1_path, s3_bucket, s3_prefix):
     print('level2 properties')
     print(yaml.dump(properties, indent=4))
 
-    metadata_doc = target_metadata_doc(properties, s3_prefix.rstrip('/')).lstrip('/')
-    print('metadata_doc', metadata_doc)
+    prefix = f's3://{s3_bucket}/{s3_prefix}'.rstrip('/')
+    dataset_location = target_metadata_doc(properties, prefix)
+    print('metadata location', dataset_location)
 
-    key = metadata_doc
+    key = dataset_location[len(f"s3://{s3_bucket}/"):]
     print('checking for output at', s3_bucket, key)
     if check_object_exists(s3_bucket, key):
         print('output already exists')
