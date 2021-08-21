@@ -107,7 +107,9 @@ function check_output_exists {
     python /scripts/check-exists.py --level1-path="$WORKDIR/$TASK_UUID" --s3-bucket="$DESTINATION_BUCKET" --s3-prefix="$DESTINATION_PREFIX"
     if [ "$?" -ne 0 ]; then
         log_message $LOG_INFO "Output already exists, exiting"
-        delete_message
+	if [[ -v RECEIPT_HANDLE ]]; then
+            delete_message
+	fi
         exit 0;
     fi
 }

@@ -48,12 +48,12 @@ log_message $LOG_INFO "L1_BUCKET=${L1_BUCKET}"
 
 create_task_folders
 fetch_landsat_granule
-check_output_exists
 
 # Create work file
 echo "$WORKDIR/$TASK_UUID" > "$WORKDIR/$TASK_UUID/scenes.txt"
 
 prepare_level1_landsat
+check_output_exists
 
 cd /scripts
 

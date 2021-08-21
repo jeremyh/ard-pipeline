@@ -32,12 +32,12 @@ log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESTINATION_BUCKET' PREF
 
 create_task_folders
 fetch_sentinel2_granule
-check_output_exists
 
 # Create work file
 echo "$WORKDIR/$TASK_UUID" > "$WORKDIR/$TASK_UUID/scenes.txt"
 
 prepare_level1_sentinel_2
+check_output_exists
 
 # Config files for wagl/luigi default to the current directory
 # The Dockerfile moves the configs to the script folder
