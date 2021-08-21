@@ -57,7 +57,7 @@ def target_metadata_doc(properties, collection_prefix):
 
     names = eodatasets3.namer(properties, collection_prefix=collection_prefix, conventions=conventions)
 
-    return names.dataset_location + '/' + names.metadata_file
+    return names.dataset_location + names.metadata_file
 
 
 @click.command()
