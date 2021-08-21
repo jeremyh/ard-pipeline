@@ -80,10 +80,10 @@ def main(level1_path, s3_bucket, s3_prefix):
     print('level2 properties')
     print(yaml.dump(properties, indent=4))
 
-    metadata_doc = target_metadata_doc(properties, '').lstrip('/')
+    metadata_doc = target_metadata_doc(properties, s3_prefix.rstrip('/')).lstrip('/')
     print('metadata_doc', metadata_doc)
 
-    key = s3_prefix + metadata_doc
+    key = metadata_doc
     print('checking for output at', s3_bucket, key)
     if check_object_exists(s3_bucket, key):
         print('output already exists')
