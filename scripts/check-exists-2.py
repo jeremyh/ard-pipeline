@@ -45,6 +45,7 @@ def convert_to_l2(properties):
     result['odc:product_family'] = 'ard'
     result['odc:producer'] = 'ga.gov.au'
     result['odc:dataset_version'] = '3.2.1'
+    result['dea:dataset_maturity'] = 'nrt'
 
     return result
 
