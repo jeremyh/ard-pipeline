@@ -28,7 +28,7 @@ log_message $LOG_INFO "$0 called with $SQS_QUEUE $DESTINATION_S3_URL $SNS_TOPIC 
 log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESTINATION_BUCKET' PREFIX:'$DESTINATION_PREFIX'"
 
 # saves the message to $WORKDIR/message.json and the body to $WORKDIR/task.json
-receive_message_landsat
+receive_message
 
 RECEIPT_HANDLE=$(jq -r '.Messages[0].ReceiptHandle' "$WORKDIR/message.json")
 TASK_UUID=$(jq -r '.Messages[0].MessageId' "$WORKDIR/message.json")

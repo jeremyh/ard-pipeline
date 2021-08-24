@@ -114,8 +114,8 @@ function check_output_exists {
     fi
 }
 
-# Receive message from queue for Landsat
-function receive_message_landsat {
+# Receive task from queue
+function receive_message {
     aws sqs receive-message --queue-url="$SQS_QUEUE" --visibility-timeout="$ESTIMATED_COMPLETION_TIME" --max-number-of-messages=1 > "$WORKDIR/message.json" 2> "$WORKDIR/message.err"
     if [ "$?" -ne 0 ]; then
         log_message $LOG_ERROR "Could not receive message from ${SQS_QUEUE}"
@@ -126,28 +126,6 @@ function receive_message_landsat {
         log_stream $LOG_DEBUG < "$WORKDIR/message.json"
     fi
 
-
-    if [ -s "$WORKDIR/message.json" ]; then
-        # Extract the task from the message
-        jq -r '.Messages[0].Body' "$WORKDIR/message.json" | jq -r '.Message' > "$WORKDIR/task.json"
-    else
-        log_message $LOG_INFO "No messages in the queue, nothing to do!"
-        log_message $LOG_INFO "Exiting with exit code 0"
-	exit 0;
-    fi
-}
-
-# Receive message from queue for Sentinel-2
-function receive_message_sentinel2 {
-    aws sqs receive-message --queue-url="$SQS_QUEUE" --visibility-timeout="$ESTIMATED_COMPLETION_TIME" --max-number-of-messages=1 > "$WORKDIR/message.json" 2> "$WORKDIR/message.err"
-    if [ "$?" -ne 0 ]; then
-        log_message $LOG_ERROR "Could not receive message from ${SQS_QUEUE}"
-        log_stream $LOG_ERROR < "$WORKDIR/message.err"
-        exit -1;
-    else
-        log_message $LOG_DEBUG "Received message from ${SQS_QUEUE}"
-        log_stream $LOG_DEBUG < "$WORKDIR/message.json"
-    fi
 
     if [ -s "$WORKDIR/message.json" ]; then
         # Extract the task from the message

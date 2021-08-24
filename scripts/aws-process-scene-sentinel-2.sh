@@ -30,7 +30,7 @@ log_message $LOG_INFO "$0 called with $SQS_QUEUE $SOURCE_BUCKET $DESTINATION_S3_
 log_message $LOG_INFO "[s3 destination config] BUCKET:'$DESTINATION_BUCKET' PREFIX:'$DESTINATION_PREFIX'"
 
 # saves the message to $WORKDIR/message.json and the body to $WORKDIR/task.json
-receive_message_sentinel2
+receive_message
 
 RECEIPT_HANDLE=$(jq -r '.Messages[0].ReceiptHandle' "$WORKDIR/message.json")
 GRANULE_PATH=$(jq -r '.tiles[0].path' "$WORKDIR/task.json")
