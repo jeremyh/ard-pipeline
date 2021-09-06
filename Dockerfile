@@ -76,6 +76,7 @@ RUN apt-get update -y \
         libgfortran5 \
         jq \
         awscli \
+        libjpeg62 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /scripts /granules /output /upload
