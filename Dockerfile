@@ -15,7 +15,8 @@ USER root
 # Build deps
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
-        git bzip2 ca-certificates gfortran-10 gcc-10 make software-properties-common libpq-dev wget libjpeg62-dev \
+        git bzip2 ca-certificates gfortran-10 gcc-10 make software-properties-common \
+        libpq-dev wget libjpeg62-dev libjpeg62 libc6 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s $(which gfortran-10) $(which gfortran-10 | sed 's/\(.*\)\/\gfortran-10/\1\/gfortran/') \
