@@ -12,12 +12,6 @@ ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
 
 USER root
 
-RUN apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        gnupg
-RUN echo deb http://ppa.launchpad.net/linuxuprising/libpng12/ubuntu focal main > /etc/apt/sources.list.d/linuxuprising-ubuntu-libpng12-focal.list
-RUN apt-key adv --keyserver hkp://pool.sks-keyservers.net:80 --recv-keys EA8CACC073C3DB2A
-
 # Build deps
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
@@ -84,6 +78,10 @@ RUN apt-get update -y \
         awscli \
         libjpeg62 \
     && rm -rf /var/lib/apt/lists/*
+
+# install libpng12
+COPY lib /build-lib
+RUN dpkg -i /build-lib/libpng12-0_1.2.54-1ubuntu1.1+1~ppa0~focal_amd64.deb && rm -rf /build-lib
 
 RUN mkdir /scripts /granules /output /upload
 
