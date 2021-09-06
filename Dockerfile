@@ -12,6 +12,12 @@ ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
 
 USER root
 
+RUN apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        gnupg
+RUN echo deb http://ppa.launchpad.net/linuxuprising/libpng12/ubuntu focal main > /etc/apt/sources.list.d/linuxuprising-ubuntu-libpng12-focal.list
+RUN apt-key adv --keyserver hkp://pool.sks-keyservers.net:80 --recv-keys EA8CACC073C3DB2A
+
 # Build deps
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
