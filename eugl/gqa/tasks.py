@@ -327,7 +327,7 @@ class GQATask(luigi.Task):
         else:
             # Read gverify arguments from yaml
             with self.input()["runtime_args"].open("r") as _md:
-                gverify_args = yaml.load(_md)
+                gverify_args = yaml.load(_md, Loader=yaml.SafeLoader)
 
         try:
             if (
