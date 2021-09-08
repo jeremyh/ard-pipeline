@@ -71,13 +71,6 @@ function fetch_sentinel2_granule {
 # Run luigi task ARDP
 function run_luigi {
     log_message $LOG_INFO "Running luigi"
-    luigi-deps-tree --module tesp.workflow ARDP \
-        --level1-list "$WORKDIR/$TASK_UUID/scenes.txt" \
-        --workdir "$OUTDIR/$TASK_UUID" \
-        --pkgdir "$PKGDIR/$TASK_UUID" \
-        --local-scheduler \
-        --workers 1
-
     luigi --module tesp.workflow ARDP \
         --level1-list "$WORKDIR/$TASK_UUID/scenes.txt" \
         --workdir "$OUTDIR/$TASK_UUID" \
