@@ -33,6 +33,7 @@ RUN pip install awscli boto boto3 numpy matplotlib==3.4.3
 # GDAL 3.1 is being used because https://gdal.org/api/python.html#usage
 RUN conda install -y -c conda-forge \
         blosc==1.21.0 \
+        pandas==1.0.4 \
         click==7.1.2 \
         gdal==3.1.4 \
         python-fmask==0.5.5 \
