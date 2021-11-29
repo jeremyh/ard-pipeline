@@ -4,6 +4,7 @@
 #     https://www.atlassian.com/git/tutorials/saving-changes/gitignore
 
 modtran/tests/
+ard-pipeline/scripts/*
 
 # Node artifact files
 node_modules/

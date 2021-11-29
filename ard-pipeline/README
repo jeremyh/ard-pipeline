@@ -1,0 +1,20 @@
+To get started,
+```
+$ module use /g/data/v10/public/modules/modulefiles
+$ module load dea/20200617  # whatever dea_version is in module-config.yaml
+```
+then
+```
+$ python3 configure.py
+$ cd scripts
+$ chmod +x cleanup.bash setup.bash
+$ ./setup.bash
+```
+The `LD_LIBRARY_PATH` line in the module-script needs to be commented out when compiling, but then uncommented when
+running in the deployed copy.
+
+In case something goes wrong, run
+```
+$ ./cleanup.bash
+```
+in the scripts folder and start over.

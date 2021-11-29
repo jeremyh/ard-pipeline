@@ -1,0 +1,77 @@
+#%Module########################################################################
+##
+## ard-pipeline/{{ target_version }} modulefile
+##
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "   This module loads the environment for producing ARD"
+        puts stderr "   Version $version"
+}
+
+set version       {{ target_version }}
+set base          {{ target_modules_repo }}/ard-pipeline
+
+set dea_env_b     /g/data/v10/public/modules/dea-env
+set dea_env_v     {{ dea_env_version }}
+set dea_env_m     dea-env/$dea_env_v
+
+set odc_env_v     {{ dea_version }}
+set odc_env_m     dea/$odc_env_v
+
+module-whatis   "Loads wagl version $version"
+
+if { [ module-info mode load ] } {
+
+    if { ! [is-loaded dea-env] } {
+        module load "$dea_env_m"
+    } else {
+        if { ! [is-loaded "$dea_env_m"] } {
+            puts stderr "Module ard-pipeline/$version requires $dea_env_m"
+            exit 1
+        }
+    }
+
+    if { ! [is-loaded dea] } {
+        module load "$odc_env_m"
+    } else {
+        if { ! [is-loaded "$odc_env_m"] } {
+            puts stderr "Module ard-pipeline/$version requires $odc_env_m"
+            exit 1
+        }
+    }
+
+    prepend-path PYTHONPATH $base/$version/lib/{{ python_version }}/site-packages
+    prepend-path PATH $base/$version/bin
+    prepend-path CPATH $dea_env_b/$dea_env_v/include
+    prepend-path CPATH $base/$version/include
+    prepend-path LIBRARY_PATH $dea_env_b/$dea_env_v/lib
+    prepend-path LIBRARY_PATH $base/$version/lib
+    prepend-path LIBRARY_PATH $base/$version/lib64
+    # prepend-path LD_LIBRARY_PATH $dea_env_b/$dea_env_v/lib  # THIS LINE NEEDS TO BE COMMENTED OUT WHEN COMPILING. ONCE DEPLOYED UNCOMMENT (THE DEPLOYED SCRIPT)
+    prepend-path LD_LIBRARY_PATH $base/$version/lib
+    prepend-path LD_LIBRARY_PATH $base/$version/lib64
+    prepend-path MANPATH $base/$version/share/man
+    # prepend-path INFOPATH $base/$version/share/info
+    prepend-path PKG_CONFIG_PATH $base/$version/lib/pkgconfig
+    prepend-path PKG_CONFIG_PATH $base/$version/lib64/pkgconfig
+    setenv HDF5_PLUGIN_PATH $base/$version/hdf5-plugins
+    setenv CPL_ZIP_ENCODING UTF-8
+    setenv LANG en_AU.utf8
+}
+
+# Placed outside of the mode load logic to unload library
+module load modtran/{{ modtran_version }}
+module load openmpi
+
+# the following gets rid of this error "shmem: posix: file name search ..."
+# see here for details https://github.com/underworldcode/underworld2/issues/415
+setenv LD_PRELOAD $::env(OPENMPI_ROOT)/lib/libmpi.so
+
+if { [ module-info mode remove ] } {
+    remove-path PYTHONPATH $base/$version/lib/{{ python_version }}/site-packages/
+    remove-path PATH $base/$version/bin
+}
+
+# setenv WAGL_CFG_ROOT "$base/$version/wagl-cfg"
+setenv LUIGI_CONFIG_PATH $base/$version/cfg/luigi-ARD-singlefile.cfg
