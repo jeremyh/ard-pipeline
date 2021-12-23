@@ -32,7 +32,7 @@ for op in $(xmlstarlet sel -t -m "//IMAGE_FILE" --var "band_id=position()-1" \
     echo Running gdal_calc.py -A "${fname}.jp2" --outfile=temp.tif --calc="numpy.where(A == 0, 0, A+${offset})"
     gdal_calc.py -A "${fname}.jp2" --outfile=temp.tif --calc="numpy.where(A == 0, 0, A+${offset})"
     echo Running gdal_translate -co QUALITY=100 -co REVERSIBLE=YES -co YCBCR420=NO temp.tif "${fname}.jp2"
-    gdal_translate -co QUALITY=100 -co REVERSIBLE=YES -co YCBCR420=NO temp.tif "${fname}.jp2"
+    gdal_translate --config GDAL_PAM_ENABLED NO -co QUALITY=100 -co REVERSIBLE=YES -co YCBCR420=NO temp.tif "${fname}.jp2"
     rm -f temp.tif
 done
 
