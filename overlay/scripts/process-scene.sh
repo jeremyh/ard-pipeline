@@ -8,6 +8,8 @@
 #                                                                            #
 ##############################################################################
 
+set -euo pipefail
+
 # $0: process-scene.sh
 # $1: $GRANULE_URL: Url to fetch the granule data from
 # $2: $DATASTRIP_URL: Url to fetch the datastrip data from
@@ -77,7 +79,7 @@ mkdir -p $WORKDIR
 source activate wagl
 if [ "$?" -ne 0 ]; then
     log_message $LOG_ERROR "Unable to find environment"
-    exit -1;
+    exit 1;
 fi
 log_message $LOG_INFO "wagl environment activated"
 
@@ -86,16 +88,20 @@ log_message $LOG_INFO "Syncing tile information from s3"
 aws s3 sync --only-show-errors "$GRANULE_URL" "$WORKDIR/$TASK_UUID"
 if [ "$?" -ne 0 ]; then
     log_message $LOG_ERROR "Unable to fetch granule";
-    exit -1;
+    exit 1;
 fi
 log_message $LOG_INFO "Tile synched"
 
 aws s3 sync --only-show-errors "$DATASTRIP_URL" "$WORKDIR/$TASK_UUID/datastrip"
 if [ "$?" -ne 0 ]; then
     log_message $LOG_ERROR "Unable to fetch metadata";
-    exit -1;
+    exit 1;
 fi
 log_message $LOG_INFO "Metadata synched"
+
+# If data includes radiation offsets, remove them and their record in the MTD xml
+log_message $LOG_INFO "Rewriting Data with radiation offsets (if required)"
+/scripts/remove_l1_dn_offsets.sh
 
 # Create work file
 echo "$WORKDIR/$TASK_UUID" > "$WORKDIR/$TASK_UUID/scenes.txt"
