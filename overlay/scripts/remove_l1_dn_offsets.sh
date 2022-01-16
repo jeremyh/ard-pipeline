@@ -1,18 +1,13 @@
 #!/bin/bash
 
-set -euo pipefail
+cd "$1"
 
-# Run either in the current directory, or within to the supplied directory
-if [[ -v 1 ]]; then
-    cd "$1"
+if [[ ! -r l1c-metadata.xml ]]; then
+    echo "Unable to find l1c-metadata.xml"
+    exit
 fi
 
-if [[ ! -r MTD_MSIL1C.xml ]]; then
-    echo "Unable to find MTD_MSIL1C.xml, please supply a Sentinel 2 Level 1 dataset dir."
-    exit 1
-fi
-
-if ! grep -q Radiometric_Offset_List MTD_MSIL1C.xml; then
+if ! grep -q Radiometric_Offset_List l1c-metadata.xml; then
     echo "No Radiometric Offsets found, SKIPPING."
     exit
 fi
@@ -22,7 +17,7 @@ fi
 # shellcheck disable=SC2016
 for op in $(xmlstarlet sel -t -m "//IMAGE_FILE" --var "band_id=position()-1" \
     --if '//RADIO_ADD_OFFSET[@band_id=$band_id]' \
-    -v "." -o "," -v "//RADIO_ADD_OFFSET[@band_id=\$band_id]" -nl MTD_MSIL1C.xml); do
+    -v "." -o "," -v "//RADIO_ADD_OFFSET[@band_id=\$band_id]" -nl l1c-metadata.xml); do
     
     fname=${op%,*}
     offset=${op#*,}
@@ -37,5 +32,5 @@ for op in $(xmlstarlet sel -t -m "//IMAGE_FILE" --var "band_id=position()-1" \
 done
 
 # Use xmlstarlet again to delete the Radiometric Offset section
-cp MTD_MSIL1C.xml MTD_MSIL1C.xml.orig
-xmlstarlet ed --pf -d "//Radiometric_Offset_List" MTD_MSIL1C.xml.orig > MTD_MSIL1C.xml
+cp l1c-metadata.xml l1c-metadata.xml.orig
+xmlstarlet ed --pf -d "//Radiometric_Offset_List" l1c-metadata.xml.orig > l1c-metadata.xml
