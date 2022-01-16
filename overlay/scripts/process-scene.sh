@@ -8,7 +8,7 @@
 #                                                                            #
 ##############################################################################
 
-set -euo pipefail
+# set -euo pipefail
 
 # $0: process-scene.sh
 # $1: $GRANULE_URL: Url to fetch the granule data from
