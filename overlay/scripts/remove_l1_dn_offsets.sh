@@ -18,11 +18,12 @@ fi
 for op in $(xmlstarlet sel -t -m "//IMAGE_FILE" --var "band_id=position()-1" \
     --if '//RADIO_ADD_OFFSET[@band_id=$band_id]' \
     -v "." -o "," -v "//RADIO_ADD_OFFSET[@band_id=\$band_id]" -nl l1c-metadata.xml); do
-    
+
     fname=${op%,*}
+    fname=${fname:(-3)}  # extract B?? from long file name
     offset=${op#*,}
 
-    echo "Applying Pixel Data Offset to ${fname}.jp2"
+    echo "Applying Pixel Data Offset ${offset} to ${fname}.jp2"
 
     echo Running gdal_calc.py -A "${fname}.jp2" --outfile=temp.tif --calc="numpy.where(A == 0, 0, A+${offset})"
     gdal_calc.py -A "${fname}.jp2" --outfile=temp.tif --calc="numpy.where(A == 0, 0, A+${offset})"
