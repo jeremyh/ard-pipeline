@@ -64,6 +64,16 @@ function fetch_sentinel2_granule {
     fi
     log_message $LOG_INFO "Metadata synched"
 
+    # top level metadata if there
+    aws s3 cp --only-show-errors "${DATASTRIP_URL%/datastrip/0}/metadata.xml" "$WORKDIR/$TASK_UUID/l1c-metadata.xml"
+    if [ "$?" -ne 0 ]; then
+        log_message $LOG_ERROR "Unable to fetch top-level metadata, skipping";
+    else
+        # If data includes radiation offsets, remove them and their record in the MTD xml
+        log_message $LOG_INFO "Rewriting Data with radiation offsets (if required)"
+        /scripts/remove_l1_dn_offsets.sh "$WORKDIR/$TASK_UUID"
+    fi
+
     find "$WORKDIR/$TASK_UUID" -type f
     log_message $LOG_INFO "Fetching scene completed"
 }
