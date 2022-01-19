@@ -31,16 +31,25 @@ RUN pip install awscli boto boto3
 
 # GDAL 3.1 is being used because https://gdal.org/api/python.html#usage
 RUN conda install -y -c conda-forge \
+        bitshuffle==0.3.5 \
+        blosc==1.21.0 \
+        blosc-hdf5-plugin==1.0.0 \
+        boost-cpp==1.74.0 \
+        cairo==1.16.0 \
+        certifi==2021.5.30 \
+        click==7.1.2 \
+        cython==0.29.24 \
+        gdal==3.1.4 \
+        h5py==1.10.6 \
+        hdf5plugin==2.3.2 \
+        hdf5-external-filter-plugins-bitshuffle==0.1.0 \
+        libnetcdf==4.7.4 \
         matplotlib==3.4.3 \
         numpy==1.21.2 \
-        blosc==1.21.0 \
-        click==7.1.2 \
-        gdal==3.1.4 \
+        proj==7.1.1 \
+        python==3.8.2 \
         python-fmask==0.5.5 \
-        hdf5plugin==2.3.2 \
-        blosc-hdf5-plugin==1.0.0 \
-        bitshuffle==0.3.5 \
-        hdf5-external-filter-plugins-bitshuffle==0.1.0 \
+        scipy==1.7.0 \
     && conda clean --all -y
 
 # Download the necessary codebases (@versions) (using git now as installs needed version info)
