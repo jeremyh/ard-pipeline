@@ -24,7 +24,7 @@ RUN ln -s $(which gfortran-10) $(which gfortran-10 | sed 's/\(.*\)\/\gfortran-10
 WORKDIR ${BUILD_DIR}
 
 # Bump this when newer versions of python are required
-RUN wget -O /root/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-py38_4.8.2-Linux-x86_64.sh \
+RUN wget -O /root/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py38_4.8.2-Linux-x86_64.sh \
     && chmod +x /root/miniconda.sh && /root/miniconda.sh -b -f -p conda && rm /root/miniconda.sh
 
 RUN pip install awscli boto boto3
@@ -40,7 +40,7 @@ RUN conda install -y -c conda-forge \
         click==7.1.2 \
         cython==0.29.24 \
         gdal==3.1.4 \
-        h5py==1.10.6 \
+        h5py==3.3.0 \
         hdf5plugin==2.3.2 \
         hdf5-external-filter-plugins-bitshuffle==0.1.0 \
         libnetcdf==4.7.4 \
