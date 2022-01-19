@@ -27,10 +27,11 @@ WORKDIR ${BUILD_DIR}
 RUN wget -O /root/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-py38_4.8.2-Linux-x86_64.sh \
     && chmod +x /root/miniconda.sh && /root/miniconda.sh -b -f -p conda && rm /root/miniconda.sh
 
-RUN pip install awscli boto boto3 numpy matplotlib==3.4.3
+RUN pip install awscli boto boto3 numpy==1.21.2 matplotlib==3.4.3
 
 # GDAL 3.1 is being used because https://gdal.org/api/python.html#usage
 RUN conda install -y -c conda-forge \
+        numpy==1.21.2 \
         blosc==1.21.0 \
         click==7.1.2 \
         gdal==3.1.4 \
