@@ -86,6 +86,7 @@ RUN apt-get update -y \
         libgfortran5 \
         jq \
         awscli \
+        xmlstarlet \
         libjpeg62 \
     && rm -rf /var/lib/apt/lists/*
 
