@@ -3,9 +3,9 @@ SHELL ["/bin/bash", "-c"]
 
 ENV BUILD_DIR=/build
 ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
-ENV WAGL_VERSION=develop
-ENV EUGL_VERSION=master
-ENV TESP_VERSION=master
+ENV WAGL_VERSION=wagl-5.6.0
+ENV EUGL_VERSION=eugl-0.4.0
+ENV TESP_VERSION=tesp-0.9.0
 ENV EODATASETS1_VERSION=eodatasets-0.12
 ENV EODATASETS3_VERSION=eodatasets3-0.22.2
 ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
@@ -45,7 +45,7 @@ RUN conda install -y -c conda-forge \
         hdf5-external-filter-plugins-bitshuffle==0.1.0 \
         libnetcdf==4.7.4 \
         matplotlib==3.4.3 \
-        numpy==1.21.2 \
+        numpy==1.22.0 \
         proj==7.1.1 \
         python==3.8.2 \
         python-fmask==0.5.5 \
