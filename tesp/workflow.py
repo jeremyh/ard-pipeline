@@ -233,6 +233,7 @@ class Package(luigi.Task):
             fmask_doc_path=fmask_doc_fname,
             gqa_doc_path=gqa_doc_fname,
             tesp_doc_path=tesp_doc_fname,
+            level1_metadata_path=self.yamls_dir,
         ):
             if self.non_standard_packaging:
                 ds_id, md_path = package_non_standard(Path(self.pkgdir), eods_granule)
