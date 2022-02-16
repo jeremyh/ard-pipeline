@@ -220,6 +220,10 @@ class Package(luigi.Task):
         fmask_img_fname = Path(self.input()["fmask"]["image"].path)
         fmask_doc_fname = Path(self.input()["fmask"]["metadata"].path)
         gqa_doc_fname = Path(self.input()["gqa"].path)
+        if self.yamls_dir is None or self.yamls_dir == "":
+            level1_metadata_path = None
+        else:
+            level1_metadata_path = Path(self.yamls_dir)
 
         tesp_doc_fname = Path(self.workdir) / f"{self.granule}.tesp.yaml"
         with tesp_doc_fname.open("w") as src:
@@ -233,7 +237,7 @@ class Package(luigi.Task):
             fmask_doc_path=fmask_doc_fname,
             gqa_doc_path=gqa_doc_fname,
             tesp_doc_path=tesp_doc_fname,
-            level1_metadata_path=self.yamls_dir,
+            level1_metadata_path=level1_metadata_path,
         ):
             if self.non_standard_packaging:
                 ds_id, md_path = package_non_standard(Path(self.pkgdir), eods_granule)
