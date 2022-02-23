@@ -80,7 +80,7 @@ do
   echo "*********************"
   echo "Installing: $PKG"
   find -type f | xargs chmod ug+rw    # this is needed because NCI git hidden objects file permission weirdness
-  pip install . --user
+  pip install --user 'pystac==1.0.0rc2' .
   echo "*********************"
   cd "$BUILD_DIR" || exit 1
 done
