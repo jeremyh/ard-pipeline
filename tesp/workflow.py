@@ -277,22 +277,34 @@ class Package(luigi.Task):
                 json.dump(data, outf)
 
 
-def list_packages(workdir, acq_parser_hint, pkgdir):
+def list_packages(workdir, acq_parser_hint, pkgdir, yamls_dir):
     def worker(level1):
         work_root = pjoin(workdir, f"{basename(level1)}.ARD")
 
         result = []
         for granule in preliminary_acquisitions_data(level1, acq_parser_hint):
             work_dir = pjoin(work_root, granule["id"])
-            result.append(
-                Package(
-                    level1,
-                    work_dir,
-                    granule["id"],
-                    pkgdir,
-                    acq_parser_hint=acq_parser_hint,
+            if yamls_dir is None or yamls_dir == "":
+                result.append(
+                    Package(
+                        level1,
+                        work_dir,
+                        granule["id"],
+                        pkgdir,
+                        acq_parser_hint=acq_parser_hint,
+                    )
                 )
-            )
+            else:
+                result.append(
+                    Package(
+                        level1,
+                        work_dir,
+                        granule["id"],
+                        pkgdir,
+                        acq_parser_hint=acq_parser_hint,
+                        yamls_dir=yamls_dir,
+                    )
+                )
 
         return result
 
@@ -308,12 +320,15 @@ class ARDP(luigi.WrapperTask):
     workdir = luigi.Parameter()
     pkgdir = luigi.Parameter()
     acq_parser_hint = luigi.OptionalParameter(default="")
+    yamls_dir = luigi.OptionalParameter(default="")
 
     def requires(self):
         with open(self.level1_list) as src:
             level1_list = [level1.strip() for level1 in src.readlines()]
 
-        worker = list_packages(self.workdir, self.acq_parser_hint, self.pkgdir)
+        worker = list_packages(
+            self.workdir, self.acq_parser_hint, self.pkgdir, self.yamls_dir
+        )
 
         executor = ThreadPoolExecutor()
         futures = [executor.submit(worker, level1) for level1 in level1_list]
