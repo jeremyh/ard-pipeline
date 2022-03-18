@@ -4,9 +4,13 @@ except ImportError:
     # Running on pre-3.8 Python; use importlib-metadata package
     from importlib_metadata import distribution
 
+import re
+import zipfile
+
 import rasterio
 import yaml
 from idl_functions import histogram
+from wagl.acquisition import xml_via_safe
 
 # TODO: Fix update to merge the dictionaries
 
