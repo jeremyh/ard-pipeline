@@ -79,6 +79,7 @@ class Sentinel2Acquisition(Acquisition):
         the Acquisition's data will be read.
         """
         result = super().data(out=out, window=window, masked=masked)
+
         if not hasattr(self, "offset"):
             return result
 

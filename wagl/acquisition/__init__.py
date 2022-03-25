@@ -699,6 +699,7 @@ def acquisitions_via_safe(pathname):
         img_data_path = "".join(
             ["zip://", pathname, "!/", find_image_path(archive.namelist())]
         )
+
         if basename(images[0]) == images[0]:
             img_data_path = "".join(
                 [img_data_path, pjoin("GRANULE", granule_id, "IMG_DATA")]
