@@ -18,6 +18,7 @@ setup(
         "rasterio",
         "rios",
         "python-fmask==0.5.5",
+        "s2cloudless==1.5.0",
         "wagl",
         "importlib-metadata;python_version<'3.8'",
     ],
