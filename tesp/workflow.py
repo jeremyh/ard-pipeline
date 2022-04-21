@@ -322,11 +322,16 @@ class Package(luigi.Task):
         gqa_doc_fname = Path(self.input()["gqa"].path)
 
         if self.input()["s2cloudless"] is not None:
-            Path(self.input()["s2cloudless"]["cloud_prob"].path)
+            s2cloudless_prob_fname = Path(
+                self.input()["s2cloudless"]["cloud_prob"].path
+            )
             Path(self.input()["s2cloudless"]["cloud_mask"].path)
-            Path(self.input()["s2cloudless"]["metadata"].path)
+            s2cloudless_metadata_fname = Path(
+                self.input()["s2cloudless"]["metadata"].path
+            )
         else:
-            pass
+            s2cloudless_prob_fname = None
+            s2cloudless_metadata_fname = None
 
         tesp_doc_fname = Path(self.workdir) / f"{self.granule}.tesp.yaml"
         with tesp_doc_fname.open("w") as src:
@@ -338,6 +343,9 @@ class Package(luigi.Task):
             granule_names=[self.granule],
             fmask_image_path=fmask_img_fname,
             fmask_doc_path=fmask_doc_fname,
+            s2cloudless_prob_path=s2cloudless_prob_fname,
+            s2cloudless_mask_path=s2cloudless_prob_fname,
+            s2cloudless_doc_path=s2cloudless_metadata_fname,
             gqa_doc_path=gqa_doc_fname,
             tesp_doc_path=tesp_doc_fname,
             level1_metadata_path=search_for_external_level1_metadata(),
