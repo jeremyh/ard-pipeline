@@ -13,6 +13,7 @@ from pathlib import Path
 import luigi
 import yaml
 from eodatasets3.wagl import Granule, package
+from eugl import s2cl
 from eugl.fmask import fmask
 from eugl.gqa import GQATask
 from luigi.local_target import LocalFileSystem
@@ -73,6 +74,73 @@ class WorkDir(luigi.Task):
         local_fs.mkdir(self.output().path)
 
 
+class RunS2Cloudless(luigi.Task):
+    """Execute the s2cloudless algorithm for a given granule."""
+
+    level1 = luigi.Parameter()
+    granule = luigi.Parameter()
+    workdir = luigi.Parameter()
+    acq_parser_hint = luigi.OptionalParameter(default="")
+    threshold = luigi.OptionalParameter(default=s2cl.THRESHOLD)
+    average_over = luigi.OptionalParameter(default=s2cl.AVERAGE_OVER)
+    dilation_size = luigi.OptionalParameter(default=s2cl.DILATION_SIZE)
+
+    def output(self):
+        prob_out_fname = pjoin(self.workdir, f"{self.granule}.prob.s2cloudless.tif")
+        mask_out_fname = pjoin(self.workdir, f"{self.granule}.mask.s2cloudless.tif")
+        metadata_out_fname = pjoin(self.workdir, f"{self.granule}.s2cloudless.yaml")
+
+        out_fnames = {
+            "cloud_prob": luigi.LocalTarget(prob_out_fname),
+            "cloud_mask": luigi.LocalTarget(mask_out_fname),
+            "metadata": luigi.LocalTarget(metadata_out_fname),
+        }
+
+        return out_fnames
+
+    def run(self):
+        out_fnames = self.output()
+        with out_fnames["cloud_prob"].temporary_path() as prob_out_fname:
+            with out_fnames["cloud_mask"].temporary_path() as mask_out_fname:
+                with out_fnames["metadata"].temporary_path() as metadata_out_fname:
+                    s2cl.s2cloudless_processing(
+                        self.level1,
+                        self.granule,
+                        prob_out_fname,
+                        mask_out_fname,
+                        metadata_out_fname,
+                        self.workdir,
+                        acq_parser_hint=self.acq_parser_hint,
+                        threshold=self.threshold,
+                        average_over=self.average_over,
+                        dilation_size=self.dilation_size,
+                    )
+
+
+class S2Cloudless(luigi.Task):
+    """Execute the Fmask algorithm for a given granule."""
+
+    level1 = luigi.Parameter()
+    workdir = luigi.Parameter()
+    acq_parser_hint = luigi.OptionalParameter(default="")
+    threshold = luigi.OptionalParameter(default=s2cl.THRESHOLD)
+    average_over = luigi.OptionalParameter(default=s2cl.AVERAGE_OVER)
+    dilation_size = luigi.OptionalParameter(default=s2cl.DILATION_SIZE)
+
+    def requires(self):
+        # issues task per granule
+        for granule in preliminary_acquisitions_data(self.level1, self.acq_parser_hint):
+            yield RunS2Cloudless(
+                self.level1,
+                granule,
+                self.workdir,
+                acq_parser_hint=self.acq_parser_hint,
+                threshold=self.threshold,
+                average_over=self.average_over,
+                dilation_size=self.dilation_size,
+            )
+
+
 class RunFmask(luigi.Task):
     """Execute the Fmask algorithm for a given granule."""
 
@@ -84,18 +152,6 @@ class RunFmask(luigi.Task):
     parallax_test = luigi.BoolParameter()
     upstream_settings = luigi.DictParameter(default={})
     acq_parser_hint = luigi.OptionalParameter(default="")
-
-    def requires(self):
-        # for the time being have fmask require wagl,
-        # no point in running fmask if wagl fails...
-        # return WorkDir(self.level1, dirname(self.workdir))
-        return DataStandardisation(
-            self.level1,
-            self.workdir,
-            self.granule,
-            acq_parser_hint=self.acq_parser_hint,
-            **self.upstream_settings,  # pylint: disable=not-a-mapping
-        )
 
     def output(self):
         out_fname1 = pjoin(self.workdir, f"{self.granule}.fmask.img")
