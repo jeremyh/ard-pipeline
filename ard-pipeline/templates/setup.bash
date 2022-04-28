@@ -73,7 +73,7 @@ mkdir -p "$CONFIG_DIR"
 
 echo INSTALL_DIR $INSTALL_DIR
 
-pip install --user 'cligj==0.7.2' 'itsdangerous==2.0.1' 'nested-lookup==0.2.23' 'python-rapidjson==1.6' 'requests-cache==0.7.5' 'tenacity==6.3.1' 'url-normalize==1.4.3' 's2cloudless==1.5.0'
+pip install --user 'cligj==0.7.2' 'itsdangerous==2.0.1' 'nested-lookup==0.2.23' 'python-rapidjson==1.6' 'requests-cache==0.7.5' 'tenacity==6.3.1' 'url-normalize==1.4.3' 's2cloudless==1.5.0' 'Pillow==8.3.2'
 
 EOD_PKGS=( "eod1" "eo-datasets" )
 for PKG in "${EOD_PKGS[@]}"
