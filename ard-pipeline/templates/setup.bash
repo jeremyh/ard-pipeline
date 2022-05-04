@@ -29,7 +29,6 @@ mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR" || exit 1
 
 git clone --depth 1 https://github.com/sixy6e/idl-functions.git
-git clone --depth 1 https://github.com/spotify/luigi.git
 git clone --depth 1 --branch {{ wagl_version }} https://github.com/GeoscienceAustralia/wagl.git
 git clone --depth 1 --branch {{ eod1_version }} https://github.com/GeoscienceAustralia/eo-datasets.git eod1
 git clone --depth 1 --branch {{ eod3_version }} https://github.com/GeoscienceAustralia/eo-datasets.git
@@ -73,7 +72,7 @@ mkdir -p "$CONFIG_DIR"
 
 echo INSTALL_DIR $INSTALL_DIR
 
-pip install --user 'cligj==0.7.2' 'itsdangerous==2.0.1' 'nested-lookup==0.2.23' 'python-rapidjson==1.6' 'requests-cache==0.7.5' 'tenacity==6.3.1' 'url-normalize==1.4.3' 's2cloudless==1.5.0' 'Pillow==8.3.2'
+pip install --user 'cligj==0.7.2' 'itsdangerous==2.0.1' 'nested-lookup==0.2.23' 'python-rapidjson==1.6' 'requests-cache==0.7.5' 'tenacity==6.3.1' 'url-normalize==1.4.3' 's2cloudless==1.5.0' 'Pillow==8.3.2' 'luigi==3.0.2'
 
 EOD_PKGS=( "eod1" "eo-datasets" )
 for PKG in "${EOD_PKGS[@]}"
@@ -87,7 +86,7 @@ do
   cd "$BUILD_DIR" || exit 1
 done
 
-PKGS=( "luigi" "idl-functions" "wagl" "eugl" "tesp" "swfo" "gost" )
+PKGS=( "idl-functions" "wagl" "eugl" "tesp" "swfo" "gost" )
 for PKG in "${PKGS[@]}"
 do
   cd "$PKG" || exit 1
