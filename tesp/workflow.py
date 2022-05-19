@@ -23,7 +23,7 @@ from wagl.singlefile_workflow import DataStandardisation
 
 from tesp.constants import ProductPackage
 from tesp.metadata import _get_tesp_metadata
-from tesp.package import package_non_standard
+from tesp.package import package_non_standard, write_stac_metadata
 
 QA_PRODUCTS = ["gqa", "fmask", "s2cloudless"]
 
@@ -250,6 +250,10 @@ class Package(luigi.Task):
     non_standard_packaging = luigi.BoolParameter()
     product_maturity = luigi.OptionalParameter(default="stable")
 
+    # STAC
+    stac_base_url = luigi.OptionalParameter(default="")
+    explorer_base_url = luigi.OptionalParameter(default="")
+
     def requires(self):
         # Ensure configuration values are valid
         # self._validate_cfg()
@@ -362,6 +366,11 @@ class Package(luigi.Task):
                     product_maturity=self.product_maturity,
                     included_products=self.products,
                 )
+
+                if self.stac_base_url != "" and self.explorer_base_url != "":
+                    write_stac_metadata(
+                        md_path, self.pkgdir, self.stac_base_url, self.explorer_base_url
+                    )
 
             md[ds_id] = md_path
             STATUS_LOGGER.info(
