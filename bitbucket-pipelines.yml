@@ -21,4 +21,5 @@ pipelines:
           - echo Building $VERSION
           - docker build -t geoscienceaustralia/dea-wagl-docker:$VERSION -t geoscienceaustralia/dea-wagl-docker:latest .
           - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_TOKEN
-          - docker push geoscienceaustralia/dea-wagl-docker
+          - docker push geoscienceaustralia/dea-wagl-docker:latest
+          - docker push geoscienceaustralia/dea-wagl-docker:$VERSION
