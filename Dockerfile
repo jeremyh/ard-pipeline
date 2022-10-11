@@ -50,6 +50,7 @@ RUN conda install -y -c conda-forge \
         python==3.8.2 \
         python-fmask==0.5.7 \
         scipy==1.8.1 \
+        rasterio==1.2.1 \
     && conda clean --all -y
 
 # Download the necessary codebases (@versions) (using git now as installs needed version info)
