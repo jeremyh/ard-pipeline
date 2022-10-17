@@ -6,6 +6,7 @@ ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
 ENV WAGL_VERSION=wagl-5.9.0
 ENV EUGL_VERSION=eugl-0.6.0
 ENV TESP_VERSION=tesp-0.14.2
+ENV IDLFUNCTIONS_VERSION=0.5.4
 ENV EODATASETS1_VERSION=eodatasets-0.12
 ENV EODATASETS3_VERSION=eodatasets3-0.29.0
 ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
@@ -58,7 +59,7 @@ RUN mamba install -y -c conda-forge \
 RUN pip install git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios-1.4.10
 
 # Download the necessary codebases (@versions) (using git now as installs needed version info)
-RUN pip install "git+https://github.com/sixy6e/idl-functions.git@master#egg=idl-functions" \
+RUN pip install "git+https://github.com/sixy6e/idl-functions.git@${IDLFUNCTIONS_VERSION}#egg=idl-functions" \
     "git+https://github.com/GeoscienceAustralia/eo-datasets.git@${EODATASETS1_VERSION}#egg=eodatasets1" \
     "git+https://github.com/GeoscienceAustralia/eo-datasets.git@${EODATASETS3_VERSION}#egg=eodatasets3" \
     "git+https://github.com/GeoscienceAustralia/wagl.git@${WAGL_VERSION}#egg=wagl" \
