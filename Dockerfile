@@ -47,7 +47,6 @@ RUN mamba install -y -c conda-forge \
         hdf5plugin==2.3.2 \
         hdf5-external-filter-plugins-bitshuffle==0.1.0 \
         libnetcdf==4.7.4 \
-        matplotlib==3.4.3 \
         numpy==1.23.0 \
         proj==7.1.1 \
         python-fmask==0.5.7 \
