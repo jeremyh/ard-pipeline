@@ -50,7 +50,6 @@ RUN mamba install -y -c conda-forge \
         matplotlib==3.4.3 \
         numpy==1.23.0 \
         proj==7.1.1 \
-        python==3.8.2 \
         python-fmask==0.5.7 \
         scipy==1.8.1 \
         rasterio==1.2.1 \
