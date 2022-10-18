@@ -6,6 +6,7 @@ ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
 ENV WAGL_VERSION=wagl-5.9.0
 ENV EUGL_VERSION=eugl-0.6.0
 ENV TESP_VERSION=tesp-0.14.2
+ENV IDLFUNCTIONS_VERSION=0.5.4
 ENV EODATASETS1_VERSION=eodatasets-0.12
 ENV EODATASETS3_VERSION=eodatasets3-0.29.0
 ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
@@ -29,8 +30,10 @@ RUN wget -O /root/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py
 
 RUN pip install awscli boto boto3
 
+RUN conda install mamba -n base -c conda-forge
+
 # GDAL 3.1 is being used because https://gdal.org/api/python.html#usage
-RUN conda install -y -c conda-forge \
+RUN mamba install -y -c conda-forge \
         bitshuffle==0.3.5 \
         blosc==1.21.0 \
         blosc-hdf5-plugin==1.0.0 \
@@ -56,23 +59,13 @@ RUN conda install -y -c conda-forge \
 RUN pip install git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios-1.4.10
 
 # Download the necessary codebases (@versions) (using git now as installs needed version info)
-RUN git clone --branch master https://github.com/sixy6e/idl-functions.git idl-functions \
-    && cd ${BUILD_DIR}/idl-functions && pip install . && rm -rf .git
-
-RUN git clone --branch ${EODATASETS1_VERSION} https://github.com/GeoscienceAustralia/eo-datasets.git eodatasets1 \
-    && cd ${BUILD_DIR}/eodatasets1 && pip install . && rm -rf .git
-
-RUN git clone --branch ${EODATASETS3_VERSION} https://github.com/GeoscienceAustralia/eo-datasets.git eodatasets3 \
-    && cd ${BUILD_DIR}/eodatasets3 && pip install . && rm -rf .git
-
-RUN git clone --branch ${WAGL_VERSION} https://github.com/GeoscienceAustralia/wagl.git wagl \
-    && cd ${BUILD_DIR}/wagl && pip install . && rm -rf .git
-
-RUN git clone --branch ${EUGL_VERSION} https://github.com/OpenDataCubePipelines/eugl.git eugl \
-    && cd ${BUILD_DIR}/eugl && pip install . && rm -rf .git
-
-RUN git clone --branch ${TESP_VERSION} https://github.com/OpenDataCubePipelines/tesp.git tesp \
-    && cd ${BUILD_DIR}/tesp && pip install . && rm -rf .git
+RUN pip install "git+https://github.com/sixy6e/idl-functions.git@${IDLFUNCTIONS_VERSION}#egg=idl-functions" \
+    "git+https://github.com/GeoscienceAustralia/eo-datasets.git@${EODATASETS1_VERSION}#egg=eodatasets1" \
+    "git+https://github.com/GeoscienceAustralia/eo-datasets.git@${EODATASETS3_VERSION}#egg=eodatasets3" \
+    "git+https://github.com/GeoscienceAustralia/wagl.git@${WAGL_VERSION}#egg=wagl" \
+    "git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios-1.4.10" \
+    "git+https://github.com/OpenDataCubePipelines/eugl.git@${EUGL_VERSION}#egg=eugl" \
+    "git+https://github.com/OpenDataCubePipelines/tesp.git@${TESP_VERSION}#egg=tesp"
 
 FROM ubuntu:focal as prod
 
