@@ -21,7 +21,6 @@ Workflow settings can be configured in `luigi.cfg` file.
 # pylint: disable=too-many-locals
 # pylint: disable=protected-access
 
-import logging
 import traceback
 from os.path import basename
 from os.path import join as pjoin
