@@ -89,9 +89,10 @@ def main(level1_path, s3_bucket, s3_prefix):
     print('checking for output at', s3_bucket, key)
     if check_object_exists(s3_bucket, key):
         print('output already exists')
-        sys.exit(-1)
+        sys.exit(0)
 
     print('output does not exist yet')
+    sys.exit(-1)
 
 
 if __name__ == '__main__':
