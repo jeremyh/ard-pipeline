@@ -28,24 +28,6 @@ HDF5_PLUGIN_DIR=$INSTALL_DIR/hdf5-plugins
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR" || exit 1
 
-git clone --depth 1 https://github.com/sixy6e/idl-functions.git
-git clone --depth 1 --branch {{ wagl_version }} https://github.com/GeoscienceAustralia/wagl.git
-git clone --depth 1 --branch {{ eod1_version }} https://github.com/GeoscienceAustralia/eo-datasets.git eod1
-git clone --depth 1 --branch {{ eod3_version }} https://github.com/GeoscienceAustralia/eo-datasets.git
-git clone --depth 1 --branch {{ tesp_version }} https://github.com/OpenDataCubePipelines/tesp.git
-git clone --depth 1 --branch {{ swfo_version }} https://github.com/OpenDataCubePipelines/swfo.git
-git clone --depth 1 --branch {{ eugl_version }} https://github.com/OpenDataCubePipelines/eugl.git
-git clone --depth 1 --branch {{ gost_version }} https://github.com/OpenDataCubePipelines/gost.git
-
-
-# HDF5 and other utils
-# git clone https://github.com/h5py/h5py.git
-git clone --depth 1 https://github.com/Blosc/c-blosc.git
-git clone --depth 1 https://github.com/Blosc/hdf5-blosc.git
-git clone --depth 1 https://github.com/kiyo-masui/bitshuffle.git
-# git clone --depth 1 https://github.com/LLNL/zfp
-# git clone --depth 1 https://github.com/LLNL/H5Z-ZFP.git
-
 
 module load ard-pipeline/"$ARD_MODULE_VERSION"
 
@@ -74,19 +56,12 @@ echo INSTALL_DIR $INSTALL_DIR
 
 pip install --user 'cligj==0.7.2' 'itsdangerous==2.0.1' 'nested-lookup==0.2.23' 'python-rapidjson==1.6' 'requests-cache==0.7.5' 'tenacity==6.3.1' 'url-normalize==1.4.3' 's2cloudless==1.5.0' 'Pillow==8.3.2' 'luigi==3.0.2' 'zict==2.1.0' 'setuptools==47.1.1'
 
-EOD_PKGS=( "eod1" "eo-datasets" )
-for PKG in "${EOD_PKGS[@]}"
-do
-  cd "$PKG" || exit 1
-  echo "*********************"
-  echo "Installing: $PKG"
-  find -type f | xargs chmod ug+rw    # this is needed because NCI git hidden objects file permission weirdness
-  pip install --user 'pystac==1.0.0rc2' .
-  echo "*********************"
-  cd "$BUILD_DIR" || exit 1
-done
+pip install --user 'pystac==1.0.0rc2' 'eodatasets3=={{ eod3_version }}' 'git+https://github.com/GeoscienceAustralia/eo-datasets.git@eodatasets-0.12#egg=eodatasets-0.12'
 
-PKGS=( "idl-functions" "wagl" "eugl" "tesp" "swfo" "gost" )
+cd "$BUILD_DIR" || exit 1
+git clone --depth 1 https://github.com/sixy6e/idl-functions.git
+git clone --depth 1 --branch {{ wagl_version }} https://github.com/GeoscienceAustralia/wagl.git
+PKGS=( "idl-functions" "wagl" )
 for PKG in "${PKGS[@]}"
 do
   cd "$PKG" || exit 1
@@ -97,6 +72,20 @@ do
   cd "$BUILD_DIR" || exit 1
 done
 
+pip install --user 'git+https://github.com/OpenDataCubePipelines/swfo.git@{{ swfo_version }}'
+pip install --user 'git+https://github.com/sixy6e/mpi-structlog@develop#egg=mpi_structlog' 'git+https://github.com/OpenDataCubePipelines/gost.git@{{ gost_version }}'
+pip install --user 'git+https://github.com/ubarsc/python-fmask@pythonfmask-0.5.7#egg=python-fmask-0.5.7' 'git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios-1.4.10' 'git+https://github.com/OpenDataCubePipelines/eugl.git@{{ eugl_version }}#egg={{ eugl_version }}'
+pip install --user 'pystac==1.0.0rc2' 'git+https://github.com/OpenDataCubePipelines/tesp.git@{{ tesp_version }}#egg={{ tesp_version }}'
+
+
+cd "$BUILD_DIR" || exit 1
+# HDF5 and other utils
+# git clone https://github.com/h5py/h5py.git
+git clone --depth 1 https://github.com/Blosc/c-blosc.git
+git clone --depth 1 https://github.com/Blosc/hdf5-blosc.git
+git clone --depth 1 https://github.com/kiyo-masui/bitshuffle.git
+# git clone --depth 1 https://github.com/LLNL/zfp
+# git clone --depth 1 https://github.com/LLNL/H5Z-ZFP.git
 
 # HDF5 LZF plugin
 # echo "*********************"
