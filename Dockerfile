@@ -80,6 +80,7 @@ RUN apt-get update -y \
         awscli \
         xmlstarlet \
         libjpeg62 \
+        unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # install libpng12
