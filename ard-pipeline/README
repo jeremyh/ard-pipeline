@@ -5,7 +5,7 @@ $ module load dea/20200617  # whatever dea_version is in module-config.yaml
 ```
 then
 ```
-$ python3 configure.py
+$ ./configure.py
 $ cd scripts
 $ chmod +x cleanup.bash setup.bash
 $ ./setup.bash
