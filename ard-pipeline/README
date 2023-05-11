@@ -7,7 +7,6 @@ then
 ```
 $ ./configure.py
 $ cd scripts
-$ chmod +x cleanup.bash setup.bash
 $ ./setup.bash
 ```
 The `LD_LIBRARY_PATH` line in the module-script needs to be commented out when compiling, but then uncommented when

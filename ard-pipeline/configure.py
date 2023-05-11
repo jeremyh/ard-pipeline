@@ -19,8 +19,14 @@ def main():
         print('generating', path.name)
         with path.open() as fl:
             template = Template(fl.read())
-        with (pwd / 'scripts' / path.name).open('w') as out:
+
+        output_script = pwd / 'scripts' / path.name
+        with output_script.open('w') as out:
             print(template.render(variables), file=out)
+
+        # If it's a script, add execute permissions
+        if output_script.suffix == '.bash':
+            output_script.chmod(output_script.stat().st_mode | 0o111)
 
 
 if __name__ == '__main__':
