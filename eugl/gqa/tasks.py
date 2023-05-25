@@ -112,6 +112,15 @@ class GverifyTask(luigi.Task):
         if not exists(workdir):
             os.makedirs(workdir)
 
+        for loc in [
+            self.executable,
+            self.root_fix_qa_location,
+            self.landsat_scenes_shapefile,
+            self.reference_directory,
+        ]:
+            if not exists(loc):
+                raise FileNotFoundError(loc)
+
         # Get acquisition metadata, limit it to executing granule
         container = acquisitions(self.level1, self.acq_parser_hint).get_granule(
             self.granule, container=True
