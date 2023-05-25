@@ -36,6 +36,11 @@ source {env}
 luigi --module tesp.workflow ARDP --level1-list {scene_list} --workdir {outdir} --pkgdir {pkgdir} --yamls-dir="{yamls_dir}" --workers {workers} --parallel-scheduling
 """
 
+CLEAN_UP_TEMPLATE = """
+# clean up workdir since we don't need it afterwards, even if the processing has failed
+rm -rf {outdir}
+"""
+
 SUMMARY_TEMPLATE = """{pbs_resources}
 #PBS -W depend=afterany:{jobids}
 
@@ -184,6 +189,7 @@ def _submit_multiple(
     yamls_dir,
     workers,
     pbs_resources,
+    cleanup,
     test,
 ):
     """Submit multiple PBS formatted jobs."""
@@ -216,6 +222,9 @@ def _submit_multiple(
             yamls_dir=yamls_dir,
             workers=workers,
         )
+
+        if cleanup:
+            pbs += CLEAN_UP_TEMPLATE.format(outdir=job_outdir)
 
         # write pbs script
         out_fname = pjoin(jobdir, FMT4.format(jobid=jobid))
@@ -434,6 +443,12 @@ def _submit_archive(indir, outdir, archive_list, batch_id, pbs_resources, env, t
     help="UUID's of the scenes to archive.  This uses the environment specified in index-datacube-env.",
 )
 @click.option(
+    "--cleanup",
+    default=False,
+    is_flag=True,
+    help=("Clean-up work directory afterwards."),
+)
+@click.option(
     "--test",
     default=False,
     is_flag=True,
@@ -457,6 +472,7 @@ def main(
     email,
     index_datacube_env,
     archive_list,
+    cleanup,
     test,
 ):
     """Equally partition a list of scenes across n nodes and submit
@@ -511,6 +527,7 @@ def main(
         yamls_dir,
         workers,
         pbs_resources,
+        cleanup,
         test,
     )
 
