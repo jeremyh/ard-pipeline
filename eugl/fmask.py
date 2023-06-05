@@ -3,16 +3,19 @@ snow/ice classification) code supporting Sentinel-2 Level 1 C SAFE format zip ar
 hosted by the Australian Copernicus Data Hub - http://www.copernicus.gov.au/ - for
 direct (zip) read access by datacube.
 """
+
 import logging
 import os
 import signal
 import subprocess
+import tarfile
 import tempfile
+import zipfile
 from os.path import dirname
 from os.path import join as pjoin
 from pathlib import Path
 
-from wagl.acquisition import acquisitions
+from wagl.acquisition import Acquisition, acquisitions
 from wagl.constants import BandType
 
 from eugl.metadata import fmask_metadata, grab_offset_dict
@@ -78,12 +81,45 @@ def run_command(command, work_dir, timeout=None, command_name=None):
         _LOG.debug(stdout.decode("utf-8"))
 
 
+def extract_mtl(archive_path: Path, output_folder: Path) -> Path:
+    """Find and extract the MTL from an archive."""
+    output_folder.mkdir(parents=True, exist_ok=True)
+
+    mtl_files = []
+
+    if archive_path.suffix in [".tar", ".gz", ".tgz", ".bz2"]:
+        with tarfile.open(archive_path, "r") as tar:
+            for member in tar.getmembers():
+                if member.name.endswith("_MTL.txt"):
+                    mtl_files.append(member.name)
+                    tar.extract(member, output_folder)
+
+    elif archive_path.suffix == ".zip":
+        with zipfile.ZipFile(archive_path, "r") as zipf:
+            for member in zipf.namelist():
+                if member.endswith("_MTL.txt"):
+                    mtl_files.append(member)
+                    zipf.extract(member, output_folder)
+
+    else:
+        raise ValueError(
+            "Invalid archive format. Only .tar, .tar.gz, .zip are supported."
+        )
+
+    if len(mtl_files) == 0:
+        raise ValueError("No _MTL.txt file found in the archive.")
+    elif len(mtl_files) > 1:
+        raise ValueError("Multiple _MTL.txt files found in the archive. ")
+
+    return output_folder / mtl_files[0]
+
+
 def _landsat_fmask(
-    acquisition,
-    out_fname,
-    work_dir,
-    cloud_buffer_distance,
-    cloud_shadow_buffer_distance,
+    acquisition: Acquisition,
+    out_fname: str,
+    work_dir: str,
+    cloud_buffer_distance: float,
+    cloud_shadow_buffer_distance: float,
 ):
     """Fmask algorithm for Landsat."""
     acquisition_path = Path(acquisition.pathname)
@@ -99,6 +135,8 @@ def _landsat_fmask(
         run_command(cmd, tmp_dir)
 
         acquisition_path = tmp_dir
+
+    mtl_fname = extract_mtl(acquisition_path, Path(work_dir) / "fmask_imagery2")
 
     container = acquisitions(str(acquisition_path))
     # [-1] index Avoids panchromatic band
@@ -123,9 +161,6 @@ def _landsat_fmask(
         raise NotImplementedError(
             "python-fmask requires thermal bands to process landsat imagery"
         )
-
-    # copy the mtl to the work space
-    mtl_fname = str(list(acquisition_path.rglob("*_MTL.txt"))[0])
 
     cmd = [
         "gdal_merge.py",
