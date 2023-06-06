@@ -6,17 +6,26 @@ direct (zip) read access by datacube.
 
 import logging
 import os
+import shutil
 import signal
 import subprocess
+import sys
 import tarfile
 import tempfile
 import zipfile
 from os.path import dirname
 from os.path import join as pjoin
 from pathlib import Path
+from typing import Dict
 
 import rasterio.path
+from fmask import config, landsatangles, landsatTOA, saturationcheck, sen2meta
+from fmask import fmask as fmask_algorithm
+from fmask.cmdline.sentinel2makeAnglesImage import makeAngles
+from fmask.cmdline.sentinel2Stacked import checkAnglesFile
+from rios import fileinfo
 from wagl.acquisition import Acquisition, acquisitions
+from wagl.acquisition.sentinel import Sentinel2Acquisition
 from wagl.constants import BandType
 
 from eugl.metadata import fmask_metadata, grab_offset_dict
@@ -49,7 +58,10 @@ def url_to_gdal(url: str):
     fmask tooling uses gdal, not rio, so we need to do the same conversion.
 
 
-    >>> url = 'tar:///tmp/LC08_L1GT_109080_20210601_20210608_02_T2.tar!/LC08_L1GT_109080_20210601_20210608_02_T2_B1.TIF'
+    >>> url = (
+    ...     'tar:///tmp/LC08_L1GT_109080_20210601_20210608_02_T2.tar!'
+    ...     '/LC08_L1GT_109080_20210601_20210608_02_T2_B1.TIF'
+    ... )
     >>> url_to_gdal(url)
     '/vsitar//tmp/LC08_L1GT_109080_20210601_20210608_02_T2.tar/LC08_L1GT_109080_20210601_20210608_02_T2_B1.TIF'
     """
@@ -57,16 +69,16 @@ def url_to_gdal(url: str):
     return rasterio.path.parse_path(url).as_vsi()
 
 
-def run_command(command, work_dir, timeout=None, command_name=None):
+def run_command(command, work_dir, timeout=None, command_name=None, allow_shell=False):
     """A simple utility to execute a subprocess command.
     Raises a CalledProcessError for backwards compatibility.
     """
     _proc = subprocess.Popen(
-        " ".join(command),
+        command,
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         preexec_fn=os.setsid,
-        shell=True,
+        shell=allow_shell,
         cwd=str(work_dir),
     )
 
@@ -91,9 +103,7 @@ def run_command(command, work_dir, timeout=None, command_name=None):
             raise CommandError('"%s" timed out' % (command_name))
         else:
             raise CommandError(
-                '"{}" failed with return code: {}'.format(
-                    command_name, str(_proc.returncode)
-                )
+                f'"{command_name}" failed with return code: {str(_proc.returncode)}'
             )
     else:
         _LOG.debug(stdout.decode("utf-8"))
@@ -190,9 +200,6 @@ def _landsat_fmask(
     ]
     run_command(cmd, work_dir)
 
-    from fmask import config, landsatangles, landsatTOA, saturationcheck
-    from rios import fileinfo
-
     mtl_info = config.readMTLFile(mtl_fname)
 
     img_info = fileinfo.ImageInfo(ref_fname)
@@ -239,7 +246,7 @@ def _landsat_fmask(
     # stack of Landsat thermal bands
     thermal_info = config.readThermalInfoFromLandsatMTL(mtl_fname)
 
-    anglesInfo = config.AnglesFileInfo(
+    angles_info = config.AnglesFileInfo(
         angles_fname, 3, angles_fname, 2, angles_fname, 1, angles_fname, 0
     )
 
@@ -251,7 +258,7 @@ def _landsat_fmask(
 
     fmask_config = config.FmaskConfig(sensor)
     fmask_config.setThermalInfo(thermal_info)
-    fmask_config.setAnglesInfo(anglesInfo)
+    fmask_config.setAnglesInfo(angles_info)
     fmask_config.setKeepIntermediates(False)
     fmask_config.setVerbose(False)
     fmask_config.setTempDir(tmp_dir)
@@ -262,7 +269,8 @@ def _landsat_fmask(
     # fmask_config.setEqn20NirSnowThresh
     # fmask_config.setEqn20GreenSnowThresh
 
-    # Work out a suitable buffer size, in pixels, dependent on the resolution of the input TOA image
+    # Work out a suitable buffer size, in pixels, dependent on the resolution
+    # of the input TOA image
     toa_img_info = fileinfo.ImageInfo(toa_fname)
     fmask_config.setCloudBufferSize(int(cloud_buffer_distance / toa_img_info.xRes))
     fmask_config.setShadowBufferSize(
@@ -287,6 +295,7 @@ def _sentinel2_fmask(
     parallax_test,
 ):
     """Fmask algorithm for Sentinel-2."""
+    work_dir = Path(work_dir)
     # temp_vrt_fname: save vrt with offest values in metadata
     temp_vrt_fname = pjoin(work_dir, "reflective.tmp.vrt")
     # vrt_fname: save vrt with applied offest values by gdal_translate
@@ -301,13 +310,33 @@ def _sentinel2_fmask(
     required_ids = [str(i) for i in range(1, 13)]
     required_ids.insert(8, "8A")
 
-    acq = container.get_acquisitions(granule=granule)[0]
+    acq: Sentinel2Acquisition = container.get_acquisitions(granule=granule)[0]
 
-    # zipfile extraction
-    xml_out_fname = pjoin(work_dir, Path(acq.granule_xml).name)
+    granule_xml_file = work_dir / Path(acq.granule_xml).name
     if ".zip" in acq.uri:
-        cmd = ["unzip", "-p", dataset_path, acq.granule_xml, ">", xml_out_fname]
-        run_command(cmd, work_dir)
+        _extract_file_from_zip(
+            zip_file=dataset_path,
+            file_offset=acq.granule_xml,
+            destination_path=granule_xml_file,
+        )
+
+    top_level_xml = work_dir / "MTD_MSIL1C.xml"
+
+    # TODO: otherwise, older formats have a single xml file named by the date.
+    # EG: xmlList = [f for f in glob.glob(os.path.join(safeDir, "*.xml"))
+    # if "INSPIRE.xml" not in f]
+
+    if ".zip" in acq.uri:
+        _extract_file_from_zip(
+            zip_file=dataset_path,
+            file_offset=(
+                pjoin(
+                    _base_folder_from_granule_xml(acq.granule_xml),
+                    os.path.basename(top_level_xml),
+                )
+            ),
+            destination_path=top_level_xml,
+        )
 
     offsets = grab_offset_dict(dataset_path)
 
@@ -347,63 +376,113 @@ def _sentinel2_fmask(
 
         else:
             cmd.append(acq.uri)
-
     run_command(cmd, work_dir)
 
-    # use this CLI to attach offset values to VRT as metadata info
-    cmd = [
-        "gdal_edit.py",
-        "-ro",
-        "-offset",
-        " ".join([str(e) for e in offset_values]),
-        temp_vrt_fname,
-    ]
+    # Attach offset values to VRT as metadata info
+    run_command(
+        [
+            "gdal_edit.py",
+            "-ro",
+            "-offset",
+            *[str(e) for e in offset_values],
+            temp_vrt_fname,
+        ],
+        work_dir,
+    )
 
-    run_command(cmd, work_dir)
+    # Apply offset metadata for the bands
+    run_command(["gdal_translate", temp_vrt_fname, vrt_fname, "-unscale"], work_dir)
 
-    # use this CLI to apply offset metadata for the bands
-    cmd = ["gdal_translate", temp_vrt_fname, vrt_fname, "-unscale"]
-
-    run_command(cmd, work_dir)
+    from fmask import sen2meta
 
     # angles generation
     if ".zip" in acq.uri:
-        cmd = [
-            "fmask_sentinel2makeAnglesImage.py",
-            "-i",
-            xml_out_fname,
-            "-o",
-            angles_fname,
-        ]
+        infile = granule_xml_file
     else:
-        cmd = [
-            "fmask_sentinel2makeAnglesImage.py",
-            "-i",
-            acq.granule_xml,
-            "-o",
-            angles_fname,
-        ]
-    run_command(cmd, work_dir)
+        infile = acq.granule_xml
 
-    # run fmask
-    cmd = [
-        "fmask_sentinel2Stacked.py",
-        "-a",
-        vrt_fname,
-        "-z",
-        angles_fname,
-        "-o",
-        out_fname,
-        "--cloudbufferdistance",
-        str(cloud_buffer_distance),
-        "--shadowbufferdistance",
-        str(cloud_shadow_buffer_distance),
-    ]
+    makeAngles(infile, angles_fname)
 
-    if parallax_test:
-        cmd.append("--parallaxtest")
+    # Run fmask
 
-    run_command(cmd, work_dir)
+    top_metadata = sen2meta.Sen2ZipfileMeta(xmlfilename=top_level_xml)
+
+    angles_file = checkAnglesFile(angles_fname, vrt_fname)
+    fmask_filenames = config.FmaskFilenames()
+    fmask_filenames.setTOAReflectanceFile(vrt_fname)
+    fmask_filenames.setOutputCloudMaskFile(out_fname)
+
+    fmask_config = config.FmaskConfig(config.FMASK_SENTINEL2)
+    fmask_config.setAnglesInfo(
+        config.AnglesFileInfo(
+            angles_file, 3, angles_file, 2, angles_file, 1, angles_file, 0
+        )
+    )
+
+    fmask_config.setTempDir(work_dir)
+    fmask_config.setTOARefScaling(top_metadata.scaleVal)
+    fmask_config.setTOARefOffsetDict(create_s2_band_offset_translation(top_metadata))
+    fmask_config.setSen2displacementTest(parallax_test)
+
+    # Work out a suitable buffer size, in pixels, dependent on the
+    # resolution of the input TOA image
+    toa_img_info = fileinfo.ImageInfo(vrt_fname)
+    fmask_config.setCloudBufferSize(int(cloud_buffer_distance / toa_img_info.xRes))
+    fmask_config.setShadowBufferSize(
+        int(cloud_shadow_buffer_distance / toa_img_info.xRes)
+    )
+
+    fmask_algorithm.doFmask(fmask_filenames, fmask_config)
+
+    # TODO: Remove intermediates? toa, angles files
+
+
+def _extract_file_from_zip(zip_file: Path, file_offset: str, destination_path: Path):
+    with zipfile.ZipFile(zip_file, "r") as zip_ref:
+        with zip_ref.open(file_offset) as zf, destination_path.open("wb") as f:
+            f.write(zf.read())
+
+
+def _base_folder_from_granule_xml(granule_xml):
+    """>>> g = (
+    ...     "S2B_MSIL1C_20230306T002059_N0509_R116_T55GCP_20230306T014524.SAFE"
+    ...     "/GRANULE/L1C_T55GCP_A031316_20230306T002318/MTD_TL.xml"
+    ... )
+    >>> _base_folder_from_granule_xml(g)
+    'S2B_MSIL1C_20230306T002059_N0509_R116_T55GCP_20230306T014524.SAFE'.
+    """
+    return Path(granule_xml).parent.parent.parent
+
+
+def create_s2_band_offset_translation(
+    metadata_file: sen2meta.Sen2ZipfileMeta,
+) -> Dict[int, int]:
+    """Using S2 metadata, create a translation dict from fmask's
+    band id to the offset value.
+
+    <Fmask band id:int> -> <offset value:int>
+
+    These are the RADIO_ADD_OFFSET fields in metadata:
+
+        <RADIO_ADD_OFFSET band_id="0">-1000</RADIO_ADD_OFFSET>
+
+    """
+    fmask_band_to_s2_name = {
+        config.BAND_BLUE: "B02",
+        config.BAND_GREEN: "B03",
+        config.BAND_RED: "B04",
+        config.BAND_NIR: "B08",
+        config.BAND_SWIR1: "B11",
+        config.BAND_SWIR2: "B12",
+        config.BAND_CIRRUS: "B10",
+        config.BAND_S2CDI_NIR8A: "B08A",
+        config.BAND_S2CDI_NIR7: "B07",
+        config.BAND_WATERVAPOUR: "B09",
+    }
+    return {
+        fmask_band_i: metadata_file.offsetValDict[fmask_band_to_s2_name[fmask_band_i]]
+        for fmask_band_i in fmask_band_to_s2_name
+    }
 
 
 def fmask(
@@ -416,6 +495,7 @@ def fmask(
     cloud_buffer_distance: float = 150.0,
     cloud_shadow_buffer_distance: float = 300.0,
     parallax_test: bool = False,
+    clean_up_working_files: bool = True,
 ):
     """Execute the fmask process.
 
@@ -441,7 +521,7 @@ def fmask(
         used as scratch space for fmask processing.
 
     :param acq_parser_hint:
-        A hinting helper for the acquisitions parser. Default is None.
+        A hinting helper for the acquisitions' parser. Default is None.
 
     :param cloud_buffer_distance:
         Distance (in metres) to buffer final cloud objects. Default
@@ -456,18 +536,22 @@ def fmask(
         from Frantz (2018). Default is False.
         Setting this parameter to True has no effect for Landsat
         scenes.
+    :param clean_up_working_files:
+        Whether to clean up the intermediate fmask files.
+        Default is True.
     """
     container = acquisitions(dataset_path, acq_parser_hint)
-    with tempfile.TemporaryDirectory(dir=workdir, prefix="pythonfmask-") as tmpdir:
-        acq = container.get_acquisitions(None, granule, False)[0]
+    acq = container.get_acquisitions(None, granule, False)[0]
 
+    tmp_dir = tempfile.mkdtemp(prefix="tmp-work-", dir=workdir)
+    try:
         if "SENTINEL" in acq.platform_id:
             _sentinel2_fmask(
                 dataset_path,
                 container,
                 granule,
                 out_fname,
-                tmpdir,
+                tmp_dir,
                 cloud_buffer_distance,
                 cloud_shadow_buffer_distance,
                 parallax_test,
@@ -476,22 +560,26 @@ def fmask(
             _landsat_fmask(
                 acq,
                 out_fname,
-                tmpdir,
+                tmp_dir,
                 cloud_buffer_distance,
                 cloud_shadow_buffer_distance,
             )
         else:
-            msg = "Sensor not supported"
-            raise Exception(msg)
+            raise ValueError(f"Sensor {acq.platform_id!r} not supported")
+    finally:
+        if clean_up_working_files:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+        else:
+            print(f"Keeping work directory {tmp_dir!r}", file=sys.stderr)
 
-        # metadata
-        fmask_metadata(
-            out_fname,
-            metadata_out_fname,
-            cloud_buffer_distance,
-            cloud_shadow_buffer_distance,
-            parallax_test,
-        )
+    # metadata
+    fmask_metadata(
+        out_fname,
+        metadata_out_fname,
+        cloud_buffer_distance,
+        cloud_shadow_buffer_distance,
+        parallax_test,
+    )
 
 
 def fmask_cogtif(fname, out_fname, platform):
