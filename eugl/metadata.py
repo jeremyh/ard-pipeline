@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Dict
 
 try:
     from importlib.metadata import distribution
@@ -17,7 +18,7 @@ from wagl.acquisition import xml_via_safe
 # TODO: Fix update to merge the dictionaries
 
 
-def _get_eugl_metadata():
+def _get_eugl_metadata() -> Dict:
     dist = distribution("eugl")
     return {
         "software_versions": {
@@ -29,7 +30,7 @@ def _get_eugl_metadata():
     }
 
 
-def _get_fmask_metadata():
+def _get_fmask_metadata() -> Dict:
     base_info = _get_eugl_metadata()
     dist = distribution("python-fmask")
     base_info["software_versions"]["fmask"] = {
@@ -40,7 +41,7 @@ def _get_fmask_metadata():
     return base_info
 
 
-def _get_s2cloudless_metadata():
+def _get_s2cloudless_metadata() -> Dict:
     base_info = _get_eugl_metadata()
     dist = distribution("s2cloudless")
     base_info["software_versions"]["s2cloudless"] = {
@@ -51,7 +52,7 @@ def _get_s2cloudless_metadata():
     return base_info
 
 
-def get_gqa_metadata(gverify_executable):
+def get_gqa_metadata(gverify_executable: str) -> Dict:
     """get_gqa_metadata: provides processing metadata for gqa_processing.
 
     :param gverify_executable: GQA version is determined from executable
@@ -64,7 +65,7 @@ def get_gqa_metadata(gverify_executable):
     return base_info
 
 
-def _gls_version(ref_fname):
+def _gls_version(ref_fname: str) -> str:
     # TODO a more appropriate method of version detection and/or population of metadata
     if "GLS2000_GCP_SCENE" in ref_fname:
         gls_version = "GLS_v1"
@@ -112,9 +113,6 @@ def fmask_metadata(
     with rasterio.open(fmask_img_path) as ds:
         hist = histogram(ds.read(1), minv=0, maxv=5)["histogram"]
 
-    # base info (software versions)
-    base_info = _get_fmask_metadata()
-
     # Classification schema
     # 0 -> Invalid
     # 1 -> Clear
@@ -128,6 +126,7 @@ def fmask_metadata(
     pdf = hist[1:] / hist[1:].sum() * 100
 
     md = {
+        **_get_fmask_metadata(),
         "parameters": {
             "cloud_buffer_distance_metres": cloud_buffer_distance,
             "cloud_shadow_buffer_distance_metres": cloud_shadow_buffer_distance,
@@ -141,9 +140,6 @@ def fmask_metadata(
             "water": float(pdf[4]),
         },
     }
-
-    for key, value in base_info.items():
-        md[key] = value
 
     with output_metadata_path.open("w") as src:
         yaml.safe_dump(md, src, default_flow_style=False, indent=4)
