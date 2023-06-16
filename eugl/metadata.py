@@ -7,6 +7,7 @@ except ImportError:
     # Running on pre-3.8 Python; use importlib-metadata package
     from importlib_metadata import distribution
 
+import logging
 import re
 import zipfile
 
@@ -14,6 +15,8 @@ import rasterio
 import yaml
 from idl_functions import histogram
 from wagl.acquisition import xml_via_safe
+
+_LOG = logging.getLogger(__name__)
 
 # TODO: Fix update to merge the dictionaries
 
@@ -123,6 +126,7 @@ def fmask_metadata(
 
     # info will be based on the valid pixels only (exclude 0)
     # scaled probability density function
+    _LOG.info("Histogram: %r", hist)
     pdf = hist[1:] / hist[1:].sum() * 100
 
     md = {

@@ -6,6 +6,7 @@ direct (zip) read access by datacube.
 import fnmatch
 import logging
 import os
+import shlex
 import shutil
 import signal
 import subprocess
@@ -45,6 +46,19 @@ REQUIRED_S2_BAND_IDS = (
     "11",
     "12",
 )
+
+FMASK_S2_BAND_MAPPINGS = {
+    config.BAND_BLUE: "B02",
+    config.BAND_GREEN: "B03",
+    config.BAND_RED: "B04",
+    config.BAND_NIR: "B08",
+    config.BAND_SWIR1: "B11",
+    config.BAND_SWIR2: "B12",
+    config.BAND_CIRRUS: "B10",
+    config.BAND_S2CDI_NIR8A: "B08A",
+    config.BAND_S2CDI_NIR7: "B07",
+    config.BAND_WATERVAPOUR: "B09",
+}
 
 _LOG = logging.getLogger(__name__)
 
@@ -99,8 +113,12 @@ def run_command(command, work_dir, timeout=None, command_name=None, allow_shell=
             return s.as_posix()
         return str(s)
 
+    command_ = [to_simple_str(o) for o in command]
+
+    printable_command = " ".join([shlex.quote(o) for o in command_])
+    _LOG.debug("Running command: %s", printable_command)
     _proc = subprocess.Popen(
-        [to_simple_str(o) for o in command],
+        command_,
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         preexec_fn=os.setsid,
@@ -118,7 +136,7 @@ def run_command(command, work_dir, timeout=None, command_name=None, allow_shell=
         stdout, stderr = _proc.communicate()
         timed_out = True
 
-    command_name = command_name or str(command)
+    command_name = command_name or printable_command
     if _proc.returncode != 0:
         _LOG.error("stderr: %s", stderr.decode("utf-8"))
         _LOG.info("stdout: %s", stdout.decode("utf-8"))
@@ -282,12 +300,16 @@ def _landsat_fmask(
 
     from fmask import fmask as fmask_algorithm
 
+    _LOG.debug("Setup complete. Triggering fmask.")
     fmask_algorithm.doFmask(fmask_filenames, fmask_config)
-
     # TODO: Clean up thermal/angles/saturation/toa ?
 
 
-def _extract_mtl(archive_path, out_dir):
+def _extract_mtl(archive_path: Path, out_dir: Path) -> Path:
+    """Find and extract the MTL file from a dataset.
+
+    It will be placed in the given output directory, and the resulting path is returned.
+    """
     with FileArchive(archive_path) as archive:
         mtls = [Path(file) for file in archive.files if file.endswith("_MTL.txt")]
         if len(mtls) != 1:
@@ -542,21 +564,9 @@ def create_s2_band_offset_translation(
         <RADIO_ADD_OFFSET band_id="0">-1000</RADIO_ADD_OFFSET>
 
     """
-    fmask_band_to_s2_name = {
-        config.BAND_BLUE: "B02",
-        config.BAND_GREEN: "B03",
-        config.BAND_RED: "B04",
-        config.BAND_NIR: "B08",
-        config.BAND_SWIR1: "B11",
-        config.BAND_SWIR2: "B12",
-        config.BAND_CIRRUS: "B10",
-        config.BAND_S2CDI_NIR8A: "B08A",
-        config.BAND_S2CDI_NIR7: "B07",
-        config.BAND_WATERVAPOUR: "B09",
-    }
     return {
-        fmask_band_i: metadata_file.offsetValDict[fmask_band_to_s2_name[fmask_band_i]]
-        for fmask_band_i in fmask_band_to_s2_name
+        fmask_band_i: metadata_file.offsetValDict[FMASK_S2_BAND_MAPPINGS[fmask_band_i]]
+        for fmask_band_i in FMASK_S2_BAND_MAPPINGS
     }
 
 
