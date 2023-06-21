@@ -184,6 +184,7 @@ def _landsat_fmask(
 
     cmd = [
         "gdal_merge.py",
+        "-q",
         "-separate",
         "-of",
         "HFA",
@@ -233,6 +234,7 @@ def _landsat_fmask(
     run_command(
         [
             "gdal_merge.py",
+            "-q",
             "-separate",
             "-of",
             "HFA",
