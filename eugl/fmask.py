@@ -3,6 +3,7 @@ snow/ice classification) code supporting Sentinel-2 Level 1 C SAFE format zip ar
 hosted by the Australian Copernicus Data Hub - http://www.copernicus.gov.au/ - for
 direct (zip) read access by datacube.
 """
+
 import fnmatch
 import logging
 import os
@@ -20,7 +21,7 @@ from pathlib import Path, PurePosixPath
 from typing import Dict, Optional
 
 import rasterio.path
-from fmask import config, landsatangles, landsatTOA, saturationcheck, sen2meta
+from fmask import config, landsatangles, landsatTOA, saturationcheck
 from fmask import fmask as fmask_algorithm
 from fmask.cmdline.sentinel2makeAnglesImage import makeAngles
 from fmask.cmdline.sentinel2Stacked import checkAnglesFile
@@ -46,6 +47,7 @@ REQUIRED_S2_BAND_IDS = (
     "11",
     "12",
 )
+
 
 FMASK_S2_BAND_MAPPINGS = {
     config.BAND_BLUE: "B02",
@@ -377,8 +379,7 @@ def _sentinel2_fmask(
 
         band_uris.append(uri_to_gdal(acq.uri))
 
-    # A tmp VRT with metadata-based offset values.
-    reflective_tmp_vrt = work_dir / "reflective.tmp.vrt"
+    reflective_vrt_img = work_dir / "reflective.vrt"
     run_command(
         [
             "gdalbuildvrt",
@@ -389,29 +390,37 @@ def _sentinel2_fmask(
             "20",
             "-separate",
             "-overwrite",
-            reflective_tmp_vrt,
+            reflective_vrt_img,
             *band_uris,
         ],
         work_dir,
     )
-    # Now attach offset values to VRT as metadata info
-    run_command(
-        [
-            "gdal_edit.py",
-            "-ro",
-            "-offset",
-            *[str(e) for e in band_offset_values],
-            reflective_tmp_vrt,
-        ],
-        work_dir,
-    )
 
-    # Apply offset metadata for the bands
+    fmask_config = config.FmaskConfig(config.FMASK_SENTINEL2)
+    fmask_does_scaling = hasattr(fmask_config, "setTOARefOffsetDict")
 
-    reflective_vrt_img = work_dir / "reflective.vrt"
-    run_command(
-        ["gdal_translate", reflective_tmp_vrt, reflective_vrt_img, "-unscale"], work_dir
-    )
+    # If this version of fmask doesn't support scaling, do it ourselves.
+    if not fmask_does_scaling:
+        reflective_tmp_vrt = work_dir / "reflective.tmp.vrt"
+        reflective_vrt_img.rename(reflective_tmp_vrt)
+
+        # Now attach offset values to VRT as metadata info
+        run_command(
+            [
+                "gdal_edit.py",
+                "-ro",
+                "-offset",
+                *[str(e) for e in band_offset_values],
+                reflective_tmp_vrt,
+            ],
+            work_dir,
+        )
+
+        # Apply offset metadata for the bands
+        run_command(
+            ["gdal_translate", reflective_tmp_vrt, reflective_vrt_img, "-unscale"],
+            work_dir,
+        )
 
     from fmask import sen2meta
 
@@ -420,14 +429,12 @@ def _sentinel2_fmask(
     makeAngles(str(granule_xml_file), str(angles_img))
 
     # Run fmask
-    top_metadata = sen2meta.Sen2ZipfileMeta(xmlfilename=top_level_xml)
 
     angles_file = checkAnglesFile(str(angles_img), str(reflective_vrt_img))
     fmask_filenames = config.FmaskFilenames()
     fmask_filenames.setTOAReflectanceFile(str(reflective_vrt_img))
     fmask_filenames.setOutputCloudMaskFile(str(output_path))
 
-    fmask_config = config.FmaskConfig(config.FMASK_SENTINEL2)
     fmask_config.setAnglesInfo(
         config.AnglesFileInfo(
             angles_file, 3, angles_file, 2, angles_file, 1, angles_file, 0
@@ -435,8 +442,14 @@ def _sentinel2_fmask(
     )
 
     fmask_config.setTempDir(work_dir)
-    fmask_config.setTOARefScaling(top_metadata.scaleVal)
-    fmask_config.setTOARefOffsetDict(create_s2_band_offset_translation(top_metadata))
+
+    if fmask_does_scaling:
+        top_metadata = sen2meta.Sen2ZipfileMeta(xmlfilename=top_level_xml)
+        fmask_config.setTOARefScaling(top_metadata.scaleVal)
+        fmask_config.setTOARefOffsetDict(
+            create_s2_band_offset_translation(top_metadata)
+        )
+
     fmask_config.setSen2displacementTest(parallax_test)
 
     # Work out a suitable buffer size, in pixels, dependent on the
@@ -543,7 +556,7 @@ def _base_folder_from_granule_xml(granule_xml):
 
 
 def create_s2_band_offset_translation(
-    metadata_file: sen2meta.Sen2ZipfileMeta,
+    s2metadata,
 ) -> Dict[int, int]:
     """Using S2 metadata, create a translation dict from fmask's
     band id to the offset value.
@@ -554,9 +567,12 @@ def create_s2_band_offset_translation(
 
         <RADIO_ADD_OFFSET band_id="0">-1000</RADIO_ADD_OFFSET>
 
+    This type doesn't exist on older fmask, so we can't use a usual imported type def.
+
+    :type s2metadata: fmask.sen2meta.Sen2ZipfileMeta
     """
     return {
-        fmask_band_i: metadata_file.offsetValDict[FMASK_S2_BAND_MAPPINGS[fmask_band_i]]
+        fmask_band_i: s2metadata.offsetValDict[FMASK_S2_BAND_MAPPINGS[fmask_band_i]]
         for fmask_band_i in FMASK_S2_BAND_MAPPINGS
     }
 
