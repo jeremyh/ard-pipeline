@@ -407,7 +407,7 @@ def collect_gcp(fix_location, landsat_scenes, result_file):
         for scene in landsat_scenes:
             path = "{:0=3d}".format(scene["path"])
             row = "{:0=3d}".format(scene["row"])
-            _LOG.debug(f"collecting GCPs from {path} {row}")
+            _LOG.debug("collecting GCPs from %s %s", path, row)
             scene_gcp_file = pjoin(fix_location, path, row, "points.txt")
             try:
                 with open(scene_gcp_file) as src:
@@ -573,7 +573,7 @@ def build_vrt(reference_images, out_file, work_dir):
         os.makedirs(temp_directory)
 
     common_csr = most_common(reference_images)
-    _LOG.debug(f"GQA: chosen CRS {common_csr}")
+    _LOG.debug("GQA: chosen CRS %s", common_csr)
 
     def reprojected_images():
         for image in reference_images:
@@ -710,5 +710,5 @@ def closest_match(folder, timestamp, band_id, sat_id):
 
 
 def _cleanup_workspace(out_path):
-    _LOG.debug(f"Cleaning up working directory: {out_path}")
+    _LOG.debug("Cleaning up working directory: %s", out_path)
     shutil.rmtree(out_path)
