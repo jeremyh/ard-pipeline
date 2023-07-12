@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 
-from eodatasets.verify import PackageChecksum
+from eodatasets3.verify import PackageChecksum
 
 
 def checksum(out_fname):
