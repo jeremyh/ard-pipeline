@@ -553,6 +553,8 @@ def get_tally(mode, brdf_config, brdf_datasets, viirs_datasets, dt, src_poly, sr
 
     elif mode == "VIIRS":
         satellite = "VIIRS"
+        if viirs_datasets is None:
+            raise IndexError
         datasets = next(iter(viirs_datasets.values()))
 
         assert not ("I" in viirs_datasets and "M" in viirs_datasets)
@@ -688,6 +690,10 @@ def get_brdf_data(
 
     brdf_datasets: List[str] = acquisition.brdf_datasets
     viirs_datasets = {"I": ["BRDF_Albedo_Parameters_I1"]}
+    if hasattr(acquisition, "brdf_viirs_datasets"):
+        viirs_datasets = acquisition.brdf_viirs_datasets
+    else:
+        viirs_datasets = None
 
     def get_tally2(mode, dt):
         # brdf_config, brdf_datasets, and viirs datasets are "constants"
