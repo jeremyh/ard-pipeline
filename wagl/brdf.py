@@ -614,9 +614,9 @@ class LoadedBrdfCoverageDict(TypedDict):
 def get_brdf_data(
     acquisition: Acquisition,
     brdf_config: BrdfDict,
-    mode=None,
     compression=H5CompressionFilter.LZF,
     filter_opts=None,
+    mode=None,
 ) -> Dict[BrdfDirectionalParameters, LoadedBrdfCoverageDict]:
     """Calculates the mean BRDF value for the given acquisition,
     for each BRDF parameter ['geo', 'iso', 'vol'] that covers
