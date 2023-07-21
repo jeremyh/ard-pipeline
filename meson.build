@@ -1,13 +1,8 @@
-project('ard-pipeline', 'fortran',
-  default_options : ['warning_level=3'])
+project('ard-pipeline', 'fortran')
 
 py_mod = import('python')
-py = py_mod.find_installation(pure: false)
+py3 = py_mod.find_installation(pure: false)
+py3_dep = py3.dependency()
 
-py.extension_module(
-    'our_first_module',
-    'our_first_module.c',
-    install: true,
-)
 
 subdir('wagl')
