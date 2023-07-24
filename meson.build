@@ -1,4 +1,4 @@
-project('ard-pipeline', 'fortran')
+project('ard-pipeline', 'c', 'fortran')
 
 py_mod = import('python')
 py3 = py_mod.find_installation(pure: false)
