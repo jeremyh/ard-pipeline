@@ -60,97 +60,243 @@ _sat_sol_angles = py3.extension_module(
 )
 
 
+cast_shadow_mask_src = [
+    'f90_sources/sys_variables.f90',
+    'f90_sources/cast_shadow_main.f90',
+    'f90_sources/terrain_border_margins.f90',
+    'f90_sources/cast_shadow_mask.f90',
+    'f90_sources/terrain_occlusion.f90',
+    'f90_sources/geo2metres_pixel_size.f90',
+]
+_cast_shadow_mask_module = custom_target(
+    'cast_shadow_mask_module',
+    input: cast_shadow_mask_src,
+    output: [
+        '__cast_shadow_maskmodule.c',
+        '__cast_shadow_mask-f2pywrappers.f',
+    ],
+    command: [
+        'f2py',
+        '-m', '__cast_shadow_mask',
+        '@INPUT@',
+        '--build-dir', '@OUTDIR@',
+    ],
+)
 _cast_shadow_mask = py3.extension_module(
     '__cast_shadow_mask',
     [
-        'f90_sources/sys_variables.f90',
-        'f90_sources/cast_shadow_main.f90',
-        'f90_sources/terrain_border_margins.f90',
-        'f90_sources/cast_shadow_mask.f90',
-        'f90_sources/terrain_occlusion.f90',
-        'f90_sources/geo2metres_pixel_size.f90',
+        _cast_shadow_mask_module,
+        cast_shadow_mask_src,
     ],
     install: true,
+    dependencies: [fortranobject_dep],
     link_language: 'fortran',
     subdir: 'wagl',
+)
+exiting_angle_src = [
+    'f90_sources/sys_variables.f90',
+    'f90_sources/exiting_angle.f90',
+    'f90_sources/earth_rotation.f90',
+]
+_exiting_angle_module = custom_target(
+    'exiting_angle_module',
+    input: exiting_angle_src,
+    output: ['__exiting_anglemodule.c', '__exiting_angle-f2pywrappers2.f90'],
+    command: [
+        'f2py',
+        '-m', '__exiting_angle',
+        '@INPUT@',
+        '--build-dir', '@OUTDIR@',
+    ],
 )
 _exiting_angle = py3.extension_module(
     '__exiting_angle',
     [
-        'f90_sources/sys_variables.f90',
-        'f90_sources/exiting_angle.f90',
-        'f90_sources/earth_rotation.f90',
+        _exiting_angle_module,
+        exiting_angle_src,
     ],
+    fortran_args: fortran_args,
     install: true,
+    dependencies: [fortranobject_dep],
     link_language: 'fortran',
     subdir: 'wagl',
+)
+incident_angle_src = [
+    'f90_sources/incident_angle.f90',
+    'f90_sources/earth_rotation.f90',
+]
+_incident_angle_module = custom_target(
+    'incident_angle_module',
+    input: incident_angle_src,
+    output: ['__incident_anglemodule.c', '__incident_angle-f2pywrappers.f'],
+    command: [
+        'f2py',
+        '-m', '__incident_angle',
+        '@INPUT@',
+        '--build-dir', '@OUTDIR@',
+    ],
 )
 _incident_angle = py3.extension_module(
     '__incident_angle',
     [
-        'f90_sources/incident_angle.f90',
-        'f90_sources/earth_rotation.f90',
+        _incident_angle_module,
+        incident_angle_src,
     ],
+    fortran_args: fortran_args,
     install: true,
+    dependencies: [fortranobject_dep],
     link_language: 'fortran',
     subdir: 'wagl',
+)
+slope_aspect_src = [
+    'f90_sources/sys_variables.f90',
+    'f90_sources/slope_aspect.f90',
+    'f90_sources/geo2metres_pixel_size.f90',
+]
+_slope_aspect_module = custom_target(
+    'slope_aspect_module',
+    input: slope_aspect_src,
+    output: ['__slope_aspectmodule.c', '__slope_aspect-f2pywrappers2.f90'],
+    command: [
+        'f2py',
+        '-m', '__slope_aspect',
+        '@INPUT@',
+        '--build-dir', '@OUTDIR@',
+    ],
 )
 _slope_aspect = py3.extension_module(
     '__slope_aspect',
     [
-        'f90_sources/sys_variables.f90',
-        'f90_sources/slope_aspect.f90',
-        'f90_sources/geo2metres_pixel_size.f90',
+        _slope_aspect_module,
+        slope_aspect_src,
     ],
+    fortran_args: fortran_args,
     install: true,
+    dependencies: [fortranobject_dep],
     link_language: 'fortran',
     subdir: 'wagl',
+)
+surface_reflectance_src = [
+    'f90_sources/surface_reflectance.f90',
+    'f90_sources/white_sky.f90',
+    'f90_sources/black_sky.f90',
+    'f90_sources/brdf_shape.f90',
+]
+_surface_reflectance_module = custom_target(
+    'surface_reflectance_module',
+    input: surface_reflectance_src,
+    output: [
+        '__surface_reflectancemodule.c',
+        '__surface_reflectance-f2pywrappers.f',
+    ],
+    command: [
+        'f2py',
+        '-m', '__surface_reflectance',
+        '@INPUT@',
+        '--build-dir', '@OUTDIR@',
+    ],
 )
 _surface_reflectance = py3.extension_module(
     '__surface_reflectance',
     [
-        'f90_sources/surface_reflectance.f90',
-        'f90_sources/white_sky.f90',
-        'f90_sources/black_sky.f90',
-        'f90_sources/brdf_shape.f90',
+        _surface_reflectance_module,
+        surface_reflectance_src,
     ],
+    fortran_args: fortran_args,
     install: true,
+    dependencies: [fortranobject_dep],
     link_language: 'fortran',
     subdir: 'wagl',
+)
+satellite_model_src = [
+    'f90_sources/sys_variables.f90',
+    'f90_sources/geo2metres_pixel_size.f90',
+    'f90_sources/satellite_model.f90',
+]
+_satellite_model_module = custom_target(
+    'satellite_model_module',
+    input: satellite_model_src,
+    output: ['__satellite_modelmodule.c', '__satellite_model-f2pywrappers2.f90'],
+    command: [
+        'f2py',
+        '-m', '__satellite_model',
+        '@INPUT@',
+        '--build-dir', '@OUTDIR@',
+    ],
 )
 _satellite_model = py3.extension_module(
     '__satellite_model',
     [
-        'f90_sources/sys_variables.f90',
-        'f90_sources/geo2metres_pixel_size.f90',
-        'f90_sources/satellite_model.f90',
+        _satellite_model_module,
+        satellite_model_src,
     ],
+    fortran_args: fortran_args,
     install: true,
+    dependencies: [fortranobject_dep],
     link_language: 'fortran',
     subdir: 'wagl',
+)
+track_time_info_src = [
+    'f90_sources/sys_variables.f90',
+    'f90_sources/geod2geo.f90',
+    'f90_sources/q_cal.f90',
+    'f90_sources/geo2metres_pixel_size.f90',
+    'f90_sources/satellite_track.f90',
+    'f90_sources/track_time_info.f90',
+
+]
+_track_time_info_module = custom_target(
+    'track_time_info_module',
+    input: track_time_info_src,
+    output: ['__track_time_infomodule.c', '__track_time_info-f2pywrappers2.f90'],
+    command: [
+        'f2py',
+        '-m', '__track_time_info',
+        '@INPUT@',
+        '--build-dir', '@OUTDIR@',
+    ],
 )
 _track_time_info = py3.extension_module(
     '__track_time_info',
     [
-        'f90_sources/sys_variables.f90',
-        'f90_sources/geod2geo.f90',
-        'f90_sources/q_cal.f90',
-        'f90_sources/geo2metres_pixel_size.f90',
-        'f90_sources/satellite_track.f90',
-        'f90_sources/track_time_info.f90',
+        _track_time_info_module,
+        track_time_info_src,
     ],
+    fortran_args: fortran_args,
     install: true,
+    dependencies: [fortranobject_dep],
     link_language: 'fortran',
     subdir: 'wagl',
 )
 
 
+bilinear_interpolation_src = [
+    'f90_sources/bilinear_interpolation.f90',
+
+]
+_bilinear_interpolation_module = custom_target(
+    'bilinear_interpolation_module',
+    input: bilinear_interpolation_src,
+    output: [
+        '__bilinear_interpolationmodule.c',
+        '__bilinear_interpolation-f2pywrappers.f',
+    ],
+    command: [
+        'f2py',
+        '-m', '__bilinear_interpolation',
+        '@INPUT@',
+        '--build-dir', '@OUTDIR@',
+    ],
+)
 _bilinear_interpolation = py3.extension_module(
     '__bilinear_interpolation',
     [
-        'f90_sources/bilinear_interpolation.f90',
+        _bilinear_interpolation_module,
+        bilinear_interpolation_src,
     ],
+    fortran_args: fortran_args,
     install: true,
+    dependencies: [fortranobject_dep],
     link_language: 'fortran',
     subdir: 'wagl',
 )
