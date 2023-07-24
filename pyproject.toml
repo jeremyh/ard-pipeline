@@ -12,24 +12,6 @@ license = {file = 'LICENCE.md'}
 authors = [
   {name = 'Geoscience Australia', email = 'earth.observation@ga.gov.au'},
 ]
- # scripts=[
-         # "utils/test_satellite_solar_angles",
-         # "utils/test_dsm",
-         # "utils/test_exiting_angles",
-         # "utils/test_incident_angles",
-         # "utils/test_relative_slope",
-         # "utils/test_terrain_shadow_masks",
-         # "utils/test_slope_aspect",
-         # "utils/aot_converter",
-         # "utils/wagl_convert",
-         # "utils/wagl_ls",
-         # "utils/wagl_residuals",
-         # "utils/wagl_pbs",
-         # "bin/s2package",
-         # "bin/ard_pbs",
-         # "bin/search_s2",
-         # "bin/batch_summary",
-     # ]
  # dependencies = [
          # "attrs>=17.4.0",
          # "checksumdir",
@@ -72,3 +54,22 @@ dependency-links = [
         "git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios-1.4.10",
         "git+https://github.com/ubarsc/python-fmask@pythonfmask-0.5.7#egg=python-fmask-0.5.7",  # noqa: E501
 ]
+
+[project.scripts]
+ard_test_dsm = "wagl.scripts.test_dsm:main"
+ard_test_exiting_angles = "wagl.scripts.test_exiting_angles:main"
+ard_test_incident_angles = "wagl.scripts.test_incident_angles:main"
+ard_test_relative_slope = "wagl.scripts.test_relative_slope:main"
+ard_test_satellite_solar_angles = "wagl.scripts.test_satellite_solar_angles:main"
+ard_test_slope_aspect = "wagl.scripts.test_slope_aspec:main"
+ard_test_terrain_shadow_masks = "wagl.scripts.test_terrain_shadow_masks:main"
+wagl_aot_converter = "wagl.scripts.aot_converter:main"
+wagl_buildvrt = "wagl.scripts.wagl_buildvrt:main"
+wagl_convert = "wagl.scripts.wagl_convert:main"
+wagl_ls = " wagl.scripts.wagl_ls:main"
+wagl_pbs = "wagl.scripts.wagl_pbs:main"
+wagl_residuals = "wagl.scripts.wagl_residuals:main"
+#ard_s2package = "bin/s2package"
+#ard_pbs = "bin/ard_pbs"
+#ard_search_s2 = "bin/search_s2"
+#ard_batch_summary = "bin/batch_summary"
