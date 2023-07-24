@@ -5,10 +5,10 @@ py3 = py_mod.find_installation(pure: false)
 py3_dep = py3.dependency()
 ff = meson.get_compiler('fortran')
 
-c = run_command('utils/py-files.sh', check: true)
-python_sources = c.stdout().strip().split('\n')
+c = run_command('utils/python-package-files.sh', check: true)
+packaged_files = c.stdout().strip().split('\n')
 py3.install_sources(
-    python_sources,
+    packaged_files,
     preserve_path: true,
 )
 

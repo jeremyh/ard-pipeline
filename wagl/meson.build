@@ -1,6 +1,10 @@
 
 #    config = Configuration('wagl', parent_package, top_path)
 #    config.add_subpackage('scripts')
+
+
+
+# These are included via utils/
 #    config.add_data_files('acquisition/sensors.json')
 #    config.add_data_dir('spectral_response')
 
