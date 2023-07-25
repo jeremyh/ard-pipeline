@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Calculates the Lambertian, BRDF corrected and BRDF + Terrain corrected
 ----------------------------------------------------------------------.
 

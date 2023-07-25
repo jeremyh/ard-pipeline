@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Satellite and Solar angle claculations over a 2D grid."""
 
 import math

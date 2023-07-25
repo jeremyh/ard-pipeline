@@ -60,7 +60,7 @@ class AcquisitionsContainer:
     @property
     def granules(self):
         """Lists the available granules within a scene."""
-        return sorted(list(self._granules.keys()))
+        return sorted(self._granules.keys())
 
     @property
     def groups(self):
@@ -92,7 +92,7 @@ class AcquisitionsContainer:
         """
         groups = self.get_granule(granule=granule)
         if group is None:
-            acqs = groups[list(groups.keys())[0]]
+            acqs = groups[next(iter(groups.keys()))]
         else:
             acqs = groups[group]
 

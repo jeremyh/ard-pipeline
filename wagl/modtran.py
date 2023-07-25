@@ -68,7 +68,7 @@ def prepare_modtran(acquisitions, coordinate, albedos, basedir):
         else:
             band_type = BandType.REFLECTIVE
 
-        acq = [acq for acq in acquisitions if acq.band_type == band_type][0]
+        acq = next(acq for acq in acquisitions if acq.band_type == band_type)
 
         modtran_work = pjoin(point_dir, ALBEDO_FMT.format(a=albedo.value))
 
@@ -371,7 +371,7 @@ def run_modtran(
         tp6_fname = glob.glob(pjoin(workpath, "*.tp6"))[0]
 
         if albedo == Albedos.ALBEDO_TH:
-            acq = [acq for acq in acqs if acq.band_type == BandType.THERMAL][0]
+            acq = next(acq for acq in acqs if acq.band_type == BandType.THERMAL)
 
             channel_data = read_modtran_channel(chn_fname, tp6_fname, acq, albedo)
 
@@ -402,7 +402,7 @@ def run_modtran(
                 filter_opts=filter_opts,
             )
         else:
-            acq = [acq for acq in acqs if acq.band_type == BandType.REFLECTIVE][0]
+            acq = next(acq for acq in acqs if acq.band_type == BandType.REFLECTIVE)
 
             # Will require updating to handle JSON output from modtran
             channel_data = read_modtran_channel(chn_fname, tp6_fname, acq, albedo)

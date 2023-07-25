@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # ===============================================================================
 # Copyright 2015 Geoscience Australia
 #
@@ -132,7 +130,7 @@ class GreatCircle:
         # route is undefined.
         if self.antipodal:
             raise ValueError(
-                "cannot compute intermediate points on a great circle whose endpoints are antipodal"  # noqa: E501
+                "cannot compute intermediate points on a great circle whose endpoints are antipodal"
             )
         d = self.gcarclen
         delta = 1.0 / (npoints - 1)

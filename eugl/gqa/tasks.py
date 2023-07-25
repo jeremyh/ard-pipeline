@@ -27,11 +27,6 @@ import pandas as pd
 import rasterio
 import yaml
 from rasterio.warp import Resampling
-from wagl.acquisition import acquisitions
-from wagl.data import write_img
-from wagl.geobox import GriddedGeoBox
-from wagl.logs import TASK_LOGGER
-from wagl.singlefile_workflow import DataStandardisation
 
 from eugl.acquisition_info import acquisition_info
 from eugl.fmask import CommandError, run_command
@@ -46,6 +41,11 @@ from eugl.gqa.geometric_utils import (
     reproject,
 )
 from eugl.metadata import get_gqa_metadata
+from wagl.acquisition import acquisitions
+from wagl.data import write_img
+from wagl.geobox import GriddedGeoBox
+from wagl.logs import TASK_LOGGER
+from wagl.singlefile_workflow import DataStandardisation
 
 _LOG = logging.getLogger(__name__)
 write_yaml = partial(
@@ -477,10 +477,10 @@ def calculate_gqa(df, tr, resolution, stddev=1.0, iterations=1, correl=0.75):
 
     def calculate_stats(data):
         # Calculate the mean value for both X & Y residuals
-        mean = dict(x=data.X_Residual.mean(), y=data.Y_Residual.mean())
+        mean = {"x": data.X_Residual.mean(), "y": data.Y_Residual.mean()}
 
         # Calculate the sample standard deviation for both X & Y residuals
-        stddev = dict(x=data.X_Residual.std(ddof=1), y=data.Y_Residual.std(ddof=1))
+        stddev = {"x": data.X_Residual.std(ddof=1), "y": data.Y_Residual.std(ddof=1)}
 
         mean["xy"] = math.sqrt(mean["x"] ** 2 + mean["y"] ** 2)
         stddev["xy"] = math.sqrt(stddev["x"] ** 2 + stddev["y"] ** 2)
@@ -518,7 +518,7 @@ def calculate_gqa(df, tr, resolution, stddev=1.0, iterations=1, correl=0.75):
     }
     abs_["xy"] = math.sqrt(abs_["x"] ** 2 + abs_["y"] ** 2)
 
-    abs_mean = dict(x=abs(subset.X_Residual).mean(), y=abs(subset.Y_Residual).mean())
+    abs_mean = {"x": abs(subset.X_Residual).mean(), "y": abs(subset.Y_Residual).mean()}
     abs_mean["xy"] = math.sqrt(abs_mean["x"] ** 2 + abs_mean["y"] ** 2)
 
     def _point(stat):
@@ -594,7 +594,8 @@ def build_vrt(reference_images, out_file, work_dir):
         "-vrtnodata",
         "0",
         out_file,
-    ] + reprojected
+        *reprojected,
+    ]
     run_command(command, work_dir)
 
 

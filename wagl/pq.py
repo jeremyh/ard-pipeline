@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Contains the pixel quality workflow as well as a few utilities."""
 
 import logging
@@ -271,7 +269,7 @@ def run_pq(
     spectral_bands = []
     band_descriptions = ["Blue", "Green", "Red", "NIR", "SWIR 1", "SWIR 2"]
     for band_desc in band_descriptions:
-        spectral_bands.append([a.band_name for a in acqs if a.desc == band_desc][0])
+        spectral_bands.append(next(a.band_name for a in acqs if a.desc == band_desc))
 
     # track the bits that have been set (tests that have been run)
     tests_run = {

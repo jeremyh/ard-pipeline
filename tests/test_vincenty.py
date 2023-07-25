@@ -58,7 +58,7 @@ class VincentyTestCase(unittest.TestCase):
         alpha21 = math.degrees(alpha21)
 
         print(
-            "\n Ellipsoidal Distance = %15.3f metres\n            should be         54972.271 m\n"  # noqa: E501
+            "\n Ellipsoidal Distance = %15.3f metres\n            should be         54972.271 m\n"
             % (dist)
         )
         print(f"\n Forward and back azimuths = {alpha12:15.6f}, {alpha21:15.6f} \n")

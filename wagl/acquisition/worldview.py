@@ -8,8 +8,6 @@ from .base import Acquisition
 class WorldView2Acquisition(Acquisition):
     """A WorldView-2 acquisition."""
 
-    platform_id = "WORLDVIEW_2"
-
     def __init__(
         self,
         pathname,
@@ -27,7 +25,7 @@ class WorldView2Acquisition(Acquisition):
             band_id=band_id,
             metadata=metadata,
         )
-
+        self.platform_id = "WORLDVIEW_2"
         self.tag = "WV2"
 
         self._norad_id = 35946
@@ -47,9 +45,6 @@ class WorldView2Acquisition(Acquisition):
 class WorldView2MultiAcquisition(WorldView2Acquisition):
     """A multi-band WorldView-2 acquisition."""
 
-    band_names = [f"BAND-{name}" for name in ["C", "B", "G", "Y", "R", "RE", "N", "N2"]]
-    sensor_id = "MUL"
-
     def __init__(
         self,
         pathname,
@@ -67,6 +62,10 @@ class WorldView2MultiAcquisition(WorldView2Acquisition):
             band_id=band_id,
             metadata=metadata,
         )
+        self.band_names = [
+            f"BAND-{name}" for name in ["C", "B", "G", "Y", "R", "RE", "N", "N2"]
+        ]
+        self.sensor_id = "MUL"
 
     def close(self):
         super().close()

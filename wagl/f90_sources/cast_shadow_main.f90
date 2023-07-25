@@ -204,7 +204,7 @@ SUBROUTINE cast_shadow_main( &
                 sazi(i, j) = sazi_data((k-1)*nlA_ori+i, j)
             enddo
         enddo
-            
+
         ii=nlA/2
 
         if(.not.is_utm) then

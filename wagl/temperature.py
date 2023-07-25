@@ -172,9 +172,7 @@ def surface_brightness_temperature(
     for tile in acq.tiles():
         idx = (slice(tile[0][0], tile[0][1]), slice(tile[1][0], tile[1][1]))
 
-        radiance = acq.radiance_data(
-            window=tile, out_no_data=NO_DATA_VALUE
-        )  # noqa: F841
+        acq.radiance_data(window=tile, out_no_data=NO_DATA_VALUE)
         path_up = upwelling_radiation[idx]  # noqa: F841
         trans = transmittance[idx]
         mask = ~np.isfinite(trans)
@@ -254,7 +252,7 @@ def get_landsat_temperature(acquisitions, pq_const):
     thermal_band = pq_const.thermal_band
 
     # Function returns a list of one item. Take the first item.
-    acq = [a for a in acqs if a.band_id == thermal_band][0]
+    acq = next(a for a in acqs if a.band_id == thermal_band)
     radiance = acq.radiance_data()
 
     kelvin_array = temperature_conversion(radiance, acq.K1, acq.K2)

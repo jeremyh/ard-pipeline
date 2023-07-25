@@ -129,7 +129,7 @@ def check_interpolation_sample_geometry(container, group, grp_name):
     map_y = coord_read.map_y.values
     coord[:, 1], coord[:, 0] = (map_x, map_y) * ~geobox.transform
 
-    unique_coords = set((coord[i, 0], coord[i, 1]) for i in range(coord.shape[0]))
+    unique_coords = {(coord[i, 0], coord[i, 1]) for i in range(coord.shape[0])}
 
     return coord.shape[0] == len(unique_coords)
 

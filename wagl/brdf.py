@@ -230,7 +230,7 @@ class BrdfTileSummary:
         if self.is_empty():
             # possibly over the ocean, so lambertian
             return {
-                key: dict(id=self.source_files, value=0.0)
+                key: {"id": self.source_files, "value": 0.0}
                 for key in BrdfDirectionalParameters
             }
 
@@ -246,10 +246,10 @@ class BrdfTileSummary:
         }
 
         return {
-            key: dict(
-                id=self.source_files,
-                value=averages[bands[key]] / averages[BrdfModelParameters.ISO],
-            )
+            key: {
+                "id": self.source_files,
+                "value": averages[bands[key]] / averages[BrdfModelParameters.ISO],
+            }
             for key in BrdfDirectionalParameters
         }
 
@@ -431,11 +431,11 @@ def get_brdf_data(
     if "user" in brdf:
         # user-specified override
         return {
-            param: dict(
-                data_source="BRDF",
-                tier=BrdfTier.USER.name,
-                value=brdf["user"][acquisition.alias][param.value.lower()],
-            )
+            param: {
+                "data_source": "BRDF",
+                "tier": BrdfTier.USER.name,
+                "value": brdf["user"][acquisition.alias][param.value.lower()],
+            }
             for param in BrdfDirectionalParameters
         }
 
@@ -516,19 +516,21 @@ def get_brdf_data(
         tally[ds] = tally[ds].mean()
 
     results = {
-        param: dict(
-            data_source="BRDF",
-            id=np.array(
+        param: {
+            "data_source": "BRDF",
+            "id": np.array(
                 list(
                     {ds_id for ds in brdf_datasets for ds_id in tally[ds][param]["id"]}
                 ),
                 dtype=VLEN_STRING,
             ),
-            value=np.mean([tally[ds][param]["value"] for ds in brdf_datasets]).item(),
-            tier=BrdfTier.FALLBACK_DATASET.name
+            "value": np.mean(
+                [tally[ds][param]["value"] for ds in brdf_datasets]
+            ).item(),
+            "tier": BrdfTier.FALLBACK_DATASET.name
             if fallback_brdf
             else BrdfTier.DEFINITIVE.name,
-        )
+        }
         for param in BrdfDirectionalParameters
     }
 

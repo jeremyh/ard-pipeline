@@ -160,7 +160,7 @@ def create_resolution_groups(acqs):
     """
     fmt = "RES-GROUP-{}"
     # 0 -> n resolution sets (higest res to lowest res)
-    resolutions = sorted(set([acq.resolution for acq in acqs]))
+    resolutions = sorted({acq.resolution for acq in acqs})
     res_groups = OrderedDict([(fmt.format(i), []) for i, _ in enumerate(resolutions)])
 
     for acq in sorted(acqs):
@@ -372,7 +372,7 @@ def acquisitions_via_mtl(pathname):
         ref_mult = rescaling_md.get(f"reflectance_mult_{band}")
 
         # metadata
-        attrs = {k: v for k, v in sensor_band_info.items()}
+        attrs = dict(sensor_band_info.items())
         if attrs.get("supported_band"):
             attrs["solar_azimuth"] = solar_azimuth
             attrs["solar_elevation"] = solar_elevation
@@ -505,7 +505,7 @@ def acquisitions_s2_sinergise(pathname):
         if band_name not in esa_ids:
             continue
 
-        attrs = {k: v for k, v in band_configurations[band_id].items()}
+        attrs = dict(band_configurations[band_id].items())
         if attrs.get("supported_band"):
             attrs["solar_irradiance"] = acquisition_data["solar_irradiance_list"][
                 band_id
@@ -590,11 +590,11 @@ def get_granules_via_safe(archive, xml_root):
     def granule_data(granule):
         xml_path = granule_xml_path(granule)
 
-        return dict(
-            images=granule_images(granule),
-            xml_path=xml_path,
-            xml_root=granule_root(xml_path),
-        )
+        return {
+            "images": granule_images(granule),
+            "xml_path": xml_path,
+            "xml_root": granule_root(xml_path),
+        }
 
     granules = {granule_id(granule): granule_data(granule) for granule in grn_elements}
 
@@ -718,7 +718,7 @@ def acquisitions_via_safe(pathname):
 
             # band info stored in sensors.json
             sensor_band_info = band_configurations.get(band_id)
-            attrs = {k: v for k, v in sensor_band_info.items()}
+            attrs = dict(sensor_band_info.items())
 
             # image attributes/metadata
             if sensor_band_info.get("supported_band"):

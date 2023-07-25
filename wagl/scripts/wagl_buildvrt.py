@@ -64,7 +64,7 @@ def _buildvrt(out_fname, dataset_paths, band_names, nodata, crs, transform, verb
         "-separate",
         "-srcnodata",
         "{}".format(" ".join([f"{i}" for i in nodata])),
-        f"{str(out_fname)}",
+        f"{out_fname!s}",
     ]
     cmd.extend(dataset_paths)
 

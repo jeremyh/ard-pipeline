@@ -15,6 +15,7 @@ import numpy as np
 import rasterio
 import yaml
 from idl_functions import histogram
+
 from wagl.acquisition import xml_via_safe
 
 _LOG = logging.getLogger(__name__)

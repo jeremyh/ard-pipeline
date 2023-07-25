@@ -39,7 +39,7 @@ SUBROUTINE bilinear_interpolation(nrow, ncol, coordinator, s1, s2, s3, s4, &
 !       reference the 9 point coordinates
         ixul = coordinator(1, 1)
         iyul = coordinator(1, 2)
-        ixum = coordinator(2, 1) 
+        ixum = coordinator(2, 1)
         iyum = coordinator(2, 2)
         ixur = coordinator(3, 1)
         iyur = coordinator(3, 2)

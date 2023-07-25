@@ -57,7 +57,7 @@ FMT1 = "level1-scenes-{jobid}.txt"
 FMT2 = "jobid-{jobid}.bash"
 FMT3 = "scratch/{f_project}+gdata/{f_project}"
 DAEMON_FMT = "luigid --background --logdir {}"
-ARD_FMT = "--module wagl.{workflow_type} ARD --workflow {workflow} --vertices '{vertices}' --buffer-distance {distance} --method {method}{pq}"  # pylint: disable=line-too-long # noqa: E501
+ARD_FMT = "--module wagl.{workflow_type} ARD --workflow {workflow} --vertices '{vertices}' --buffer-distance {distance} --method {method}{pq}"  # pylint: disable=line-too-long
 TASK_FMT = "--module wagl.multifile_workflow CallTask --task {task}"
 
 

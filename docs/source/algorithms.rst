@@ -51,6 +51,6 @@ Saturation (Over and Under), Spectral Contiguity, Land/Sea discrimination, Cloud
 The PQ documentation is described in :download:`Pixel Quality Algorithm Theoretical Basis Document <auxiliary/Pixel_Quality_ATBD.pdf>`.
 
 Two cloud algorithms are incorporated into PQ. Automated Cloud Cover Assessment  (ACCA) and Function of mask (Fmask).
-ACCA is described in :download:`Characterization of the Landsat-7 ETM+ Automated Cloud-Cover Assessment (ACCA) Algorithm <auxiliary/ACCA_Special_Issue_Final_Characterization_of_the_Landsat-7_ETM_Automated_Cloud-Cover_Assessment_Algorithm.pdf>`. 
+ACCA is described in :download:`Characterization of the Landsat-7 ETM+ Automated Cloud-Cover Assessment (ACCA) Algorithm <auxiliary/ACCA_Special_Issue_Final_Characterization_of_the_Landsat-7_ETM_Automated_Cloud-Cover_Assessment_Algorithm.pdf>`.
 Fmask is described at `Object-based cloud and cloud shadow detection in Landsat imagery <http://www.sciencedirect.com/science/article/pii/S0034425711003853>`_.
 The cloud shadow algorithm is described in :download:`Cloud Shadow Algorithm Theoretical Basis Document <auxiliary/Cloud_Shadow_ATBD.pdf>`.

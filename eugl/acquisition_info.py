@@ -6,6 +6,8 @@ from datetime import timezone
 import fiona
 from rasterio.warp import Resampling
 from shapely.geometry import Polygon, shape
+
+from eugl.gqa.geometric_utils import SLC_OFF
 from wagl.acquisition.landsat import (
     Landsat5Acquisition,
     Landsat7Acquisition,
@@ -14,8 +16,6 @@ from wagl.acquisition.landsat import (
 )
 from wagl.acquisition.sentinel import Sentinel2Acquisition
 from wagl.constants import DatasetName, GroupName
-
-from eugl.gqa.geometric_utils import SLC_OFF
 
 DS_FMT = DatasetName.REFLECTANCE_FMT.value
 
@@ -65,7 +65,7 @@ class LandsatAcquisitionInfo(AcquisitionInfo):
         return True
 
     def intersecting_landsat_scenes(self, landsat_scenes_shapefile):
-        return [dict(path=self.path, row=self.row)]
+        return [{"path": self.path, "row": self.row}]
 
     @property
     def preferred_gverify_method(self):
@@ -174,7 +174,7 @@ class Sentinel2AcquisitionInfo(AcquisitionInfo):
         landsat_scenes = fiona.open(landsat_scenes_shapefile)
 
         def path_row(properties):
-            return dict(path=int(properties["PATH"]), row=int(properties["ROW"]))
+            return {"path": int(properties["PATH"]), "row": int(properties["ROW"])}
 
         geobox = self.geobox
         polygon = Polygon(

@@ -75,7 +75,7 @@ An example of running the *CalculateCoefficients* Task using the local scehduler
    $ luigi --module wagl.multifile_workflow CalculateCoefficients \
      --level1 /path/to/LS5_TM_OTH_P51_GALPGS01-007_111_068_20000707 \
      --work-root /my/work/LS5_TM_OTH_P51_GALPGS01-007_111_068_20000707.wagl-work --workers 4 --local-scheduler
-   
+
 
 Tasks available via the command line
 ------------------------------------
@@ -221,7 +221,7 @@ The example below only executes the workflow up to the end of CalculateCoefficie
    $ luigi --module wagl.multifile_workflow CalculateCoefficients \
      --level1 /path/to/LS5_TM_OTH_P51_GALPGS01-007_111_068_20000707 \
      --work-root /my/work/LS5_TM_OTH_P51_GALPGS01-007_111_068_20000707.wagl-work --workers 4 --local-scheduler
-   
+
 The bulk submission workflow entrypoint is defined in the luigi Task named *ARD*, which initialise the entire wagl.multifile_workflow tree. In order to submit a list of datasets but only execute a partial workflow such as *CalculateCoefficients*, then a generic luigi task class named *CallTask* has been defined for this very purpose.
 
 The example below will run the *CalculateCoefficients* for each input dataset:

@@ -136,7 +136,7 @@ def expected_wagl_output(tmp_path):
                 "layer": "//LC80920842016180LGN01/OA_FMASK/oa_fmask",
                 "path": str(
                     tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"  # noqa: W503
+                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
                 ),
             },
             "rg0_lambertian_panchromatic": {
@@ -200,7 +200,7 @@ def expected_wagl_output(tmp_path):
                 "layer": "//rg0_oa_cast_shadow_satellite",
                 "path": str(
                     tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"  # noqa: W503
+                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
                 ),
             },
             "rg0_oa_cast_shadow_sun": {
@@ -208,7 +208,7 @@ def expected_wagl_output(tmp_path):
                 "layer": "//rg0_oa_cast_shadow_sun",
                 "path": str(
                     tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"  # noqa: W503
+                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
                 ),
             },
             "rg0_oa_dif_panchromatic": {
@@ -314,7 +314,7 @@ def expected_wagl_output(tmp_path):
                 "layer": "//rg0_oa_self_shadow",
                 "path": str(
                     tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"  # noqa: W503
+                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
                 ),
             },
             "rg0_oa_slope": {
@@ -343,7 +343,7 @@ def expected_wagl_output(tmp_path):
                 "layer": "//rg0_oa_terrain_shadow",
                 "path": str(
                     tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"  # noqa: W503
+                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
                 ),
             },
             "rg0_oa_timedelta": {
@@ -592,14 +592,14 @@ def expected_wagl_output(tmp_path):
                 "layer": "//rg1_oa_cast_shadow_satellite",
                 "path": str(
                     tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"  # noqa: W503
+                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
                 ),
             },
             "rg1_oa_cast_shadow_sun": {
                 "layer": "//rg1_oa_cast_shadow_sun",
                 "path": str(
                     tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"  # noqa: W503
+                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
                 ),
             },
             "rg1_oa_dif_blue": {
@@ -871,7 +871,7 @@ def expected_wagl_output(tmp_path):
                 "layer": "//rg1_oa_self_shadow",
                 "path": str(
                     tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"  # noqa: W503
+                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
                 ),
             },
             "rg1_oa_slope": {
@@ -896,7 +896,7 @@ def expected_wagl_output(tmp_path):
                 "layer": "//rg1_oa_terrain_shadow",
                 "path": str(
                     tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"  # noqa: W503
+                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
                 ),
             },
             "rg1_oa_timedelta": {

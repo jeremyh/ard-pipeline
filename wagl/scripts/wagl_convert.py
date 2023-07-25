@@ -86,7 +86,7 @@ def convert_image(dataset, output_directory):
     write_img(dataset, out_fname, **kwargs)
 
     out_fname = "".join([base_fname, ".yaml"])
-    tags = {k: v for k, v in dataset.attrs.items()}
+    tags = dict(dataset.attrs.items())
     with open(out_fname, "w") as src:
         yaml.dump(tags, src, default_flow_style=False, indent=4)
 
@@ -108,7 +108,7 @@ def convert_table(group, dataset_name, output_directory):
     """
     df = read_h5_table(group, dataset_name)
     dataset = group[dataset_name]
-    tags = {k: v for k, v in dataset.attrs.items()}
+    tags = dict(dataset.attrs.items())
 
     base_fname = pjoin(output_directory, normpath(dataset_name.strip("/")))
     out_fname = "".join([base_fname, ".csv"])
@@ -144,7 +144,7 @@ def convert_scalar(dataset, output_directory):
         tags = yaml.load(dataset[()])
 
     elif dataset.attrs.get("file_format") == "json":
-        tags = {k: v for k, v in dataset.attrs.items()}
+        tags = dict(dataset.attrs.items())
         data = dataset[()]
 
         if isinstance(data, np.bytes_):
@@ -158,7 +158,7 @@ def convert_scalar(dataset, output_directory):
         with open(out_fname_json, "w") as src:
             json.dump(json.loads(data), src, cls=JsonEncoder, indent=4)
     else:
-        tags = {k: v for k, v in dataset.attrs.items()}
+        tags = dict(dataset.attrs.items())
         data = dataset[()]
         if isinstance(data, np.bytes_):
             data = data.decode("utf-8")

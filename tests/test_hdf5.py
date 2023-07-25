@@ -202,7 +202,7 @@ class HDF5Test(unittest.TestCase):
         with h5py.File(fname, "w", **self.memory_kwargs) as fid:
             dset = fid.create_dataset("data", data=self.image_data)
             hdf5.attach_attributes(dset, attrs)
-            test = {k: v for k, v in dset.attrs.items()}
+            test = dict(dset.attrs.items())
             self.assertDictEqual(test, attrs)
 
     def test_write_h5_image(self):
@@ -227,7 +227,7 @@ class HDF5Test(unittest.TestCase):
         with h5py.File(fname, "w", **self.memory_kwargs) as fid:
             dset = fid.create_dataset("data", data=self.image_data)
             hdf5.attach_image_attributes(dset, attrs)
-            test = {k: v for k, v in dset.attrs.items()}
+            test = dict(dset.attrs.items())
             self.assertDictEqual(test, attrs)
 
     def test_write_h5_image_attributes(self):
@@ -237,7 +237,7 @@ class HDF5Test(unittest.TestCase):
         fname = "test_write_h5_image_attributes.h5"
         with h5py.File(fname, "w", **self.memory_kwargs) as fid:
             hdf5.write_h5_image(self.image_data, "image", fid)
-            test = {k: v for k, v in fid["image"].attrs.items()}
+            test = dict(fid["image"].attrs.items())
 
             # assertDictEqual can't compare a numpy array, so test elsewhere
             del test["IMAGE_MINMAXRANGE"]
@@ -290,7 +290,7 @@ class HDF5Test(unittest.TestCase):
         with h5py.File(fname, "w", **self.memory_kwargs) as fid:
             dset = fid.create_dataset("data", data=self.table_data)
             hdf5.attach_table_attributes(dset, attrs=attrs)
-            test = {k: v for k, v in dset.attrs.items()}
+            test = dict(dset.attrs.items())
             self.assertDictEqual(test, attrs)
 
     def test_write_dataframe(self):
@@ -324,7 +324,7 @@ class HDF5Test(unittest.TestCase):
         with h5py.File(fname, "w", **self.memory_kwargs) as fid:
             hdf5.write_dataframe(df, "dataframe", fid)
 
-            test = {k: v for k, v in fid["dataframe"].attrs.items()}
+            test = dict(fid["dataframe"].attrs.items())
             self.assertDictEqual(test, attrs)
 
     def test_dataframe_roundtrip(self):

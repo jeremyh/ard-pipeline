@@ -109,4 +109,3 @@ SUBROUTINE set_borderf(set_border,phi_sun, zmax, zmin, sun_zen, hx, hy, &
 99  set_border=.false.
     return
 END SUBROUTINE set_borderf
-

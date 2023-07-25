@@ -1,7 +1,7 @@
 digraph AcquisitionsContainer {
        size="7.5,7.5";
-       
-       subgraph cluster_0 { 
+
+       subgraph cluster_0 {
            label="Scene"
                "Granule-1";
                "Granule-2";
@@ -32,4 +32,3 @@ digraph AcquisitionsContainer {
              "Granule-1: Group-1" -> "Band-n";
        }
 }
-

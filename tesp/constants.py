@@ -1,6 +1,7 @@
 """Constants
 ---------.
 """
+from typing import ClassVar
 
 from wagl.constants import ArdProducts
 
@@ -8,11 +9,12 @@ from wagl.constants import ArdProducts
 class ProductPackage:
     """Helper class for selecting which ard products to package."""
 
-    _default_excludes = set(
-        (ArdProducts.LAMBERTIAN.value.lower(), ArdProducts.SBT.value.lower())
-    )
+    _default_excludes: ClassVar[set[str]] = {
+        ArdProducts.LAMBERTIAN.value.lower(),
+        ArdProducts.SBT.value.lower(),
+    }
 
-    _all_products = {e.value.lower() for e in ArdProducts}
+    _all_products: ClassVar[set[str]] = {e.value.lower() for e in ArdProducts}
 
     @classmethod
     def validate_products(cls, product_list):

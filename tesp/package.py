@@ -8,7 +8,6 @@ from posixpath import join as ppjoin
 
 import eodatasets3.wagl
 import h5py
-import numpy
 import numpy as np
 import rasterio
 import yaml
@@ -19,22 +18,23 @@ from eodatasets3 import DatasetAssembler, images, utils
 from eodatasets3.scripts.tostac import dc_to_stac, json_fallback
 from eodatasets3.serialise import from_path, loads_yaml
 from rasterio.crs import CRS
-from wagl.hdf5 import find
 from yaml.representer import Representer
 
-yaml.add_representer(numpy.int8, Representer.represent_int)
-yaml.add_representer(numpy.uint8, Representer.represent_int)
-yaml.add_representer(numpy.int16, Representer.represent_int)
-yaml.add_representer(numpy.uint16, Representer.represent_int)
-yaml.add_representer(numpy.int32, Representer.represent_int)
-yaml.add_representer(numpy.uint32, Representer.represent_int)
+from wagl.hdf5 import find
+
+yaml.add_representer(np.int8, Representer.represent_int)
+yaml.add_representer(np.uint8, Representer.represent_int)
+yaml.add_representer(np.int16, Representer.represent_int)
+yaml.add_representer(np.uint16, Representer.represent_int)
+yaml.add_representer(np.int32, Representer.represent_int)
+yaml.add_representer(np.uint32, Representer.represent_int)
 yaml.add_representer(int, Representer.represent_int)
-yaml.add_representer(numpy.int64, Representer.represent_int)
-yaml.add_representer(numpy.uint64, Representer.represent_int)
+yaml.add_representer(np.int64, Representer.represent_int)
+yaml.add_representer(np.uint64, Representer.represent_int)
 yaml.add_representer(float, Representer.represent_float)
-yaml.add_representer(numpy.float32, Representer.represent_float)
-yaml.add_representer(numpy.float64, Representer.represent_float)
-yaml.add_representer(numpy.ndarray, Representer.represent_list)
+yaml.add_representer(np.float32, Representer.represent_float)
+yaml.add_representer(np.float64, Representer.represent_float)
+yaml.add_representer(np.ndarray, Representer.represent_list)
 
 
 def package_non_standard(outdir, granule):

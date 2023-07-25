@@ -1,7 +1,7 @@
 Configuration
 =============
 
-While the ARD (Analysis Ready Data) workflow can be executed at the command line, a config file named *luigi.cfg* can be used to override command line arguments, or even to supply 
+While the ARD (Analysis Ready Data) workflow can be executed at the command line, a config file named *luigi.cfg* can be used to override command line arguments, or even to supply
 parameters to Tasks that are higher up in the dependency tree. They can also be used to supply default parameters rather than specifying in the code directly.
 
 An example *luigi.cfg* can be found `here <http://github.com/GeoscienceAustralia/wagl/blob/develop/configs/luigi.cfg>`_.
@@ -31,7 +31,7 @@ To output the task history to an sqlite database, modify your luigi.cfg file wit
 
    [scheduler]
    record_task_history = True
-   
+
    [task_history]
    db_connection = sqlite:///luigi-task-history.db
 
@@ -68,7 +68,7 @@ If you're a user that would like to intersect any part of the dependency tree, t
    brdf = {"user": {<band-alias>: {"iso": <value>, "vol": <value>, "geo": <value>}, ...}}
 
    # File path name to the directory containing the ozone data
-   ozone_path = 
+   ozone_path =
 
    # A dict defining a user input value or a pathname to ancillary sources
    # internally the code defaults to {"user": 1.5}
@@ -76,28 +76,28 @@ If you're a user that would like to intersect any part of the dependency tree, t
    water_vapour = {"pathname": "/path/to/data"}
 
    # File path name to the directory containing the world 1 degree DEM data
-   dem_path = 
+   dem_path =
 
    # File path name to the directory containing the dewpoint data
-   dewpoint_path = 
+   dewpoint_path =
 
    # File path name to the directory containing the 2m (surface) temperature data
-   temp_2m_path = 
+   temp_2m_path =
 
    # File path name to the directory containing the surface pressure data
-   surface_pressure_path = 
+   surface_pressure_path =
 
    # File path name to the directory containing the atmospheric layers geopotential data
-   geopotential_path = 
+   geopotential_path =
 
    # File path name to the directory containing the atmospheric layers temperature data
-   temperature_path = 
+   temperature_path =
 
    # File path name to the directory containing the atmospheric layers relative humidity data
-   relative_humidity_path = 
+   relative_humidity_path =
 
    # File path name to a file containing the invariant geopotential height data
-   invariant_height_fname = 
+   invariant_height_fname =
 
    [CalculateLonLatGrids]
    # The compression filter to use (internally the code defaults to use *lzf*)
@@ -105,7 +105,7 @@ If you're a user that would like to intersect any part of the dependency tree, t
 
    [CalculateSatelliteAndSolarGrids]
    # File path name to the directory containing the Two-line-element data
-   tle_path = 
+   tle_path =
 
    # The compression filter to use (internally the code defaults to use *lzf*)
    compression = lzf
@@ -141,13 +141,13 @@ If you're a user that would like to intersect any part of the dependency tree, t
    vertices = (5, 5)
 
    # The point id to be run
-   point = 
+   point =
 
    # A *list* containing the albedo factor to be run
-   albedos = 
+   albedos =
 
    # A file path name to the MODTRAN executable
-   exe = 
+   exe =
 
    [Atmospherics]
    # This controls the submition of *AtmosphericsCase* taks, and most of the
@@ -193,10 +193,10 @@ If you're a user that would like to intersect any part of the dependency tree, t
    workflow = STANDARD
 
    # The factor id to run
-   factor = 
+   factor =
 
    # The band number to run
-   band_name = 
+   band_name =
 
    # The interpolation method to use;
    # *bilinear*, *FBILINEAR*, *SHEAR*, *SHEARB*, or *RBF*

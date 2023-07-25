@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Optional, Set, Union
 
 import click
+
 from wagl.tiling import scatter
 
 PBS_RESOURCES = """#!/bin/bash

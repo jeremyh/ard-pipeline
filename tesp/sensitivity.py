@@ -13,14 +13,14 @@ import numpy as np
 import rasterio
 import yaml
 from affine import Affine
+
+from tesp.package import ARD, PATTERN2
+from tesp.workflow import RunFmask
 from wagl.acquisition import preliminary_acquisitions_data
 from wagl.constants import GroupName
 from wagl.data import write_img
 from wagl.geobox import GriddedGeoBox
 from wagl.singlefile_workflow import DataStandardisation
-
-from tesp.package import ARD, PATTERN2
-from tesp.workflow import RunFmask
 
 
 class ExperimentList(luigi.WrapperTask):
@@ -86,12 +86,12 @@ class Experiment(luigi.Task):
             ):
                 work_root = pjoin(self.workdir, self.tag, basename(level1_path))
                 work_dir = pjoin(work_root, granule["id"])
-                yield dict(
-                    kind="leaf",
-                    level1_path=level1_path,
-                    workdir=work_dir,
-                    granule=granule["id"],
-                )
+                yield {
+                    "kind": "leaf",
+                    "level1_path": level1_path,
+                    "workdir": work_dir,
+                    "granule": granule["id"],
+                }
 
         # collect file info concurrently since IO is expensive
         executor = ThreadPoolExecutor()
@@ -246,9 +246,9 @@ def dict_tree(leaf_list, prefix):
         return leaf_list[0]
 
     mid = len(leaf_list) // 2
-    left = dict_tree(leaf_list[:mid], prefix + ["left"])
-    right = dict_tree(leaf_list[mid:], prefix + ["right"])
-    return dict(kind="node", prefix=prefix, left=left, right=right)
+    left = dict_tree(leaf_list[:mid], [*prefix, "left"])
+    right = dict_tree(leaf_list[mid:], [*prefix, "right"])
+    return {"kind": "node", "prefix": prefix, "left": left, "right": right}
 
 
 def requires_tree(tree, parent_task):
@@ -332,7 +332,7 @@ def unpack(input_target, outdir):
                     unpack_dataset(group[product_name], product_name, band)
 
     with h5py.File(input_file) as fid:
-        dataset = fid[list(fid)[0]]
+        dataset = fid[next(iter(fid))]
 
         for group_name in dataset:
             if group_name == "REFLECTANCE":
@@ -594,8 +594,8 @@ def merge_images(left, right, target):
         if len(left_fid) != 1 or len(right_fid) != 1:
             raise ValueError("multiple granules not supported")
 
-        left_granule = left_fid[list(left_fid)[0]]
-        right_granule = right_fid[list(right_fid)[0]]
+        left_granule = left_fid[next(iter(left_fid))]
+        right_granule = right_fid[next(iter(right_fid))]
         target_granule = target_fid.create_group("synthetic")
         target_group = target_granule.create_group("REFLECTANCE")
 

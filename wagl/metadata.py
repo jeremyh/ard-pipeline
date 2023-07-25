@@ -175,7 +175,7 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
             # tables
             dname = DatasetName.GEOPOTENTIAL.value
             dset = pnt_grp[dname]
-            attrs = {k: v for k, v in dset.attrs.items()}
+            attrs = dict(dset.attrs.items())
             df = read_h5_table(pnt_grp, dname)
             for column in df.columns:
                 attrs[column] = df[column].values
@@ -183,7 +183,7 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
 
             dname = DatasetName.RELATIVE_HUMIDITY.value
             dset = pnt_grp[dname]
-            attrs = {k: v for k, v in dset.attrs.items()}
+            attrs = dict(dset.attrs.items())
             df = read_h5_table(pnt_grp, dname)
             for column in df.columns:
                 attrs[column] = df[column].values
@@ -191,7 +191,7 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
 
             dname = DatasetName.TEMPERATURE.value
             dset = pnt_grp[dname]
-            attrs = {k: v for k, v in dset.attrs.items()}
+            attrs = dict(dset.attrs.items())
             df = read_h5_table(pnt_grp, dname)
             for column in df.columns:
                 attrs[column] = df[column].values
@@ -346,7 +346,7 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
             },
             "modtran": {
                 "version": "6.0.1",
-                "repo_url": "http://www.ontar.com/software/productdetails.aspx?item=modtran",  # noqa: E501
+                "repo_url": "http://www.ontar.com/software/productdetails.aspx?item=modtran",
             },
         }
 
@@ -459,9 +459,7 @@ def current_h5_metadata(fid: h5py.Group, dataset_path: str = ""):
         )
         if not metadata:
             raise MetadataError(
-                "Unable to find metadata entry for dataset: {}:{}".format(
-                    fid.filename, dataset_path
-                )
+                f"Unable to find metadata entry for dataset: {fid.filename}:{dataset_path}"
             )
 
     return yaml.load(metadata[()].item(), Loader=yaml.FullLoader)

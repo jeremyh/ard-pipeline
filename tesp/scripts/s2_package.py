@@ -3,9 +3,9 @@
 """Test Packaging entrypoint."""
 
 import click
-from wagl.acquisition import acquisitions
 
 from tesp.package import package
+from wagl.acquisition import acquisitions
 
 
 @click.command()

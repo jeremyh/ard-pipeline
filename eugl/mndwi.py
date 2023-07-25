@@ -5,6 +5,7 @@ import numexpr
 import numpy as np
 import yaml
 from rasterio.warp import Resampling
+
 from wagl.data import reproject_array_to_array
 from wagl.geobox import GriddedGeoBox
 from wagl.hdf5 import attach_image_attributes, find
@@ -130,11 +131,7 @@ def mndwi(wagl_h5_file, granule, out_fname):
         nodata = green_ds.attrs["no_data_value"]
 
         # create output h5 attributes
-        desc = "MNDWI derived with {} and {} ({} reflectances)".format(
-            psplit(green_path)[-1],
-            psplit(swir_path)[-1],
-            prod,
-        )
+        desc = f"MNDWI derived with {psplit(green_path)[-1]} and {psplit(swir_path)[-1]} ({prod} reflectances)"
 
         attrs = {
             "crs_wkt": geobox.crs.ExportToWkt(),

@@ -242,11 +242,9 @@ class GriddedGeoBox:
         old2New = osr.CoordinateTransformation(self.crs, newCrs)
         newOrigin = self.transform_point(old2New, self.origin)
         newCorner = self.transform_point(old2New, self.corner)
-        newPixelSize = tuple(
-            [
-                abs((newOrigin[0] - newCorner[0]) / self.get_shape_xy()[0]),
-                abs((newOrigin[1] - newCorner[1]) / self.get_shape_xy()[1]),
-            ]
+        newPixelSize = (
+            abs((newOrigin[0] - newCorner[0]) / self.get_shape_xy()[0]),
+            abs((newOrigin[1] - newCorner[1]) / self.get_shape_xy()[1]),
         )
 
         return GriddedGeoBox(self.shape, newOrigin, newPixelSize, crs=crs)

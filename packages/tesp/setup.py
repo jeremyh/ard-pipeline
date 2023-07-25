@@ -29,9 +29,9 @@ setup(
         "wagl",
         "importlib-metadata;python_version<'3.8'",
     ],
-    extras_require=dict(
-        test=["pytest", "pytest-flake8", "deepdiff", "flake8", "pep8-naming"]
-    ),
+    extras_require={
+        "test": ["pytest", "pytest-flake8", "deepdiff", "flake8", "pep8-naming"]
+    },
     dependency_links=[
         "git+https://github.com/GeoscienceAustralia/wagl@develop#egg=wagl",
         "git+https://github.com/OpenDataCubePipelines/eugl.git@master#egg=eugl",

@@ -392,7 +392,7 @@ The Enum class is represented below:
 .. code-block:: python
 
     class H5CompressionFilter(IntEnum):
-    
+
         BLOSC_LZ = 0
         BLOSC_LZ4 = 1
         BLOSC_LZ4HC = 2

@@ -47,9 +47,7 @@ def main(indir, outdir):
     structlog.configure(processors=COMMON_PROCESSORS)
     state_log = structlog.get_logger("task-final-state")
 
-    final_state_out_fname = outdir.joinpath(
-        f"{indir.name}-level1-final-state.jsonl"
-    )
+    final_state_out_fname = outdir.joinpath(f"{indir.name}-level1-final-state.jsonl")
     with open(final_state_out_fname, "w") as fobj:
         structlog.configure(logger_factory=structlog.PrintLoggerFactory(fobj))
 

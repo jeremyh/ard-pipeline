@@ -26,11 +26,11 @@ from fmask import fmask as fmask_algorithm
 from fmask.cmdline.sentinel2makeAnglesImage import makeAngles
 from fmask.cmdline.sentinel2Stacked import checkAnglesFile
 from rios import fileinfo
+
+from eugl.metadata import fmask_metadata, grab_offset_dict
 from wagl.acquisition import Acquisition, AcquisitionsContainer, acquisitions
 from wagl.acquisition.sentinel import Sentinel2Acquisition
 from wagl.constants import BandType
-
-from eugl.metadata import fmask_metadata, grab_offset_dict
 
 REQUIRED_S2_BAND_IDS = (
     "1",
@@ -139,7 +139,7 @@ def run_command(command, work_dir, timeout=None, command_name=None, allow_shell=
             raise CommandError(f"{command_name!r} timed out (timeout={timeout}")
         else:
             raise CommandError(
-                f"{command_name!r} failed with return code: {str(_proc.returncode)}"
+                f"{command_name!r} failed with return code: {_proc.returncode!s}"
             )
     else:
         _LOG.debug("Command %s had output: %s", command_name, stdout.decode("utf-8"))

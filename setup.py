@@ -93,6 +93,6 @@ setup(
     dependency_links=[
         "git+git://github.com/sixy6e/idl-functions.git@master#egg=idl-functions-0.5.2",
         "git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios-1.4.10",
-        "git+https://github.com/ubarsc/python-fmask@pythonfmask-0.5.7#egg=python-fmask-0.5.7",  # noqa: E501
+        "git+https://github.com/ubarsc/python-fmask@pythonfmask-0.5.7#egg=python-fmask-0.5.7",
     ],
 )

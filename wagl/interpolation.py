@@ -388,12 +388,12 @@ def sheared_bilinear_interpolate(
                 vi, vj = map(list, vertices.T.astype(int))
 
                 # Update vertices with same warp as for the interpolation
-                four_pts = dict(
-                    x=x[:, vj].ravel(),
-                    left=left[vi].ravel(),
-                    right=right[vi].ravel(),
-                    row_start=row_start[vi].ravel(),
-                )
+                four_pts = {
+                    "x": x[:, vj].ravel(),
+                    "left": left[vi].ravel(),
+                    "right": right[vi].ravel(),
+                    "row_start": row_start[vi].ravel(),
+                }
                 vertices[:, 1] = numexpr.evaluate(sheared, local_dict=four_pts)
 
             # determine bilinear coefficients

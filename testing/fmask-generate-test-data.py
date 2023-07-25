@@ -18,43 +18,43 @@ dc_uris.register_scheme("zip", "tar")
 
 
 # Cut-down integration test datasets. Small and stable but ... not real pixels.
-EOD3_TEST_DATASETS = dict(
-    ls8_tar="tests/integration/data/LC09_L1TP_112081_20220209_20220209_02_T1.tar",
-    ls8_dir="tests/integration/data/LC08_L1GT_089074_20220506_20220512_02_T2",
-    s2_zip="tests/integration/data/esa_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.zip",
-    s2_multigran="tests/integration/data/multi-granule/S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016.zip",
-    s2_sinergise="tests/integration/data/sinergise_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446",
-)
+EOD3_TEST_DATASETS = {
+    "ls8_tar": "tests/integration/data/LC09_L1TP_112081_20220209_20220209_02_T1.tar",
+    "ls8_dir": "tests/integration/data/LC08_L1GT_089074_20220506_20220512_02_T2",
+    "s2_zip": "tests/integration/data/esa_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.zip",
+    "s2_multigran": "tests/integration/data/multi-granule/S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016.zip",
+    "s2_sinergise": "tests/integration/data/sinergise_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446",
+}
 
 
 # Real datasets stored on NCI.
-NCI_S2_TESTS = dict(
-    s2_new_format="/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2023/2023-02/35S145E-40S150E/S2B_MSIL1C_20230211T001109_N0509_R073_T55HEB_20230211T012907.zip",
-    s2_older_format="/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2016/2016-12/25S135E-30S140E/S2A_OPER_PRD_MSIL1C_PDMC_20161204T065230_R002_V20161204T005702_20161204T005702.zip",
+NCI_S2_TESTS = {
+    "s2_new_format": "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2023/2023-02/35S145E-40S150E/S2B_MSIL1C_20230211T001109_N0509_R073_T55HEB_20230211T012907.zip",
+    "s2_older_format": "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2016/2016-12/25S135E-30S140E/S2A_OPER_PRD_MSIL1C_PDMC_20161204T065230_R002_V20161204T005702_20161204T005702.zip",
     # Some with valid past ARD outputs.
     # Near Canberra
-    s2_near_canberra_multigran="/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2015/2015-11/35S145E-40S150E/S2A_OPER_PRD_MSIL1C_PDMC_20170207T120115_R030_V20151122T000632_20151122T000632.zip",
+    "s2_near_canberra_multigran": "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2015/2015-11/35S145E-40S150E/S2A_OPER_PRD_MSIL1C_PDMC_20170207T120115_R030_V20151122T000632_20151122T000632.zip",
     # Near Newcastle
-    s2_near_newcastle_multigran="/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2016/2016-01/30S150E-35S155E/S2A_OPER_PRD_MSIL1C_PDMC_20160118T230529_R130_V20160117T235915_20160117T235915.zip",
+    "s2_near_newcastle_multigran": "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2016/2016-01/30S150E-35S155E/S2A_OPER_PRD_MSIL1C_PDMC_20160118T230529_R130_V20160117T235915_20160117T235915.zip",
     # Darwin wet season.
-    s2_darwin_wet_season="/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2018/2018-01/10S130E-15S135E/S2A_MSIL1C_20180130T014031_N0206_R031_T52LFM_20180130T063131.zip",
-)
-NCI_LS_TESTS = dict(
-    ls7="/g/data/da82/AODH/USGS/L1/Landsat/C1/104_076/LE71040762021365/LE07_L1TP_104076_20211231_20220126_01_T1.tar",
-    ls8="/g/data/up71/projects/ARD_implementation_validation/ARD_update_for_USGS_C2L1/input/LC08_L1GT_109080_20210601_20210608_02_T2.tar",
-    ls9="/g/data/da82/AODH/USGS/L1/Landsat/C2/091_084/LC90910842022276/LC09_L1TP_091084_20221003_20230327_02_T1.tar",
-)
-NCI_S2_PROBLEM_DATASETS = dict(
-    s2_old_failing_scene="/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2023/2023-05/40S140E-45S145E/S2B_MSIL1C_20230515T002059_N0509_R116_T55GCP_20230515T014126.zip",
-    s2_all_nan_fmask="/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2023/2023-03/40S140E-45S145E/S2B_MSIL1C_20230306T002059_N0509_R116_T55GCP_20230306T014524.zip",
-)
-NCI_FUQIN_S2_TEST_DATASETS = dict(
+    "s2_darwin_wet_season": "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2018/2018-01/10S130E-15S135E/S2A_MSIL1C_20180130T014031_N0206_R031_T52LFM_20180130T063131.zip",
+}
+NCI_LS_TESTS = {
+    "ls7": "/g/data/da82/AODH/USGS/L1/Landsat/C1/104_076/LE71040762021365/LE07_L1TP_104076_20211231_20220126_01_T1.tar",
+    "ls8": "/g/data/up71/projects/ARD_implementation_validation/ARD_update_for_USGS_C2L1/input/LC08_L1GT_109080_20210601_20210608_02_T2.tar",
+    "ls9": "/g/data/da82/AODH/USGS/L1/Landsat/C2/091_084/LC90910842022276/LC09_L1TP_091084_20221003_20230327_02_T1.tar",
+}
+NCI_S2_PROBLEM_DATASETS = {
+    "s2_old_failing_scene": "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2023/2023-05/40S140E-45S145E/S2B_MSIL1C_20230515T002059_N0509_R116_T55GCP_20230515T014126.zip",
+    "s2_all_nan_fmask": "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2023/2023-03/40S140E-45S145E/S2B_MSIL1C_20230306T002059_N0509_R116_T55GCP_20230306T014524.zip",
+}
+NCI_FUQIN_S2_TEST_DATASETS = {
     # Fuqin's test scenes.
-    s2_t54jwl_2021="/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2021/2021-12/30S140E-35S145E/S2A_MSIL1C_20211212T003701_N0301_R059_T54JWL_20211212T020702.zip",
-    s2_t55hfa_2022="/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2022/2022-02/35S145E-40S150E/S2A_MSIL1C_20220218T000241_N0400_R030_T55HFA_20220218T012533.zip",
-    s2_t54jwl_2017="/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2017/2017-12/30S140E-35S145E/S2B_MSIL1C_20171208T003659_N0206_R059_T54JWL_20171208T034537.zip",
-    s2_t55hev_2021="/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2021/2021-05/35S145E-40S150E/S2B_MSIL1C_20210522T001109_N0300_R073_T55HEV_20210522T012307.zip",
-)
+    "s2_t54jwl_2021": "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2021/2021-12/30S140E-35S145E/S2A_MSIL1C_20211212T003701_N0301_R059_T54JWL_20211212T020702.zip",
+    "s2_t55hfa_2022": "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2022/2022-02/35S145E-40S150E/S2A_MSIL1C_20220218T000241_N0400_R030_T55HFA_20220218T012533.zip",
+    "s2_t54jwl_2017": "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2017/2017-12/30S140E-35S145E/S2B_MSIL1C_20171208T003659_N0206_R059_T54JWL_20171208T034537.zip",
+    "s2_t55hev_2021": "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2021/2021-05/35S145E-40S150E/S2B_MSIL1C_20210522T001109_N0300_R073_T55HEV_20210522T012307.zip",
+}
 
 # Combine all test dicts together
 NCI_ALL_TEST_DATASETS = dict(
@@ -151,7 +151,7 @@ def main(
                         echo(f"Thumbnail written to {thumb_jpg.as_posix()!r}")
 
         except Exception as e:
-            secho(f"Error processing {dataset.as_posix()!r}: {str(e)}", fg="red")
+            secho(f"Error processing {dataset.as_posix()!r}: {e!s}", fg="red")
             traceback.print_exc()
             failures += 1
             continue

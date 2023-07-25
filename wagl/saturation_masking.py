@@ -93,7 +93,7 @@ def set_saturation_bits(acquisitions, pq_const, result):
         # dataset
         if bit_index == 5 and 6 not in bit_index_list:
             bit_index = 6
-            _LOG.debug(f"Copying thermal band mask to bit {str(bit_index)}")
+            _LOG.debug(f"Copying thermal band mask to bit {bit_index!s}")
             result.set_mask(mask, bit_index)
             bits_set.append(bit_index)
 

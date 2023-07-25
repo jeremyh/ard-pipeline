@@ -14,17 +14,17 @@ from typing import Optional
 import luigi
 import yaml
 from eodatasets3.wagl import Granule, package
+from luigi.local_target import LocalFileSystem
+
 from eugl import s2cl
 from eugl.fmask import fmask
 from eugl.gqa import GQATask
-from luigi.local_target import LocalFileSystem
-from wagl.acquisition import acquisitions, preliminary_acquisitions_data
-from wagl.logs import STATUS_LOGGER, TASK_LOGGER
-from wagl.singlefile_workflow import DataStandardisation
-
 from tesp.constants import ProductPackage
 from tesp.metadata import _get_tesp_metadata
 from tesp.package import package_non_standard, write_stac_metadata
+from wagl.acquisition import acquisitions, preliminary_acquisitions_data
+from wagl.logs import STATUS_LOGGER, TASK_LOGGER
+from wagl.singlefile_workflow import DataStandardisation
 
 QA_PRODUCTS = ["gqa", "fmask", "s2cloudless"]
 

@@ -6,9 +6,9 @@ from rasterio.crs import CRS
 from rasterio.enums import Resampling
 from rasterio.warp import reproject as rio_reproject
 from s2cloudless import S2PixelCloudDetector
-from wagl.acquisition import acquisitions
 
 from eugl.metadata import s2cloudless_metadata
+from wagl.acquisition import acquisitions
 
 S2CL_BANDS = [
     "BAND-1",
@@ -184,16 +184,16 @@ def s2cloudless_processing(
 
     cloud_prob = result["cloud_prob"]
 
-    export_kwargs = dict(
-        mode="w",
-        driver="GTiff",
-        compress="deflate",
-        height=cloud_prob.shape[1],
-        width=cloud_prob.shape[2],
-        count=1,
-        crs=result["crs"],
-        transform=result["transform"],
-    )
+    export_kwargs = {
+        "mode": "w",
+        "driver": "GTiff",
+        "compress": "deflate",
+        "height": cloud_prob.shape[1],
+        "width": cloud_prob.shape[2],
+        "count": 1,
+        "crs": result["crs"],
+        "transform": result["transform"],
+    }
 
     with rasterio.open(
         pjoin(workdir, prob_out_fname),

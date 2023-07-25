@@ -346,7 +346,7 @@ class AtmosphericsCase(luigi.Task):
 
     def output(self):
         out_path = pjoin(self.work_root, self.base_dir)
-        albedos = "-".join([a for a in self.albedos])
+        albedos = "-".join(list(self.albedos))
         out_fname = "".join([POINT_ALBEDO_FMT.format(p=self.point, a=albedos), ".h5"])
         return luigi.LocalTarget(pjoin(out_path, out_fname))
 
@@ -458,7 +458,7 @@ class InterpolateCoefficient(luigi.Task):
         coefficients_fname = self.input()["comp"].path
         ancillary_fname = self.input()["ancillary"].path
 
-        acq = [acq for acq in acqs if acq.band_name == self.band_name][0]
+        acq = next(acq for acq in acqs if acq.band_name == self.band_name)
 
         with self.output().temporary_path() as out_fname:
             _interpolate(
@@ -875,7 +875,7 @@ class SurfaceReflectance(luigi.Task):
         ancillary_fname = inputs["ancillary"].path
 
         # get the acquisition we wish to process
-        acq = [acq for acq in acqs if acq.band_name == self.band_name][0]
+        acq = next(acq for acq in acqs if acq.band_name == self.band_name)
 
         with self.output().temporary_path() as out_fname:
             _calculate_reflectance(
@@ -916,7 +916,7 @@ class SurfaceTemperature(luigi.Task):
     def run(self):
         container = acquisitions(self.level1, self.acq_parser_hint)
         acqs = container.get_acquisitions(self.group, self.granule)
-        acq = [acq for acq in acqs if acq.band_name == self.band_name][0]
+        acq = next(acq for acq in acqs if acq.band_name == self.band_name)
 
         with self.output().temporary_path() as out_fname:
             interpolation_fname = self.input()["interpolation"].path
@@ -1051,7 +1051,7 @@ class LinkwaglOutputs(luigi.Task):
                         grp_name = basename(dirname(fname.replace(self.work_root, "")))
 
                         with h5py.File(fname, "r") as fid:
-                            groups = [g for g in fid]
+                            groups = list(fid)
 
                         for pth in groups:
                             new_path = ppjoin(self.granule, grp_name, pth)

@@ -23,7 +23,7 @@ To output the task history to an sqlite database, modify your *luigi.cfg* file w
 
    [scheduler]
    record_task_history = True
-   
+
    [task_history]
    db_connection = sqlite:///luigi-task-history.db
 

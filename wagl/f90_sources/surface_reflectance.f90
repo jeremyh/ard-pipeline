@@ -306,10 +306,10 @@ SUBROUTINE reflectance( &
                 endif
 
 !               set terrain corrected reflectance less than 0.0001 to 0.0001
-                if (ref_terrain(i) .lt. 0.0001) then 
+                if (ref_terrain(i) .lt. 0.0001) then
                     ref_terrain(i) = 0.0001
-                    iref_terrain(i, j) = 1 
-                endif 
+                    iref_terrain(i, j) = 1
+                endif
 
 !               Should test for these cases in initial tests! (ie must be lt these)
 !               presently comments as test for ge 90 in initial one
