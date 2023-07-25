@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd "$1"
+cd "$1" || exit 1
 
 if [[ ! -r l1c-metadata.xml ]]; then
     echo "Unable to find l1c-metadata.xml"

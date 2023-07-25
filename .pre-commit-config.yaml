@@ -26,3 +26,13 @@ repos:
     hooks:
     -   id: black
         language_version: python3
+-   repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.5
+    # TODO: clean up these old scripts
+    hooks:
+    -   id: shellcheck
+        exclude: ^(deployment/scripts/|deployment/overlay/scripts|deployment/nci/templates)
+-   repo: https://github.com/jazzband/pip-tools
+    rev: 7.1.0
+    hooks:
+    -   id: pip-compile

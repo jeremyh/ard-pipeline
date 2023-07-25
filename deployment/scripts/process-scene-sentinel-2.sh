@@ -41,7 +41,7 @@ check_output_exists
 
 # Config files for wagl/luigi default to the current directory
 # The Dockerfile moves the configs to the script folder
-cd /scripts
+cd /scripts || exit 1
 
 activate_modtran
 run_luigi
