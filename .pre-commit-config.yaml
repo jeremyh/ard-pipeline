@@ -36,3 +36,7 @@ repos:
     rev: 7.1.0
     hooks:
     -   id: pip-compile
+-   repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+    -   id: hadolint-docker
