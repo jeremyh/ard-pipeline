@@ -11,25 +11,25 @@ import click
 import numpy as np
 import rasterio
 from click import secho
-
 from eodatasets3 import serialise
-from eodatasets3.ui import uri_resolve, PathPath
+from eodatasets3.ui import PathPath, uri_resolve
 
 
-class InvalidDataset(Exception):
+class InvalidDatasetError(Exception):
     pass
 
 
 def find_yaml_file(path: Path) -> List[Path]:
-
     # Did they give us a metadata file directly?
     if path.is_file():
         return [path]
 
     # Otherwise find all the datasets in the directory.
-    fs = sorted(path.rglob('*.odc-metadata.yaml'))
+    fs = sorted(path.rglob("*.odc-metadata.yaml"))
     if not fs:
-        raise InvalidDataset(f"Could not find any output metadata files for {path.as_posix()!r}")
+        raise InvalidDatasetError(
+            f"Could not find any output metadata files for {path.as_posix()!r}"
+        )
 
     return fs
 
@@ -49,52 +49,58 @@ def compare(original_pkg: Path, new_package: Path):
         # Raise an error, printing which yamls are missing from the new package.
         missing = set(original_yamls_relative) - set(new_yamls_relative)
         if missing:
-            raise InvalidDataset(f'Missing yaml files from new package outputs: {printable_list(missing)}')
+            raise InvalidDatasetError(
+                f"Missing yaml files from new package outputs: {printable_list(missing)}"
+            )
 
         # Otherwise just print the two lists
-        raise InvalidDataset(f'Yaml files in new package do not match original package:'
-                             f'{printable_list(original_yamls_relative)}'
-                             '!='
-                             f'{printable_list(new_yamls_relative)}')
+        raise InvalidDatasetError(
+            f"Yaml files in new package do not match original package:"
+            f"{printable_list(original_yamls_relative)}"
+            "!="
+            f"{printable_list(new_yamls_relative)}"
+        )
 
-    secho(f'{len(new_yamls)} datasets found in both packages', fg='green')
+    secho(f"{len(new_yamls)} datasets found in both packages", fg="green")
 
     # Now compare images.
     for original_yaml, new_yaml in zip(original_yamls, new_yamls):
-
         original_dataset = serialise.from_path(original_yaml)
         new_dataset = serialise.from_path(new_yaml)
-        secho(f'Comparing dataset {new_dataset.label}', bold=True)
+        secho(f"Comparing dataset {new_dataset.label}", bold=True)
 
         # Make sure there's at least one location (but an embedded one will still come first).
-        original_dataset.locations = (original_dataset.locations or []) + [original_yaml]
+        original_dataset.locations = (original_dataset.locations or []) + [
+            original_yaml
+        ]
         new_dataset.locations = (new_dataset.locations or []) + [new_yaml]
 
         for name, measurement in new_dataset.measurements.items():
             new_image_path = uri_resolve(new_dataset.locations[0], measurement.path)
-            old_image_path = uri_resolve(original_dataset.locations[0], original_dataset.measurements[name].path)
-            secho(f'{name}: {measurement.path}')
-            result = compare_images(
-                new_image_path,
-                old_image_path
+            old_image_path = uri_resolve(
+                original_dataset.locations[0], original_dataset.measurements[name].path
             )
+            secho(f"{name}: {measurement.path}")
+            result = compare_images(new_image_path, old_image_path)
 
-            if result['diff'] > 0:
-                secho(f'\t{result["diff"]} pixels differ ({result["same"]} same), max difference {result["max_diff"]}',
-                      fg='red')
+            if result["diff"] > 0:
+                secho(
+                    f'\t{result["diff"]} pixels differ ({result["same"]} same), max difference {result["max_diff"]}',
+                    fg="red",
+                )
                 failures += 1
 
     if failures:
-        secho(f'{failures} differing image(s)', fg='red')
+        secho(f"{failures} differing image(s)", fg="red")
     else:
-        secho('No differences found', fg='green')
+        secho("No differences found", fg="green")
     return failures
 
 
 def printable_list(files: Iterable[Path]) -> str:
     """An indendented list of files, for printing to the user."""
     files_printable = ",\n\t".join(f.as_posix() for f in files)
-    return f'\n\t{files_printable}\n'
+    return f"\n\t{files_printable}\n"
 
 
 def compare_images(path1: str, path2: str):
@@ -109,7 +115,6 @@ def compare_images(path1: str, path2: str):
 
         for i in range(0, img1.shape[0], chunk_size[0]):
             for j in range(0, img1.shape[1], chunk_size[1]):
-
                 window = rasterio.windows.Window(j, i, chunk_size[1], chunk_size[0])
 
                 data1 = img1.read(1, window=window)
@@ -123,34 +128,43 @@ def compare_images(path1: str, path2: str):
                     diff_pixel_count += np.sum(data1 != data2)
                     same_pixel_count += np.sum(data1 == data2)
 
-    return dict(max_diff=max_diff, same=same_pixel_count, diff=diff_pixel_count)
+    return {"max_diff": max_diff, "same": same_pixel_count, "diff": diff_pixel_count}
 
 
 def display_difference(difference, i, j, chunk_size):
     import matplotlib.pyplot as plt
+
     # Display the difference
     plt.figure(figsize=(5, 5))
-    plt.imshow(difference, cmap='bwr', vmin=-np.max(np.abs(difference)), vmax=np.max(np.abs(difference)))
-    plt.colorbar(label='Pixel difference (image1 - image2)')
+    plt.imshow(
+        difference,
+        cmap="bwr",
+        vmin=-np.max(np.abs(difference)),
+        vmax=np.max(np.abs(difference)),
+    )
+    plt.colorbar(label="Pixel difference (image1 - image2)")
     plt.title(
-        f'Difference between the two images (chunk from {i},{j} to {i + chunk_size[0]},{j + chunk_size[1]})')
+        f"Difference between the two images (chunk from {i},{j} to {i + chunk_size[0]},{j + chunk_size[1]})"
+    )
     plt.show()
 
 
 def show(result):
     if result is None:
-        secho('identical', fg="green")
+        secho("identical", fg="green")
     else:
-        secho(f"not identical! max diff: {result['max_diff']}, same: {result['same']}, diff: {result['diff']}",
-              fg="red")
+        secho(
+            f"not identical! max diff: {result['max_diff']}, same: {result['same']}, diff: {result['diff']}",
+            fg="red",
+        )
 
 
 @click.command(help=__doc__)
-@click.argument('in1', type=PathPath(exists=True))
-@click.argument('in2', type=PathPath(exists=True))
+@click.argument("in1", type=PathPath(exists=True))
+@click.argument("in2", type=PathPath(exists=True))
 def main(in1, in2):
     sys.exit(compare(in1, in2))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

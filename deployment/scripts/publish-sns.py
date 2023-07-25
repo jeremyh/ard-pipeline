@@ -55,7 +55,6 @@ def main(stac_file, sns_arn):
     with open(stac_file) as fl:
         stac_doc = json.load(fl)
 
-    msg = stac_doc
     msg_attrs = get_attributes(stac_doc)
     publish_sns(sns_arn, stac_doc, msg_attrs)
 
