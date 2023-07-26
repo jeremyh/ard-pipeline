@@ -38,12 +38,13 @@ dependencies = [
     "sentinelhub==3.4.2",
     "shapely>=1.5.13",
     "structlog>=16.1.0",
+    "blosc2 >=2.0.0,!=2.2.1,!=2.2.2",  # Needed for tables install but they don't seem to declare it?
     "tables>=3.4.2"
 ]
 dependency-links = [
-    "git+git://github.com/sixy6e/idl-functions.git@master#egg=idl-functions-0.5.2",
-    "git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios-1.4.10",
-    "git+https://github.com/ubarsc/python-fmask@pythonfmask-0.5.7#egg=python-fmask-0.5.7"  # noqa: E501
+    "git+git://github.com/sixy6e/idl-functions.git@master#egg=idl-functions",
+    "git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios",
+    "git+https://github.com/ubarsc/python-fmask@pythonfmask-0.5.7#egg=python-fmask"
 ]
 description = 'ARD image processing'
 # Was needed for tesp .. here too? TODO

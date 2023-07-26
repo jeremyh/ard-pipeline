@@ -11,13 +11,21 @@
 
 incdir_numpy = run_command(
     py3,
-    ['-c', 'import numpy; print(numpy.get_include())'],
+    [
+        '-c',
+        'import os; os.chdir(".."); import numpy; print(numpy.get_include())',
+    ],
     check: true,
 ).stdout().strip()
-inc_np = include_directories(incdir_numpy)
-# np_dep = declare_dependency(include_directories: inc_np)
-incdir_f2py = incdir_numpy / '..' / '..' / 'f2py' / 'src'
-inc_f2py = include_directories(incdir_f2py)
+incdir_f2py = run_command(
+    py3,
+    [
+        '-c',
+        'import os; os.chdir(".."); import numpy.f2py; print(numpy.f2py.get_include())',
+    ],
+    check: true,
+).stdout().strip()
+inc_np = include_directories(incdir_numpy, incdir_f2py)
 
 # Share this object across multiple modules.
 fortranobject_lib = static_library(
@@ -25,11 +33,11 @@ fortranobject_lib = static_library(
     incdir_f2py / 'fortranobject.c',
     # c_args: numpy_nodepr_api,
     dependencies: py3_dep,
-    include_directories: [inc_np, inc_f2py],
+    include_directories: [inc_np],
 )
 fortranobject_dep = declare_dependency(
     link_with: fortranobject_lib,
-    include_directories: [inc_np, inc_f2py],
+    include_directories: [inc_np],
 )
 
 sat_sol_angles_src = [
@@ -43,7 +51,11 @@ sat_sol_angles_src = [
 _sat_sol_angles_module = custom_target(
     'sat_sol_angles_module',
     input: sat_sol_angles_src,
-    output: ['__sat_sol_anglesmodule.c', '__sat_sol_angles-f2pywrappers2.f90'],
+    output: [
+        '__sat_sol_anglesmodule.c',
+        '__sat_sol_angles-f2pywrappers2.f90',
+        '__sat_sol_angles-f2pywrappers.f',
+    ],
     command: [
         'f2py',
         '-m', '__sat_sol_angles',
@@ -78,6 +90,7 @@ _cast_shadow_mask_module = custom_target(
     output: [
         '__cast_shadow_maskmodule.c',
         '__cast_shadow_mask-f2pywrappers.f',
+        '__cast_shadow_mask-f2pywrappers2.f90',
     ],
     command: [
         'f2py',
@@ -105,7 +118,11 @@ exiting_angle_src = [
 _exiting_angle_module = custom_target(
     'exiting_angle_module',
     input: exiting_angle_src,
-    output: ['__exiting_anglemodule.c', '__exiting_angle-f2pywrappers2.f90'],
+    output: [
+        '__exiting_anglemodule.c',
+        '__exiting_angle-f2pywrappers.f',
+        '__exiting_angle-f2pywrappers2.f90',
+    ],
     command: [
         'f2py',
         '-m', '__exiting_angle',
@@ -132,7 +149,11 @@ incident_angle_src = [
 _incident_angle_module = custom_target(
     'incident_angle_module',
     input: incident_angle_src,
-    output: ['__incident_anglemodule.c', '__incident_angle-f2pywrappers.f'],
+    output: [
+        '__incident_anglemodule.c',
+        '__incident_angle-f2pywrappers.f',
+        # '__incident_angle-f2pywrappers2.f90',
+    ],
     command: [
         'f2py',
         '-m', '__incident_angle',
@@ -160,7 +181,11 @@ slope_aspect_src = [
 _slope_aspect_module = custom_target(
     'slope_aspect_module',
     input: slope_aspect_src,
-    output: ['__slope_aspectmodule.c', '__slope_aspect-f2pywrappers2.f90'],
+    output: [
+        '__slope_aspectmodule.c',
+        '__slope_aspect-f2pywrappers.f',
+        '__slope_aspect-f2pywrappers2.f90',
+    ],
     command: [
         'f2py',
         '-m', '__slope_aspect',
@@ -192,6 +217,7 @@ _surface_reflectance_module = custom_target(
     output: [
         '__surface_reflectancemodule.c',
         '__surface_reflectance-f2pywrappers.f',
+        # '__surface_reflectance-f2pywrappers2.f90',
     ],
     command: [
         'f2py',
@@ -220,7 +246,11 @@ satellite_model_src = [
 _satellite_model_module = custom_target(
     'satellite_model_module',
     input: satellite_model_src,
-    output: ['__satellite_modelmodule.c', '__satellite_model-f2pywrappers2.f90'],
+    output: [
+        '__satellite_modelmodule.c',
+        '__satellite_model-f2pywrappers.f',
+        '__satellite_model-f2pywrappers2.f90',
+    ],
     command: [
         'f2py',
         '-m', '__satellite_model',
@@ -252,7 +282,11 @@ track_time_info_src = [
 _track_time_info_module = custom_target(
     'track_time_info_module',
     input: track_time_info_src,
-    output: ['__track_time_infomodule.c', '__track_time_info-f2pywrappers2.f90'],
+    output: [
+        '__track_time_infomodule.c',
+        '__track_time_info-f2pywrappers.f',
+        '__track_time_info-f2pywrappers2.f90',
+    ],
     command: [
         'f2py',
         '-m', '__track_time_info',
@@ -284,6 +318,7 @@ _bilinear_interpolation_module = custom_target(
     output: [
         '__bilinear_interpolationmodule.c',
         '__bilinear_interpolation-f2pywrappers.f',
+        # '__bilinear_interpolation-f2pywrappers2.f90',
     ],
     command: [
         'f2py',
