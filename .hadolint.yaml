@@ -1,0 +1,5 @@
+ignored:
+-   DL3008         # Not pinning apt-get versions (will do once stable)
+-   DL3013         # Not pinning pip versions (will do once stable)
+-   DL4006         # Set pipefail. TODO fix.
+-   DL3059         # multiple consecive run instructions.

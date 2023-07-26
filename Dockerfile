@@ -15,56 +15,59 @@ USER root
 # Build deps
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
-        git bzip2 ca-certificates gfortran-10 gcc-10 make software-properties-common libpq-dev wget \
+       git bzip2 ca-certificates gfortran-10 gcc-10 make software-properties-common libpq-dev wget libarchive13 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN ln -s $(which gfortran-10) $(which gfortran-10 | sed 's/\(.*\)\/\gfortran-10/\1\/gfortran/') \
-    && ln -s $(which gcc-10) $(which gcc-10 | sed 's/\(.*\)\/\gcc-10/\1\/gcc/')
+RUN ln -s "$(which gfortran-10)" "$(which gfortran-10 | sed 's/\(.*\)\/\gfortran-10/\1\/gfortran/')" \
+ && ln -s "$(which gcc-10)" "$(which gcc-10 | sed 's/\(.*\)\/\gcc-10/\1\/gcc/')"
 
 WORKDIR ${BUILD_DIR}
 
-RUN echo I am running on $BUILDPLATFORM, building for $TARGETARCH
-
 # Bump this when newer versions of python are required
 RUN if [[ "$TARGETARCH" == "arm64" ]] ; then export archname="aarch64"; else export archname="x86_64" ; fi; \
-    wget -O /root/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py38_23.5.2-0-Linux-${archname}.sh \
-    && chmod +x /root/miniconda.sh && /root/miniconda.sh -b -f -p conda && rm /root/miniconda.sh
+    wget --progress=dot:giga -O /root/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py311_23.5.2-0-Linux-${archname}.sh \
+ && chmod +x /root/miniconda.sh \
+ && /root/miniconda.sh -b -f -p conda \
+ && rm /root/miniconda.sh
 
-RUN pip install awscli boto boto3
+RUN pip install --no-cache-dir awscli boto boto3 \
+ && conda install mamba -n base -c conda-forge
 
-RUN conda install mamba -n base -c conda-forge
-
-# GDAL 3.1 is being used because https://gdal.org/api/python.html#usage
-RUN mamba install -y -c conda-forge \
-        bitshuffle==0.3.5 \
-        blosc==1.21.0 \
-        blosc-hdf5-plugin==1.0.0 \
-        boost-cpp==1.74.0 \
-        cairo==1.16.0 \
-        certifi==2021.5.30 \
-        click==7.1.2 \
-        cython==0.29.24 \
-        gdal==3.1.4 \
-        h5py==3.3.0 \
-        hdf5plugin==2.3.2 \
-        hdf5-external-filter-plugins-bitshuffle==0.1.0 \
-        libnetcdf==4.7.4 \
-        numpy==1.23.0 \
-        proj==7.1.1 \
-        python-fmask==0.5.7 \
-        scipy==1.8.1 \
-        rasterio==1.2.1 \
+# TODO: Need to match gdal version? Previuosly GDAL 3.1
+RUN  mamba install -y -c conda-forge \
+            blosc \
+            boost-cpp \
+            cairo \
+            certifi \
+            click \
+            cython \
+            gdal \
+            h5py \
+            hdf5-external-filter-plugins-bitshuffle \
+            hdf5plugin \
+            libnetcdf \
+            lightgbm \
+            numpy \
+            proj \
+            pytables \
+            python-fmask \
+            rasterio \
+            scikit-image \
+            scipy \
     && conda clean --all -y
 
 # Download the necessary codebases (@versions) (using git now as installs needed version info)
-RUN pip install "git+https://github.com/sixy6e/idl-functions.git@${IDLFUNCTIONS_VERSION}#egg=idl-functions" \
-    "git+https://github.com/GeoscienceAustralia/eo-datasets.git@${EODATASETS3_VERSION}#egg=eodatasets3" \
-    "git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios-1.4.10" \
-    "git+https://github.com/ubarsc/python-fmask@pythonfmask-0.5.7#egg=python-fmask-${PYTHON_FMASK_VERSION}"
+RUN pip install --no-cache-dir \
+    "git+https://github.com/sixy6e/idl-functions.git@${IDLFUNCTIONS_VERSION}#egg=idl-functions" \
+    "git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios" \
+    "git+https://github.com/ubarsc/python-fmask@pythonfmask-0.5.7#egg=python-fmask"
 
 WORKDIR /code
-ADD . ./
-RUN pip install .
+COPY . ./
+RUN pip install --no-cache-dir .
+
+RUN adduser --disabled-password --gecos '' ubuntu
+USER ubuntu
 
 FROM ubuntu:focal as prod
 
@@ -96,3 +99,6 @@ RUN mkdir /scripts /granules /output /upload
 COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
 COPY deployment/scripts /scripts
 COPY deployment/configs /configs
+
+RUN adduser --disabled-password --gecos '' ubuntu
+USER ubuntu
