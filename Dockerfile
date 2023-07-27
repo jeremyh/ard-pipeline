@@ -18,7 +18,8 @@ RUN apt-get update -y \
        git bzip2 ca-certificates gfortran-10 gcc-10 make software-properties-common libpq-dev wget libarchive13 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN ln -s "$(which gfortran-10)" "$(which gfortran-10 | sed 's/\(.*\)\/\gfortran-10/\1\/gfortran/')" \
+RUN set -o pipefail; \
+    ln -s "$(which gfortran-10)" "$(which gfortran-10 | sed 's/\(.*\)\/\gfortran-10/\1\/gfortran/')" \
  && ln -s "$(which gcc-10)" "$(which gcc-10 | sed 's/\(.*\)\/\gcc-10/\1\/gcc/')"
 
 WORKDIR ${BUILD_DIR}
