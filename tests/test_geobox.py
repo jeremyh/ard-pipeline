@@ -7,13 +7,12 @@ import h5py
 import numpy as np
 import numpy.testing as npt
 import rasterio as rio
+from data import LS8_SCENE1
 from osgeo import gdal, osr
 
 from wagl import unittesting_tools as ut
 from wagl.acquisition import acquisitions
 from wagl.geobox import GriddedGeoBox
-
-from .data import LS8_SCENE1
 
 affine.EPSILON = 1e-9
 affine.EPSILON2 = 1e-18

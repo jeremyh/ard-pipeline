@@ -1,11 +1,10 @@
 import unittest
 
 import ephem
+from data import LS5_SCENE1, LS7_SCENE1, LS8_SCENE1, TLE_DIR
 
 from wagl.acquisition import acquisitions
 from wagl.tle import load_tle
-
-from .data import LS5_SCENE1, LS7_SCENE1, LS8_SCENE1, TLE_DIR
 
 
 class TLELoadingTest(unittest.TestCase):

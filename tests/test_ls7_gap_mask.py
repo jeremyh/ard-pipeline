@@ -3,9 +3,9 @@
 
 import unittest
 
-from wagl.acquisition import acquisitions
+from data import LS7_GAP_MASK, LS7_NO_GAP_MASK
 
-from .data import LS7_GAP_MASK, LS7_NO_GAP_MASK
+from wagl.acquisition import acquisitions
 
 
 class GapMaskRadianceTest(unittest.TestCase):

@@ -1,9 +1,9 @@
 import unittest
 
+from data import LAND_SEA_RASTERS, LS7_SCENE1, LS8_SCENE1
+
 from wagl.acquisition import acquisitions
 from wagl.land_sea_masking import calc_land_sea_mask
-
-from .data import LAND_SEA_RASTERS, LS7_SCENE1, LS8_SCENE1
 
 
 class LandSeaMaskingTest(unittest.TestCase):

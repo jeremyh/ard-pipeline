@@ -1,12 +1,7 @@
 import datetime
 import unittest
 
-from wagl.acquisition import acquisitions
-from wagl.acquisition.landsat import Landsat8Acquisition, LandsatAcquisition
-from wagl.constants import BandType
-from wagl.temperature import temperature_at_sensor
-
-from .data import (
+from data import (
     LS5_SCENE1,
     LS7_SCENE1,
     LS7_SCENERTC2,
@@ -14,6 +9,11 @@ from .data import (
     LS8_SCENE1C2,
     LS8_SCENERTC2,
 )
+
+from wagl.acquisition import acquisitions
+from wagl.acquisition.landsat import Landsat8Acquisition, LandsatAcquisition
+from wagl.constants import BandType
+from wagl.temperature import temperature_at_sensor
 
 
 class AcquisitionLoadMtlTest(unittest.TestCase):
