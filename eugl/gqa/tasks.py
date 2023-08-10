@@ -41,7 +41,7 @@ from eugl.gqa.geometric_utils import (
     reproject,
 )
 from eugl.metadata import get_gqa_metadata
-from wagl.acquisition import acquisitions
+from wagl.acquisition import PackageIdentificationHint, acquisitions
 from wagl.data import write_img
 from wagl.geobox import GriddedGeoBox
 from wagl.logs import TASK_LOGGER
@@ -56,7 +56,7 @@ write_yaml = partial(
 class GverifyTask(luigi.Task):
     # Imagery arguments
     level1 = luigi.Parameter()
-    acq_parser_hint = luigi.OptionalParameter(default="")
+    acq_parser_hint: PackageIdentificationHint = luigi.OptionalParameter(default="")
     granule = luigi.Parameter()
     workdir = luigi.Parameter()
 

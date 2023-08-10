@@ -2,6 +2,7 @@
 
 import datetime
 import re
+from typing import IO, Union
 
 
 def parse_type(s):
@@ -42,7 +43,7 @@ def parse_type(s):
     raise ValueError
 
 
-def load_mtl(filename, root=None, pairs=r"(\w+)\s=\s(.*)"):
+def load_mtl(filename: Union[str, IO], root=None, pairs=r"(\w+)\s=\s(.*)") -> dict:
     """Parse an MTL file and return dict-of-dict's containing the metadata."""
 
     def parse(lines, tree, level=0):
@@ -61,6 +62,7 @@ def load_mtl(filename, root=None, pairs=r"(\w+)\s=\s(.*)"):
                     tree[key.lower()] = parse_type(value)
 
     tree = {}
+
     if isinstance(filename, str):
         with open(filename) as fo:
             data = fo.readlines()

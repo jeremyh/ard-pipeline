@@ -17,13 +17,14 @@ import zipfile
 from collections import OrderedDict
 from os.path import basename, commonpath, dirname, isdir, isfile, splitext
 from os.path import join as pjoin
+from typing import List, Literal, Optional, Tuple
 from xml.etree import ElementTree
 
 from dateutil import parser
 from nested_lookup import nested_lookup
 
 from ..mtl import load_mtl
-from .base import Acquisition, AcquisitionsContainer  # noqa: F401
+from .base import Acquisition, AcquisitionsContainer, ResolutionGroups
 from .landsat import ACQUISITION_TYPE, LandsatAcquisition
 from .sentinel import (
     Sentinel2aAcquisition,
@@ -119,7 +120,13 @@ def preliminary_acquisitions_data(path, hint=None):
                 raise OSError(f"No acquisitions found in: {path}")
 
 
-def acquisitions(path, hint=None):
+#: Primarily just to say the S2 scene is a Sinergise, not ESA, scene.
+PackageIdentificationHint = Optional[Literal["s2_sinergise"]]
+
+
+def acquisitions(
+    path: str, hint: PackageIdentificationHint = None
+) -> AcquisitionsContainer:
     """Return an instance of `AcquisitionsContainer` containing the
     acquisitions for each Granule Group (if applicable) and
     each sub Group.
@@ -140,7 +147,7 @@ def acquisitions(path, hint=None):
     return container
 
 
-def create_resolution_groups(acqs):
+def create_resolution_groups(acqs: List[Acquisition]) -> ResolutionGroups:
     """Given a list of acquisitions, return an OrderedDict containing
     groups of acquisitions based on the resolution.
     The order of groups is highest to lowest resolution.
@@ -170,7 +177,7 @@ def create_resolution_groups(acqs):
     return res_groups
 
 
-def preliminary_acquisitions_data_via_mtl(pathname):
+def preliminary_acquisitions_data_via_mtl(pathname: str) -> Tuple[str, dict]:
     """Preliminary data for MTL."""
     if isfile(pathname) and tarfile.is_tarfile(pathname):
         with tarfile.open(pathname, "r") as tarball:
@@ -196,7 +203,7 @@ def preliminary_acquisitions_data_via_mtl(pathname):
     return prefix_name, data
 
 
-def get_acquisition_datetime_via_mtl(data):
+def get_acquisition_datetime_via_mtl(data: dict) -> datetime.datetime:
     coll_map = get_collection_map(data.keys())
 
     prod_md = data[coll_map["PRODUCT_METADATA"]]
@@ -208,7 +215,7 @@ def get_acquisition_datetime_via_mtl(data):
     return acq_datetime
 
 
-def preliminary_worldview2_acquisition_data_via_xml(pathname):
+def preliminary_worldview2_acquisition_data_via_xml(pathname: str) -> ElementTree.XML:
     xml_file = None
 
     for root, _, files in os.walk(pathname):
@@ -225,16 +232,16 @@ def preliminary_worldview2_acquisition_data_via_xml(pathname):
     return root
 
 
-def worldview2_acquisition_id(xml_root):
+def worldview2_acquisition_id(xml_root: ElementTree.XML) -> str:
     return xml_root.findall("./IMD/PRODUCTCATALOGID")[0].text
 
 
-def worldview2_acquisition_datetime(xml_root):
+def worldview2_acquisition_datetime(xml_root: ElementTree.XML) -> datetime.datetime:
     key = "./IMD/MAP_PROJECTED_PRODUCT/EARLIESTACQTIME"
     return parser.parse(xml_root.findall(key)[0].text).replace(tzinfo=None)
 
 
-def worldview2_acquisitions_via_xml(pathname):
+def worldview2_acquisitions_via_xml(pathname: str) -> AcquisitionsContainer:
     xml_root = preliminary_worldview2_acquisition_data_via_xml(pathname)
 
     granule_id = worldview2_acquisition_id(xml_root)
@@ -289,7 +296,7 @@ def get_collection_map(data_keys):
     return LANDSATMTLMAP[coll]
 
 
-def acquisitions_via_mtl(pathname):
+def acquisitions_via_mtl(pathname: str) -> AcquisitionsContainer:
     """Obtain a list of Acquisition objects from `pathname`.
     The argument `pathname` can be a MTL file or a directory name.
     If `pathname` is a directory then the MTL file will be search
@@ -395,7 +402,7 @@ def acquisitions_via_mtl(pathname):
     )
 
 
-def preliminary_acquisitions_data_s2_sinergise(pathname):
+def preliminary_acquisitions_data_s2_sinergise(pathname: str) -> dict:
     """Preliminary data for Sinergise Sentinel-2."""
     search_paths = {
         "datastrip/metadata.xml": [
@@ -454,7 +461,7 @@ def preliminary_acquisitions_data_s2_sinergise(pathname):
     return acquisition_data
 
 
-def acquisitions_s2_sinergise(pathname):
+def acquisitions_s2_sinergise(pathname: str) -> AcquisitionsContainer:
     """Collect the TOA Radiance images for each granule within a scene.
     Multi-granule & multi-resolution hierarchy format.
     Returns an instance of `AcquisitionsContainer`.
@@ -532,7 +539,7 @@ def acquisitions_s2_sinergise(pathname):
     return AcquisitionsContainer(label=basename(pathname), granules=granule_groups)
 
 
-def xml_via_safe(archive, pathname):
+def xml_via_safe(archive: zipfile.ZipFile, pathname: str) -> ElementTree.XML:
     """Preliminary data for zip archives.
 
     Returns an `ElementTree.XML` object.
@@ -607,7 +614,7 @@ def acquisition_time_via_safe(granule_root):
     return acq_time
 
 
-def acquisitions_via_safe(pathname):
+def acquisitions_via_safe(pathname: str) -> AcquisitionsContainer:
     """Collect the TOA Radiance images for each granule within a scene.
     Multi-granule & multi-resolution hierarchy format.
     Returns an instance of `AcquisitionsContainer`.

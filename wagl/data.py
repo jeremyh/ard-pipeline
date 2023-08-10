@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 from os.path import basename, dirname
 from os.path import join as pjoin
+from typing import Tuple
 
 import h5py
 import numpy as np
@@ -22,11 +23,11 @@ from wagl.tiling import generate_tiles
 _LOG = logging.getLogger(__name__)
 
 
-def get_pixel(filename, dataset_name, lonlat):
+def get_pixel(h5_path: str, dataset_name: str, lonlat: Tuple[float, float]):
     """Return a pixel from `filename` at the longitude and latitude given
     by the tuple `lonlat`. Optionally, the `band` can be specified.
     """
-    with h5py.File(filename, "r") as fid:
+    with h5py.File(h5_path, "r") as fid:
         ds = fid[dataset_name]
         geobox = GriddedGeoBox.from_h5_dataset(ds)
         x, y = (int(v) for v in ~geobox.transform * lonlat)

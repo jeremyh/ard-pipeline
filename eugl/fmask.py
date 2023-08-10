@@ -28,7 +28,12 @@ from fmask.cmdline.sentinel2Stacked import checkAnglesFile
 from rios import fileinfo
 
 from eugl.metadata import fmask_metadata, grab_offset_dict
-from wagl.acquisition import Acquisition, AcquisitionsContainer, acquisitions
+from wagl.acquisition import (
+    Acquisition,
+    AcquisitionsContainer,
+    PackageIdentificationHint,
+    acquisitions,
+)
 from wagl.acquisition.sentinel import Sentinel2Acquisition
 from wagl.constants import BandType
 
@@ -584,7 +589,7 @@ def fmask(
     out_fname: str,
     metadata_out_fname: str,
     workdir: str,
-    acq_parser_hint=None,
+    acq_parser_hint: PackageIdentificationHint = None,
     cloud_buffer_distance: float = 150.0,
     cloud_shadow_buffer_distance: float = 300.0,
     parallax_test: bool = False,

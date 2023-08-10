@@ -1,6 +1,10 @@
 """Contains the base implementations for the acquisition and AcquisitionsContainer objects."""
+from __future__ import annotations
+
+import datetime
 from functools import total_ordering
 from os.path import join as pjoin
+from typing import Dict, List
 
 import dateutil
 import numpy as np
@@ -12,8 +16,18 @@ from ..geobox import GriddedGeoBox
 from ..modtran import read_spectral_response
 from ..tiling import generate_tiles
 
+#: Acquisitions grouped by resolution
+#:
+#: Of the form:
+#:    {'RES-GROUP-0: [acquisition, acquisition],
+#:     'RES-GROUP-1: [acquisition, acquisition],
+#:     'RES-GROUP-N: [acquisition, acquisition]}
+#:
+#: (the "RES-GROUP-" naming was chosen originally and is now depended on by downstream users.)
+ResolutionGroups = Dict[str, List["Acquisition"]]
 
-def set_utc(acq_dt):
+
+def set_utc(acq_dt: datetime.datetime) -> datetime.datetime:
     """Check the timezone and convert to UTC if either no timezone
     exists, or if the acquisition datetime is not in UTC.
 
@@ -31,7 +45,7 @@ def set_utc(acq_dt):
 
 
 class AcquisitionsContainer:
-    """A container for dealing with a hierarchial structure
+    """A container for dealing with a hierarchical structure
     of acquisitions from different resolution groups, granules,
     but all part of the same geospatial area or scene.
 
@@ -39,8 +53,9 @@ class AcquisitionsContainer:
     groups.
     """
 
-    def __init__(self, label, granules):
+    def __init__(self, label: str, granules: dict[str, ResolutionGroups]):
         self._granules = granules
+        #: In practice, usually the name of the input dataset file/tar.
         self._label = label
 
     def __repr__(self):
@@ -79,7 +94,7 @@ class AcquisitionsContainer:
         :param granule:
             A `str` defining the granule layer from which to retrieve
             the acquisitions from. If `None` (default), return the
-            acquisitions from the the first granule in the
+            acquisitions from the first granule in the
             `AcquisitionsContainer.granule` list.
 
         :param only_supported_bands:
@@ -103,13 +118,15 @@ class AcquisitionsContainer:
         else:
             return acqs
 
-    def get_granule(self, granule=None, container=False):
+    def get_granule(
+        self, granule=None, container=False
+    ) -> ResolutionGroups | AcquisitionsContainer:
         """Return a granule containing groups of `Acquisition` objects.
 
         :param granule:
             A `str` defining the granule layer from which to retrieve
             groups of `Acquisition` objects. Default is `None`, which
-            returns the the first granule in the
+            returns the first granule in the
             `AcquisitionsContainer.granule` list.
 
         :param container:
@@ -220,7 +237,7 @@ class AcquisitionsContainer:
 
         return groups
 
-    def get_all_acquisitions(self, granule=None):
+    def get_all_acquisitions(self, granule=None) -> list[Acquisition]:
         """Retrieve all supported acquisitions from a given granule.
         This will ignore the fact that acquisitions could be from
         different resolution groups, and put them all in a single

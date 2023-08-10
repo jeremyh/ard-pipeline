@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 
 """Ancillary dataset retrieval and storage."""
-
+import configparser
 import datetime
+import json
 import os.path
 from os.path import join as pjoin
-
-# import glob
-# from urllib.parse import urlparse
 from posixpath import join as ppjoin
+from typing import Dict, List, Optional, Set, Tuple, TypedDict
 
+import attr
 import h5py
 import numpy as np
 import pandas as pd
@@ -17,7 +17,11 @@ from geopandas import GeoSeries
 from shapely import wkt
 from shapely.geometry import Point, Polygon
 
-from wagl.brdf import get_brdf_data
+from wagl.acquisition import (
+    Acquisition,
+    AcquisitionsContainer,
+)
+from wagl.brdf import BrdfDict, get_brdf_data
 from wagl.constants import (
     POINT_FMT,
     AerosolTier,
@@ -39,6 +43,12 @@ from wagl.hdf5 import (
 )
 from wagl.metadata import current_h5_metadata
 from wagl.satellite_solar_angles import create_coordinator, create_vertices
+
+#: A H5 file path and dataset name, separated by a colon.
+#: h5_path, dataset_name = this.split(":")
+PathWithDataset = str
+
+LonLat = Tuple[float, float]
 
 ECWMF_LEVELS = [
     1,
@@ -183,10 +193,33 @@ def _collect_ancillary(
         )
 
 
+class AerosolDict(TypedDict):
+    # An optional, user-specified value.
+    user: Optional[float]
+    # HDF5 file path.
+    pathname: str
+
+
+class WaterVapourDict(TypedDict):
+    # An optional, user-specified value.
+    user: Optional[float]
+    # The folder that water vapour files are found.
+    # The files inside are expected of format: "pr_wtr.eatm.{year}.h5"
+    pathname: str
+
+
+class NbarPathsDict(TypedDict):
+    aerosol_dict: AerosolDict
+    water_vapour_dict: WaterVapourDict
+    ozone_path: str
+    dem_path: str
+    brdf_dict: BrdfDict
+
+
 def collect_ancillary(
-    container,
+    container: AcquisitionsContainer,
     satellite_solar_group,
-    nbar_paths,
+    nbar_paths: NbarPathsDict,
     sbt_path=None,
     invariant_fname=None,
     vertices=(3, 3),
@@ -256,6 +289,14 @@ def collect_ancillary(
         An opened `h5py.File` object, that is either in-memory using the
         `core` driver, or on disk.
     """
+
+    # This requirement was stated in the docstring, let's just enforce it.
+    if len(container.granules) > 1:
+        raise RuntimeError(
+            "Container should consist of a single Granule or None, only. "
+            "Use `AcquisitionsContainer.get_granule` method prior to calling this function."
+        )
+
     # Initialise the output files
     if out_group is None:
         fid = h5py.File("ancillary.h5", "w", driver="core", backing_store=False)
@@ -467,13 +508,115 @@ def collect_sbt_ancillary(
         return fid
 
 
+@attr.define
+class AncillaryConfig:
+    """
+    The configuration settings for finding ancillary data used in data processing.
+    """
+
+    aerosol_dict: AerosolDict
+    water_vapour_dict: WaterVapourDict
+    dem_path: PathWithDataset
+    brdf_dict: BrdfDict
+    ozone_path: Optional[str] = None
+
+    @classmethod
+    def from_luigi(cls, luigi_config_path: Optional[str] = None):
+        """
+        Load ancillary config from luigi config file.
+
+        If no path is given, it will try to load from the default luigi locations.
+
+            /etc/luigi/luigi.cfg
+            luigi.cfg
+            $LUIGI_CONFIG_PATH
+
+        (the latter is set by most DEA modules on load)
+        """
+        if not luigi_config_path:
+            for path in (
+                "/etc/luigi/luigi.cfg",
+                "luigi.cfg",
+                os.environ.get("LUIGI_CONFIG_PATH"),
+            ):
+                if path and os.path.exists(path):
+                    luigi_config_path = path
+                    break
+            else:
+                raise ValueError(
+                    "No luigi config path given, and no default config found"
+                )
+
+        config = configparser.ConfigParser()
+        config.read(luigi_config_path)
+
+        def get_dict(field):
+            try:
+                return json.loads(config.get("DataStandardisation", field))
+            except json.JSONDecodeError as e:
+                raise ValueError(
+                    f"Config is not a valid json dict: DataStandardisation->{field!r}"
+                ) from e
+
+        return cls(
+            aerosol_dict=get_dict("aerosol"),
+            water_vapour_dict=get_dict("water_vapour"),
+            ozone_path=config.get("DataStandardisation", "ozone_path"),
+            dem_path=config.get("DataStandardisation", "dem_path"),
+            brdf_dict=get_dict("brdf"),
+        )
+
+
+def find_needed_acquisition_ancillary(
+    acquisition: Acquisition,
+    config: AncillaryConfig,
+) -> Tuple[Set[str], List[str]]:
+    """
+    Find which Ancillary Paths are needed to process this acquisition.
+
+    Parameters:
+    -----------
+    container : AcquisitionsContainer
+        Container object containing acquisitions.
+    config : AncillaryConfig
+        Config object containing ancillary paths.
+
+    Returns:
+    --------
+        The tiers ("DEFINITIVE", "FALLBACK_DATASET") being used and the list of ancillary
+        paths needed.
+
+        The ancillary is found separately for ALPHA_1 and ALPHA_2, so
+        in theory there could be two tiers. (?)
+
+    """
+    dem_file_path = config.dem_path.split(":")[0]
+
+    paths = [
+        config.aerosol_dict["pathname"],
+        find_water_vapour_definitive_path(acquisition, config.water_vapour_dict),
+        config.ozone_path,
+        dem_file_path,
+    ]
+
+    tiers: Set[str] = set()
+
+    # This currently loads the H5 files. Maybe they're empty?
+    params = get_brdf_data(acquisition, config.brdf_dict)
+    for param, brdf_data in params.items():
+        tiers += brdf_data["tier"]
+        paths.extend(brdf_data["id"])
+
+    return tiers, paths
+
+
 def collect_nbar_ancillary(
-    container,
-    aerosol_dict=None,
-    water_vapour_dict=None,
-    ozone_path=None,
-    dem_path=None,
-    brdf_dict=None,
+    container: AcquisitionsContainer,
+    aerosol_dict: AerosolDict = None,
+    water_vapour_dict: WaterVapourDict = None,
+    ozone_path: Optional[str] = None,
+    dem_path: PathWithDataset = None,
+    brdf_dict: BrdfDict = None,
     out_group=None,
     compression=H5CompressionFilter.LZF,
     filter_opts=None,
@@ -655,12 +798,16 @@ def aggregate_ancillary(granule_groups):
         attach_attributes(dset, attrs)
 
 
-def get_aerosol_data(acquisition, aerosol_dict):
+def get_aerosol_data(
+    acquisition: Acquisition, aerosol_dict: AerosolDict
+) -> Tuple[float, Dict]:
     """Extract the aerosol value for an acquisition.
     The version 2 retrieves the data from a HDF5 file, and provides
     more control over how the data is selected geo-metrically.
     Better control over timedeltas.
     """
+    aerosol_fname = aerosol_dict["pathname"]
+
     dt = acquisition.acquisition_datetime
     geobox = acquisition.gridded_geo_box()
     roi_poly = Polygon(
@@ -679,8 +826,6 @@ def get_aerosol_data(acquisition, aerosol_dict):
         metadata = {"id": np.array([], VLEN_STRING), "tier": tier.name}
 
         return aerosol_dict["user"], metadata
-
-    aerosol_fname = aerosol_dict["pathname"]
 
     data = None
     delta_tolerance = datetime.timedelta(days=0.5)
@@ -725,7 +870,7 @@ def get_aerosol_data(acquisition, aerosol_dict):
     return data, metadata
 
 
-def get_elevation_data(lonlat, pathname):
+def get_elevation_data(lonlat: LonLat, pathname: PathWithDataset):
     """Get elevation data for a scene.
 
     :param lon_lat:
@@ -734,7 +879,7 @@ def get_elevation_data(lonlat, pathname):
         float (2-tuple)
 
     :pathname:
-        The pathname of the DEM with a ':' to seperate the
+        The pathname of the DEM with a ':' to separate the
         dataset name.
     :type dem_dir:
         str
@@ -754,11 +899,11 @@ def get_elevation_data(lonlat, pathname):
     return data, metadata
 
 
-def get_ozone_data(ozone_fname, lonlat, time):
+def get_ozone_data(ozone_fname: str, lonlat: LonLat, acq_time: datetime.datetime):
     """Get ozone data for a scene. `lonlat` should be the (x,y) for the centre
     the scene.
     """
-    dname = time.strftime("%b").lower()
+    dname = acq_time.strftime("%b").lower()
 
     try:
         data, md_uuid = get_pixel(ozone_fname, dname, lonlat)
@@ -773,24 +918,25 @@ def get_ozone_data(ozone_fname, lonlat, time):
     return data, metadata
 
 
-def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1, tolerance=1):
+def get_water_vapour(
+    acquisition: Acquisition,
+    water_vapour_dict: WaterVapourDict,
+    scale_factor=0.1,
+    tolerance=1,
+):
     """Retrieve the water vapour value for an `acquisition` and the
     path for the water vapour ancillary data.
     """
-    dt = acquisition.acquisition_datetime
-    geobox = acquisition.gridded_geo_box()
+    datafile = find_water_vapour_definitive_path(acquisition, water_vapour_dict)
 
-    year = dt.strftime("%Y")
+    dt = acquisition.acquisition_datetime
     hour = dt.timetuple().tm_hour
-    filename = f"pr_wtr.eatm.{year}.h5"
 
     if "user" in water_vapour_dict:
         metadata = {"id": np.array([], VLEN_STRING), "tier": WaterVapourTier.USER.name}
         return water_vapour_dict["user"], metadata
 
-    water_vapour_path = water_vapour_dict["pathname"]
-
-    datafile = pjoin(water_vapour_path, filename)
+    geobox = acquisition.gridded_geo_box()
 
     if os.path.isfile(datafile):
         with h5py.File(datafile, "r") as fid:
@@ -843,6 +989,17 @@ def get_water_vapour(acquisition, water_vapour_dict, scale_factor=0.1, tolerance
     metadata = {"id": np.array([md_uuid], VLEN_STRING), "tier": tier.name}
 
     return data, metadata
+
+
+def find_water_vapour_definitive_path(
+    acquisition: Acquisition, water_vapour_dict: Dict[str, str]
+) -> str:
+    dat = acquisition.acquisition_datetime
+    year = dat.strftime("%Y")
+    filename = f"pr_wtr.eatm.{year}.h5"
+    water_vapour_path = water_vapour_dict["pathname"]
+    datafile = pjoin(water_vapour_path, filename)
+    return datafile
 
 
 def ecwmf_elevation(datafile, lonlat):

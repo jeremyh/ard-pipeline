@@ -1,4 +1,4 @@
-FROM ubuntu:focal as builder
+FROM ubuntu:jammy as builder
 SHELL ["/bin/bash", "-c"]
 
 ENV BUILD_DIR=/build

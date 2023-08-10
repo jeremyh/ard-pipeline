@@ -6,7 +6,7 @@ import click
 from botocore.exceptions import ClientError
 
 from tesp.workflow import Package
-from wagl.acquisition import acquisitions
+from wagl.acquisition import PackageIdentificationHint, acquisitions
 
 
 @click.command()
@@ -14,7 +14,7 @@ from wagl.acquisition import acquisitions
 @click.option("--acq-parser-hint", required=True)
 @click.option("--s3-bucket", required=True)
 @click.option("--s3-prefix", required=True)
-def main(level1_path, acq_parser_hint, s3_bucket, s3_prefix):
+def main(level1_path, acq_parser_hint: PackageIdentificationHint, s3_bucket, s3_prefix):
     container = acquisitions(level1_path, hint=acq_parser_hint)
     [granule] = container.granules
     acq = container.get_acquisitions(None, granule, False)[0]

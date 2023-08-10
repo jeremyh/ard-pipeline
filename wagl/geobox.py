@@ -47,8 +47,8 @@ class GriddedGeoBox:
     located on grid corners
     """
 
-    @staticmethod
-    def from_dataset(dataset):
+    @classmethod
+    def from_dataset(cls, dataset):
         """Return the GriddedGeoBox that encloses the full extent of
         the supplied Rasterio or GDAL dataset.
 

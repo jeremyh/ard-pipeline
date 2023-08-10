@@ -8,7 +8,7 @@ from rasterio.warp import reproject as rio_reproject
 from s2cloudless import S2PixelCloudDetector
 
 from eugl.metadata import s2cloudless_metadata
-from wagl.acquisition import acquisitions
+from wagl.acquisition import PackageIdentificationHint, acquisitions
 
 S2CL_BANDS = [
     "BAND-1",
@@ -118,7 +118,7 @@ def s2cloudless_processing(
     mask_out_fname,
     metadata_out_fname,
     workdir,
-    acq_parser_hint=None,
+    acq_parser_hint: PackageIdentificationHint = None,
     threshold=THRESHOLD,
     average_over=AVERAGE_OVER,
     dilation_size=DILATION_SIZE,

@@ -14,7 +14,28 @@ from wagl.constants import BandType
 class AcquisitionLoadZipTest(unittest.TestCase):
     def test_load_acquisitions_s2a_scene1(self):
         container = acquisitions(S2A_SCENE1)
-        assert len(container.get_all_acquisitions()) == 11
+
+        assert container.granules == [
+            "S2A_OPER_MSI_L1C_TL_SGS__20171207T032513_A012840_T55JEJ_N02.06"
+        ]
+
+        all_acquisitions = container.get_all_acquisitions()
+        assert len(all_acquisitions) == 11
+        # Sanity check
+        assert sorted(acq.band_name for acq in all_acquisitions) == [
+            "BAND-1",
+            "BAND-11",
+            "BAND-12",
+            "BAND-2",
+            "BAND-3",
+            "BAND-4",
+            "BAND-5",
+            "BAND-6",
+            "BAND-7",
+            "BAND-8",
+            "BAND-8A",
+        ]
+
         assert len(container.get_acquisitions(group="RES-GROUP-0")) == 4
         assert len(container.get_acquisitions(group="RES-GROUP-1")) == 6
         assert len(container.get_acquisitions(group="RES-GROUP-2")) == 1

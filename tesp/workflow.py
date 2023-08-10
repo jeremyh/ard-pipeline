@@ -22,7 +22,11 @@ from eugl.gqa import GQATask
 from tesp.constants import ProductPackage
 from tesp.metadata import _get_tesp_metadata
 from tesp.package import package_non_standard, write_stac_metadata
-from wagl.acquisition import acquisitions, preliminary_acquisitions_data
+from wagl.acquisition import (
+    PackageIdentificationHint,
+    acquisitions,
+    preliminary_acquisitions_data,
+)
 from wagl.logs import STATUS_LOGGER, TASK_LOGGER
 from wagl.singlefile_workflow import DataStandardisation
 
@@ -81,7 +85,7 @@ class RunS2Cloudless(luigi.Task):
     level1 = luigi.Parameter()
     granule = luigi.Parameter()
     workdir = luigi.Parameter()
-    acq_parser_hint = luigi.OptionalParameter(default="")
+    acq_parser_hint: PackageIdentificationHint = luigi.OptionalParameter(default="")
     threshold = luigi.FloatParameter(default=s2cl.THRESHOLD)
     average_over = luigi.IntParameter(default=s2cl.AVERAGE_OVER)
     dilation_size = luigi.IntParameter(default=s2cl.DILATION_SIZE)

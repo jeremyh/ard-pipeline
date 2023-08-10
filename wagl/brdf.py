@@ -23,6 +23,7 @@ import datetime
 import logging
 import os
 from os.path import join as pjoin
+from typing import Dict, List, Literal, Tuple, TypedDict
 
 import h5py
 import numpy as np
@@ -36,7 +37,9 @@ from rasterio.crs import CRS
 from rasterio.features import rasterize
 from shapely import ops, wkt
 from shapely.geometry import box
+from shapely.geometry.base import BaseGeometry
 
+from wagl.acquisition import Acquisition
 from wagl.constants import BrdfDirectionalParameters, BrdfModelParameters, BrdfTier
 from wagl.data import read_subset
 from wagl.hdf5 import VLEN_STRING, H5CompressionFilter
@@ -49,6 +52,36 @@ _LOG = logging.getLogger(__name__)
 # Aqua launched 2002-05-04, so we'll add a buffer for determining the start
 # date for using definitive data.
 DEFINITIVE_START_DATE = datetime.datetime(2002, 7, 1).date()
+
+
+class BrdfBandDict(TypedDict):
+    iso: float
+    vol: float
+    geo: float
+
+
+class BrdfDict(TypedDict):
+    #: Optionally, use this user-specified value instead of looking up the data.
+    #: (A dict of band-aliases-names-to-value.)
+    user: Dict[str, BrdfBandDict]
+
+    #: Base BRDF directory.
+    #: Eg. '/g/data/v10/eoancillarydata-2/BRDF/MCD43A1.061'
+    #:
+    #: This dir should contain H5 files inside day subdirectories:
+    #: Eg. '2011.01.29/MCD43A1.A2011014.h29v11.061.2021181032509.h5'
+    brdf_path: str
+
+    #: The fallback brdf directory.
+    #: Eg. '/g/data/v10/eoancillarydata-2/BRDF_FALLBACK/MCD43A1.006'
+    #:
+    #: This dir should contain a h5 files in subdirectories for each day-of-year.
+    #: Eg. '176/MCD43A1.JLAV.006.h30v10.DOY.176.h5'
+    brdf_fallback_path: str
+
+    #: Single ocean mask file.
+    #: Eg. '/g/data/v10/eoancillarydata-2/ocean_mask/base_oz_tile_set_water_mask_geotif.tif'
+    ocean_mask_path: str
 
 
 class BRDFLoaderError(Exception):
@@ -83,31 +116,24 @@ def _date_proximity(cmp_date, date_interpreter=lambda x: x):
     return _proximity_comparator
 
 
-def get_brdf_dirs_modis(brdf_root, scene_date, pattern="%Y.%m.%d"):
+def get_brdf_dirs_modis(
+    brdf_root_dir: str, scene_date: datetime.date, pattern="%Y.%m.%d"
+):
     """Get list of MODIS BRDF directories for the dataset.
 
-    :param brdf_root:
-        BRDF root directory.
-    :type brdf_root:
-        :py:class:`str`
-
-    :param scene_date:
-        Scene Date.
-    :type scene_date:
-        :py:class:`datetime.date`
+    A Brdf root directory contains a list of day directories:
+        MCD43A1.061/2011.01.14/MCD43A1.A2011014.h29v10.061.2021181032544.h5
 
     :param pattern:
         A string handed to strptime to interpret directory names into
         observation dates for the brdf ancillary.
-    :type pattern:
-        :py:class:`str`
 
     :return:
-       A string containing the closest matching BRDF directory.
+       A string containing the closest matching BRDF directory name inside the brdf root..
 
     """
     dirs = []
-    for dname in sorted(os.listdir(brdf_root)):
+    for dname in sorted(os.listdir(brdf_root_dir)):
         try:
             dirs.append(datetime.datetime.strptime(dname, pattern).date())
         except ValueError:
@@ -116,7 +142,7 @@ def get_brdf_dirs_modis(brdf_root, scene_date, pattern="%Y.%m.%d"):
     return min(dirs, key=_date_proximity(scene_date)).strftime(pattern)
 
 
-def get_brdf_dirs_fallback(brdf_root, scene_date):
+def get_brdf_dirs_fallback(brdf_root: str, scene_date: datetime.date) -> str:
     """Get list of pre-MODIS BRDF directories for the dataset.
 
     :param brdf_root:
@@ -190,10 +216,26 @@ def coord_transformer(src_crs, dst_crs):
     return result
 
 
+class BrdfSummaryDict(TypedDict):
+    sum: float
+    count: int
+
+
+class BrdfValue(TypedDict):
+    # The source brdf files.
+    id: List[str]
+    # The value.
+    value: float
+
+
 class BrdfTileSummary:
     """A lightweight class to represent the BRDF information gathered from a tile."""
 
-    def __init__(self, brdf_summaries, source_files):
+    def __init__(
+        self,
+        brdf_summaries: Dict[BrdfModelParameters, BrdfSummaryDict],
+        source_files: List[str],
+    ):
         self.brdf_summaries = brdf_summaries
         self.source_files = source_files
 
@@ -201,36 +243,35 @@ class BrdfTileSummary:
     def empty():
         """When the tile is not inside the ROI."""
         return BrdfTileSummary(
-            {key: {"sum": 0.0, "count": 0} for key in BrdfModelParameters}, []
+            {key: BrdfSummaryDict(sum=0.0, count=0) for key in BrdfModelParameters}, []
         )
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         return all(
             self.brdf_summaries[key]["count"] == 0 for key in BrdfModelParameters
         )
 
-    def __add__(self, other):
+    def __add__(self, other: "BrdfTileSummary"):
         """Accumulate information from different tiles."""
 
         def add(key):
             this = self.brdf_summaries[key]
             that = other.brdf_summaries[key]
-            return {
-                "sum": this["sum"] + that["sum"],
-                "count": this["count"] + that["count"],
-            }
+            return BrdfSummaryDict(
+                sum=this["sum"] + that["sum"], count=this["count"] + that["count"]
+            )
 
         return BrdfTileSummary(
             {key: add(key) for key in BrdfModelParameters},
             self.source_files + other.source_files,
         )
 
-    def mean(self):
+    def mean(self) -> Dict[BrdfDirectionalParameters, BrdfValue]:
         """Calculate the mean BRDF parameters."""
         if self.is_empty():
             # possibly over the ocean, so lambertian
             return {
-                key: {"id": self.source_files, "value": 0.0}
+                key: BrdfValue(id=self.source_files, value=0.0)
                 for key in BrdfDirectionalParameters
             }
 
@@ -246,15 +287,15 @@ class BrdfTileSummary:
         }
 
         return {
-            key: {
-                "id": self.source_files,
-                "value": averages[bands[key]] / averages[BrdfModelParameters.ISO],
-            }
+            key: BrdfValue(
+                id=self.source_files,
+                value=averages[bands[key]] / averages[BrdfModelParameters.ISO],
+            )
             for key in BrdfDirectionalParameters
         }
 
 
-def valid_region(acquisition, mask_value=None):
+def valid_region(acquisition, mask_value=None) -> Tuple[BaseGeometry, dict]:
     """Return valid data region for input images based on mask value and input image path."""
     img = acquisition.data()
     gbox = acquisition.gridded_geo_box()
@@ -270,12 +311,11 @@ def valid_region(acquisition, mask_value=None):
         mask = img != 0
 
     shapes = rasterio.features.shapes(mask.astype("uint8"), mask=mask)
-    shape = ops.unary_union(
+    shape: BaseGeometry = ops.unary_union(
         [shapely.geometry.shape(shape) for shape, val in shapes if val == 1]
     )
 
-    # convex hull
-    geom = shape.convex_hull
+    geom: BaseGeometry = shape.convex_hull
 
     # buffer by 1 pixel
     geom = geom.buffer(1, join_style=3, cap_style=3)
@@ -302,7 +342,9 @@ def valid_region(acquisition, mask_value=None):
     return geom, crs
 
 
-def load_brdf_tile(src_poly, src_crs, fid, dataset_name, fid_mask):
+def load_brdf_tile(
+    src_poly, src_crs, fid, dataset_name: str, fid_mask
+) -> BrdfTileSummary:
     """Summarize BRDF data from a single tile."""
     ds = fid[dataset_name]
 
@@ -373,9 +415,32 @@ def load_brdf_tile(src_poly, src_crs, fid, dataset_name, fid_mask):
     )
 
 
+class NoBrdfRootError(ValueError):
+    """
+    The configured BRDF folder doesn't exist, or has no data.
+
+    This is a hard error if you have specified a BRDF directory.
+    """
+
+    ...
+
+
+AncillaryTier = Literal["DEFINITIVE", "FALLBACK_DATASET"]
+
+
+class LoadedBrdfCoverageDict(TypedDict):
+    data_source: Literal["BRDF"]
+    tier: AncillaryTier
+    id: np.ndarray[str]
+    value: float
+
+
 def get_brdf_data(
-    acquisition, brdf, compression=H5CompressionFilter.LZF, filter_opts=None
-):
+    acquisition: Acquisition,
+    brdf: BrdfDict,
+    compression=H5CompressionFilter.LZF,
+    filter_opts=None,
+) -> Dict[BrdfDirectionalParameters, LoadedBrdfCoverageDict]:
     """Calculates the mean BRDF value for the given acquisition,
     for each BRDF parameter ['geo', 'iso', 'vol'] that covers
     the acquisition's extents.
@@ -445,41 +510,45 @@ def get_brdf_data(
 
     src_poly, src_crs = valid_region(acquisition)
     src_crs = rasterio.crs.CRS(**src_crs)
-    brdf_datasets = acquisition.brdf_datasets
+
+    brdf_datasets: List[str] = acquisition.brdf_datasets
 
     # Get the date of acquisition
     dt = acquisition.acquisition_datetime.date()
 
-    # Determine if we're being forced into fallback
-    if os.path.isdir(brdf_primary_path):
-        # Compare the scene date and MODIS BRDF start date to select the
-        # BRDF data root directory.
-        # Scene dates outside this range are to use the fallback data
-        brdf_dir_list = sorted(os.listdir(brdf_primary_path))
+    # Have they provided a BRDF path?
+    if brdf_primary_path:
+        # If they specified a directory that doesn't exist, that's a system error.
+        # But if the date is outside our available range, go to fallback brdf.
+        if not os.path.isdir(brdf_primary_path):
+            raise NoBrdfRootError(
+                f"No BRDF dir found on system. Expecting {brdf_primary_path!r}"
+            )
+        brdf_dirs = os.listdir(brdf_primary_path)
+        if not brdf_dirs:
+            raise NoBrdfRootError(
+                f"No BRDF data found on system. Expecting inside {brdf_primary_path!r}"
+            )
 
-        try:
-            brdf_dir_range = [brdf_dir_list[0], brdf_dir_list[-1]]
-            brdf_range = [
-                datetime.date(*[int(x) for x in y.split(".")]) for y in brdf_dir_range
-            ]
-
-            fallback_brdf = dt < DEFINITIVE_START_DATE or dt > brdf_range[1]
-        except IndexError:
-            fallback_brdf = True  # use fallback data if all goes wrong
-
+        # Compare the scene date and MODIS BRDF date to select the BRDF directory.
+        last_brdf_dir = sorted(brdf_dirs)[-1]
+        last_brdf_date = datetime.date(*[int(x) for x in last_brdf_dir.split(".")])
+        use_fallback_brdf = (dt < DEFINITIVE_START_DATE) or (dt > last_brdf_date)
     else:
-        fallback_brdf = True
+        use_fallback_brdf = True
 
-    def get_tally(fallback_brdf, dt):
+    def get_tally(
+        use_fallback_brdf: bool, dt: datetime.datetime
+    ) -> Dict[str, BrdfTileSummary]:
         # get all HDF files in the input dir
-        if fallback_brdf:
+        if use_fallback_brdf:
             brdf_base_dir = brdf_secondary_path
-            brdf_dirs = get_brdf_dirs_fallback(brdf_base_dir, dt)
+            brdf_day_dir = get_brdf_dirs_fallback(brdf_base_dir, dt)
         else:
             brdf_base_dir = brdf_primary_path
-            brdf_dirs = get_brdf_dirs_modis(brdf_base_dir, dt)
+            brdf_day_dir = get_brdf_dirs_modis(brdf_base_dir, dt)
 
-        dbDir = pjoin(brdf_base_dir, brdf_dirs)
+        dbDir = pjoin(brdf_base_dir, brdf_day_dir)
         tile_list = [
             pjoin(folder, f)
             for (folder, _, filelist) in os.walk(dbDir)
@@ -487,7 +556,7 @@ def get_brdf_data(
             if f.endswith(".h5")
         ]
 
-        tally = {}
+        tally: Dict[str, BrdfTileSummary] = {}
         with rasterio.open(brdf_ocean_mask_path, "r") as fid_mask:
             for ds in brdf_datasets:
                 tally[ds] = BrdfTileSummary.empty()
@@ -498,40 +567,43 @@ def get_brdf_data(
                         )
         return tally
 
-    tally = get_tally(fallback_brdf, dt)
+    tally = get_tally(use_fallback_brdf, dt)
 
     def is_empty(tally):
         return any(tally[ds].is_empty() for ds in brdf_datasets)
 
     days_back = 0
-    while not fallback_brdf and is_empty(tally):
+    while not use_fallback_brdf and is_empty(tally):
         if days_back > 30:
             tally = get_tally(True, dt)
             break
 
         days_back += 1
-        tally = get_tally(fallback_brdf, dt - datetime.timedelta(days=days_back))
+        tally = get_tally(use_fallback_brdf, dt - datetime.timedelta(days=days_back))
 
-    for ds in brdf_datasets:
-        tally[ds] = tally[ds].mean()
+    dataset_tallies = {ds: tally[ds].mean() for ds in brdf_datasets}
 
-    results = {
-        param: {
-            "data_source": "BRDF",
-            "id": np.array(
+    return {
+        param: LoadedBrdfCoverageDict(
+            data_source="BRDF",
+            id=np.array(
                 list(
-                    {ds_id for ds in brdf_datasets for ds_id in tally[ds][param]["id"]}
+                    {
+                        ds_id
+                        for ds in brdf_datasets
+                        for ds_id in dataset_tallies[ds][param]["id"]
+                    }
                 ),
                 dtype=VLEN_STRING,
             ),
-            "value": np.mean(
-                [tally[ds][param]["value"] for ds in brdf_datasets]
+            value=np.mean(
+                [dataset_tallies[ds][param]["value"] for ds in brdf_datasets]
             ).item(),
-            "tier": BrdfTier.FALLBACK_DATASET.name
-            if fallback_brdf
-            else BrdfTier.DEFINITIVE.name,
-        }
+            tier=(
+                BrdfTier.FALLBACK_DATASET.name
+                if use_fallback_brdf
+                else BrdfTier.DEFINITIVE.name
+            ),
+        )
         for param in BrdfDirectionalParameters
     }
-
-    return results

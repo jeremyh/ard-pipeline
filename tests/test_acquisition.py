@@ -105,7 +105,14 @@ class AcquisitionsContainerTest(unittest.TestCase):
 
     def test_granules_ls5_scene1(self):
         scene = acquisitions(LS5_SCENE1)
+        assert len(scene.granules) == 1
         assert scene.granules[0] == "LT50900812009097ASA00"
+
+        res_groups = scene.get_granule("LT50900812009097ASA00")
+        assert len(res_groups) == 1
+
+        # This will unwrap when there's only one granule.
+        assert scene.get_granule() == res_groups
 
     def test_granules_ls7_scene1(self):
         scene = acquisitions(LS7_SCENE1)
