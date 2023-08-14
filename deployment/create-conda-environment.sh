@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -eux
+unset PIP_REQUIRE_VIRTUALENV
 
 clean_all=false
 
@@ -18,26 +19,37 @@ mkdir -p "${location}"
 
 # TODO: Or in Docker, should it be "$TARGETARCH"?
 arch="$(uname -m)"
-if [ "$arch" = "aarch64" ]; then
-  archname="aarch64"
+if [ "$arch" = "arm64" ]; then
+  archname="arm64"
 else
   archname="x86_64"
 fi
 
-conda_inst="${location}/miniconda.sh"
+if [ "$(uname)" = "Darwin" ]; then
+  osname="MacOSX"
+else
+  osname="Linux"
+fi
 
-wget --progress=dot:giga \
-    -O "${conda_inst}" \
-    "https://repo.anaconda.com/miniconda/Miniconda3-py311_23.5.2-0-Linux-${archname}.sh"
+conda_file="Miniconda3-py311_23.5.2-0-${osname}-${archname}.sh"
+conda_inst="${location}/${conda_file}"
 
-chmod +x "${conda_inst}"
+if [ ! -f "${conda_inst}" ]; then
+  wget --progress=dot:giga \
+      -O "${conda_inst}" \
+      "https://repo.anaconda.com/miniconda/${conda_file}"
+  chmod +x "${conda_inst}"
+fi
+
 
 "${conda_inst}" -b -f -p "${location}"
-rm "${conda_inst}"
+set +ux
+# dynamic, so shellcheck can't check it.
+# shellcheck source=/dev/null
+. "${location}/bin/activate"
 
-conda install mamba -n base -c conda-forge
-
-mamba install -y -c conda-forge \
+# conda install -y mamba -n base -c conda-forge
+conda install -y -c conda-forge \
             blosc \
             boost-cpp \
             cairo \
@@ -58,6 +70,9 @@ mamba install -y -c conda-forge \
             scikit-image \
             scipy
 
+
+set -ux
+
 pip install "${pip_args[@]}" \
     "git+https://github.com/sixy6e/idl-functions.git@0.5.4#egg=idl-functions" \
     "git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios" \
@@ -66,4 +81,9 @@ pip install "${pip_args[@]}" \
 
 if [ "$clean_all" = true ]; then
     conda clean --all -y
+    rm "${conda_inst}"
 fi
+
+echo
+echo "Conda installed to ${location}"
+echo "Run 'source ${location}/bin/activate' to activate"
