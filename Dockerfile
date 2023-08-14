@@ -25,43 +25,8 @@ RUN set -o pipefail; \
 WORKDIR ${BUILD_DIR}
 
 # Bump this when newer versions of python are required
-RUN if [[ "$TARGETARCH" == "arm64" ]] ; then export archname="aarch64"; else export archname="x86_64" ; fi; \
-    wget --progress=dot:giga -O /root/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py311_23.5.2-0-Linux-${archname}.sh \
- && chmod +x /root/miniconda.sh \
- && /root/miniconda.sh -b -f -p conda \
- && rm /root/miniconda.sh
-
-RUN pip install --no-cache-dir awscli boto boto3 \
- && conda install mamba -n base -c conda-forge
-
-# TODO: Need to match gdal version? Previuosly GDAL 3.1
-RUN  mamba install -y -c conda-forge \
-            blosc \
-            boost-cpp \
-            cairo \
-            certifi \
-            click \
-            cython \
-            gdal \
-            h5py \
-            hdf5-external-filter-plugins-bitshuffle \
-            hdf5plugin \
-            libnetcdf \
-            lightgbm \
-            numpy \
-            proj \
-            pytables \
-            python-fmask \
-            rasterio \
-            scikit-image \
-            scipy \
-    && conda clean --all -y
-
-# Download the necessary codebases (@versions) (using git now as installs needed version info)
-RUN pip install --no-cache-dir \
-    "git+https://github.com/sixy6e/idl-functions.git@${IDLFUNCTIONS_VERSION}#egg=idl-functions" \
-    "git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios" \
-    "git+https://github.com/ubarsc/python-fmask@pythonfmask-0.5.7#egg=python-fmask"
+COPY deployment/scripts/install_miniconda.sh /root
+RUN /root/install_miniconda.sh
 
 WORKDIR /code
 COPY . ./
