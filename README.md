@@ -27,11 +27,23 @@ A [Justfile](https://github.com/casey/just) is included in the repo for running 
 
 ### Dependencies
 
-You can either create your own environment, or the provided [Dockerfile](Dockerfile).
+You can either create your own environment, or use the provided [Dockerfile](Dockerfile).
 
-Due to the large number of native dependencies, miniconda is the recommended
-way to build your own python environment. See the provided [Docker image](Dockerfile) for
-example setup.
+If building your own environment, miniconda is recommended dur to the large number of
+native dependencies.
+
+A script is provided to build conda with needed dependencies:
+
+```
+    # Create environment in ~/conda directory
+    ./deployment/create-conda-environment.sh ~/conda
+
+    # Activate the environment in the current shell
+    ~/conda/bin/activate
+
+    # Build ARD for development
+    pip install --no-build-isolation --editable .
+```
 
 ### Import errors
 
