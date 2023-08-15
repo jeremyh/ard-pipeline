@@ -62,6 +62,8 @@ conda install -y -c conda-forge \
             hdf5plugin \
             libnetcdf \
             lightgbm \
+            meson \
+            meson-python \
             numpy \
             proj \
             pytables \
@@ -69,7 +71,6 @@ conda install -y -c conda-forge \
             rasterio \
             scikit-image \
             scipy
-
 
 set -ux
 

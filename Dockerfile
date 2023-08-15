@@ -1,4 +1,4 @@
-FROM ubuntu:jammy as builder
+FROM ubuntu:focal as builder
 SHELL ["/bin/bash", "-c"]
 
 ENV BUILD_DIR=/build
@@ -25,8 +25,8 @@ RUN set -o pipefail; \
 WORKDIR ${BUILD_DIR}
 
 # Bump this when newer versions of python are required
-COPY deployment/scripts/install_miniconda.sh /root
-RUN /root/install_miniconda.sh
+COPY deployment/create-conda-environment.sh /root
+RUN /root/create-conda-environment.sh
 
 WORKDIR /code
 COPY . ./
