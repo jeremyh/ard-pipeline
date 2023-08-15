@@ -234,16 +234,20 @@ class BrdfTileSummary:
     def __init__(
         self,
         brdf_summaries: Dict[BrdfModelParameters, BrdfSummaryDict],
+        source_ids: List[str],
         source_files: List[str],
     ):
         self.brdf_summaries = brdf_summaries
+        self.source_ids = source_ids
         self.source_files = source_files
 
     @staticmethod
     def empty():
         """When the tile is not inside the ROI."""
         return BrdfTileSummary(
-            {key: BrdfSummaryDict(sum=0.0, count=0) for key in BrdfModelParameters}, []
+            {key: BrdfSummaryDict(sum=0.0, count=0) for key in BrdfModelParameters},
+            [],
+            [],
         )
 
     def is_empty(self) -> bool:
@@ -263,7 +267,8 @@ class BrdfTileSummary:
 
         return BrdfTileSummary(
             {key: add(key) for key in BrdfModelParameters},
-            self.source_files + other.source_files,
+            sorted(set(self.source_files + other.source_files)),
+            sorted(set(self.source_ids + other.source_ids)),
         )
 
     def mean(self) -> Dict[BrdfDirectionalParameters, BrdfValue]:
@@ -271,7 +276,7 @@ class BrdfTileSummary:
         if self.is_empty():
             # possibly over the ocean, so lambertian
             return {
-                key: BrdfValue(id=self.source_files, value=0.0)
+                key: BrdfValue(id=self.source_ids, value=0.0)
                 for key in BrdfDirectionalParameters
             }
 
@@ -288,7 +293,7 @@ class BrdfTileSummary:
 
         return {
             key: BrdfValue(
-                id=self.source_files,
+                id=self.source_ids,
                 value=averages[bands[key]] / averages[BrdfModelParameters.ISO],
             )
             for key in BrdfDirectionalParameters
@@ -430,6 +435,7 @@ AncillaryTier = Literal["DEFINITIVE", "FALLBACK_DATASET"]
 
 class LoadedBrdfCoverageDict(TypedDict):
     data_source: Literal["BRDF"]
+    local_source_paths: List[str]
     tier: AncillaryTier
     id: np.ndarray[str]
     value: float
@@ -596,6 +602,11 @@ def get_brdf_data(
                 ),
                 dtype=VLEN_STRING,
             ),
+            local_source_paths=[
+                path
+                for ds in brdf_datasets
+                for path in dataset_tallies[ds][param]["source_paths"]
+            ],
             value=np.mean(
                 [dataset_tallies[ds][param]["value"] for ds in brdf_datasets]
             ).item(),

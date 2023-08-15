@@ -42,7 +42,7 @@ def find_needed_level1_ancillary(
             acquisition,
             AncillaryConfig.from_luigi(luigi_config_path),
         )
-        if tiers != 1:
+        if len(tiers) != 1:
             raise ValueError(
                 f"Expected one tier, got: {tiers!r} in {level1_path}. TODO: Should this happen?"
             )
@@ -69,7 +69,7 @@ def find_needed_level1_ancillary(
     help="Output bare paths only, no yaml formatting",
 )
 def main(level1_paths, acq_parser_hint, luigi_config_path, paths_only):
-    for i, (label, tiers, needed_paths) in enumerate(
+    for i, (label, tier, needed_paths) in enumerate(
         find_needed_level1_ancillary(
             level1_paths,
             acq_parser_hint=acq_parser_hint,
@@ -83,7 +83,7 @@ def main(level1_paths, acq_parser_hint, luigi_config_path, paths_only):
             # Readable yaml output with everything.
             label = style(f"{label!r}", fg="blue")
             echo(f"dataset: {label}")
-            echo(f'tier: {style(", ".join(tiers), bold=True)}')
+            echo(f"tier: {style(tier, bold=True)}")
             echo()
             for path in needed_paths:
                 echo(f"- {path!r}")

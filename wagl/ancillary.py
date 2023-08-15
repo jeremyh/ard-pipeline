@@ -604,8 +604,8 @@ def find_needed_acquisition_ancillary(
     # This currently loads the H5 files. Maybe they're empty?
     params = get_brdf_data(acquisition, config.brdf_dict)
     for param, brdf_data in params.items():
-        tiers += brdf_data["tier"]
-        paths.extend(brdf_data["id"])
+        tiers.add(brdf_data["tier"])
+        paths.extend(brdf_data["local_source_paths"])
 
     return tiers, paths
 
