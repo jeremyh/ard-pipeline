@@ -6,7 +6,9 @@ unset PIP_REQUIRE_VIRTUALENV
 clean_all=false
 
 if [ "$clean_all" = true ]; then
-     pip_args=(--no-cache-dir --force-reinstall)
+    pip_args=(--no-cache-dir --force-reinstall)
+else
+    pip_args=(--no-binary :all:)
 fi
 
 location="conda"
@@ -48,8 +50,8 @@ set +ux
 # shellcheck source=/dev/null
 . "${location}/bin/activate"
 
-# conda install -y mamba -n base -c conda-forge
-conda install -y -c conda-forge \
+conda install -y mamba libarchive -n base -c conda-forge
+mamba install -y -c conda-forge \
             blosc \
             boost-cpp \
             cairo \

@@ -348,7 +348,11 @@ def valid_region(acquisition, mask_value=None) -> Tuple[BaseGeometry, dict]:
 
 
 def load_brdf_tile(
-    src_poly, src_crs, fid, dataset_name: str, fid_mask
+    src_poly,
+    src_crs,
+    fid: h5py.File,
+    dataset_name: str,
+    fid_mask: rasterio.DatasetReader,
 ) -> BrdfTileSummary:
     """Summarize BRDF data from a single tile."""
     ds = fid[dataset_name]
@@ -417,6 +421,7 @@ def load_brdf_tile(
     return BrdfTileSummary(
         {param: layer_sum(param.value) for param in BrdfModelParameters},
         [current_h5_metadata(fid)["id"]],
+        [fid.filename],
     )
 
 
@@ -603,9 +608,7 @@ def get_brdf_data(
                 dtype=VLEN_STRING,
             ),
             local_source_paths=[
-                path
-                for ds in brdf_datasets
-                for path in dataset_tallies[ds][param]["source_paths"]
+                path for ds in brdf_datasets for path in tally[ds].source_files
             ],
             value=np.mean(
                 [dataset_tallies[ds][param]["value"] for ds in brdf_datasets]

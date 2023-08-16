@@ -109,7 +109,7 @@ def set_land_sea_bit(
     gridded_geo_box,
     pq_const,
     pqaResult,
-    ancillary_path="/g/data/v10/eoancillarydata/Land_Sea_Rasters",
+    ancillary_path="/g/data/v10/eoancillarydata-2/Land_Sea_Rasters",
 ):
     mask, md = calc_land_sea_mask(gridded_geo_box, ancillary_path)
     bit_index = pq_const.land_sea

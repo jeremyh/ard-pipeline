@@ -597,6 +597,8 @@ def find_needed_acquisition_ancillary(
         find_water_vapour_definitive_path(acquisition, config.water_vapour_dict),
         config.ozone_path,
         dem_file_path,
+        # Always uses the ocean mask.
+        config.brdf_dict["ocean_mask_path"],
     ]
 
     tiers: Set[str] = set()
