@@ -66,7 +66,8 @@ mamba install -y -c conda-forge \
             lightgbm \
             meson \
             meson-python \
-            numpy \
+            'numpy<1.24' \
+	    'pandas<2' \
             proj \
             pytables \
             python-fmask \
