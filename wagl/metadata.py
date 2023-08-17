@@ -338,7 +338,7 @@ def create_ard_yaml(res_group_bands, ancillary_group, out_group, parameters, wor
         return result
 
     def software_versions():
-        dist = distribution("wagl")
+        dist = distribution("ard-pipeline")
         return {
             "wagl": {
                 "version": dist.version,
@@ -403,7 +403,7 @@ def create_pq_yaml(acquisition, ancillary, tests_run, out_group):
     :return:
         None; The yaml document is written to the HDF5 file.
     """
-    dist = distribution("wagl")
+    dist = distribution("ard-pipeline")
     source_info = {
         "source_l1t": dirname(acquisition.dir_name),
         "source_reflectance": "NBAR",
