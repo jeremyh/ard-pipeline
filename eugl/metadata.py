@@ -24,12 +24,10 @@ _LOG = logging.getLogger(__name__)
 
 
 def _get_eugl_metadata() -> Dict:
-    dist = distribution("eugl")
     return {
         "software_versions": {
             "eugl": {
-                "version": dist.version,
-                "repo_url": dist.metadata.get("Home-page"),
+                "version": "embedded",
             }
         }
     }
