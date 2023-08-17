@@ -4,6 +4,7 @@
 deployment/modtran/tests/
 deployment/ard-pipeline/scripts/*
 
+conda
 *.o
 *.so
 *.swp
