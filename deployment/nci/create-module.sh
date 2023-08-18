@@ -3,6 +3,7 @@
 set -eou pipefail
 
 this_dir="$(dirname "${0}")"
+cd "${this_dir}"
 
 umask 002
 unset PYTHONPATH
@@ -10,7 +11,7 @@ module use /g/data/v10/public/modules/modulefiles /g/data/v10/private/modules/mo
 
 echo "##########################"
 echo # User can set any of these bash vars before calling to override them
-echo "module_dir = ${module_dir:=/g/data/v10/public/modules/modulefiles}"
+echo "module_dir = ${module_dir:=/g/data/v10/public/modules}"
 echo "swfo_version= ${swfo_version:="swfo-0.0.2"}"
 echo "gost_version = ${gost_version:="gost-0.0.3"}"
 echo "modtran_version = ${modtran_version:="6.0.1"}"
@@ -21,18 +22,18 @@ export module_dir
 
 echoerr() { echo "$@" 1>&2; }
 
-if [[ $# != 1 ]] || [[ "$1" == "--help" ]];
-then
-    echoerr
-    echoerr "Usage: $0 <tagged_ard_version>"
-    exit 1
-fi
-export version="$1"
+#if [[ $# != 1 ]] || [[ "$1" == "--help" ]];
+#then
+#    echoerr
+#    echoerr "Usage: $0 <tagged_ard_version>"
+#    exit 1
+#fi
+version="$(date '+%Y%m%d-%H%M')"
 
 package_name=ard-pipeline
 package_description="ARD Pipeline"
 package_dest=${module_dir}/${package_name}/${version}
-export package_name package_description package_dest
+export package_name package_description package_dest version
 
 printf '# Packaging "%s %s" to "%s" #\n' "$package_name" "$version" "$package_dest"
 
@@ -45,6 +46,7 @@ else
   exit 1
 fi
 
+echo
 echo "Creating Conda environment"
 export conda_dir="${package_dest}/conda"
 "${this_dir}/../create-conda-environment.sh" "${conda_dir}"
@@ -53,16 +55,26 @@ export conda_dir="${package_dest}/conda"
 # shellcheck source=/dev/null
 . "${conda_dir}/bin/activate"
 
+# TODO: Install from tagged version.
+echo
+echo "Installing ard-pipeline"
+cd ../../
+python3 -m pip install -y .
+
+echo
 echo "Adding utility packages"
 conda install -y jq
-pip install -y 'git+https://github.com/sixy6e/mpi-structlog@develop#egg=mpi_structlog' \
+python3 -m pip install -y \
+               "git+https://github.com/sixy6e/mpi-structlog@develop#egg=mpi_structlog" \
                "git+https://github.com/OpenDataCubePipelines/swfo.git@${swfo_version}" \
                "git+https://github.com/OpenDataCubePipelines/gost.git@${gost_version}"
 
+echo
 echo "Adding luigi configs"
 envsubst < "${this_dir}/luigi.cfg.template" > "${package_dest}/etc/luigi.cfg"
 cp -v "${this_dir}/luigi-logging.cfg" "${package_dest}/etc/luigi-logging.cfg"
 
+echo
 echo "Adding datacube config"
 cp -v "${DATACUBE_CONFIG_PATH}" "${package_dest}/etc/datacube.conf"
 
@@ -73,6 +85,8 @@ mkdir -v -p "${modulefile_dir}"
 modulefile_dest="${modulefile_dir}/${version}"
 envsubst < modulefile.template > "${modulefile_dest}"
 echo "Wrote modulefile to ${modulefile_dest}"
+
+# TODO: revoke write permissions on module?
 
 echo
 echo 'Done. Ready:'
