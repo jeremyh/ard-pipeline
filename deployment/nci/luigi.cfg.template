@@ -57,7 +57,7 @@ backup_reference_directory = /g/data/v10/eoancillarydata-2/GCP/GLS2000_GCP_SCENE
 rpc_connect_timeout = 60.0
 rpc_retry_attempts = 10
 rpc_retry_wait = 60
-logging_conf_file = {{ target_modules_repo }}/ard-pipeline/{{ target_version }}/cfg/logging.cfg
+logging_conf_file = ${package_dest}/etc/luigi-logging.cfg
 # max-reschedules = 1
 
 [scheduler]

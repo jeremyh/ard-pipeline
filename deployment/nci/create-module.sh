@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+this_dir="$(dirname "${0}")"
+
+umask 002
+unset PYTHONPATH
+module use /g/data/v10/public/modules/modulefiles /g/data/v10/private/modules/modulefiles
+
+echo "##########################"
+echo # User can set any of these bash vars before calling to override them
+echo "module_dir = ${module_dir:=/g/data/v10/public/modules/modulefiles}"
+echo "swfo_version= ${swfo_version:="swfo-0.0.2"}"
+echo "gost_version = ${gost_version:="gost-0.0.3"}"
+echo "modtran_version = ${modtran_version:="6.0.1"}"
+# Uppercase to match the variable that DEA modules use (If you already have it loaded, we'll take it from there).
+echo "DATACUBE_CONFIG_PATH = ${DATACUBE_CONFIG_PATH:="/g/data/v10/public/modules/dea/20221025/datacube.conf"}"
+
+export module_dir
+
+echoerr() { echo "$@" 1>&2; }
+
+if [[ $# != 1 ]] || [[ "$1" == "--help" ]];
+then
+    echoerr
+    echoerr "Usage: $0 <tagged_ard_version>"
+    exit 1
+fi
+export version="$1"
+
+package_name=ard-pipeline
+package_description="ARD Pipeline"
+package_dest=${module_dir}/${package_name}/${version}
+export package_name package_description package_dest
+
+printf '# Packaging "%s %s" to "%s" #\n' "$package_name" "$version" "$package_dest"
+
+read -p "Continue? [y/N]" -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+  echo "Proceeding..."
+else
+  exit 1
+fi
+
+echo "Creating Conda environment"
+export conda_dir="${package_dest}/conda"
+"${this_dir}/../create-conda-environment.sh" "${conda_dir}"
+
+# dynamic, so shellcheck can't check it.
+# shellcheck source=/dev/null
+. "${conda_dir}/bin/activate"
+
+echo "Adding utility packages"
+conda install -y jq
+pip install -y 'git+https://github.com/sixy6e/mpi-structlog@develop#egg=mpi_structlog' \
+               "git+https://github.com/OpenDataCubePipelines/swfo.git@${swfo_version}" \
+               "git+https://github.com/OpenDataCubePipelines/gost.git@${gost_version}"
+
+echo "Adding luigi configs"
+envsubst < "${this_dir}/luigi.cfg.template" > "${package_dest}/etc/luigi.cfg"
+cp -v "${this_dir}/luigi-logging.cfg" "${package_dest}/etc/luigi-logging.cfg"
+
+echo "Adding datacube config"
+cp -v "${DATACUBE_CONFIG_PATH}" "${package_dest}/etc/datacube.conf"
+
+echo
+echo "Writing modulefile"
+modulefile_dir="${module_dir}/modulefiles/${package_name}"
+mkdir -v -p "${modulefile_dir}"
+modulefile_dest="${modulefile_dir}/${version}"
+envsubst < modulefile.template > "${modulefile_dest}"
+echo "Wrote modulefile to ${modulefile_dest}"
+
+echo
+echo 'Done. Ready:'
+echo "   module load ${package_name}/${version}"
