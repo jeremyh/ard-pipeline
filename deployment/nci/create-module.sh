@@ -32,15 +32,17 @@ echoerr() { echo "$@" 1>&2; }
 #    echoerr "Usage: $0 <tagged_ard_version>"
 #    exit 1
 #fi
-# version="${1}"
-version="$(date '+%Y%m%d-%H%M')"
+
+# They can provide the version number as the first argument, otherwise we'll make a date-based one.
+version="${1:-$(date '+%Y%m%d-%H%M')}"
 
 package_name=ard-pipeline
 package_description="ARD Pipeline"
 package_dest=${module_dir}/${package_name}/${version}
 export package_name package_description package_dest version
 
-printf '# Packaging "%s %s" to "%s" #\n' "$package_name" "$version" "$package_dest"
+echo '#'
+printf '# Packaging "%s %s" to "%s"\n' "$package_name" "$version" "$package_dest"
 
 read -p "Continue? [y/N]" -n 1 -r
 echo
