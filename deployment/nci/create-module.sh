@@ -13,15 +13,15 @@ module load openmpi
 export LC_ALL=en_AU.utf8
 export LANG=C.UTF-8
 
+# User can set any of these bash vars before calling to override them
 echo "##########################"
-echo # User can set any of these bash vars before calling to override them
 echo "module_dir = ${module_dir:=/g/data/v10/public/modules}"
 echo "swfo_version= ${swfo_version:="swfo-0.0.2"}"
 echo "gost_version = ${gost_version:="gost-0.0.3"}"
 echo "modtran_version = ${modtran_version:="6.0.1"}"
 # Uppercase to match the variable that DEA modules use (If you already have it loaded, we'll take it from there).
 echo "DATACUBE_CONFIG_PATH = ${DATACUBE_CONFIG_PATH:="/g/data/v10/public/modules/dea/20221025/datacube.conf"}"
-
+echo "##########################"
 export module_dir swfo_version gost_version modtran_version
 
 echoerr() { echo "$@" 1>&2; }
@@ -41,9 +41,8 @@ package_description="ARD Pipeline"
 package_dest=${module_dir}/${package_name}/${version}
 export package_name package_description package_dest version
 
-echo '#'
-printf '# Packaging "%s %s" to "%s"\n' "$package_name" "$version" "$package_dest"
-
+echo
+printf 'Packaging "%s %s" to "%s"\n' "$package_name" "$version" "$package_dest"
 read -p "Continue? [y/N]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
