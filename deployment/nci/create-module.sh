@@ -54,12 +54,12 @@ fi
 
 echo
 echo "Creating Conda environment"
-export conda_dir="${package_dest}/conda"
-"${this_dir}/../create-conda-environment.sh" "${conda_dir}"
+export conda_root="${package_dest}/conda"
+"${this_dir}/../create-conda-environment.sh" "${conda_root}"
 
 # dynamic, so shellcheck can't check it.
 # shellcheck source=/dev/null
-. "${conda_dir}/bin/activate"
+. "${conda_root}/bin/activate"
 
 # TODO: Install from tagged version.
 echo

@@ -16,29 +16,45 @@ set base          ${module_dir}
 
 module-whatis   "${package_description} ${version}"
 
+setenv LC_ALL en_AU.utf8
+setenv LANG C.UTF-8
+
+if {[module-info command unload]} {system AUTO_ACTIVATE_BASE=false ${conda_root}/bin/conda deactivate}
+
+conflict dea-env
+
+prepend-path    MANPATH        ${conda_root}/man
+prepend-path    MANPATH        ${conda_root}/share/man
+prepend-path    PATH        ${conda_root}/bin
+prepend-path    PATH        ${conda_root}/sbin
+prepend-path    PKG_CONFIG_PATH        ${conda_root}/lib/pkgconfig
+
+# `python install -u` by default
+setenv PYTHONUSERBASE ~/.digitalearthau/ard-pipeline/${version}/local
+# user created envs go here:
+setenv CONDA_ENVS_PATH ~/.digitalearthau/ard-pipeline/${version}/envs
+
+# setenv CONDARC    $userhome/.conda
+setenv CONDA_SOLVER   libmamba
+setenv CONDA_YES      true
+setenv CONDA_CHANNELS "conda-forge"
+
 # Enable segfault tracebacks in py3. https://docs.python.org/3/library/faulthandler.html
 setenv PYTHONFAULTHANDLER 1
-setenv PYTHONUSERBASE ~/.digitalearthau/ard-pipeline/${version}/local
 
+# Maybe add here?
 # setenv GDAL_DATA /g/data/v10/public/modules/dea-env/20221025/share/gdal
 # setenv PROJ_LIB /g/data/v10/public/modules/dea-env/20221025/share/proj
 # setenv PROJ_NETWORK ON
 # setenv UDUNITS2_XML_PATH /g/data/v10/public/modules/dea-env/20221025/share/udunits/udunits2.xml
 # setenv GSETTINGS_SCHEMA_DIR /g/data/v10/public/modules/dea-env/20221025/share/glib-2.0/schemas
 
-# Placed outside of the mode load logic to unload library
 module load modtran/${modtran_version}
 module load openmpi
-
-setenv LC_ALL en_AU.utf8
-setenv LANG C.UTF-8
 
 # the following gets rid of this error "shmem: posix: file name search ..."
 # see here for details https://github.com/underworldcode/underworld2/issues/415
 setenv LD_PRELOAD $::env(OPENMPI_ROOT)/lib/libmpi.so
-
-prepend-path PYTHONPATH ${python_dest}
-prepend-path PATH ${package_dest}/bin
 
 setenv LUIGI_CONFIG_PATH ${package_dest}/etc/luigi.cfg
 setenv DATACUBE_CONFIG_PATH ${package_dest}/etc/datacube.conf
