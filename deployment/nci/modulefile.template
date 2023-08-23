@@ -27,7 +27,7 @@ setenv PYTHONUSERBASE ~/.digitalearthau/ard-pipeline/${version}/local
 # setenv GSETTINGS_SCHEMA_DIR /g/data/v10/public/modules/dea-env/20221025/share/glib-2.0/schemas
 
 # Placed outside of the mode load logic to unload library
-module load modtran/{{ modtran_version }}
+module load modtran/${modtran_version}
 module load openmpi
 
 setenv LC_ALL en_AU.utf8

@@ -8,6 +8,10 @@ cd "${this_dir}"
 umask 002
 unset PYTHONPATH
 module use /g/data/v10/public/modules/modulefiles /g/data/v10/private/modules/modulefiles
+module load openmpi
+
+export LC_ALL=en_AU.utf8
+export LANG=C.UTF-8
 
 echo "##########################"
 echo # User can set any of these bash vars before calling to override them
@@ -18,7 +22,7 @@ echo "modtran_version = ${modtran_version:="6.0.1"}"
 # Uppercase to match the variable that DEA modules use (If you already have it loaded, we'll take it from there).
 echo "DATACUBE_CONFIG_PATH = ${DATACUBE_CONFIG_PATH:="/g/data/v10/public/modules/dea/20221025/datacube.conf"}"
 
-export module_dir
+export module_dir swfo_version gost_version modtran_version
 
 echoerr() { echo "$@" 1>&2; }
 
@@ -28,6 +32,7 @@ echoerr() { echo "$@" 1>&2; }
 #    echoerr "Usage: $0 <tagged_ard_version>"
 #    exit 1
 #fi
+# version="${1}"
 version="$(date '+%Y%m%d-%H%M')"
 
 package_name=ard-pipeline
@@ -58,19 +63,22 @@ export conda_dir="${package_dest}/conda"
 # TODO: Install from tagged version.
 echo
 echo "Installing ard-pipeline"
-cd ../../
-python3 -m pip install -y .
+pushd ../../
+	python3 -m pip install .
+popd
 
 echo
 echo "Adding utility packages"
 conda install -y jq
-python3 -m pip install -y \
-               "git+https://github.com/sixy6e/mpi-structlog@develop#egg=mpi_structlog" \
-               "git+https://github.com/OpenDataCubePipelines/swfo.git@${swfo_version}" \
-               "git+https://github.com/OpenDataCubePipelines/gost.git@${gost_version}"
+# TODO: update these? They aren't used directly by the processor.
+# python3 -m pip install \
+#             "git+https://github.com/sixy6e/mpi-structlog@develop#egg=mpi_structlog" \
+#             "git+https://github.com/OpenDataCubePipelines/swfo.git@${swfo_version}" \
+#             "git+https://github.com/OpenDataCubePipelines/gost.git@${gost_version}"
 
 echo
 echo "Adding luigi configs"
+mkdir -v -p "${package_dest}/etc"
 envsubst < "${this_dir}/luigi.cfg.template" > "${package_dest}/etc/luigi.cfg"
 cp -v "${this_dir}/luigi-logging.cfg" "${package_dest}/etc/luigi-logging.cfg"
 
