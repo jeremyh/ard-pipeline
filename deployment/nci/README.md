@@ -7,7 +7,7 @@ It will show you the variables it's using and ask for confirmation.
 You can override any variables by setting them in bash before calling.
 
 ```
-❯ ./create--module.sh
+❯ ./create-module.sh
 ##########################
 module_dir = /g/data/up71/modules
 swfo_version= swfo-0.0.2

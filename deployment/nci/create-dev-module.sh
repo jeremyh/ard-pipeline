@@ -8,4 +8,3 @@ cd "$this_dir"
 # Create in out dev module dir
 export module_dir="/g/data/up71/modules"
 ./create-module.sh "${@}"
-
