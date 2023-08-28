@@ -13,6 +13,7 @@ import logging
 import math
 import os
 import re
+import shlex
 import shutil
 from collections import Counter, namedtuple
 from datetime import datetime, timezone
@@ -20,6 +21,7 @@ from functools import partial
 from itertools import chain
 from os.path import abspath, basename, exists, isdir
 from os.path import join as pjoin
+from typing import List
 
 import h5py
 import luigi
@@ -141,7 +143,7 @@ class GverifyTask(luigi.Task):
                 self.landsat_scenes_shapefile
             )
 
-            def fixed_extra_parameters():
+            def fixed_extra_parameters() -> List[str]:
                 points_txt = pjoin(workdir, "points.txt")
                 collect_gcp(self.root_fix_qa_location, landsat_scenes, points_txt)
                 return ["-t", "FIXED_LOCATION", "-t_file", points_txt]
@@ -151,13 +153,13 @@ class GverifyTask(luigi.Task):
                 # for sentinel-2 land tiles we prefer grid points
                 # rather than GCPs
                 if acq_info.preferred_gverify_method == "grid":
-                    extra = ["-g", self.grid_size]
+                    extra_gverify_args = ["-g", self.grid_size]
                 else:
-                    extra = fixed_extra_parameters()
+                    extra_gverify_args = fixed_extra_parameters()
             else:
                 # for sea tiles we always pick GCPs
                 location = acq_info.ocean_band()
-                extra = fixed_extra_parameters()
+                extra_gverify_args = fixed_extra_parameters()
 
             # Extract the source band from the results archive
             with h5py.File(self.input()[0].path, "r") as h5:
@@ -200,7 +202,7 @@ class GverifyTask(luigi.Task):
                 vrt_file,
                 source_band,
                 outdir=workdir,
-                extra=extra,
+                extra_gverify_args=extra_gverify_args,
                 resampling=acq_info.preferred_resampling_method,
             )
         except (ValueError, FileNotFoundError, CommandError) as ve:
@@ -230,22 +232,27 @@ class GverifyTask(luigi.Task):
                     pass
 
     def _run_gverify(
-        self, reference, source, outdir, extra=None, resampling=Resampling.bilinear
+        self,
+        reference,
+        source,
+        outdir,
+        extra_gverify_args=None,
+        resampling=Resampling.bilinear,
     ):
         resampling_method = {
             Resampling.nearest: "NN",
             Resampling.bilinear: "BI",
             Resampling.cubic: "CI",
         }
-        extra = extra or []  # Default to empty list
+        extra_gverify_args = extra_gverify_args or []  # Default to empty list
 
-        wrapper = [
+        bash_env_setup = [
             f"export LD_LIBRARY_PATH={self.ld_library_path}:$LD_LIBRARY_PATH; ",
             f"export GDAL_DATA={self.gdal_data}; ",
             f"export GEOTIFF_CSV={self.geotiff_csv}; ",
         ]
 
-        gverify = [
+        gverify_cmd = [
             self.executable,
             "-b",
             reference,
@@ -271,10 +278,16 @@ class GverifyTask(luigi.Task):
             str(self.chip_size),
         ]
 
-        cmd = [" ".join(chain(wrapper, gverify, extra))]
-
-        _LOG.debug("calling gverify {}".format(" ".join(cmd)))
-        run_command(cmd, outdir, timeout=self.timeout, command_name="gverify")
+        cmd = [
+            " ".join(
+                shlex.quote(s)
+                for s in chain(bash_env_setup, gverify_cmd, extra_gverify_args)
+            )
+        ]
+        _LOG.info("gverify call: {}".format(" ".join(cmd)))
+        run_command(
+            cmd, outdir, timeout=self.timeout, command_name="gverify", use_shell=True
+        )
 
 
 class GQATask(luigi.Task):

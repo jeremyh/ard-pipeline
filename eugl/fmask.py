@@ -100,7 +100,7 @@ def uri_to_gdal(url: str):
     return rasterio.path.parse_path(url).as_vsi()
 
 
-def run_command(command, work_dir, timeout=None, command_name=None, allow_shell=False):
+def run_command(command, work_dir, timeout=None, command_name=None, use_shell=False):
     """A simple utility to execute a subprocess command.
     Raises a CalledProcessError for backwards compatibility.
     """
@@ -112,16 +112,17 @@ def run_command(command, work_dir, timeout=None, command_name=None, allow_shell=
             return s.as_posix()
         return str(s)
 
-    command_ = [to_simple_str(o) for o in command]
+    if not use_shell:
+        command = [to_simple_str(o) for o in command]
 
-    printable_command = " ".join([shlex.quote(o) for o in command_])
+    printable_command = " ".join([shlex.quote(o) for o in command])
     _LOG.debug("Running command: %s", printable_command)
     _proc = subprocess.Popen(
-        command_,
+        command,
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         preexec_fn=os.setsid,
-        shell=allow_shell,
+        shell=use_shell,
         cwd=str(work_dir),
     )
 
