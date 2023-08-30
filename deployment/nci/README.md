@@ -22,3 +22,6 @@ Continue? [y/N]
 ```
 
 The script `./create-dev-module.sh` gives an example of calling it with a different module location.
+
+After loading the your new module, run `./check-environment.sh` to check that things load.
+

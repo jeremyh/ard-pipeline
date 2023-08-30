@@ -57,9 +57,13 @@ echo "Creating Conda environment"
 export conda_root="${package_dest}/conda"
 "${this_dir}/../create-conda-environment.sh" "${conda_root}"
 
+set +u
 # dynamic, so shellcheck can't check it.
 # shellcheck source=/dev/null
 . "${conda_root}/bin/activate"
+
+# this seems to be killing conda?
+# set -u
 
 # TODO: Install from tagged version.
 echo
