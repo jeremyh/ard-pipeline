@@ -8,4 +8,3 @@ try:
     __version__ = metadata.version(__name__)
 except metadata.PackageNotFoundError:
     __version__ = "Unpackaged-Install"
-

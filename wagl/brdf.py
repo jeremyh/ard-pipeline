@@ -119,7 +119,7 @@ def _date_proximity(cmp_date, date_interpreter=lambda x: x):
     If two dates are equidistant return the most recent.
 
     :param cmp_date: date to compare list against
-    :param date_interprater: function applied to the list to
+    :param date_interpreter: function applied to the list to
         transform items into dates
     """
 
