@@ -39,7 +39,7 @@ A script is provided to build conda with needed dependencies:
     ./deployment/create-conda-environment.sh ~/conda
 
     # Activate the environment in the current shell
-    ~/conda/bin/activate
+    . ~/conda/bin/activate
 
     # Install ARD for development
     pip install --no-build-isolation --editable .
