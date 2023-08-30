@@ -19,6 +19,7 @@ dependencies = [
     "GDAL>=1.9.2",
     "geopandas>=0.1.1",
     "h5py>=2.5.0",
+    "hdf5plugin",
     "idl-functions>=0.5.2",  # custom package via git, not pypi
     "importlib-metadata;python_version<'3.8'",
     "luigi>2.7.6",
@@ -37,9 +38,7 @@ dependencies = [
     "scipy>=0.14",
     "sentinelhub==3.4.2",
     "shapely>=1.5.13",
-    "structlog>=16.1.0",
-    "blosc2 >=2.0.0,!=2.2.1,!=2.2.2",  # Needed for tables install but they don't seem to declare it?
-    "tables>=3.4.2"
+    "structlog>=16.1.0"
 ]
 dependency-links = [
     "git+git://github.com/sixy6e/idl-functions.git@master#egg=idl-functions",

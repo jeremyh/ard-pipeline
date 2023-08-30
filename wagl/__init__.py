@@ -8,3 +8,8 @@ try:
     __version__ = metadata.version(__name__)
 except metadata.PackageNotFoundError:
     __version__ = "Unpackaged-Install"
+
+
+# Register hdf5 plugins globally.
+# For all usage of h5py.
+import hdf5plugin  # noqa: F401
