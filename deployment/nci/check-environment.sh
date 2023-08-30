@@ -6,7 +6,7 @@ echo Checking environment...
 python3_path=$(which python3)
 
 if [[ ! $python3_path =~ "conda" ]]; then
-  echo "Error: python3 path does not contain 'conda'. Have you loaded the module?"
+  echo "❌ Error: python3 path does not contain 'conda'. Have you loaded the module?"
   exit 1
 fi
 
@@ -48,9 +48,8 @@ EOF
 
 echo -n 'Checking modtran is available...'
 if ! command -v mod6c_cons &> /dev/null; then
-  echo "Error: modtran 'mod6c_cons' not found in PATH"
+  echo "❌: modtran 'mod6c_cons' not found in PATH"
   exit 1
 else
   echo '✅'
 fi
-
