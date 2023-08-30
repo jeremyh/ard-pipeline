@@ -43,6 +43,14 @@ print("Attempting load of fortran-based modules... ", end='', flush=True)
 from wagl import multifile_workflow
 print("✅")
 
+# The previous import of wagl should have initialised the filters.
+print("Attempting hdf5 blosc compression...", end='', flush=True)
+import h5py
+import tempfile
+f = h5py.File(tempfile.mktemp('-test.h5'),'w')
+dset = f.create_dataset("myData", (100, 100), compression=32001)
+print("✅")
+
 EOF
 
 
