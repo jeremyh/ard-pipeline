@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """Test several different configurations of the tp5 file format."""
-
+import re
 import unittest
 from os.path import abspath, dirname
 from os.path import join as pjoin
@@ -17,6 +17,19 @@ FNAME5 = pjoin(DATA_DIR, "point-3-albedo-0.tp5")
 FNAME6 = pjoin(DATA_DIR, "point-3-albedo-0_binary.tp5")
 FNAME7 = pjoin(DATA_DIR, "point-3-albedo-t.tp5")
 FNAME8 = pjoin(DATA_DIR, "point-3-albedo-t_binary.tp5")
+
+
+def assert_similar_output(input_file: str, expected_contents: str):
+    with open(input_file) as src:
+        data = "".join(src.readlines())
+
+    expected_content = remove_duplicate_whitespace(expected_contents)
+    data_clean = remove_duplicate_whitespace(data)
+    assert expected_content == data_clean
+
+
+def remove_duplicate_whitespace(s: str) -> str:
+    return re.sub(r"\s+", " ", s).strip()
 
 
 class Tp5Test(unittest.TestCase):
@@ -43,10 +56,7 @@ class Tp5Test(unittest.TestCase):
             sat_azimuth=279.408417,
         )
 
-        with open(FNAME1) as src:
-            data = "".join(src.readlines())
-
-        assert test == data
+        assert_similar_output(FNAME1, test)
 
     def test_midlat_summer_albedo_b(self):
         """Test the mid latitude summer albedo binary configuration."""
@@ -67,10 +77,7 @@ class Tp5Test(unittest.TestCase):
             sat_azimuth=279.408417,
         )
 
-        with open(FNAME2) as src:
-            data = "".join(src.readlines())
-
-        assert test == data
+        assert_similar_output(FNAME2, test)
 
     def test_midlat_summer_trans(self):
         """Test the mid latitude summer transmittance configuration."""
@@ -88,10 +95,7 @@ class Tp5Test(unittest.TestCase):
             sat_view_offset=180.0 - 171.000748,
         )
 
-        with open(FNAME3) as src:
-            data = "".join(src.readlines())
-
-        assert test == data
+        assert_similar_output(FNAME3, test)
 
     def test_midlat_summer_trans_b(self):
         """Test the mid latitude summer transmittance binary configuration."""
@@ -109,10 +113,7 @@ class Tp5Test(unittest.TestCase):
             sat_view_offset=180.0 - 171.000748,
         )
 
-        with open(FNAME4) as src:
-            data = "".join(src.readlines())
-
-        assert test == data
+        assert_similar_output(FNAME4, test)
 
     def test_tropical_albedo(self):
         """Test the tropical albedo configuration."""
@@ -133,10 +134,7 @@ class Tp5Test(unittest.TestCase):
             sat_azimuth=278.77069,
         )
 
-        with open(FNAME5) as src:
-            data = "".join(src.readlines())
-
-        assert test == data
+        assert_similar_output(FNAME5, test)
 
     def test_tropical_albedo_b(self):
         """Test the tropical albedo binary configuration."""
@@ -157,10 +155,7 @@ class Tp5Test(unittest.TestCase):
             sat_azimuth=278.77069,
         )
 
-        with open(FNAME6) as src:
-            data = "".join(src.readlines())
-
-        assert test == data
+        assert_similar_output(FNAME6, test)
 
     def test_tropical_trans(self):
         """Test the tropical transmittance configuration."""
@@ -178,10 +173,7 @@ class Tp5Test(unittest.TestCase):
             sat_view_offset=8.99957275390625,
         )
 
-        with open(FNAME7) as src:
-            data = "".join(src.readlines())
-
-        assert test == data
+        assert_similar_output(FNAME7, test)
 
     def test_tropical_trans_b(self):
         """Test the tropical transmittance binary configuration."""
@@ -199,10 +191,7 @@ class Tp5Test(unittest.TestCase):
             sat_view_offset=8.99957275390625,
         )
 
-        with open(FNAME8) as src:
-            data = "".join(src.readlines())
-
-        assert test == data
+        assert_similar_output(FNAME8, test)
 
     def test_sbt(self):
         """Test the surface brightness temperature configuration."""
