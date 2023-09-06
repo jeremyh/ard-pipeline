@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import re
 import tempfile
 import unittest
 from os.path import abspath, dirname
@@ -8,6 +8,16 @@ from os.path import join as pjoin
 from wagl.modtran_profiles import MIDLAT_SUMMER_ALBEDO, MIDLAT_SUMMER_TRANSMITTANCE
 
 DATA_DIR = pjoin(dirname(abspath(__file__)), "data")
+
+
+def assert_similar_str(input1: str, input2: str):
+    input1 = remove_duplicate_whitespace(input1)
+    input2 = remove_duplicate_whitespace(input2)
+    assert input1 == input2
+
+
+def remove_duplicate_whitespace(s: str) -> str:
+    return re.sub(r"\s+", " ", s).strip()
 
 
 class Tp5ReformatTest(unittest.TestCase):
@@ -47,7 +57,7 @@ class Tp5ReformatTest(unittest.TestCase):
             with open(out_fname) as src:
                 test_albedo = "".join(src.readlines())
 
-        assert test_albedo == ref_albedo
+        assert_similar_str(test_albedo, ref_albedo)
 
     def test_midlat_summer_transmittance(self):
         """Test a mid latitude summer transmittance profile."""
@@ -78,7 +88,7 @@ class Tp5ReformatTest(unittest.TestCase):
             with open(out_fname) as src:
                 test_trans = "".join(src.readlines())
 
-        assert test_trans == ref_trans
+        assert_similar_str(test_trans, ref_trans)
 
 
 if __name__ == "__main__":

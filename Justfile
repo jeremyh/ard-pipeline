@@ -20,4 +20,4 @@
 
 # Run tests in Docker
 @test:
-    docker run --rm --volume "${PWD}":/tests -w /tests ard:dev pytest
+    docker run --rm --volume "${PWD}/tests":/tests -w /tests ard:dev pytest

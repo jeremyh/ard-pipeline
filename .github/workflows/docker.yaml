@@ -1,11 +1,13 @@
-name: Docker-run-unitests
+name: Docker Tests
 on: [push, pull_request]
 
 jobs:
-    docker_test_runner:
+    build-and-test:
         runs-on: ubuntu-latest
         steps:
-        -   name: Checkout
+        -   name: Checkout code
             uses: actions/checkout@v2
-        -   name: Run docker to execute unittests
-            uses: ./
+        -   name: Build Docker image
+            run: docker build -t ard .
+        -   name: Run pytest in Docker container
+            run: docker run -v ${{ github.workspace }}/tests:/tests ard pytest /tests
