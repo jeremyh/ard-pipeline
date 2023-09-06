@@ -15,7 +15,7 @@ USER root
 # Build deps
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
-       git bzip2 ca-certificates gfortran-10 gcc-10 make software-properties-common libpq-dev wget libarchive13 \
+       git bzip2 libtiff5 ca-certificates gfortran-10 gcc-10 make software-properties-common libpq-dev wget libarchive13 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN set -o pipefail; \
@@ -50,6 +50,7 @@ RUN apt-get update -y \
         libgfortran5 \
         jq \
         awscli \
+	libtiff5 \
         xmlstarlet \
         libjpeg62 \
         unzip \
@@ -65,6 +66,7 @@ RUN mkdir /scripts /granules /output /upload
 COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
 COPY deployment/scripts /scripts
 COPY deployment/configs /configs
+RUN conda init bash
 
 RUN adduser --disabled-password --gecos '' ubuntu
 USER ubuntu

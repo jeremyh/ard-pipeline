@@ -70,6 +70,7 @@ mamba install -y -c conda-forge \
 	    'pandas<2' \
             proj \
             pytables \
+	    pytest \
             python-fmask \
             rasterio \
             scikit-image \
