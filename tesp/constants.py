@@ -17,13 +17,13 @@ class ProductPackage:
     _all_products: ClassVar[set[str]] = {e.value.lower() for e in ArdProducts}
 
     @classmethod
-    def validate_products(cls, product_list):
+    def validate_products(cls, product_list) -> bool:
         return set(product_list).issubset(cls._all_products)
 
     @classmethod
-    def all(cls):
+    def all(cls) -> set[str]:
         return cls._all_products
 
     @classmethod
-    def default(cls):
+    def default(cls) -> set[str]:
         return cls._all_products - cls._default_excludes

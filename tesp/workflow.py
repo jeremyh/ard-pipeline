@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from os.path import basename
 from os.path import join as pjoin
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
 import luigi
 import yaml
@@ -68,8 +68,8 @@ class WorkDir(luigi.Task):
     ARD Task submission phase.
     """
 
-    level1 = luigi.Parameter()
-    workdir = luigi.Parameter()
+    level1: str = luigi.Parameter()
+    workdir: str = luigi.Parameter()
 
     def output(self):
         return luigi.LocalTarget(self.workdir)
@@ -82,13 +82,13 @@ class WorkDir(luigi.Task):
 class RunS2Cloudless(luigi.Task):
     """Execute the s2cloudless algorithm for a given granule."""
 
-    level1 = luigi.Parameter()
-    granule = luigi.Parameter()
-    workdir = luigi.Parameter()
+    level1: str = luigi.Parameter()
+    granule: str = luigi.Parameter()
+    workdir: str = luigi.Parameter()
     acq_parser_hint: PackageIdentificationHint = luigi.OptionalParameter(default="")
-    threshold = luigi.FloatParameter(default=s2cl.THRESHOLD)
-    average_over = luigi.IntParameter(default=s2cl.AVERAGE_OVER)
-    dilation_size = luigi.IntParameter(default=s2cl.DILATION_SIZE)
+    threshold: float = luigi.FloatParameter(default=s2cl.THRESHOLD)
+    average_over: int = luigi.IntParameter(default=s2cl.AVERAGE_OVER)
+    dilation_size: int = luigi.IntParameter(default=s2cl.DILATION_SIZE)
 
     def platform_id(self):
         container = acquisitions(self.level1, hint=self.acq_parser_hint)
@@ -166,14 +166,14 @@ class S2Cloudless(luigi.Task):
 class RunFmask(luigi.Task):
     """Execute the Fmask algorithm for a given granule."""
 
-    level1 = luigi.Parameter()
-    granule = luigi.Parameter()
-    workdir = luigi.Parameter()
-    cloud_buffer_distance = luigi.FloatParameter(default=150.0)
-    cloud_shadow_buffer_distance = luigi.FloatParameter(default=300.0)
-    parallax_test = luigi.BoolParameter()
-    upstream_settings = luigi.DictParameter(default={})
-    acq_parser_hint = luigi.OptionalParameter(default="")
+    level1: str = luigi.Parameter()
+    granule: str = luigi.Parameter()
+    workdir: str = luigi.Parameter()
+    cloud_buffer_distance: float = luigi.FloatParameter(default=150.0)
+    cloud_shadow_buffer_distance: float = luigi.FloatParameter(default=300.0)
+    parallax_test: bool = luigi.BoolParameter()
+    upstream_settings: dict = luigi.DictParameter(default={})
+    acq_parser_hint: PackageIdentificationHint = luigi.OptionalParameter(default="")
 
     def output(self):
         out_fname1 = pjoin(self.workdir, f"{self.granule}.fmask.img")
@@ -207,12 +207,12 @@ class RunFmask(luigi.Task):
 class Fmask(luigi.WrapperTask):
     """A helper task that issues RunFmask Tasks."""
 
-    level1 = luigi.Parameter()
-    workdir = luigi.Parameter()
-    cloud_buffer_distance = luigi.FloatParameter(default=150.0)
-    cloud_shadow_buffer_distance = luigi.FloatParameter(default=300.0)
-    parallax_test = luigi.BoolParameter()
-    acq_parser_hint = luigi.OptionalParameter(default="")
+    level1: str = luigi.Parameter()
+    workdir: str = luigi.Parameter()
+    cloud_buffer_distance: float = luigi.FloatParameter(default=150.0)
+    cloud_shadow_buffer_distance: float = luigi.FloatParameter(default=300.0)
+    parallax_test: bool = luigi.BoolParameter()
+    acq_parser_hint: PackageIdentificationHint = luigi.OptionalParameter(default="")
 
     def requires(self):
         # issues task per granule
@@ -232,32 +232,32 @@ class Package(luigi.Task):
     and gqa have executed successfully.
     """
 
-    level1 = luigi.Parameter()
-    workdir = luigi.Parameter()
-    granule = luigi.OptionalParameter(default="")
-    pkgdir = luigi.Parameter()
-    yamls_dir = luigi.OptionalParameter(default="")
-    cleanup = luigi.BoolParameter()
-    acq_parser_hint = luigi.OptionalParameter(default="")
-    products = luigi.ListParameter(default=ProductPackage.default())
-    qa_products = luigi.ListParameter(default=QA_PRODUCTS)
+    level1: str = luigi.Parameter()
+    workdir: str = luigi.Parameter()
+    granule: str = luigi.OptionalParameter(default="")
+    pkgdir: str = luigi.Parameter()
+    yamls_dir: str = luigi.OptionalParameter(default="")
+    cleanup: bool = luigi.BoolParameter()
+    acq_parser_hint: PackageIdentificationHint = luigi.OptionalParameter(default="")
+    products: Sequence[str] = luigi.ListParameter(default=ProductPackage.default())
+    qa_products: Sequence[str] = luigi.ListParameter(default=QA_PRODUCTS)
 
     # fmask settings
-    cloud_buffer_distance = luigi.FloatParameter(default=150.0)
-    cloud_shadow_buffer_distance = luigi.FloatParameter(default=300.0)
-    parallax_test = luigi.BoolParameter()
+    cloud_buffer_distance: float = luigi.FloatParameter(default=150.0)
+    cloud_shadow_buffer_distance: float = luigi.FloatParameter(default=300.0)
+    parallax_test: bool = luigi.BoolParameter()
 
     # s2cloudless settings
-    threshold = luigi.FloatParameter(default=s2cl.THRESHOLD)
-    average_over = luigi.IntParameter(default=s2cl.AVERAGE_OVER)
-    dilation_size = luigi.IntParameter(default=s2cl.DILATION_SIZE)
+    threshold: float = luigi.FloatParameter(default=s2cl.THRESHOLD)
+    average_over: int = luigi.IntParameter(default=s2cl.AVERAGE_OVER)
+    dilation_size: int = luigi.IntParameter(default=s2cl.DILATION_SIZE)
 
-    non_standard_packaging = luigi.BoolParameter()
-    product_maturity = luigi.OptionalParameter(default="stable")
+    non_standard_packaging: bool = luigi.BoolParameter()
+    product_maturity: Optional[str] = luigi.OptionalParameter(default="stable")
 
     # STAC
-    stac_base_url = luigi.OptionalParameter(default="")
-    explorer_base_url = luigi.OptionalParameter(default="")
+    stac_base_url: Optional[str] = luigi.OptionalParameter(default="")
+    explorer_base_url: Optional[str] = luigi.OptionalParameter(default="")
 
     def requires(self):
         # Ensure configuration values are valid
@@ -461,11 +461,14 @@ class ARDP(luigi.WrapperTask):
     dataset listed in the `level1_list` parameter.
     """
 
-    level1_list = luigi.Parameter()
-    workdir = luigi.Parameter()
-    pkgdir = luigi.Parameter()
-    acq_parser_hint = luigi.OptionalParameter(default="")
-    yamls_dir = luigi.OptionalParameter(default="")
+    level1_list: str = luigi.Parameter(
+        description="A path to a file that contains a list of level1 paths. (confusingly named)"
+    )
+
+    workdir: str = luigi.Parameter()
+    pkgdir: str = luigi.Parameter()
+    acq_parser_hint: PackageIdentificationHint = luigi.OptionalParameter(default="")
+    yamls_dir: str = luigi.OptionalParameter(default="")
 
     def requires(self):
         with open(self.level1_list) as src:
