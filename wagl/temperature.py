@@ -216,7 +216,7 @@ def radiance_conversion(band_array, gain, bias):
 def temperature_conversion(band_array, k1, k2):
     """Converts the radiance image to degrees Kelvin.
 
-    :param image:
+    :param band_array:
         A 2D Numpy array containing the thermal band converted to
         radiance.
 

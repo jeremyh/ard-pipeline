@@ -44,10 +44,11 @@ A script is provided to build conda with needed dependencies:
     # Install ARD for development
     pip install --no-build-isolation --editable .
 
-    # Check that dependencies correctly load
+    # Check the environment for common problems.
+    # (Eg, can we import dependencies?)
     ./deployment/check-environment.sh
 
-    # (note that the last check is for modtran, which you may or may not be using in your environment)
+    # (note that the last check is for Modtran, which you may or may not be using in your environment. On NCI, we can `module load modtran`)
 
 ```
 
