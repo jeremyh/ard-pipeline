@@ -3,8 +3,10 @@
 
 import json
 import shutil
+import uuid
 from pathlib import Path
 from posixpath import join as ppjoin
+from typing import Tuple
 
 import eodatasets3.wagl
 import h5py
@@ -17,6 +19,7 @@ from datacube.utils import jsonify_document
 from eodatasets3 import DatasetAssembler, images, utils
 from eodatasets3.scripts.tostac import dc_to_stac, json_fallback
 from eodatasets3.serialise import from_path, loads_yaml
+from eodatasets3.wagl import Granule
 from rasterio.crs import CRS
 from yaml.representer import Representer
 
@@ -37,15 +40,21 @@ yaml.add_representer(np.float64, Representer.represent_float)
 yaml.add_representer(np.ndarray, Representer.represent_list)
 
 
-def package_non_standard(outdir: str, granule):
+def package_non_standard(
+    base_output_dir: Path, granule: Granule
+) -> Tuple[uuid.UUID, Path]:
     """
     A prototype package alternative that uses wagl's native H5 for storage.
-    It creates a yaml file to go along with the h5, and writes fmask into a h5.
+
+    It will copy the hdf5-file to the output as-is (using dataset subfolders), and
+    generate suitable yaml files for ODC.
     """
     input_hdf5: Path = granule.wagl_hdf5
     assert input_hdf5.exists()
 
-    with DatasetAssembler(collection_location=outdir, naming_conventions="dea") as da:
+    with DatasetAssembler(
+        collection_location=base_output_dir, naming_conventions="dea"
+    ) as da:
         level1 = granule.source_level1_metadata
         da.add_source_dataset(
             level1, auto_inherit_properties=True, inherit_geometry=True
