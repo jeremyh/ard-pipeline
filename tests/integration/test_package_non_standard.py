@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from pathlib import Path
+from pprint import pprint
 
 import pytest
 import yaml
@@ -57,7 +58,12 @@ granule_names = ["LC80920842016180LGN01"]
 def expected_wagl_output(tmp_path):
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
-        "accessories": {},
+        "accessories": {
+            "checksum:sha1": {"path": "ga_ls8c_ard_3-1-0_092084_2016-06-28.sha1"},
+            "metadata:processor": {
+                "path": "ga_ls8c_ard_3-1-0_092084_2016-06-28.proc-info.yaml"
+            },
+        },
         "crs": "epsg:32655",
         "geometry": {
             "coordinates": [
@@ -72,6 +78,48 @@ def expected_wagl_output(tmp_path):
             "type": "Polygon",
         },
         "grids": {
+            "1490": {
+                "shape": [157, 156],
+                "transform": [
+                    1490.4807692307693,
+                    0.0,
+                    360592.5,
+                    0.0,
+                    -1492.452229299363,
+                    -3713092.5,
+                    0.0,
+                    0.0,
+                    1.0,
+                ],
+            },
+            "1497": {
+                "shape": [167, 166],
+                "transform": [
+                    1497.198795180723,
+                    0.0,
+                    352582.5,
+                    0.0,
+                    -1499.0119760479042,
+                    -3705082.5,
+                    0.0,
+                    0.0,
+                    1.0,
+                ],
+            },
+            "2994": {
+                "shape": [84, 83],
+                "transform": [
+                    2994.5783132530123,
+                    0.0,
+                    352575.0,
+                    0.0,
+                    -2980.357142857143,
+                    -3705075.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                ],
+            },
             "default": {
                 "shape": [79, 78],
                 "transform": [
@@ -86,866 +134,557 @@ def expected_wagl_output(tmp_path):
                     1.0,
                 ],
             },
-            "rg0": {
-                "shape": [157, 156],
-                "transform": [
-                    1490.4807692307693,
-                    0.0,
-                    360592.5,
-                    0.0,
-                    -1492.452229299363,
-                    -3713092.5,
-                    0.0,
-                    0.0,
-                    1.0,
-                ],
-            },
-            "rg0_oa_dsm_smoothed": {
-                "shape": [167, 166],
-                "transform": [
-                    1497.198795180723,
-                    0.0,
-                    352582.5,
-                    0.0,
-                    -1499.0119760479042,
-                    -3705082.5,
-                    0.0,
-                    0.0,
-                    1.0,
-                ],
-            },
-            "rg1_oa_dsm_smoothed": {
-                "shape": [84, 83],
-                "transform": [
-                    2994.5783132530123,
-                    0.0,
-                    352575.0,
-                    0.0,
-                    -2980.357142857143,
-                    -3705075.0,
-                    0.0,
-                    0.0,
-                    1.0,
-                ],
-            },
         },
         "label": "ga_ls8c_ard_3-1-0_092084_2016-06-28",
         "lineage": {"level1": ["fb1c622e-90aa-50e8-9d5e-ad69db82d0f6"]},
         "measurements": {
             "oa_fmask": {
                 "layer": "//LC80920842016180LGN01/OA_FMASK/oa_fmask",
-                "path": str(
-                    tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
-                ),
+                "path": "LC80920842016180LGN01.converted-datasets.h5",
             },
             "rg0_lambertian_panchromatic": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/STANDARDISED-PRODUCTS/REFLECTANCE/LAMBERTIAN/BAND-8",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_nbar_panchromatic": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/STANDARDISED-PRODUCTS/REFLECTANCE/NBAR/BAND-8",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_nbart_panchromatic": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/STANDARDISED-PRODUCTS/REFLECTANCE/NBART/BAND-8",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_a_panchromatic": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/A/BAND-8",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_aspect": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/SLOPE-ASPECT/ASPECT",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_azimuthal_exiting": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/EXITING-ANGLES/AZIMUTHAL-EXITING",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_azimuthal_incident": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/INCIDENT-ANGLES/AZIMUTHAL-INCIDENT",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_b_panchromatic": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/B/BAND-8",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_cast_shadow_satellite": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//rg0_oa_cast_shadow_satellite",
-                "path": str(
-                    tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
-                ),
+                "path": "LC80920842016180LGN01.converted-datasets.h5",
             },
             "rg0_oa_cast_shadow_sun": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//rg0_oa_cast_shadow_sun",
-                "path": str(
-                    tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
-                ),
+                "path": "LC80920842016180LGN01.converted-datasets.h5",
             },
             "rg0_oa_dif_panchromatic": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIF/BAND-8",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_dir_panchromatic": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIR/BAND-8",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_dsm_smoothed": {
-                "grid": "rg0_oa_dsm_smoothed",
+                "grid": "1497",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/ELEVATION/DSM-SMOOTHED",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_exiting": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/EXITING-ANGLES/EXITING-ANGLE",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_fs_panchromatic": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FS/BAND-8",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_fv_panchromatic": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FV/BAND-8",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_incident": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/INCIDENT-ANGLES/INCIDENT-ANGLE",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_latitude": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/LONGITUDE-LATITUDE/LATITUDE",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_longitude": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/LONGITUDE-LATITUDE/LONGITUDE",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_relative_azimuth": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/SATELLITE-SOLAR/RELATIVE-AZIMUTH",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_relative_slope": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/RELATIVE-SLOPE/RELATIVE-SLOPE",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_s_panchromatic": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/S/BAND-8",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_satellite_azimuth": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/SATELLITE-SOLAR/SATELLITE-AZIMUTH",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_satellite_view": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/SATELLITE-SOLAR/SATELLITE-VIEW",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_self_shadow": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//rg0_oa_self_shadow",
-                "path": str(
-                    tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
-                ),
+                "path": "LC80920842016180LGN01.converted-datasets.h5",
             },
             "rg0_oa_slope": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/SLOPE-ASPECT/SLOPE",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_solar_azimuth": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/SATELLITE-SOLAR/SOLAR-AZIMUTH",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_solar_zenith": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/SATELLITE-SOLAR/SOLAR-ZENITH",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_terrain_shadow": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//rg0_oa_terrain_shadow",
-                "path": str(
-                    tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
-                ),
+                "path": "LC80920842016180LGN01.converted-datasets.h5",
             },
             "rg0_oa_timedelta": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/SATELLITE-SOLAR/TIME-DELTA",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg0_oa_ts_panchromatic": {
-                "grid": "rg0",
+                "grid": "1490",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-0/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/TS/BAND-8",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_lambertian_blue": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/LAMBERTIAN/BAND-2",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_lambertian_coastal_aerosol": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/LAMBERTIAN/BAND-1",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_lambertian_green": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/LAMBERTIAN/BAND-3",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_lambertian_nir": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/LAMBERTIAN/BAND-5",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_lambertian_red": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/LAMBERTIAN/BAND-4",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_lambertian_swir_1": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/LAMBERTIAN/BAND-6",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_lambertian_swir_2": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/LAMBERTIAN/BAND-7",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbar_blue": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBAR/BAND-2",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbar_coastal_aerosol": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBAR/BAND-1",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbar_green": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBAR/BAND-3",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbar_nir": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBAR/BAND-5",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbar_red": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBAR/BAND-4",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbar_swir_1": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBAR/BAND-6",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbar_swir_2": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBAR/BAND-7",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbart_blue": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBART/BAND-2",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbart_coastal_aerosol": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBART/BAND-1",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbart_green": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBART/BAND-3",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbart_nir": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBART/BAND-5",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbart_red": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBART/BAND-4",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbart_swir_1": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBART/BAND-6",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_nbart_swir_2": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBART/BAND-7",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_a_blue": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/A/BAND-2",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_a_coastal_aerosol": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/A/BAND-1",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_a_green": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/A/BAND-3",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_a_nir": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/A/BAND-5",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_a_red": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/A/BAND-4",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_a_swir_1": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/A/BAND-6",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_a_swir_2": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/A/BAND-7",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_aspect": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/SLOPE-ASPECT/ASPECT",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_azimuthal_exiting": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/EXITING-ANGLES/AZIMUTHAL-EXITING",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_azimuthal_incident": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INCIDENT-ANGLES/AZIMUTHAL-INCIDENT",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_b_blue": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/B/BAND-2",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_b_coastal_aerosol": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/B/BAND-1",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_b_green": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/B/BAND-3",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_b_nir": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/B/BAND-5",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_b_red": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/B/BAND-4",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_b_swir_1": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/B/BAND-6",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_b_swir_2": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/B/BAND-7",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_cast_shadow_satellite": {
                 "layer": "//rg1_oa_cast_shadow_satellite",
-                "path": str(
-                    tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
-                ),
+                "path": "LC80920842016180LGN01.converted-datasets.h5",
             },
             "rg1_oa_cast_shadow_sun": {
                 "layer": "//rg1_oa_cast_shadow_sun",
-                "path": str(
-                    tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
-                ),
+                "path": "LC80920842016180LGN01.converted-datasets.h5",
             },
             "rg1_oa_dif_blue": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIF/BAND-2",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dif_coastal_aerosol": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIF/BAND-1",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dif_green": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIF/BAND-3",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dif_nir": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIF/BAND-5",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dif_red": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIF/BAND-4",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dif_swir_1": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIF/BAND-6",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dif_swir_2": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIF/BAND-7",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dir_blue": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIR/BAND-2",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dir_coastal_aerosol": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIR/BAND-1",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dir_green": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIR/BAND-3",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dir_nir": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIR/BAND-5",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dir_red": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIR/BAND-4",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dir_swir_1": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIR/BAND-6",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dir_swir_2": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/DIR/BAND-7",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_dsm_smoothed": {
-                "grid": "rg1_oa_dsm_smoothed",
+                "grid": "2994",
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/ELEVATION/DSM-SMOOTHED",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_exiting": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/EXITING-ANGLES/EXITING-ANGLE",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fs_blue": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FS/BAND-2",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fs_coastal_aerosol": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FS/BAND-1",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fs_green": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FS/BAND-3",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fs_nir": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FS/BAND-5",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fs_red": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FS/BAND-4",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fs_swir_1": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FS/BAND-6",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fs_swir_2": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FS/BAND-7",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fv_blue": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FV/BAND-2",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fv_coastal_aerosol": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FV/BAND-1",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fv_green": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FV/BAND-3",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fv_nir": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FV/BAND-5",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fv_red": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FV/BAND-4",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fv_swir_1": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FV/BAND-6",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_fv_swir_2": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/FV/BAND-7",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_incident": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INCIDENT-ANGLES/INCIDENT-ANGLE",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_latitude": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/LONGITUDE-LATITUDE/LATITUDE",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_longitude": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/LONGITUDE-LATITUDE/LONGITUDE",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_relative_azimuth": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/SATELLITE-SOLAR/RELATIVE-AZIMUTH",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_relative_slope": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/RELATIVE-SLOPE/RELATIVE-SLOPE",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_s_blue": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/S/BAND-2",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_s_coastal_aerosol": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/S/BAND-1",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_s_green": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/S/BAND-3",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_s_nir": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/S/BAND-5",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_s_red": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/S/BAND-4",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_s_swir_1": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/S/BAND-6",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_s_swir_2": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/S/BAND-7",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_satellite_azimuth": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/SATELLITE-SOLAR/SATELLITE-AZIMUTH",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_satellite_view": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/SATELLITE-SOLAR/SATELLITE-VIEW",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_self_shadow": {
                 "layer": "//rg1_oa_self_shadow",
-                "path": str(
-                    tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
-                ),
+                "path": "LC80920842016180LGN01.converted-datasets.h5",
             },
             "rg1_oa_slope": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/SLOPE-ASPECT/SLOPE",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_solar_azimuth": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/SATELLITE-SOLAR/SOLAR-AZIMUTH",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_solar_zenith": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/SATELLITE-SOLAR/SOLAR-ZENITH",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_terrain_shadow": {
                 "layer": "//rg1_oa_terrain_shadow",
-                "path": str(
-                    tmp_path
-                    / "LC80920842016180LGN01/LC80920842016180LGN01.converted.datasets.h5"
-                ),
+                "path": "LC80920842016180LGN01.converted-datasets.h5",
             },
             "rg1_oa_timedelta": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/SATELLITE-SOLAR/TIME-DELTA",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_ts_blue": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/TS/BAND-2",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_ts_coastal_aerosol": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/TS/BAND-1",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_ts_green": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/TS/BAND-3",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_ts_nir": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/TS/BAND-5",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_ts_red": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/TS/BAND-4",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_ts_swir_1": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/TS/BAND-6",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
             "rg1_oa_ts_swir_2": {
                 "layer": "//LC80920842016180LGN01/RES-GROUP-1/INTERPOLATED-ATMOSPHERIC-COEFFICIENTS/TS/BAND-7",
-                "path": str(
-                    tmp_path / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
-                ),
+                "path": "LC80920842016180LGN01.wagl.h5",
             },
         },
         "product": {
@@ -1016,6 +755,8 @@ def test_package(tmp_path, expected_wagl_output: dict):
         with md_path.open("r") as f:
             generated_doc = yaml.safe_load(f)
             del generated_doc["id"]
+
+            pprint(generated_doc)
         # Assert md_path matches expected_wagl_output
         # assert expected_wagl_output == yaml.load(md_path.open('r'))
         assert expected_wagl_output == generated_doc

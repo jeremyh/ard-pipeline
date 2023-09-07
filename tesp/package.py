@@ -37,24 +37,15 @@ yaml.add_representer(np.float64, Representer.represent_float)
 yaml.add_representer(np.ndarray, Representer.represent_list)
 
 
-def package_non_standard(outdir, granule):
-    """Yaml creator for the ard pipeline."""
-    outdir = Path(outdir) / granule.name
-    indir = granule.wagl_hdf5.parent
+def package_non_standard(outdir: str, granule):
+    """
+    A prototype package alternative that uses wagl's native H5 for storage.
+    It creates a yaml file to go along with the h5, and writes fmask into a h5.
+    """
+    input_hdf5: Path = granule.wagl_hdf5
+    assert input_hdf5.exists()
 
-    if indir.is_file():
-        shutil.copy(indir, outdir)
-    else:
-        shutil.copytree(indir, outdir)
-
-    wagl_h5 = outdir / str(granule.name + ".wagl.h5")
-    dataset_doc = outdir / str(granule.name + ".yaml")
-    boolean_h5 = Path(str(wagl_h5).replace("wagl.h5", "converted.datasets.h5"))
-    fmask_img = outdir / str(granule.name + ".fmask.img")
-
-    f = h5py.File(boolean_h5)
-
-    with DatasetAssembler(metadata_path=dataset_doc, naming_conventions="dea") as da:
+    with DatasetAssembler(collection_location=outdir, naming_conventions="dea") as da:
         level1 = granule.source_level1_metadata
         da.add_source_dataset(
             level1, auto_inherit_properties=True, inherit_geometry=True
@@ -63,7 +54,7 @@ def package_non_standard(outdir, granule):
         da.producer = "ga.gov.au"
         da.properties["odc:file_format"] = "HDF5"
 
-        with h5py.File(wagl_h5, "r") as fid:
+        with h5py.File(input_hdf5, "r") as fid:
             img_paths = [ppjoin(fid.name, pth) for pth in find(fid, "IMAGE")]
             granule_group = fid[granule.name]
 
@@ -92,10 +83,22 @@ def package_non_standard(outdir, granule):
             eodatasets3.wagl._read_gqa_doc(da, granule.gqa_doc)
             eodatasets3.wagl._read_fmask_doc(da, granule.fmask_doc)
 
+            output_dir = da._work_path
+
+            wagl_h5: Path = output_dir / (granule.name + ".wagl.h5")
+            # Copy data from input to output
+            shutil.copytree(input_hdf5.parent, output_dir, dirs_exist_ok=True)
+
+            fmask_img = output_dir / (granule.name + ".fmask.img")
+            assert fmask_img.exists()
+
+            boolean_h5 = output_dir / (granule.name + ".converted-datasets.h5")
+            created_f = h5py.File(boolean_h5, "w")
+
             with rasterio.open(fmask_img) as ds:
                 fmask_layer = f"/{granule.name}/OA_FMASK/oa_fmask"
                 data = ds.read(1)
-                fmask_ds = f.create_dataset(
+                fmask_ds = created_f.create_dataset(
                     fmask_layer, data=data, compression="lzf", shuffle=True
                 )
                 fmask_ds.attrs["crs_wkt"] = ds.crs.wkt
@@ -113,16 +116,13 @@ def package_non_standard(outdir, granule):
 
                 measurement_name = "oa_fmask"
 
-                pathname = str(outdir.joinpath(boolean_h5))
-
                 no_data = fmask_ds.attrs.get("no_data_value")
                 if no_data is None:
                     no_data = float("nan")
-
                 da._measurements.record_image(
                     measurement_name,
                     grid_spec,
-                    pathname,
+                    boolean_h5,
                     fmask_ds[:],
                     layer=f"/{fmask_layer}",
                     nodata=no_data,
@@ -162,7 +162,7 @@ def package_non_standard(outdir, granule):
                     )
                     .replace("-", "_")
                     .lower()
-                )  # we don't wan't hyphens in odc land
+                )  # we don't want hyphens in odc land
 
                 # include this band in defining the valid data bounds?
                 include = True if "nbart" in measurement_name else False
@@ -173,8 +173,7 @@ def package_non_standard(outdir, granule):
 
                 # if we are of type bool, we'll have to convert just for GDAL
                 if ds.dtype.name == "bool":
-                    pathname = str(outdir.joinpath(boolean_h5))
-                    out_ds = f.create_dataset(
+                    out_ds = created_f.create_dataset(
                         measurement_name,
                         data=np.uint8(ds[:]),
                         compression="lzf",
@@ -188,20 +187,18 @@ def package_non_standard(outdir, granule):
                     da._measurements.record_image(
                         measurement_name,
                         grid_spec,
-                        pathname,
+                        boolean_h5,
                         out_ds[:],
                         layer=f"/{out_ds.name}",
                         nodata=no_data,
                         expand_valid_data=include,
                     )
                 else:
-                    pathname = str(outdir.joinpath(wagl_h5))
-
                     # work around as note_measurement doesn't allow us to specify the gridspec
                     da._measurements.record_image(
                         measurement_name,
                         grid_spec,
-                        pathname,
+                        wagl_h5,
                         ds[:],
                         layer=f"/{ds.name}",
                         nodata=no_data,
