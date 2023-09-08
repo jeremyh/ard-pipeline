@@ -28,8 +28,11 @@ else
   osname="Linux"
 fi
 
+cache_dir="$(dirname "$0")/cache"
+mkdir -p "${cache_dir}"
+
 conda_file="Miniconda3-py311_23.5.2-0-${osname}-${archname}.sh"
-conda_inst="${location}/${conda_file}"
+conda_inst="${cache_dir}/${conda_file}"
 
 if [ ! -f "${conda_inst}" ]; then
   wget --progress=dot:giga \

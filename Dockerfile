@@ -19,15 +19,16 @@ RUN set -o pipefail; \
     ln -s "$(which gfortran-10)" "$(which gfortran-10 | sed 's/\(.*\)\/\gfortran-10/\1\/gfortran/')" \
  && ln -s "$(which gcc-10)" "$(which gcc-10 | sed 's/\(.*\)\/\gcc-10/\1\/gcc/')"
 
-WORKDIR ${BUILD_DIR}
+WORKDIR /build
 
 # Bump this when newer versions of python are required
-COPY deployment/create-conda-environment.sh deployment/environment.yaml /root/
-RUN --mount=type=cache,target=/build/conda/pkgs,id=conda \
+COPY deployment/create-conda-environment.sh deployment/environment.yaml .
+RUN --mount=type=cache,target=/opt/conda/pkgs,id=conda \
     --mount=type=cache,target=/root/.cache,id=pip \
-    /root/create-conda-environment.sh
+    --mount=type=cache,target=/build/cache,id=downloads \
+    ./create-conda-environment.sh /opt/conda
 # Use conda for the remaining commands
-SHELL ["/build/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/bash", "-c"]
+SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/bash", "-c"]
 
 WORKDIR /code
 COPY docs ./docs
@@ -47,9 +48,6 @@ FROM ubuntu:focal as prod
 ENV LC_ALL="C.UTF-8"
 ENV LANG="C.UTF-8"
 
-ENV BUILD_DIR=/build
-ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
-ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
 
 RUN --mount=type=cache,target=/var/cache/apt,id=aptprod \
     apt-get update -y \
@@ -70,16 +68,16 @@ RUN --mount=type=cache,target=/var/cache/apt,id=aptprod \
 
 RUN mkdir /scripts /granules /output /upload
 
-COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
+COPY --from=builder /opt/conda /opt/conda
 COPY deployment/scripts /scripts
 COPY deployment/configs /configs
 COPY deployment/check-environment.sh /scripts
-RUN /build/conda/bin/conda init bash
+RUN /opt/conda/bin/conda init bash
 
 ENV PYTHONFAULTHANDLER=1
 
 RUN adduser --disabled-password --gecos '' user
 USER user
-RUN /build/conda/bin/conda init bash
+RUN /opt/conda/bin/conda init bash
 RUN echo "conda activate ard" >> ~/.bashrc
-ENTRYPOINT ["/build/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/bash", "-c"]
+ENTRYPOINT ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/bash", "-c"]
