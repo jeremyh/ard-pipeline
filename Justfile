@@ -19,10 +19,15 @@
     docker build -t ard:native .
 
 @run:
-    docker run -it --rm --volume "${PWD}:/tests" -w /tests ard:dev /bin/bash -l
+    docker run --platform linux/amd64 -it --rm --volume "${PWD}:/tests" -w /tests ard:dev /bin/bash -l
+@root:
+    docker run --platform linux/amd64 -it --rm --volume "${PWD}:/tests" --user root -w /tests ard:dev /bin/bash -l
+
+@py:
+    docker run -it --rm --volume "${PWD}:/tests" -w /tests ard:dev python
 
 @take-env:
-    docker run --rm --volume "${PWD}:/tests" --user root -w /tests ard:dev 'pip uninstall ard-pipeline rios python-fmask idl-functions -y; conda env export > /tests/deployment/environment-frozen.yaml'
+    docker run --rm --volume "${PWD}:/tests" --user root -w /tests ard:dev 'pip uninstall ard-pipeline rios python-fmask idl-functions -y; conda env export > /tests/deployment/environment.yaml'
 
 
 # Run tests in Docker

@@ -4,12 +4,7 @@ set -eux
 unset PIP_REQUIRE_VIRTUALENV
 
 clean_all=false
-
-if [ "$clean_all" = true ]; then
-    pip_args=(--no-cache-dir --force-reinstall)
-else
-    pip_args=(--no-binary :all:)
-fi
+pip_args=(--no-binary :all:)
 
 location="conda"
 # If they provided a location argument, install there instead

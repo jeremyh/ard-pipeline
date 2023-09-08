@@ -9,7 +9,8 @@ ARG TARGETARCH
 USER root
 
 # Build deps
-RUN apt-get update -y \
+RUN --mount=type=cache,target=/var/cache/apt,id=aptbuild \
+    apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
        git bzip2 libtiff5 ca-certificates gfortran-10 gcc-10 make software-properties-common libpq-dev wget libarchive13 \
     && rm -rf /var/lib/apt/lists/*
@@ -22,7 +23,9 @@ WORKDIR ${BUILD_DIR}
 
 # Bump this when newer versions of python are required
 COPY deployment/create-conda-environment.sh deployment/environment.yaml /root/
-RUN /root/create-conda-environment.sh
+RUN --mount=type=cache,target=/build/conda/pkgs,id=conda \
+    --mount=type=cache,target=/root/.cache,id=pip \
+    /root/create-conda-environment.sh
 # Use conda for the remaining commands
 SHELL ["/build/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/bash", "-c"]
 
@@ -33,9 +36,8 @@ COPY eugl ./eugl
 COPY tesp ./tesp
 COPY wagl ./wagl
 COPY pyproject.toml meson.build LICENCE.md README.md ./
-# hadolint shell=/bin/bash
-RUN pip install --no-cache-dir .
-# hadolint shell=/bin/bash
+RUN --mount=type=cache,target=/root/.cache,id=pip \
+    pip install .
 RUN adduser --disabled-password --gecos '' user
 USER user
 
@@ -49,7 +51,8 @@ ENV BUILD_DIR=/build
 ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
 ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
 
-RUN apt-get update -y \
+RUN --mount=type=cache,target=/var/cache/apt,id=aptprod \
+    apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         libgfortran5 \
         jq \
@@ -70,6 +73,7 @@ RUN mkdir /scripts /granules /output /upload
 COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
 COPY deployment/scripts /scripts
 COPY deployment/configs /configs
+COPY deployment/check-environment.sh /scripts
 RUN /build/conda/bin/conda init bash
 
 ENV PYTHONFAULTHANDLER=1
@@ -78,3 +82,4 @@ RUN adduser --disabled-password --gecos '' user
 USER user
 RUN /build/conda/bin/conda init bash
 RUN echo "conda activate ard" >> ~/.bashrc
+ENTRYPOINT ["/build/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/bash", "-c"]
