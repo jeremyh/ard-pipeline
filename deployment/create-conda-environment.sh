@@ -49,7 +49,7 @@ set +ux
 . "${location}/bin/activate"
 
 conda install -y mamba libarchive -n base -c conda-forge
-conda env create -n ard -f "$(dirname "$0")/environment.yaml"
+mamba env create -n ard -f "$(dirname "$0")/environment.yaml"
 conda activate ard
 
 # Freeze the environment as it exists without our locally-installed  packages.
