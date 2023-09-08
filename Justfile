@@ -9,6 +9,9 @@
 @install-dev:
     python3 -m pip install --no-build-isolation --editable .
 
+@build-conda:
+    docker build --platform linux/amd64 -t ard:conda -f Dockerfile.conda-native .
+
 @build:
     docker build --platform linux/amd64 -t ard:dev .
 
@@ -16,7 +19,11 @@
     docker build -t ard:native .
 
 @run:
-    docker run -it --rm --volume "${PWD}:/tests" --user root -w /tests ard:dev /bin/bash
+    docker run -it --rm --volume "${PWD}:/tests" -w /tests ard:dev /bin/bash -l
+
+@take-env:
+    docker run --rm --volume "${PWD}:/tests" --user root -w /tests ard:dev 'pip uninstall ard-pipeline rios python-fmask idl-functions -y; conda env export > /tests/deployment/environment-frozen.yaml'
+
 
 # Run tests in Docker
 @test:

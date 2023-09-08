@@ -3,9 +3,13 @@
 set -eu
 
 echo Checking environment...
-python3_path=$(which python3)
-
-if [[ ! $python3_path =~ "conda" ]]; then
+python_bin_path=$(which python)
+if [[ ! $python_bin_path =~ "conda" ]]; then
+  echo "❌ Error: python path does not contain 'conda'. Have you loaded the module?"
+  exit 1
+fi
+python3_bin_path=$(which python3)
+if [[ ! $python3_bin_path =~ "conda" ]]; then
   echo "❌ Error: python3 path does not contain 'conda'. Have you loaded the module?"
   exit 1
 fi

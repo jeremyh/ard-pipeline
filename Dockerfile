@@ -1,12 +1,8 @@
+# syntax = docker/dockerfile:1.5
 FROM ubuntu:focal as builder
 SHELL ["/bin/bash", "-c"]
 
 ENV BUILD_DIR=/build
-ENV PATH="${PATH}:${BUILD_DIR}/conda/bin"
-ENV IDLFUNCTIONS_VERSION=0.5.4
-ENV PYTHON_FMASK_VERSION=0.5.7
-ENV EODATASETS3_VERSION=eodatasets3-0.29.0
-ENV PYTHONPATH=${BUILD_DIR}/conda/lib/python3.8/site-packages/
 ARG BUILDPLATFORM
 ARG TARGETARCH
 
@@ -25,15 +21,23 @@ RUN set -o pipefail; \
 WORKDIR ${BUILD_DIR}
 
 # Bump this when newer versions of python are required
-COPY deployment/create-conda-environment.sh /root
+COPY deployment/create-conda-environment.sh deployment/environment.yaml /root/
 RUN /root/create-conda-environment.sh
+# Use conda for the remaining commands
+SHELL ["/build/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/bash", "-c"]
 
 WORKDIR /code
-COPY . ./
+COPY docs ./docs
+COPY utils ./utils
+COPY eugl ./eugl
+COPY tesp ./tesp
+COPY wagl ./wagl
+COPY pyproject.toml meson.build LICENCE.md README.md ./
+# hadolint shell=/bin/bash
 RUN pip install --no-cache-dir .
-
-RUN adduser --disabled-password --gecos '' ubuntu
-USER ubuntu
+# hadolint shell=/bin/bash
+RUN adduser --disabled-password --gecos '' user
+USER user
 
 FROM ubuntu:focal as prod
 
@@ -58,7 +62,7 @@ RUN apt-get update -y \
 
 # install libpng12
 # COPY deployment/lib /build-lib
-# RUN dpkg -i /build-lib/libpng12-0_1.2.54-1ubuntu1.1+1~ppa0~focal_amd64.deb \
+# RUN dpkg -i /build-lib/libpng12-0_1.2.54-1ubuntu1.1+1~ppa0~jammy_amd64.deb \
       # && rm -rf /build-lib
 
 RUN mkdir /scripts /granules /output /upload
@@ -66,7 +70,11 @@ RUN mkdir /scripts /granules /output /upload
 COPY --from=builder ${BUILD_DIR} ${BUILD_DIR}
 COPY deployment/scripts /scripts
 COPY deployment/configs /configs
-RUN conda init bash
+RUN /build/conda/bin/conda init bash
 
-RUN adduser --disabled-password --gecos '' ubuntu
-USER ubuntu
+ENV PYTHONFAULTHANDLER=1
+
+RUN adduser --disabled-password --gecos '' user
+USER user
+RUN /build/conda/bin/conda init bash
+RUN echo "conda activate ard" >> ~/.bashrc

@@ -51,32 +51,11 @@ set +ux
 . "${location}/bin/activate"
 
 conda install -y mamba libarchive -n base -c conda-forge
-mamba install -y -c conda-forge \
-            blosc \
-            boost-cpp \
-            cairo \
-            certifi \
-            click \
-            cython \
-            gdal \
-            h5py \
-            hdf5-external-filter-plugins-bitshuffle \
-            hdf5plugin \
-            libnetcdf \
-            lightgbm \
-            meson \
-            meson-python \
-            'numpy<1.24' \
-	    'pandas<2' \
-            proj \
-            pytables \
-	    pytest \
-            python-fmask \
-            rasterio \
-            scikit-image \
-            scipy
+conda env create -n ard -f "$(dirname "$0")/environment.yaml"
+conda activate ard
 
-set -ux
+# Freeze the environment as it exists without our locally-installed  packages.
+# conda env export --from-history  > "${location}/environment.yaml"
 
 pip install "${pip_args[@]}" \
     "git+https://github.com/sixy6e/idl-functions.git@0.5.4#egg=idl-functions" \

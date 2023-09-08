@@ -33,10 +33,10 @@ dependencies = [
     "pyyaml>=3.11",
     "rasterio>1,!=1.0.3.post1,!=1.0.3",  # issue with /vsizip/ reader
     "rios",
-    "s2cloudless==1.5.0",
+    "s2cloudless>=1.5.0",
     "scikit-image>=0.8.2",
     "scipy>=0.14",
-    "sentinelhub==3.4.2",
+    "sentinelhub>=3.4.2",
     "shapely>=1.5.13",
     "structlog>=16.1.0"
 ]
