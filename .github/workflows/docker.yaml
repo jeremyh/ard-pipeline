@@ -10,4 +10,4 @@ jobs:
         -   name: Build Docker image
             run: docker build -t ard .
         -   name: Run pytest in Docker container
-            run: docker run -v ${{ github.workspace }}/tests:/tests ard pytest /tests
+            run: docker run -v ${{ github.workspace }}/tests:/tests -w /tests ard pytest
