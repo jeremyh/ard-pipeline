@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
     build-with-docker:
-        name: Build with Docker
+        name: Build and Test
         runs-on: ubuntu-latest
         steps:
         -   uses: actions/checkout@v3
@@ -13,5 +13,7 @@ jobs:
                 context: .
                 load: true
                 tags: ard:test
+                cache-from: type=gha
+                cache-to: type=gha,mode=max
         -   name: Test
             run: docker run --rm -v ${{ github.workspace }}/tests:/tests -w /tests ard:test pytest
