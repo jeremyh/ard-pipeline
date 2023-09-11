@@ -612,7 +612,8 @@ class LoadedBrdfCoverageDict(TypedDict):
     data_source: Literal["BRDF"]
     local_source_paths: List[str]
     tier: AncillaryTier
-    id: np.ndarray[str]
+    # Type unsupported in py3.8, but is: np.ndarray[str]
+    id: np.ndarray
     value: float
 
 
