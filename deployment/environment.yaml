@@ -13,12 +13,13 @@ dependencies:
 -   boost-cpp=1.74.0=hc6e9bd1_3
 -   bzip2=1.0.8=h7f98852_4
 -   c-ares=1.19.1=hd590300_0
--   ca-certificates=2023.7.22=hbcca054_0
+-   ca-certificates=2023.08.22=h06a4308_0
 -   cached-property=1.5.2=hd8ed1ab_1
 -   cached_property=1.5.2=pyha770c72_1
 -   cairo=1.16.0=h6cf1ce9_1008
--   certifi=2021.5.30=py38h578d9bd_0
+-   certifi=2023.7.22=py38h06a4308_0
 -   cfitsio=3.470=hb418390_7
+-   click=8.1.7=unix_pyh707e725_0
 -   click-plugins=1.1.1=py_0
 -   cligj=0.7.2=pyhd8ed1ab_1
 -   curl=7.87.0=h6312ad2_0
@@ -38,6 +39,7 @@ dependencies:
 -   hdf5-external-filter-plugins-bitshuffle=0.1.0=h7c18f73_6
 -   hdf5plugin=2.3.2=py38hff3c14e_1
 -   icu=68.2=h9c3ff4c_0
+-   iniconfig=1.1.1=pyhd3eb1b0_0
 -   jpeg=9e=h0b41bf4_3
 -   json-c=0.13.1=hbfbb72e_1002
 -   kealib=1.4.14=hcc255d8_2
@@ -82,17 +84,20 @@ dependencies:
 -   ncurses=6.4=hcb278e6_0
 -   numpy=1.23.0=py38h3a7f9d9_0
 -   openjpeg=2.4.0=hb52868f_1
--   openssl=1.1.1v=hd590300_0
+-   openssl=1.1.1v=h7f8727e_0
+-   packaging=23.1=py38h06a4308_0
 -   pcre=8.45=h9c3ff4c_0
 -   pcre2=10.40=hc3806b6_0
 -   pip=23.2.1=pyhd8ed1ab_0
 -   pixman=0.40.0=h36c2ea0_0
+-   pluggy=1.0.0=py38h06a4308_1
 -   poppler=0.89.0=h2de54a5_5
 -   poppler-data=0.4.12=hd8ed1ab_0
 -   postgresql=12.15=h16c4e8d_1
 -   proj=7.1.1=h966b41f_3
 -   pthread-stubs=0.4=h36c2ea0_1001
 -   pyparsing=3.1.1=pyhd8ed1ab_0
+-   pytest=7.4.0=py38h06a4308_0
 -   python=3.8.15=h257c98d_0_cpython
 -   python_abi=3.8=3_cp38
 -   readline=8.2=h8228510_1
@@ -102,6 +107,7 @@ dependencies:
 -   sqlite=3.43.0=h2c6b66d_0
 -   tiledb=2.2.9=h91fcb0e_0
 -   tk=8.6.12=h27826a3_0
+-   tomli=2.0.1=py38h06a4308_0
 -   wheel=0.41.2=pyhd8ed1ab_0
 -   xerces-c=3.2.3=h9d8b166_3
 -   xorg-kbproto=1.0.7=h7f98852_1002
@@ -132,7 +138,6 @@ dependencies:
     -   charset-normalizer==3.2.0
     -   checksumdir==1.2.0
     -   ciso8601==2.3.0
-    -   click==8.1.7
     -   click-datetime==0.2
     -   cloudpickle==2.2.1
     -   colorama==0.4.4
@@ -176,7 +181,6 @@ dependencies:
     -   numexpr==2.8.5
     -   oauthlib==3.2.2
     -   opencv-python-headless==4.8.0.76
-    -   packaging==23.1
     -   pandas==2.0.3
     -   partd==1.4.0
     -   pillow==10.0.0
@@ -212,7 +216,6 @@ dependencies:
     -   tblib==2.0.0
     -   tenacity==8.2.3
     -   tifffile==2023.7.10
-    -   tomli==2.0.1
     -   tomli-w==1.0.0
     -   toolz==0.12.0
     -   tornado==6.3.3
