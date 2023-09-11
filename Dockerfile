@@ -54,6 +54,7 @@ RUN --mount=type=cache,target=/var/cache/apt,id=aptprod \
         libgfortran5 \
         jq \
         awscli \
+	libarchive13 \
 	libtiff5 \
         xmlstarlet \
         libjpeg62 \
