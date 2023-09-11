@@ -28,7 +28,7 @@ else
   osname="Linux"
 fi
 
-cache_dir="$(dirname "$0")/cache"
+cache_dir=~/.cache
 mkdir -p "${cache_dir}"
 
 conda_file="Miniconda3-py311_23.5.2-0-${osname}-${archname}.sh"

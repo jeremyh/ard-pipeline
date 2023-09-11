@@ -25,7 +25,6 @@ WORKDIR /build
 COPY deployment/create-conda-environment.sh deployment/environment.yaml .
 RUN --mount=type=cache,target=/opt/conda/pkgs,id=conda \
     --mount=type=cache,target=/root/.cache,id=pip \
-    --mount=type=cache,target=/build/cache,id=downloads \
     ./create-conda-environment.sh /opt/conda
 # Use conda for the remaining commands
 SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/bash", "-c"]
