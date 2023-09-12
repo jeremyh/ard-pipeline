@@ -290,4 +290,4 @@ dependencies:
     -   xarray==2023.8.0
     -   zict==3.0.0
     -   zipp==3.16.2
-prefix: /build/conda
+prefix: /opt/conda/envs/ard
