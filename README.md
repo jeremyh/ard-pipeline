@@ -16,14 +16,29 @@ The luigi task workflow for producing NBAR for a Landsat 5TM scene is given belo
 -----------------------------------
 * Landsat 5 TM
 * Landsat 7 ETM
-* Landsat 8 OLI
-* Landsat 8 TIRS
-* Sentinel-2a
+* Landsat 8+9 OLI+TIRS
+* Sentinel 2a+b
 
 ## Development
 ---------------
 
 A [Justfile](https://github.com/casey/just) is included in the repo for running common commands.
+
+Build docker container:
+
+    just build
+
+Run a shell inside it:
+
+    just run
+
+Run tests:
+
+    just test
+
+Alternatively, fetch a dev build from Dockerhub:
+
+    docker pull --platform linux/amd64 geoscienceaustralia/ard-pipeline:dev
 
 ### Dependencies
 
