@@ -24,6 +24,12 @@ jobs:
             with:
                 username: ${{ secrets.DOCKERHUB_USERNAME }}
                 password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+        -   uses: aws-actions/configure-aws-credentials@v2
+            with:
+                role-to-assume: arn:aws:iam::538673716275:role/ard_pipeline_github-actions-role
+                aws-region: ap-southeast-2
+
         -   uses: docker/build-push-action@v4
             if: |
                 github.event_name == 'push'
@@ -31,4 +37,6 @@ jobs:
             with:
                 context: .
                 push: true
-                tags: geoscienceaustralia/ard-pipeline:dev
+                tags: |
+                    geoscienceaustralia/ard-pipeline:dev
+                    538673716275.dkr.ecr.ap-southeast-2.amazonaws.com/geoscienceaustralia/ard-pipeline:dev
