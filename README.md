@@ -36,18 +36,18 @@ Run tests:
 
     just test
 
-Alternatively, fetch a dev build from Dockerhub:
+### Dependencies
+
+You can either create your own local Python environment, or use the provided [Dockerfile](Dockerfile).
+
+Builds are also available from Dockerhub:
 
     docker pull --platform linux/amd64 geoscienceaustralia/ard-pipeline:dev
 
-### Dependencies
-
-You can either create your own environment, or use the provided [Dockerfile](Dockerfile).
-
-If building your own environment, miniconda is recommended due to the large number of
+If building your own environment, Miniconda is recommended due to the large number of
 native dependencies.
 
-A script is provided to build conda with needed dependencies:
+A script is provided to build Conda with dependencies:
 
 ```
     # Create environment in ~/conda directory
