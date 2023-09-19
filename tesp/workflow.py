@@ -482,8 +482,7 @@ class ARDP(luigi.WrapperTask):
         futures = [executor.submit(worker, level1) for level1 in level1_list]
 
         for future in as_completed(futures):
-            for _package in future.result():
-                yield _package
+            yield from future.result()
 
 
 if __name__ == "__main__":

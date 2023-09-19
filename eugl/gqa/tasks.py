@@ -380,7 +380,7 @@ class GQATask(luigi.Task):
                     "error_message": gverify_args["error_msg"],
                 }
 
-        except (StopIteration, FileNotFoundError) as _:  # noqa: F841
+        except (StopIteration, FileNotFoundError) as _:
             TASK_LOGGER.error(
                 "Gverify results file contains no tabulated data; {}".format(
                     self.input()["results"].path

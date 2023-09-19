@@ -494,8 +494,9 @@ def calculate_cast_shadow(
         "geotransform": geobox.transform.to_gdal(),
     }
     desc = (
-        "The cast shadow mask determined using the {} " "as the source direction."
-    ).format(source_dir)
+        f"The cast shadow mask determined using the {source_dir} "
+        "as the source direction."
+    )
     attrs["description"] = desc
     attrs["alias"] = f"cast-shadow-{source_dir}".lower()
     attach_image_attributes(out_dset, attrs)

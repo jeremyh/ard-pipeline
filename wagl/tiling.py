@@ -195,8 +195,9 @@ class TiledOutput:
         # Check we have the correct dimensions to create the file
         if samples is None or lines is None:
             msg = (
-                "Samples and lines are required inputs! Samples: {ns} " "Lines: {nl}"
-            ).format(ns=samples, nl=lines)
+                f"Samples and lines are required inputs! Samples: {samples} "
+                f"Lines: {lines}"
+            )
             raise TypeError(msg)
 
         driver = gdal.GetDriverByName(fmt)
@@ -255,9 +256,7 @@ class TiledOutput:
         """
         dims = array.ndim
         if array.ndim not in [2, 3]:
-            msg = (
-                "Input array is not 2 or 3 dimensions. " "Array dimensions: {dims}"
-            ).format(dims=dims)
+            msg = "Input array is not 2 or 3 dimensions. " f"Array dimensions: {dims}"
             raise TypeError(msg)
 
         ystart = tile[0][0]
