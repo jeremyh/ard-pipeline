@@ -2,7 +2,7 @@ project(
     'ard-pipeline',
     'c',
     'fortran',
-    version: run_command('utils/find-version.sh', check: true).stdout().strip(),
+    version: run_command('utils/find-version.py', check: true).stdout().strip(),
 )
 
 py_mod = import('python')
