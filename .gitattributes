@@ -12,3 +12,5 @@
 *.bin binary
 *.tif binary
 *.TIF binary
+
+.git_archival.txt  export-subst

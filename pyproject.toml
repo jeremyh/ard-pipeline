@@ -1,6 +1,13 @@
 [build-system]
 build-backend = 'mesonpy'
-requires = ['meson-python', 'numpy']
+requires = [
+    'meson-python',
+    # For f2py
+    'numpy',
+    # For package version calculation (via Git)
+    "setuptools>=45",
+    "setuptools_scm[toml]>=6.2"
+]
 
 [project]
 authors = [
@@ -46,6 +53,7 @@ dependency-links = [
     "git+https://github.com/ubarsc/python-fmask@pythonfmask-0.5.7#egg=python-fmask"
 ]
 description = 'ARD image processing'
+dynamic = ["version"]
 # Was needed for tesp .. here too? TODO
 include_package_data = true
 license = {file = 'LICENCE.md'}
@@ -53,7 +61,6 @@ name = 'ard-pipeline'
 package_data = {"eugl.gqa" = ["data/*.csv"]}
 readme = 'README.md'
 requires-python = '>=3.8'
-version = '6.0.0.dev1'
 
 [project.scripts]
 ard_batch_summary = "tesp.scripts.batch_summary:main"
@@ -141,3 +148,6 @@ target-version = "py38"
     "NPY002"  # randint usage. TODO: fixable
 ]
 "wagl/vincenty.py" = ["N802", "N803", "N806", "N816", "N817"]
+
+[tool.setuptools_scm]
+write_to = "wagl/_version.py"
