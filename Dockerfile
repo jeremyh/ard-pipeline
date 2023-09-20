@@ -12,7 +12,7 @@ USER root
 RUN --mount=type=cache,target=/var/cache/apt,id=aptbuild \
     apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
-       git bzip2 libtiff5 ca-certificates gfortran-10 gcc-10 make software-properties-common libpq-dev wget libarchive13 \
+       git bzip2 libtiff5 ca-certificates gfortran-10 gcc-10 git make software-properties-common libpq-dev wget libarchive13 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN set -o pipefail; \
@@ -35,6 +35,8 @@ COPY utils ./utils
 COPY eugl ./eugl
 COPY tesp ./tesp
 COPY wagl ./wagl
+# Needed to read version number
+COPY .git ./.git
 COPY pyproject.toml meson.build LICENCE.md README.md ./
 RUN --mount=type=cache,target=/root/.cache,id=pip \
     pip install .
@@ -60,11 +62,6 @@ RUN --mount=type=cache,target=/var/cache/apt,id=aptprod \
         libjpeg62 \
         unzip \
     && rm -rf /var/lib/apt/lists/*
-
-# install libpng12
-# COPY deployment/lib /build-lib
-# RUN dpkg -i /build-lib/libpng12-0_1.2.54-1ubuntu1.1+1~ppa0~jammy_amd64.deb \
-      # && rm -rf /build-lib
 
 RUN mkdir /scripts /granules /output /upload
 

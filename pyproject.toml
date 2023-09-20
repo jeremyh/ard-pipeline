@@ -1,12 +1,12 @@
 [build-system]
 build-backend = 'mesonpy'
 requires = [
-    'meson-python',
-    # For f2py
-    'numpy',
     # For package version calculation (via Git)
     "setuptools>=45",
-    "setuptools_scm[toml]>=6.2"
+    "setuptools_scm[toml]>=6.2",
+    'meson-python',
+    # For f2py
+    'numpy'
 ]
 
 [project]

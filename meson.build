@@ -2,11 +2,17 @@ project(
     'ard-pipeline',
     'c',
     'fortran',
-    version: run_command('utils/find-version.py', check: true).stdout().strip(),
+    version: run_command(
+        'python3',
+        [
+          '-m', 'setuptools_scm'
+        ], check:true
+      ).stdout().strip(),
 )
 
 py_mod = import('python')
 py3 = py_mod.find_installation(pure: false)
+
 py3_dep = py3.dependency()
 ff = meson.get_compiler('fortran')
 
