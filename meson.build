@@ -1,4 +1,9 @@
-project('ard-pipeline', 'c', 'fortran')
+project(
+    'ard-pipeline',
+    'c',
+    'fortran',
+    version: run_command('utils/find-version.sh', check: true).stdout().strip(),
+)
 
 py_mod = import('python')
 py3 = py_mod.find_installation(pure: false)
