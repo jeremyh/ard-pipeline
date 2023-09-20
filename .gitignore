@@ -1,4 +1,5 @@
 
+wagl/_version.py
 
 # The dea-wagl-docker repo historically had these ignores:
 deployment/modtran/tests/
