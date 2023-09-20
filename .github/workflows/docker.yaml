@@ -5,6 +5,11 @@ permissions:
     id-token: write   # This is required for requesting the JWT
     contents: read    # This is required for actions/checkout
 
+env:
+    ECR_REGISTRY: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com
+    ECR_REPOSITORY: docker_nodejs_demo
+    IMAGE_TAG: nodejs_demo_image
+
 jobs:
     build-with-docker:
         name: Build and Test
@@ -14,17 +19,19 @@ jobs:
 
         -   uses: docker/setup-buildx-action@v2
 
+        # Build and test first.
         -   uses: docker/build-push-action@v4
             with:
                 context: .
                 load: true
-                tags: ard:dev
+                tags: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com/geoscienceaustralia/ard-pipeline:dev
                 cache-from: type=gha
                 cache-to: type=gha,mode=max
 
         -   name: Test
-            run: docker run --rm -v ${{ github.workspace }}/tests:/tests -w /tests ard:dev pytest
+            run: docker run --rm -v ${{ github.workspace }}/tests:/tests -w /tests geoscienceaustralia/ard-pipeline:dev pytest
 
+        # Now push the docker image everywhere (if this is the main repository).
         -   uses: docker/login-action@v3
             if: |
                 github.event_name == 'push'
@@ -41,12 +48,19 @@ jobs:
                 role-to-assume: arn:aws:iam::538673716275:role/ard_pipeline_github-actions-role
                 aws-region: ap-southeast-2
 
-        -   uses: whoan/docker-build-with-cache-action@master
+        -   uses: aws-actions/amazon-ecr-login@v1
+            if: |
+                github.event_name == 'push'
+                && github.ref == 'refs/heads/main'
+            id: login-ecr
+
+        -   uses: docker/build-push-action@v4
             if: |
                 github.event_name == 'push'
                 && github.ref == 'refs/heads/main'
             with:
-                context: ./
-                registry: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com
-                image_name: geoscienceaustralia/ard-pipeline
-                image_tag: dev
+                context: .
+                push: true
+                tags: |
+                    geoscienceaustralia/ard-pipeline:dev
+                    ${{ steps.login-ecr.outputs.registry }}/geoscienceaustralia/ard-pipeline:dev
