@@ -10,11 +10,23 @@ ARG TARGETARCH
 USER root
 
 # Build deps
-RUN --mount=type=cache,target=/var/cache/apt,id=aptbuild \
-    apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
-       git bzip2 libtiff5 ca-certificates gfortran-10 gcc-10 git make software-properties-common libpq-dev wget libarchive13 \
-    && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/var/cache/apt,id=aptbuild <<EOF
+    set -eu
+    apt-get update -y;
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
+        bzip2 \
+        ca-certificates \
+        gcc-10 \
+        gfortran-10 \
+        git \
+        libarchive13 \
+        libpq-dev \
+        libtiff5 \
+        make \
+        software-properties-common \
+        wget
+    rm -rf /var/lib/apt/lists/*
+EOF
 
 RUN set -o pipefail; \
     ln -s "$(which gfortran-10)" "$(which gfortran-10 | sed 's/\(.*\)\/\gfortran-10/\1\/gfortran/')" \
@@ -25,27 +37,17 @@ WORKDIR /build
 # Override the default in the conda-environment creator
 ARG fmask_version=0.5.7
 
-COPY deployment/create-conda-environment.sh deployment/environment.yaml .
+COPY deployment/create-conda-environment.sh deployment/environment.yaml ./
 RUN --mount=type=cache,target=/opt/conda/pkgs,id=conda \
     --mount=type=cache,target=/root/.cache,id=pip \
     ./create-conda-environment.sh /opt/conda
 
 # Use conda for the remaining commands
-SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/bash", "-c"]
+SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/sh", "-c"]
 
-WORKDIR /code
-COPY docs ./docs
-COPY utils ./utils
-COPY eugl ./eugl
-COPY tesp ./tesp
-COPY wagl ./wagl
-# Needed to read version number
-COPY .git ./.git
-COPY pyproject.toml meson.build LICENCE.md README.md ./
-RUN --mount=type=cache,target=/root/.cache,id=pip \
-    pip install .
-RUN adduser --disabled-password --gecos '' user
-USER user
+RUN --mount=type=bind,target=/code,readonly,source=. \
+    --mount=type=cache,target=/root/.cache,id=pip \
+    pip install /code
 
 FROM ubuntu:focal as prod
 
@@ -53,19 +55,20 @@ FROM ubuntu:focal as prod
 ENV LC_ALL="C.UTF-8"
 ENV LANG="C.UTF-8"
 
-
-RUN --mount=type=cache,target=/var/cache/apt,id=aptprod \
-    apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+RUN --mount=type=cache,target=/var/cache/apt,id=aptprod <<EOF
+    set -eu
+    apt-get update -y
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         libgfortran5 \
         jq \
         awscli \
         libarchive13 \
-	libtiff5 \
+        libtiff5 \
         xmlstarlet \
         libjpeg62 \
-        unzip \
-    && rm -rf /var/lib/apt/lists/*
+        unzip
+    rm -rf /var/lib/apt/lists/*
+EOF
 
 RUN mkdir /scripts /granules /output /upload
 
