@@ -55,10 +55,11 @@ conda activate ard
 # Freeze the environment as it exists without our locally-installed  packages.
 # conda env export --from-history  > "${location}/environment.yaml"
 
+# These version defaults may be overidden by setting them before calling the script.
 pip install "${pip_args[@]}" \
-    "git+https://github.com/sixy6e/idl-functions.git@0.5.4#egg=idl-functions" \
-    "git+https://github.com/ubarsc/rios@rios-1.4.10#egg=rios" \
-    "git+https://github.com/ubarsc/python-fmask@pythonfmask-0.5.7#egg=python-fmask" \
+    "git+https://github.com/sixy6e/idl-functions.git@${idl_functions_version:-0.5.4}#egg=idl-functions" \
+    "git+https://github.com/ubarsc/rios@rios-${rios_version:-1.4.10}#egg=rios" \
+    "git+https://github.com/ubarsc/python-fmask@pythonfmask-${fmask_version:-0.5.7}#egg=python-fmask" \
     awscli boto boto3
 
 if [ "$clean_all" = true ]; then

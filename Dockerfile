@@ -1,4 +1,5 @@
 # syntax = docker/dockerfile:1.5
+
 FROM ubuntu:focal as builder
 SHELL ["/bin/bash", "-c"]
 
@@ -21,11 +22,14 @@ RUN set -o pipefail; \
 
 WORKDIR /build
 
-# Bump this when newer versions of python are required
+# Override the default in the conda-environment creator
+ARG fmask_version=0.5.7
+
 COPY deployment/create-conda-environment.sh deployment/environment.yaml .
 RUN --mount=type=cache,target=/opt/conda/pkgs,id=conda \
     --mount=type=cache,target=/root/.cache,id=pip \
     ./create-conda-environment.sh /opt/conda
+
 # Use conda for the remaining commands
 SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/bash", "-c"]
 

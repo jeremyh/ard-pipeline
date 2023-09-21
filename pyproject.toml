@@ -36,7 +36,7 @@ dependencies = [
     "pandas>=0.17.1",
     "pyproj>1.9.5",
     "python-dateutil>=2.6.1",
-    "python-fmask==0.5.7",
+    "python-fmask",
     "pyyaml>=3.11",
     "rasterio>1,!=1.0.3.post1,!=1.0.3",  # issue with /vsizip/ reader
     "rios",
