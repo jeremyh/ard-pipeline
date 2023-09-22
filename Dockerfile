@@ -47,7 +47,8 @@ SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/
 
 RUN --mount=type=bind,target=/code,readonly,source=. \
     --mount=type=cache,target=/root/.cache,id=pip \
-    pip install /code
+    --mount=type=tmpfs,target=/tmp \
+    pip install --config-settings=builddir=/tmp/ard-pipeline-build /code
 
 FROM ubuntu:focal as prod
 
