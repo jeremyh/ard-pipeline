@@ -68,12 +68,9 @@ jobs:
         -   uses: aws-actions/amazon-ecr-login@v1
             id: login-ecr
 
-        -   uses: docker/build-push-action@v4
-            with:
-                context: .
-                push: true
-                cache-from: type=gha
-                cache-to: type=gha,mode=max
-                tags: |
-                    geoscienceaustralia/ard-pipeline:dev
-                    ${{ steps.login-ecr.outputs.registry }}/geoscienceaustralia/ard-pipeline:dev
+        -   name: Push Docker image
+            run: |
+                docker tag ard-pipeline:dev geoscienceaustralia/ard-pipeline:dev
+                docker tag ard-pipeline:dev  ${{ steps.login-ecr.outputs.registry }}/geoscienceaustralia/ard-pipeline:dev
+                docker push geoscienceaustralia/ard-pipeline:dev
+                docker push ${{ steps.login-ecr.outputs.registry }}/geoscienceaustralia/ard-pipeline:dev
