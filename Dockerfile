@@ -3,7 +3,12 @@
 FROM ubuntu:focal as builder
 SHELL ["/bin/bash", "-c"]
 
-ENV BUILD_DIR=/build
+ENV BUILD_DIR=/build \
+    DEBIAN_FRONTEND=noninteractive \
+    LC_ALL="C.UTF-8" \
+    LANG="C.UTF-8" \
+    PYTHONFAULTHANDLER=1
+
 ARG BUILDPLATFORM
 ARG TARGETARCH
 
@@ -13,7 +18,7 @@ USER root
 RUN --mount=type=cache,target=/var/cache/apt,id=aptbuild <<EOF
     set -eu
     apt-get update -y;
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
+    apt-get install -y --fix-missing --no-install-recommends \
         bzip2 \
         ca-certificates \
         gcc-10 \
@@ -58,13 +63,15 @@ EOF
 FROM ubuntu:focal as prod
 
 # locale variables required by Click
-ENV LC_ALL="C.UTF-8"
-ENV LANG="C.UTF-8"
+ENV DEBIAN_FRONTEND=noninteractive \
+    LC_ALL="C.UTF-8" \
+    LANG="C.UTF-8" \
+    PYTHONFAULTHANDLER=1
 
 RUN --mount=type=cache,target=/var/cache/apt,id=aptprod <<EOF
     set -eu
     apt-get update -y
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    apt-get install -y --no-install-recommends \
         libgfortran5 \
         jq \
         awscli \
@@ -83,8 +90,6 @@ COPY deployment/scripts /scripts
 COPY deployment/configs /configs
 COPY deployment/check-environment.sh /scripts
 RUN /opt/conda/bin/conda init bash
-
-ENV PYTHONFAULTHANDLER=1
 
 RUN adduser --disabled-password --gecos '' user
 USER user
