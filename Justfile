@@ -24,8 +24,7 @@
 
 # Run tests in Docker (Similar to Github Actions config)
 @test:
-    docker run --rm --volume "${PWD}/tests":/tests -w /tests ard:dev pytest
-
+    docker run -it --rm --volume "${PWD}/tests":/tests -w /tests ard:dev pytest
 
 @root:
     docker run --platform linux/amd64 -it --rm --volume "${PWD}:/tests" --user root -w /tests ard:dev /bin/bash -l

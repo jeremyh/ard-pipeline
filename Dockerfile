@@ -45,18 +45,15 @@ RUN --mount=type=cache,target=/opt/conda/pkgs,id=conda \
 # Use conda for the remaining commands
 SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/sh", "-c"]
 
-# We copy just the relevant things to maximise caching.
-WORKDIR /code
-COPY docs ./docs
-COPY utils ./utils
-COPY eugl ./eugl
-COPY tesp ./tesp
-COPY wagl ./wagl
-# Needed to read version number
-COPY .git ./.git
-COPY pyproject.toml meson.build LICENCE.md README.md ./
 
-RUN pip install .
+RUN --mount=type=bind,target=/code,readonly,source=. \
+    --mount=type=cache,target=/root/.cache,id=pip \
+    --mount=type=tmpfs,target=/tmp <<EOF
+    set -eu
+    cd /code
+    pip install --config-settings=builddir=/tmp/ard-pipeline-build .
+EOF
+
 
 FROM ubuntu:focal as prod
 
