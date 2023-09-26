@@ -24,12 +24,14 @@ jobs:
             with:
                 context: .
                 load: true
-                tags: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com/geoscienceaustralia/ard-pipeline:dev
+                tags: |
+                    538673716275.dkr.ecr.ap-southeast-2.amazonaws.com/geoscienceaustralia/ard-pipeline:dev
+                    geoscienceaustralia/ard-pipeline:dev
                 cache-from: type=gha
                 cache-to: type=gha,mode=max
 
         -   name: Test
-            run: docker run --rm -v ${{ github.workspace }}/tests:/tests -w /tests geoscienceaustralia/ard-pipeline:dev pytest
+            run: docker run --rm -v ${{ github.workspace }}/tests:/tests -w /tests geoscienceaustralia/ard-pipeline:dev python -m pytest
 
         # Now push the docker image everywhere (if this is the main repository).
         -   uses: docker/login-action@v3
