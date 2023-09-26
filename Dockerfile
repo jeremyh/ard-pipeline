@@ -56,8 +56,7 @@ COPY wagl ./wagl
 COPY .git ./.git
 COPY pyproject.toml meson.build LICENCE.md README.md ./
 
-RUN --mount=type=cache,target=/root/.cache,id=pip \
-    pip install .
+RUN pip install .
 
 FROM ubuntu:focal as prod
 
