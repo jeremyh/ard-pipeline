@@ -61,6 +61,7 @@ set +u
 # dynamic, so shellcheck can't check it.
 # shellcheck source=/dev/null
 . "${conda_root}/bin/activate"
+conda activate ard
 
 # this seems to be killing conda?
 # set -u
