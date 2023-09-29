@@ -61,15 +61,15 @@ set +u
 # dynamic, so shellcheck can't check it.
 # shellcheck source=/dev/null
 . "${conda_root}/bin/activate"
-conda activate ard
+# conda activate ard
 
 # this seems to be killing conda?
 # set -u
 
 # TODO: Install from tagged version.
 echo
-echo "Installing ard-pipeline"
 pushd ../../
+	echo "Installing ard-pipeline $(python3 -m setuptools_scm)"
 	python3 -m pip install .
 popd
 

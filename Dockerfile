@@ -48,7 +48,7 @@ RUN --mount=type=cache,target=/opt/conda/pkgs,id=conda \
     ./create-conda-environment.sh /opt/conda
 
 # Use conda for the remaining commands
-SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/sh", "-c"]
+SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "/bin/sh", "-c"]
 
 
 RUN --mount=type=bind,target=/code,readonly,source=. \
@@ -94,5 +94,4 @@ RUN /opt/conda/bin/conda init bash
 RUN adduser --disabled-password --gecos '' user
 USER user
 RUN /opt/conda/bin/conda init bash
-RUN echo "conda activate ard" >> ~/.bashrc
-ENTRYPOINT ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "ard", "/bin/bash", "-c"]
+ENTRYPOINT ["/opt/conda/bin/conda", "run", "--no-capture-output", "/bin/bash", "-c"]
