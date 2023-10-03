@@ -21,7 +21,7 @@ from wagl.acquisition import (
     Acquisition,
     AcquisitionsContainer,
 )
-from wagl.brdf import BrdfDict, get_brdf_data
+from wagl.brdf import BrdfDict, BrdfMode, get_brdf_data
 from wagl.constants import (
     POINT_FMT,
     AerosolTier,
@@ -49,6 +49,7 @@ from wagl.satellite_solar_angles import create_coordinator, create_vertices
 PathWithDataset = str
 
 LonLat = Tuple[float, float]
+
 
 ECWMF_LEVELS = [
     1,
@@ -570,6 +571,7 @@ class AncillaryConfig:
 def find_needed_acquisition_ancillary(
     acquisition: Acquisition,
     config: AncillaryConfig,
+    mode: Optional[BrdfMode] = None,
 ) -> Tuple[Set[str], List[str]]:
     """
     Find which Ancillary Paths are needed to process this acquisition.
@@ -604,7 +606,7 @@ def find_needed_acquisition_ancillary(
     tiers: Set[str] = set()
 
     # This currently loads the H5 files. Maybe they're empty?
-    params = get_brdf_data(acquisition, config.brdf_dict)
+    params = get_brdf_data(acquisition, config.brdf_dict, mode=mode)
     for param, brdf_data in params.items():
         tiers.add(brdf_data["tier"])
         paths.extend(brdf_data["local_source_paths"])

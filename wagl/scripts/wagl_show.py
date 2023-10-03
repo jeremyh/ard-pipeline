@@ -14,7 +14,7 @@ from click import echo, style
 from osgeo import osr
 
 from wagl.acquisition import PackageIdentificationHint, acquisitions
-from wagl.ancillary import AncillaryConfig, find_needed_acquisition_ancillary
+from wagl.ancillary import AncillaryConfig, BrdfMode, find_needed_acquisition_ancillary
 from wagl.brdf import AncillaryTier
 
 osr.UseExceptions()
@@ -23,6 +23,7 @@ osr.UseExceptions()
 def find_needed_level1_ancillary(
     level1_paths: List[str],
     *,
+    mode: BrdfMode = None,
     acq_parser_hint: PackageIdentificationHint = None,
     luigi_config_path: Optional[str] = None,
 ) -> Tuple[str, AncillaryTier, List[str]]:
@@ -39,8 +40,7 @@ def find_needed_level1_ancillary(
         acquisition = container.get_highest_resolution()[0][0]
 
         tiers, paths = find_needed_acquisition_ancillary(
-            acquisition,
-            AncillaryConfig.from_luigi(luigi_config_path),
+            acquisition, AncillaryConfig.from_luigi(luigi_config_path), mode=mode
         )
         if len(tiers) != 1:
             raise ValueError(
@@ -52,6 +52,11 @@ def find_needed_level1_ancillary(
 
 @click.command("ard_show", help=__doc__)
 @click.argument("level1_paths", nargs=-1, type=str, required=True)
+@click.option(
+    "--mode",
+    type=str,
+    help="Brdf mode",
+)
 @click.option(
     "--acq-parser-hint",
     type=str,
@@ -68,12 +73,13 @@ def find_needed_level1_ancillary(
     is_flag=True,
     help="Output bare paths only, no yaml formatting",
 )
-def main(level1_paths, acq_parser_hint, luigi_config_path, paths_only):
+def main(level1_paths, acq_parser_hint, mode, luigi_config_path, paths_only):
     for i, (label, tier, needed_paths) in enumerate(
         find_needed_level1_ancillary(
             level1_paths,
             acq_parser_hint=acq_parser_hint,
             luigi_config_path=luigi_config_path,
+            mode=mode,
         )
     ):
         if paths_only:

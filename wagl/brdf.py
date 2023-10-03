@@ -23,7 +23,7 @@ import datetime
 import logging
 import os
 from os.path import join as pjoin
-from typing import Dict, List, Literal, Tuple, TypedDict
+from typing import Dict, List, Literal, Optional, Tuple, TypedDict
 
 import h5py
 import numpy as np
@@ -48,12 +48,12 @@ from wagl.metadata import current_h5_metadata
 
 _LOG = logging.getLogger(__name__)
 
-BrdfMode = Literal["fallback", "MODIS", "VIIRS"]
-
 # Accurate BRDF requires both Terra and Aqua to be operating
 # Aqua launched 2002-05-04, so we'll add a buffer for determining the start
 # date for using definitive data.
 DEFINITIVE_START_DATE = datetime.datetime(2002, 7, 1).date()
+
+BrdfMode = Literal["fallback", "MODIS", "VIIRS"]
 
 
 class BrdfBandDict(TypedDict):
@@ -630,7 +630,7 @@ def get_brdf_data(
     brdf_config: BrdfDict,
     compression=H5CompressionFilter.LZF,
     filter_opts=None,
-    mode=None,
+    mode: Optional[BrdfMode] = None,
 ) -> Dict[BrdfDirectionalParameters, LoadedBrdfCoverageDict]:
     """Calculates the mean BRDF value for the given acquisition,
     for each BRDF parameter ['geo', 'iso', 'vol'] that covers
