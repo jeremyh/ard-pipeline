@@ -48,6 +48,7 @@ from wagl.metadata import current_h5_metadata
 
 _LOG = logging.getLogger(__name__)
 
+BrdfMode = Literal["fallback", "MODIS", "VIIRS"]
 
 # Accurate BRDF requires both Terra and Aqua to be operating
 # Aqua launched 2002-05-04, so we'll add a buffer for determining the start
@@ -83,6 +84,11 @@ class BrdfDict(TypedDict):
     #: Single ocean mask file.
     #: Eg. '/g/data/v10/eoancillarydata-2/ocean_mask/base_oz_tile_set_water_mask_geotif.tif'
     ocean_mask_path: str
+
+    #: Eg. /g/data/v10/eoancillarydata-2/BRDF/VNP43IA1.001
+    viirs_i_path: str
+    #: Eg. /g/data/v10/eoancillarydata-2/BRDF/VNP43MA1.001
+    viirs_m_path: str
 
 
 class BRDFLoaderError(Exception):
@@ -516,7 +522,15 @@ def load_brdf_tile(
     return bts
 
 
-def get_tally(mode, brdf_config, brdf_datasets, viirs_datasets, dt, src_poly, src_crs):
+def get_tally(
+    mode: BrdfMode,
+    brdf_config: BrdfDict,
+    brdf_datasets: List[str],
+    viirs_datasets,
+    dt: datetime.date,
+    src_poly,
+    src_crs,
+):
     """
     Get all HDF files in the input dir.
     `mode` can be one of `MODIS`, `VIIRS` or `fallback`
@@ -562,7 +576,7 @@ def get_tally(mode, brdf_config, brdf_datasets, viirs_datasets, dt, src_poly, sr
             brdf_base_dir = assert_exists(brdf_config["viirs_i_path"])
             brdf_dirs = get_brdf_dirs_viirs(brdf_base_dir, dt)
         elif "M" in viirs_datasets.keys():
-            brdf_base_dir = assert_exists(brdf_config["viirs_m_path"])
+            brdf_base_dir = assert_exists(brdf_config["viirs_i_path"])
             brdf_dirs = get_brdf_dirs_viirs(brdf_base_dir, dt)
         else:
             raise ValueError("No I or M bands in VIIRS band for sensor")
@@ -695,7 +709,7 @@ def get_brdf_data(
     else:
         viirs_datasets = None
 
-    def get_tally2(mode, dt):
+    def get_tally2(mode: BrdfMode, dt: datetime.date):
         # brdf_config, brdf_datasets, and viirs datasets are "constants"
         # for the purpose of choosing the data to use (MODIS vs VIIRS vs fallback)
         result = get_tally(
