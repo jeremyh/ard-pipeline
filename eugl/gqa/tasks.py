@@ -278,13 +278,11 @@ class GverifyTask(luigi.Task):
             str(self.chip_size),
         ]
 
-        cmd = [
-            " ".join(
-                shlex.quote(s)
-                for s in chain(bash_env_setup, gverify_cmd, extra_gverify_args)
-            )
-        ]
-        _LOG.info("gverify call: {}".format(" ".join(cmd)))
+        cmd = " ".join(
+            shlex.quote(s)
+            for s in chain(bash_env_setup, gverify_cmd, extra_gverify_args)
+        )
+        TASK_LOGGER.info("gverify call", cmd=cmd)
         run_command(
             cmd, outdir, timeout=self.timeout, command_name="gverify", use_shell=True
         )
