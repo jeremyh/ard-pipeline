@@ -145,7 +145,9 @@ def run_command(command, work_dir, timeout=None, command_name=None, use_shell=Fa
             raise CommandError(f"{command_name!r} timed out (timeout={timeout}")
         else:
             raise CommandError(
-                f"{command_name!r} failed with return code: {_proc.returncode!s}"
+                f"{command_name!r} failed with return code: {_proc.returncode!s}. \n"
+                f"{stdout.decode('utf-8')}\n"
+                f"{stderr.decode('utf-8')}\n"
             )
     else:
         _LOG.debug("Command %s had output: %s", command_name, stdout.decode("utf-8"))
