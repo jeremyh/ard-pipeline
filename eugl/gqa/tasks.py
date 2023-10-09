@@ -279,8 +279,10 @@ class GverifyTask(luigi.Task):
         ]
 
         cmd = " ".join(
-            shlex.quote(s)
-            for s in chain(bash_env_setup, gverify_cmd, extra_gverify_args)
+            [
+                *bash_env_setup,
+                *[shlex.quote(s) for s in chain(gverify_cmd, extra_gverify_args)],
+            ]
         )
         TASK_LOGGER.info("gverify call", cmd=cmd)
         run_command(
