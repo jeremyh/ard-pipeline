@@ -4,10 +4,9 @@ project(
     'fortran',
     version: run_command(
         'python3',
-        [
-          '-m', 'setuptools_scm'
-        ], check:true
-      ).stdout().strip(),
+        ['-m', 'setuptools_scm'],
+        check: true,
+    ).stdout().strip(),
 )
 
 py_mod = import('python')
