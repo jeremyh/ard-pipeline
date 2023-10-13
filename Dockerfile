@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1.5
-
-FROM ubuntu:focal as builder
+# We use rockylinux 8.8 to match the NCI gadi environment.
+FROM rockylinux:8.8 as builder
 SHELL ["/bin/bash", "-c"]
 
 ENV BUILD_DIR=/build \
@@ -15,27 +15,21 @@ ARG TARGETARCH
 USER root
 
 # Build deps
-RUN --mount=type=cache,target=/var/cache/apt,id=aptbuild <<EOF
+RUN --mount=type=cache,target=/var/cache/dnf,id=dnfbuild <<EOF
     set -eu
-    apt-get update -y;
-    apt-get install -y --fix-missing --no-install-recommends \
+    dnf --quiet makecache --refresh
+    dnf --assumeyes --quiet install \
         bzip2 \
         ca-certificates \
-        gcc-10 \
-        gfortran-10 \
+        libarchive \
+        libtiff-devel \
+        findutils \
+        gcc \
+        gcc-gfortran \
         git \
-        libarchive13 \
-        libpq-dev \
-        libtiff5 \
         make \
-        software-properties-common \
         wget
-    rm -rf /var/lib/apt/lists/*
 EOF
-
-RUN set -o pipefail; \
-    ln -s "$(which gfortran-10)" "$(which gfortran-10 | sed 's/\(.*\)\/\gfortran-10/\1\/gfortran/')" \
- && ln -s "$(which gcc-10)" "$(which gcc-10 | sed 's/\(.*\)\/\gcc-10/\1\/gcc/')"
 
 WORKDIR /build
 
@@ -56,31 +50,29 @@ RUN --mount=type=bind,target=/code,readonly,source=. \
     --mount=type=tmpfs,target=/tmp <<EOF
     set -eu
     cd /code
-    pip install --config-settings=builddir=/tmp/ard-pipeline-build .
+    pip install -v --config-settings=builddir=/tmp/ard-pipeline-build .
 EOF
 
 
-FROM ubuntu:focal as prod
+FROM rockylinux:8.8 as prod
 
 # locale variables required by Click
-ENV DEBIAN_FRONTEND=noninteractive \
-    LC_ALL="C.UTF-8" \
+ENV LC_ALL="C.UTF-8" \
     LANG="C.UTF-8" \
     PYTHONFAULTHANDLER=1
 
-RUN --mount=type=cache,target=/var/cache/apt,id=aptprod <<EOF
+RUN --mount=type=cache,target=/var/cache/dnf,id=dnfprod <<EOF
     set -eu
-    apt-get update -y
-    apt-get install -y --no-install-recommends \
-        libgfortran5 \
+    dnf --quiet makecache --refresh
+    dnf --assumeyes --quiet install \
+        libgfortran \
+        libarchive \
+        libtiff \
+        findutils \
         jq \
-        awscli \
-        libarchive13 \
-        libtiff5 \
         xmlstarlet \
-        libjpeg62 \
-        unzip
-    rm -rf /var/lib/apt/lists/*
+        unzip \
+        which
 EOF
 
 RUN mkdir /scripts /granules /output /upload
@@ -91,7 +83,7 @@ COPY deployment/configs /configs
 COPY deployment/check-environment.sh /scripts
 RUN /opt/conda/bin/conda init bash
 
-RUN adduser --disabled-password --gecos '' user
+RUN useradd -m user
 USER user
 RUN /opt/conda/bin/conda init bash
 ENTRYPOINT ["/opt/conda/bin/conda", "run", "--no-capture-output", "/bin/bash", "-c"]
