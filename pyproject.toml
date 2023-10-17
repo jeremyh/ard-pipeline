@@ -3,7 +3,9 @@ build-backend = 'mesonpy'
 requires = [
     # For package version calculation (via Git)
     "setuptools>=45",
-    "setuptools_scm[toml]>=6.2",
+    # version 8 seems to have broken the write_file functionality
+    # (when called directly: python -m setuptools_scm)
+    "setuptools_scm[toml]>=6.2,<8",
     'meson-python',
     # For f2py
     'numpy'
@@ -146,5 +148,4 @@ target-version = "py38"
 "wagl/vincenty.py" = ["N802", "N803", "N806", "N816", "N817"]
 
 [tool.setuptools_scm]
-version_file = "wagl/_version.py"
 write_to = "wagl/_version.py"
