@@ -313,7 +313,7 @@ class HDF5Test(unittest.TestCase):
             "index_dtype": "int64",
             "index_names": np.array(["index"], dtype=object),
             "integer_data_dtype": "int64",
-            "metadata": "`Pandas.DataFrame` converted to HDF5 compound datatype.",  # pylint: disable=line-too-long # noqa: E501
+            "metadata": "`Pandas.DataFrame` converted to HDF5 compound datatype.",  # pylint: disable=line-too-long
             "nrows": 10,
             "python_type": "`Pandas.DataFrame`",
         }
