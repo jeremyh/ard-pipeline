@@ -5,10 +5,19 @@ set -eou pipefail
 this_dir="$(dirname "${0}")"
 cd "${this_dir}"
 
+full_hostname=$(hostname)
+
+# If we're on NCI, make sure they don't have other python-containing modules loaded.
+# It will interfere with the build
+if [[ $full_hostname == *"nci.org.au"* ]]; then
+    if [[ $(which python3) != "/bin/python3" ]]; then
+        echo "'python' does not appear to be the default NCI python. Make sure you have no modules loaded."
+        exit 1
+    fi
+fi
+
 umask 002
 unset PYTHONPATH
-module use /g/data/v10/public/modules/modulefiles /g/data/v10/private/modules/modulefiles
-module load openmpi
 
 export LC_ALL=en_AU.utf8
 export LANG=C.UTF-8
@@ -23,7 +32,7 @@ echo "modtran_version = ${modtran_version:="6.0.1"}"
 echo
 # It thinks we're trying to quote the inner json for bash
 # shellcheck disable=SC2089
-echo "ard_product_array=${ard_product_array:='["NBART", "NBAR"]'}"
+echo "ard_product_array=${ard_product_array:="[\"NBART\", \"NBAR\"]"}"
 echo "fmask_version=${fmask_version:="0.5.7"}"
 echo
 # Uppercase to match the variable that DEA modules use (If you already have it loaded, we'll take it from there).
@@ -62,6 +71,9 @@ then
 else
   exit 1
 fi
+
+module use /g/data/v10/public/modules/modulefiles /g/data/v10/private/modules/modulefiles
+module load openmpi
 
 echo
 echo "Creating Conda environment"
