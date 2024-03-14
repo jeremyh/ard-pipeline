@@ -14,13 +14,13 @@ import os
 import re
 import shlex
 import shutil
-from collections import Counter, namedtuple
+from collections import Counter
 from datetime import datetime, timezone
 from functools import partial
 from itertools import chain
 from os.path import abspath, basename, exists, isdir
 from os.path import join as pjoin
-from typing import List
+from typing import List, NamedTuple, Optional, Sequence, TypeVar
 
 import h5py
 import luigi
@@ -174,7 +174,7 @@ class GverifyTask(luigi.Task):
 
             # returns a reference image from one of ls5/7/8
             #  the gqa band id will differ depending on if the source image is 5/7/8
-            reference_imagery = get_reference_imagery(
+            reference_imagery: List[CSR] = get_reference_imagery(
                 landsat_scenes,
                 acq_info.timestamp,
                 band_id,
@@ -555,13 +555,20 @@ def calculate_gqa(df, tr, resolution, stddev=1.0, iterations=1, correl=0.75):
     }
 
 
-def most_common(sequence):
+T = TypeVar("T")
+
+
+def most_common(sequence: Sequence[T]) -> T:
     result, _ = Counter(sequence).most_common(1)[0]
     return result
 
 
-class CSR(namedtuple("CSRBase", ["filename", "crs", "resolution"])):
+class CSR(NamedTuple):
     """Do two images have the same coordinate system and resolution?."""
+
+    filename: str
+    crs: rasterio.crs.CRS
+    resolution: Sequence[float]
 
     @classmethod
     def from_file(cls, filename):
@@ -577,7 +584,7 @@ class CSR(namedtuple("CSRBase", ["filename", "crs", "resolution"])):
         return hash((self.crs.data["init"], self.resolution))
 
 
-def build_vrt(reference_images, out_file, work_dir):
+def build_vrt(reference_images: List[CSR], out_file: str, work_dir: str):
     temp_directory = pjoin(work_dir, "reprojected_references")
     if not exists(temp_directory):
         os.makedirs(temp_directory)
@@ -597,8 +604,12 @@ def build_vrt(reference_images, out_file, work_dir):
                 yield CSR.from_file(out_file)
 
     reprojected = [abspath(image.filename) for image in reprojected_images()]
+
+    crs = common_csr.crs
     command = [
         "gdalbuildvrt",
+        "-a_srs",
+        f"EPSG:{crs.to_epsg()}",
         "-srcnodata",
         "0",
         "-vrtnodata",
@@ -609,7 +620,9 @@ def build_vrt(reference_images, out_file, work_dir):
     run_command(command, work_dir)
 
 
-def get_reference_imagery(path_rows, timestamp, band_id, sat_id, reference_directories):
+def get_reference_imagery(
+    path_rows, timestamp, band_id, sat_id, reference_directories
+) -> List[CSR]:
     australian = [
         entry
         for entry in path_rows
@@ -619,7 +632,7 @@ def get_reference_imagery(path_rows, timestamp, band_id, sat_id, reference_direc
     if australian == []:
         raise ValueError("No Australian path row found")
 
-    def find_references(entry, directories):
+    def find_references(entry, directories) -> List[str]:
         path = "{:0=3d}".format(entry["path"])
         row = "{:0=3d}".format(entry["row"])
 
@@ -642,19 +655,19 @@ def get_reference_imagery(path_rows, timestamp, band_id, sat_id, reference_direc
 
         return find_references(entry, rest)
 
-    result = [
+    image_paths = [
         reference
         for entry in australian
         for reference in find_references(entry, reference_directories)
     ]
 
-    if not result:
+    if not image_paths:
         raise ValueError(f"No reference found for {path_rows}")
 
-    return [CSR.from_file(image) for image in result]
+    return [CSR.from_file(image) for image in image_paths]
 
 
-def get_reference_date(filename, band_id, sat_id):
+def get_reference_date(filename: str, band_id: str, sat_id: str) -> Optional[datetime]:
     """get_reference_date: extracts date from reference filename.
 
     :param filename: GQA reference image
@@ -691,7 +704,9 @@ def get_reference_date(filename, band_id, sat_id):
     return None
 
 
-def closest_match(folder, timestamp, band_id, sat_id):
+def closest_match(
+    folder: str, timestamp: datetime, band_id: str, sat_id: str
+) -> List[str]:
     """Returns the reference observation closest to the observation being
     evaluated.
     """
