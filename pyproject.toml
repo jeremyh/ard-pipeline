@@ -86,6 +86,9 @@ wagl_ls = " wagl.scripts.wagl_ls:main"
 wagl_residuals = "wagl.scripts.wagl_residuals:main"
 
 [tool.ruff]
+target-version = "py38"
+
+[tool.ruff.lint]
 ignore = [
     "S101",  # Allow asserts
     "EXE001"  # "Shebang is present, but not executable". Too many to list right now.
@@ -106,9 +109,8 @@ select = [
     # "S",  # Bandit (security) -- explore warnings and enable in future?
     "UP"  # pyupgrade
 ]
-target-version = "py38"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tesp/constants.py" = ["A003"]  # Shadowing built-in "all". It's a class method name, so would have to be renamed everywhere?
 # These historically weren't linted for line length.
 "tesp/scripts/ard_pbs.py" = ["E501"]
@@ -149,7 +151,7 @@ target-version = "py38"
 
 # Matching old behaviour: We auto-format with the smaller line default
 # ...  but only enforce line length to be under this larger 120 limit.
-[tool.ruff.pycodestyle]
+[tool.ruff.lint.pycodestyle]
 max-line-length = 120
 
 [tool.setuptools_scm]
