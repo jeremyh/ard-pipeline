@@ -126,10 +126,15 @@ def is_offshore_territory(
         [geobox.ul_lonlat, geobox.ur_lonlat, geobox.lr_lonlat, geobox.ll_lonlat]
     )
 
-    with fiona.open(offshore_territory_boundary_path, "r") as offshore_territory:
-        for boundary_poly in offshore_territory:
-            if shape(boundary_poly["geometry"]).contains(acq_polygon):
-                return False
+    try:
+        with fiona.open(offshore_territory_boundary_path, "r") as offshore_territory:
+            for boundary_poly in offshore_territory:
+                if shape(boundary_poly["geometry"]).contains(acq_polygon):
+                    return False
+    except fiona.errors.DriverError:
+        # the offshore territory boundary path is invalid
+        # as will be the case for the NRT pipeline
+        return False
 
     return True
 
