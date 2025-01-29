@@ -92,7 +92,7 @@ COPY deployment/check-environment.sh /scripts
 RUN /opt/conda/bin/conda init bash
 
 RUN useradd -m user
-RUN chown user /granules /output /upload
+RUN chown user /granules /output /upload /scripts
 USER user
 RUN /opt/conda/bin/conda init bash
 ENTRYPOINT ["/opt/conda/bin/conda", "run", "--no-capture-output", "/bin/bash", "-c"]
