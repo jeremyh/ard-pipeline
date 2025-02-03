@@ -362,8 +362,8 @@ class Sentinel2cAcquisition(Sentinel2Acquisition):
         self.tle_format = "S2C%4d%sASNNOR.S00"
         self.tag = "S2C"
         self.altitude = 786000.0
-        self.inclination = 1.721243708316808
-        self.omega = 0.001039918
+        self.inclination = 1.7203448637520307
+        self.omega = 0.0010405158
         self.semi_major_axis = 7167000.0
         self.maximum_view_angle = 20.0
 
