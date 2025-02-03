@@ -151,11 +151,12 @@ function receive_message {
 function prepare_level1_sentinel_2 {
 # Note that argument refers to a filename and not a directory
     log_message $LOG_INFO "Generating 1C product metadata"
-    eo3-prepare sentinel-l1 "$WORKDIR/$TASK_UUID" --output-base "$WORKDIR/$TASK_UUID"
+    eo3-prepare sentinel-l1 "$WORKDIR/$TASK_UUID" --input-relative-to="$WORKDIR/$TASK_UUID"
     if [ "$?" -ne 0 ]; then
         log_message $LOG_ERROR "Could not prepare level-1 metadata";
         exit -1;
     fi
+    mv "$WORKDIR"/*.odc-metadata.yaml "$WORKDIR/$TASK_UUID/"
     CAPTURE_DATE="$(date -u --date=$(cat "$WORKDIR/$TASK_UUID/productInfo.json" | jq -r '.tiles[0].timestamp') '+%Y-%m-%d')"
     log_message $LOG_INFO "Generated 1C product metadata"
     log_message $LOG_INFO "CAPTURE_DATE=$CAPTURE_DATE"
