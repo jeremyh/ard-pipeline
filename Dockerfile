@@ -23,6 +23,7 @@ RUN --mount=type=cache,target=/var/cache/dnf,id=dnfbuild <<EOF
         ca-certificates \
         libarchive \
         libtiff-devel \
+        libpng \
         findutils \
         gcc \
         gcc-gfortran \
