@@ -50,8 +50,7 @@ jobs:
         if: |
             needs.build_with_docker.result == 'success'
             && github.repository == 'OpenDataCubePipelines/ard-pipeline'
-            && (github.event_name == 'push' || github.event_name == 'release')
-            && github.ref == 'refs/heads/main'
+            && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'release')
 
         runs-on: ubuntu-latest
         needs: build_with_docker
