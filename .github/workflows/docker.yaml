@@ -1,5 +1,5 @@
 name: Docker Tests
-on: [push, pull_request]
+on: [push, pull_request, release]
 
 permissions:
     id-token: write   # This is required for requesting the JWT
@@ -50,7 +50,7 @@ jobs:
         if: |
             needs.build_with_docker.result == 'success'
             && github.repository == 'OpenDataCubePipelines/ard-pipeline'
-            && github.event_name == 'push'
+            && (github.event_name == 'push' || github.event_name == 'release')
             && github.ref == 'refs/heads/main'
 
         runs-on: ubuntu-latest
