@@ -79,6 +79,8 @@ ENV HDF5_PLUGIN_PATH=/opt/conda/lib/hdf5/plugin
 RUN --mount=type=cache,target=/var/cache/dnf,id=dnfprod <<EOF
     set -eu
     dnf --quiet makecache --refresh
+    # Use latest certificates
+    dnf --assumeyes --quiet upgrade ca-certificates
     dnf --assumeyes --quiet install \
         gcc-gfortran \
         git \

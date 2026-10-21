@@ -4,7 +4,8 @@ set -eux
 unset PIP_REQUIRE_VIRTUALENV
 
 clean_all=false
-pip_args=(--no-binary :all:)
+# Need to disable build-isolation on newer pips, as fmask doesn't declare numpy as a dependency
+pip_args=(--no-binary :all: --no-build-isolation)
 
 location="conda"
 # If they provided a location argument, install there instead
